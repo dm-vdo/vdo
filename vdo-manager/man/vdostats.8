@@ -1,0 +1,562 @@
+.TH VDOSTATS 8 "2017-09-12" "Red Hat" \" -*- nroff -*-
+.\" As of groff 1.22.2, friendly display macros (.DS/.DE) haven't been
+.\" written. Try to fake it.
+.de DS
+.  nf
+.  ft CR
+..
+.de DE
+.  fi
+.  ft R
+..
+.
+.\" Save the default hyphenation mode, so we can suspend (.nh) and
+ \" resume.
+.nr defaultHyphenationMode \n[.hy]
+.de hyResume
+.  hy \n[defaultHyphenationMode]
+..
+.
+.SH NAME
+vdostats \- get configuration and statistics from a running VDO volume
+.
+.
+.SH SYNOPSIS
+.nh
+.in +6
+.ti -6
+.B vdostats
+.RB [ \-\-verbose ]
+.RB [ \-\-human\-readable ]
+.RB [ \-\-si ]
+.RB [ \-\-all ]
+.RB [ \-\-version ]
+.RB [
+.IR device...
+.RB ]
+.in -6
+.
+.
+.SH DESCRIPTION
+.hyResume
+The \fBvdostats\fR utility display statistics for each configured (or
+specified) VDO device.
+.PP
+The default output format is a table with the following columns,
+similar to that of the Linux \fBdf\fR utility:
+.TP
+.B Device
+The path to the VDO volume
+.TP
+.B 1K\-blocks
+The total number of 1K blocks allocated for a VDO
+volume (= physical volume size * block size / 1024)
+.TP
+.B Used
+The total number of 1K blocks used on a VDO
+volume (= physical blocks used * block size / 1024)
+.TP
+.B Available
+The total number of 1K blocks available on a VDO
+volume (= physical blocks free * block size / 1024)
+.TP
+.B Use%
+The percentage of physical blocks used on a VDO volume
+(= used blocks / allocated blocks * 100)
+.TP
+.B Space Saving%
+The percentage of physical blocks saved on a VDO
+volume (= [logical blocks used - physical blocks used] /
+logical blocks used)
+.SH VERBOSE OUTPUT
+The \fB\-\-verbose\fR option displays VDO device statistics in YAML
+format for the specified VDO devices. The following fields will
+continue to be reported in future releases. Management tools should
+not rely upon the order in which any of the statistics are reported.
+.TP
+.B version
+The version of these statistics.
+.TP
+.B release version
+The release version of the VDO.
+.TP
+.B data blocks used
+The number of physical blocks currently in use by a VDO
+volume to store data.
+.TP
+.B overhead blocks used
+The number of physical blocks currently in use by a VDO volume to
+store VDO metadata.
+.TP
+.B logical blocks used
+The number of logical blocks currently mapped.
+.TP
+.B physical blocks
+The total number of physical blocks allocated for a VDO
+volume.
+.TP
+.B logical blocks
+The maximum number of logical blocks that can be mapped
+by a VDO volume.
+.TP
+.B 1K-blocks
+The total number of 1K blocks allocated for a VDO
+volume (= physical volume size * block size / 1024)
+.TP
+.B 1K-blocks used
+The total number of 1K blocks used on a VDO
+volume (= physical blocks used * block size / 1024)
+.TP
+.B 1K-blocks available
+The total number of 1K blocks available on a VDO
+volume (= physical blocks free * block size / 1024)
+.TP
+.B used percent
+The percentage of physical blocks used on a VDO volume
+(= used blocks / allocated blocks * 100)
+.TP
+.B saving percent
+The percentage of physical blocks saved on a VDO
+volume (= [logical blocks used - physical blocks used] /
+logical blocks used)
+.TP
+.B block map cache size
+The size of the block map cache, in bytes.
+.TP
+.B write policy
+The write policy (sync or async). This is configured
+via \fBvdo modify \-\-writePolicy=\fIpolicy\fR.
+.TP
+.B block size
+The block size of a VDO volume, in bytes.
+.TP
+.B completed recovery count
+The number of times a VDO volume has recovered from an unclean
+shutdown.
+.TP
+.B read-only recovery count
+The number of times a VDO volume has been recovered from
+read-only mode (via \fBvdo start \-\-forceRebuild\fR).
+.TP
+.B operating mode
+Indicates whether a VDO volume is operating normally, is in
+recovery mode, or is in read-only mode.
+.TP
+.B recovery progress (%)
+Indicates online recovery progress, or \fBN/A\fR if the
+volume is not in recovery mode.
+.TP
+.B compressed fragments written
+The number of compressed fragments that have been written since
+the VDO volume was last restarted.
+.TP
+.B compressed blocks written
+The number of physical blocks of compressed data that have been
+written since the VDO volume was last restarted.
+.PP
+The remaining fields are primarily intended for software support and
+are subject to change in future releases; management tools should not
+rely upon them.
+.TP
+.B compressed fragments in packer
+The number of compressed fragments being processed that have not
+yet been written.
+.TP
+.B slab count
+The total number of slabs.
+.TP
+.B slabs opened
+The total number of slabs from which blocks have ever been
+allocated.
+.TP
+.B slabs reopened
+The number of times slabs have been re-opened since the VDO was
+started.
+.TP
+.B journal disk full count
+The number of times a request could not make a recovery journal
+entry because the recovery journal was full.
+.TP
+.B journal commits requested count
+The number of times the recovery journal requested slab journal
+commits.
+.TP
+.B journal entries batching
+The number of journal entry writes started minus the number of
+journal entries written.
+.TP
+.B journal entries started
+The number of journal entries which have been made in memory.
+.TP
+.B journal entries writing
+The number of journal entries in submitted writes minus the
+number of journal entries committed to storage.
+.TP
+.B journal entries written
+The total number of journal entries for which a write has been
+issued.
+.TP
+.B journal entries committed
+The number of journal entries written to storage.
+.TP
+.B journal blocks batching
+The number of journal block writes started minus the number of
+journal blocks written.
+.TP
+.B journal blocks started
+The number of journal blocks which have been touched in memory.
+.TP
+.B journal blocks writing
+The number of journal blocks written (with metadatata in
+active memory) minus the number of journal blocks committed.
+.TP
+.B journal blocks written
+The total number of journal blocks for which a write has been
+issued.
+.TP
+.B journal blocks committed
+The number of journal blocks written to storage.
+.TP
+.B slab journal disk full count
+The number of times an on-disk slab journal was full.
+.TP
+.B slab journal flush count
+The number of times an entry was added to a slab journal that was
+over the flush threshold.
+.TP
+.B slab journal blocked count
+The number of times an entry was added to a slab journal that
+was over the blocking threshold.
+.TP
+.B slab journal blocks written
+The number of slab journal block writes issued.
+.TP
+.B slab journal tail busy count
+The number of times write requests blocked waiting for a slab
+journal write.
+.TP
+.B slab summary blocks written
+The number of slab summary block writes issued.
+.TP
+.B reference blocks written
+The number of reference block writes issued.
+.TP
+.B block map dirty pages
+The number of dirty pages in the block map cache.
+.TP
+.B block map clean pages
+The number of clean pages in the block map cache.
+.TP
+.B block map free pages
+The number of free pages in the block map cache.
+.TP
+.B block map failed pages
+The number of block map cache pages that have write errors.
+.TP
+.B block map incoming pages
+The number of block map cache pages that are being read into the
+cache.
+.TP
+.B block map outgoing pages
+The number of block map cache pages that are being written.
+.TP
+.B block map cache pressure
+The number of times a free page was not available when needed.
+.TP
+.B block map read count
+The total number of block map page reads.
+.TP
+.B block map write count
+The total number of block map page writes.
+.TP
+.B block map failed reads
+The total number of block map read errors.
+.TP
+.B block map failed writes
+The total number of block map write errors.
+.TP
+.B block map reclaimed
+The total number of block map pages that were reclaimed.
+.TP
+.B block map read outgoing
+The total number of block map reads for pages that were being
+written.
+.TP
+.B block map found in cache
+The total number of block map cache hits.
+.TP
+.B block map discard required
+The total number of block map requests that required a page to be
+discarded.
+.TP
+.B block map wait for page
+The total number of requests that had to wait for a page.
+.TP
+.B block map fetch required
+The total number of requests that required a page fetch.
+.TP
+.B block map pages loaded
+The total number of page fetches.
+.TP
+.B block map pages saved
+The total number of page saves.
+.TP
+.B block map flush count
+The total number of flushes issued by the block map.
+.TP
+.B invalid advice PBN count
+The number of times the index returned invalid advice
+.TP
+.B invalid rollover PBN count
+The number of times the index returned invalid advice for a
+retried query after a block has reached the maximum reference
+count.
+.TP
+.B dedupe deadlock avoidance count
+The number of times deduplication was aborted in order to avoid
+a potential deadlock with other requests.
+.TP
+.B no space error count
+The number of write requests which failed due to the VDO volume
+being out of space.
+.TP
+.B read only error count
+The number of write requests which failed due to the VDO volume
+being in read-only mode.
+.TP
+.B instance
+The VDO instance.
+.TP
+.B 512 byte emulation
+Indicates whether 512 byte emulation is on or off for the volume.
+.TP
+.B current VDO IO requests in progress
+The number of I/O requests the VDO is current processing.
+.TP
+.B maximum VDO IO requests in progress
+The maximum number of simultaneous I/O requests the VDO has
+processed.
+.TP
+.B current dedupe queries
+The number of deduplication queries currently in flight.
+.TP
+.B maximum dedupe queries
+The maximum number of in-flight deduplication queries.
+.TP
+.B dedupe advice valid
+The number of times deduplication advice was correct.
+.TP
+.B dedupe advice stale
+The number of times deduplication advice was incorrect.
+.TP
+.B dedupe advice timeouts
+The number of times deduplication queries timed out.
+.TP
+.B flush out
+The number of flush requests submitted by VDO to the
+underlying storage.
+.TP
+.B write amplification ratio
+The average number of block writes to the underlying storage per block
+written to the VDO device.
+.PP
+.B bios in...
+.br
+.B bios in partial...
+.br
+.B bios out...
+.br
+.B bios meta...
+.br
+.B bios journal...
+.br
+.B bios page cache...
+.br
+.B bios out completed...
+.br
+.B bios meta completed...
+.br
+.B bios journal completed...
+.br
+.B bios page cache completed...
+.br
+.B bios acknowledged...
+.br
+.B bios acknowledged partial...
+.br
+.B bios in progress...
+.br
+.RS
+These statistics count the number of bios in each category with
+a given flag. The categories are:
+.TP
+.B bios in
+The number of block I/O requests received by VDO.
+.TP
+.B bios in partial
+The number of partial block I/O requests received by VDO. Applies only
+to 512-byte emulation mode.
+.TP
+.B bios out
+The number of non-metadata block I/O requests submitted by VDO to the
+storage device.
+.TP
+.B bios meta
+The number
+of metadata block I/O requests submitted by VDO to the
+storage device.
+.TP
+.B bios journal
+The number of recovery journal block I/O requests submitted by VDO
+to the storage device.
+.TP
+.B bios page cache
+The number of block map I/O requests submitted by VDO to the
+storage device.
+.TP
+.B bios out completed
+The number of non-metadata block I/O requests completed by
+the storage device.
+.TP
+.B bios meta completed
+The number of metadata block I/O requests completed by the
+storage device.
+.TP
+.B bios journal completed
+The number of recovery journal block I/O requests
+completed by the storage device.
+.TP
+.B bios page cache completed
+The number of block map I/O
+requests completed by the storage device.
+.TP
+.B bios acknowledged
+The number of block I/O requests acknowledged by VDO.
+.TP
+.B bios acknowledged partial
+The number of partial block I/O requests acknowledged by
+VDO. Applies only to 512-byte emulation mode.
+.TP
+.B bios in progress
+The number of bios submitted to the VDO which have not
+yet been acknowledged.
+.PP
+There are five types of flags:
+.TP
+.B read
+The number of
+non-write bios (bios without the REQ_WRITE flag
+set)
+.TP
+.B write
+The number of
+write bios (bios with the REQ_WRITE flag set)
+.TP
+.B discard
+The number of
+bios with a REQ_DISCARD flag set
+.TP
+.B flush
+The number of flush bios (bios with the REQ_FLUSH flag set)
+.TP
+.B fua
+The number of "force unit access" bios (bios with the REQ_FUA flag set)
+.PP
+Note that all bios will be counted as either read or write bios,
+depending on the REQ_WRITE flag setting, regardless of whether any of
+the other flags are set.
+.RE
+.
+.TP
+.B KVDO module bios used
+The current number of kernel "struct bio" structures allocated by the
+kernel VDO module.
+.TP
+.B KVDO module peak bio count
+The peak number of kernel "struct bio" structures allocated by the
+kernel VDO module, since the module was loaded.
+.TP
+.B KVDO module bytes used
+The current count of bytes allocated by the kernel VDO module.
+.TP
+.B KVDO module peak bytes used
+The peak count of bytes allocated by the kernel VDO module, since the
+module was loaded.
+.TP
+.B read cache accesses
+The number of times VDO searched the read cache.
+.TP
+.B read cache hits
+The number of times VDO found an entry in the read cache for the
+desired data block, whether or not the block's contents had yet been
+read into memory.
+.TP
+.B read cache data hits
+The number of times VDO found an entry in the read cache for the
+desired data block, where the block's contents had been
+read into memory.
+.
+.
+.SH OPTIONS
+.TP
+.B \-\-verbose
+Displays the utilization and block I/O (bios) statistics for the
+selected VDO devices.
+.TP
+.B \-\-human\-readable
+Displays block values in readable form (Base 2: 1 KB = 2^10 bytes =
+1024 bytes).
+.\" A superscript would be desirable, but it'd be ugly (at best) in ASCII.
+.TP
+.B \-\-si
+Modifies the output of the \fB\-\-human\-readable\fR option to use SI
+units (Base 10: 1 KB = 10^3 bytes = 1000 bytes). If the
+\fB\-\-human\-readable\fR option is not supplied, this option has no
+effect.
+.TP
+.B \-\-all
+This option is only for backwards compatibility. It is now
+equivalent to \fB\-\-verbose\fR.
+.TP
+.B \-\-version
+Displays the \fBvdostats\fR version.
+.TP
+.I device...
+Specifies one or more specific volumes to report on. If this argument
+is omitted, \fBvdostats\fR will report on all devices.
+.
+.
+.SH EXAMPLES
+The following example shows sample output if no options are provided:
+.PP
+.DS
+Device             1K-blocks  Used       Available   Use% Space Saving%
+/dev/mapper/my_vdo 1932562432 427698104  1504864328  22%  21%
+.DE
+.PP
+With the \fB\-\-human\-readable\fR option, block counts are converted
+to conventional units (1 KB = 1024 bytes):
+.PP
+.DS
+Device             Size   Used    Available   Use%   Space Saving%
+/dev/mapper/my_vdo 1.8T   407.9G  1.4T        22%    21%
+.DE
+.PP
+With the \fB\-\-si\fR option as well, the block counts are reported
+using SI units (1 KB = 1000 bytes):
+.PP
+.DS
+Device             Size   Used    Available   Use%    Space Saving%
+/dev/mapper/my_vdo 2.0T   438G    1.5T        22%     21%
+.DE
+.\" Add example of verbose mode?
+.\" The VDO integration manual didn't have one.
+.
+.
+.SH NOTES
+The output may be incomplete when the command is run by an
+unprivileged user.
+.
+.
+.SH SEE ALSO
+.BR vdo (8).

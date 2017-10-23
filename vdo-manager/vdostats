@@ -1,0 +1,220 @@
+#!/usr/bin/python
+
+#
+# Copyright (c) 2017 Red Hat, Inc.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA. 
+#
+
+"""
+  vdoStats - Report statistics from an Albireo VDO.
+
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdoStats#1 $
+"""
+
+import gettext
+import locale
+import os
+import sys
+
+from optparse import OptionParser
+
+# Temporary patch to address layout changes
+for dir in sys.path:
+  vdoDir = os.path.join(dir, 'vdo')
+  if os.path.isdir(vdoDir):
+    sys.path.append(vdoDir)
+    break
+
+from statistics import *
+from utils import Command, CommandError, runCommand
+
+gettext.install('vdo')
+
+parser = OptionParser(usage="%prog [options] [device ...]");
+parser.add_option("--all", action="store_true", dest="all",
+                  help=_("Equivalent to --verbose"))
+parser.add_option("--human-readable", action="store_true",
+                  dest="humanReadable",
+                  help=_("Display stats in human-readable form"))
+parser.add_option("--si", action="store_true", dest="si",
+                  help=_("Use SI units, implies --human-readable"))
+parser.add_option("--verbose", action="store_true", dest="verbose",
+                  help=_("Include verbose statistics"))
+parser.add_option("--version", action="store_true", dest="version",
+                  help=_("Print the vdostats version number and exit"))
+
+UNITS = [ 'B', 'K', 'M', 'G', 'T' ]
+
+def makeDedupeFormatter(options):
+  """
+  Make the formatter for dedupe stats if needed.
+
+  :param options:  The command line options
+
+  :return: A formatter if needed or None
+  """
+  if not options.verbose:
+    return None
+
+  return StatFormatter([{ 'namer' : '+'  },
+                        { 'indent': '  ', 'namer' : True }],
+                       hierarchical=False)
+
+def enumerateDevices():
+  """
+  Enumerate the list of VDO devices on this host.
+
+  :return: A list of VDO device names
+  """
+  try:
+    lines = runCommand(["dmsetup", "ls", "--target", "dedupe"]).split("\n")
+    names = [line.split()[0] for line in lines if len(line) > 0]
+    paths = ["/dev/mapper/" + name for name in names]
+    return filter(os.path.exists, paths)
+  except CommandError as e:
+    print >> sys.stderr, _("Error enumerating VDO devices: {0}".format(e))
+
+def getDeviceStats(devices, assays):
+  """
+  Get the statistics for a given device.
+
+  :param devices:  A list of devices to sample. If empty, all VDOs will
+                   be sampled.
+  :param assays:   The types of samples to take for each device
+  """
+  if not devices:
+    mustBeVDO = False
+    devices = enumerateDevices()
+  else:
+    mustBeVDO = True
+
+  return Samples.assayDevices(assays, devices, mustBeVDO)
+
+def formatSize(size, options):
+  """
+  Format a size (in KB) for printing.
+
+  :param size:    The size in bytes.
+  :param options: The command line options
+
+  :return: The size formatted for printing based on the options
+  """
+  if isinstance(size, NotAvailable):
+    return size
+
+  if not options.humanReadable:
+    return size
+
+  size    *= 1024
+  divisor  = 1000.0 if options.si else 1024.0
+  unit     = 0
+  while ((size >= divisor) and (unit < (len(UNITS) - 1))):
+    size /= divisor
+    unit += 1
+
+  return "{0:>.1f}{1}".format(size, UNITS[unit])
+
+def formatPercent(value):
+  """
+  Format a percentage for printing.
+
+  :param value: The value to format
+
+  :return: The formatted value
+  """
+  return value if isinstance(value, NotAvailable) else "{0}%".format(value)
+
+def dfStats(sample, options):
+  """
+  Extract the values needed for df-style output from a sample.
+
+  :param sample:  The sample from which to extract df values
+  :param options: The command line options
+  """
+  return ([formatSize(sample.getStat(statName), options)
+           for statName in
+           ["oneKBlocks", "oneKBlocksUsed", "oneKBlocksAvailable"]]
+          + [formatPercent(sample.getStat(statName))
+             for statName in ["usedPercent", "savingPercent"]])
+
+def printDF(stats, options):
+  """
+  Print stats in df-style.
+
+  :param stats:   A list of samples, one for each device sampled
+  :param options: The command line options
+  """
+  dfFormat = "{0:<20} {1:>9} {2:>9} {3:>9} {4:>4} {5:>13}"
+  print(dfFormat.format("Device",
+                        "Size" if options.humanReadable else "1K-blocks",
+                        "Used", "Available", "Use%", "Space saving%"))
+  for stat in stats:
+    print(apply(dfFormat.format,
+                [stat.getDevice()] + dfStats(stat.getSamples()[0], options)))
+
+def printYAML(stats, dedupeFormatter):
+  """
+  Print stats as (pseudo) YAML.
+
+  :param stats:           A list of Samples, one for each device sampled
+  :param dedupeFormatter: The formatter for dedupe stats (may be None)
+  """
+  for stat in stats:
+    samples = stat.getSamples()
+    if dedupeFormatter:
+      dedupeFormatter.output(LabeledValue.make(stat.getDevice(),
+                                               [s.labeled() for s in samples]))
+
+def main():
+  try:
+    locale.setlocale(locale.LC_ALL, '')
+  except locale.Error:
+    pass
+
+  (options, devices) = parser.parse_args()
+  if options.version:
+    print("{0}.{1}".format(CURRENT_RELEASE_VERSION_NUMBER,
+                           VDOStatistics.statisticsVersion))
+    sys.exit(0)
+
+  if options.all:
+    options.verbose = True
+  if options.si:
+    options.humanReadable = True
+
+  dedupeFormatter = makeDedupeFormatter(options)
+
+  if options.verbose:
+    statsTypes = [VDOStatistics(), KernelStatistics()]
+  else:
+    statsTypes = [VDOStatistics()]
+
+  try:
+    stats = getDeviceStats(devices, statsTypes)
+    if not stats:
+      sys.exit(0)
+  except Exception as e:
+    print >> sys.stderr, e
+    sys.exit(1)
+
+  if options.verbose:
+    printYAML(stats, dedupeFormatter)
+  else:
+    printDF(stats, options)
+
+if __name__ == "__main__":
+  main()

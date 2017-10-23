@@ -1,0 +1,28 @@
+- hosts: vdoClients
+  remote_user: username
+  become: yes
+  become_method: sudo
+  connection: ssh
+  gather_facts: yes
+  tasks:
+  - name: Create VDO volume vdo1
+    vdo:
+      name: vdo1
+      state: present
+      compression: enabled
+      deduplication: enabled
+      volumegroup: VDO
+      physicalsize: 260G
+      logicalsize: 1T
+      blockmapcachesize: 21G
+      readcache: enabled
+      readcachesize: 64M
+      writepolicy: async
+      emulate512: enabled
+      slabsize: 16G
+      albireomem: 0.5
+      ackthreads: 2
+      biothreads: 4
+      cputhreads: 6
+      logicalthreads: 6
+      physicalthreads: 2

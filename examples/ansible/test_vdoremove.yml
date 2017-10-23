@@ -1,0 +1,11 @@
+- hosts: vdoClients
+  remote_user: username
+  become: yes
+  become_method: sudo
+  connection: ssh
+  gather_facts: yes
+  tasks:
+  - name: Remove VDO volume vdo1
+    vdo:
+      name: vdo1
+      state: absent

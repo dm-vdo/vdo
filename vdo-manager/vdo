@@ -1,0 +1,796 @@
+#!/usr/bin/python
+
+#
+# Copyright (c) 2017 Red Hat, Inc.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA. 
+#
+
+"""
+  vdo - Albireo VDO management utility
+
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdo#1 $
+
+"""
+#pylint: disable=C0302
+
+from __future__ import print_function
+
+import copy
+import gettext
+import logging
+import locale
+import optparse
+import os
+import re
+import sys
+from textwrap import TextWrapper
+import traceback
+
+# Temporary patch to address layout changes
+for dir in sys.path:
+  vdoDir = os.path.join(dir, 'vdo')
+  if os.path.isdir(vdoDir):
+    sys.path.append(vdoDir)
+    break
+
+from utils import Command, Logger
+from vdomgmnt import *
+
+gettext.install('vdo')
+
+# "Line too long"
+#pylint: disable=C0301
+class VdoHelp(object):
+  """Help for the vdo command. Holds the strings used by the help
+  facility of OptionParser and it also provides per-command help.
+
+  Note 1: OptionParser runs all strings through _(), so we do not do
+  that for any of the strings in this class, but we do use _() on all
+  strings we print directly.
+
+  Note 2: it would be nice to use a dictionary for _commandTable, but
+  the order is significant (in the usage string and commands()
+  methods), and OrderedDict doesn't exist until Python 2.7.
+
+  Attributes:
+    _commandTable (list of dict): command information
+    _displayWidth (int): width of displayed information; uses the
+                         environment variable COLUMNS if set
+    compressionChoices (list of str): choices for compression
+    deduplicationChoices (list of str): choices for deduplication
+    emulate512Choices (list of str): choices for 512 byte emulation
+    readCacheChoices (list of str): choices for read cache status
+    sparseIndexChoices (list of str): choices for sparse indexing
+    vdoLogLevelChoices (list of str): choices for log levels
+    writePolicyChoices (list of str): choices for write policies
+    options (dict): option descriptions, indexed by option name
+  """
+
+  def __init__(self):
+    self._commandTable = []
+    try:
+      self._displayWidth = int(os.environ['COLUMNS'])
+    except (KeyError, ValueError):
+      self._displayWidth = 80
+    self._displayWidth -= 2
+
+    self.lvmOptionalSuffix = """Using a value with a {options} or {last} suffix
+is optional""".format(options = ", ".join([Constants.lvmSuffixTextMap[suffix]
+                                           for suffix
+                                            in Constants.lvmSuffixes[:-1]]),
+                      last = Constants.lvmSuffixTextMap[
+                                                    Constants.lvmSuffixes[-1]])
+
+    self.lvmOptionalSiSuffix = """Using a value with a {options} or {last}
+suffix is optional""".format(options
+                              = ", ".join([Constants.lvmSiSuffixTextMap[suffix]
+                                           for suffix
+                                            in Constants.lvmSiSuffixes[:-1]]),
+                             last
+                              = Constants.lvmSiSuffixTextMap[
+                                                  Constants.lvmSiSuffixes[-1]])
+
+    self.activateChoices = Constants.enableChoices
+    self.compressionChoices = Constants.enableChoices
+    self.deduplicationChoices = Constants.enableChoices
+    self.emulate512Choices = Constants.enableChoices
+    self.readCacheChoices = Constants.enableChoices
+    self.sparseIndexChoices = Constants.enableChoices
+    self.vdoLogLevelChoices = ['critical', 'error', 'warning', 'notice',
+                               'info', 'debug']
+    self.writePolicyChoices = ['async', 'sync']
+    self.options = {
+      'activate':
+        """Indicates if the VDO volume should, in addition to being created, be
+activated and started. The default is {activate}. Choices: {choices}.
+""".format(activate=Defaults.activate,
+           choices=', '.join(self.activateChoices)),
+
+      'all':
+        """Indicates that the command should be applied to all configured VDO
+volumes. May not be used with --name.""",
+
+      'blockMapCacheSize':
+        """Specifies the amount of memory allocated for caching block map
+pages; the value must be a multiple of {pageSize}. {suffixOptions}. If no
+suffix is supplied, the value will be interpreted as {defaultUnits}. The
+default is {defaultCacheSize}; the value must be at least {minCacheSize} and
+less than {maxCachePlusOne}. Note that there is a memory overhead
+of 15%.
+""".format(pageSize=Defaults.vdoPhysicalBlockSize,
+           suffixOptions = self.lvmOptionalSiSuffix,
+           defaultUnits = Constants.lvmDefaultUnitsText,
+           defaultCacheSize = Defaults.blockMapCacheSize,
+           minCacheSize = Defaults.blockMapCacheSizeMin,
+           maxCachePlusOne = Defaults.blockMapCacheSizeMaxPlusOne),
+
+      'blockMapPeriod':
+        """Tunes the quantity of block map updates that can accumulate before
+cache pages are flushed to disk. The default value of {period} means highest
+performance; a lower value means shorter recovery time but lower performance.
+""".format(period=Defaults.blockMapPeriod),
+
+      'confFile':
+        """Specifies an alternate configuration file; the default is {file}.
+""".format(file=Defaults.confFile),
+
+      'compression':
+        """Enables or disables compression when creating a VDO volume. The
+default is {compression}. Choices: {choices}.
+""".format(compression=Defaults.compression,
+           choices=', '.join(self.compressionChoices)),
+
+      'deduplication':
+        """Enables or disables deduplication when creating a VDO volume. The
+default is {deduplication}. Choices: {choices}.
+""".format(deduplication=Defaults.deduplication,
+           choices=', '.join(self.deduplicationChoices)),
+
+      'device':
+        """Specify the path of the device to use for VDO storage.""",
+
+      'emulate512':
+        """Specifies that the VDO volume is to emulate a 512 byte block device.
+The default is {emulate512}. Choices: {choices}.
+""".format(choices=', '.join(self.emulate512Choices),
+           emulate512=Defaults.emulate512),
+
+      'force':
+        """Unmounts mounted file systems before stopping a VDO volume.""",
+
+      'forceRebuild':
+        """Attempts to rebuild metadata for a VDO volume which is read-only.
+        """,
+
+      'indexMem':
+        """Specifies the amount of index memory in gigabytes; the
+default is currently 0.25 GB. 0 requests the default.
+The special decimal values 0.25, 0.5, 0.75 can be used, as can any
+positive integer.""",
+
+      'logfile':
+        """Specify the path of the file to which this script's log messages are
+directed. If unspecified, log messages will go to syslog.""",
+
+      'name':
+        """Operates on the specified VDO volume. May not be used with --all.
+""",
+
+      'noRun':
+        """Prints commands instead of executing them.""",
+
+      'readCache':
+        """Enables or disables the read cache within the VDO device. The
+default is {readCache}. Choices: {choices}.
+""".format(choices=', '.join(self.readCacheChoices),
+           readCache=Defaults.readCache),
+
+      'readCacheSize':
+        """Specifies the extra VDO device read cache size in {defaultUnits}.
+This space is in addition to a system-defined minimum. {suffixOptions}. The
+default is {readCacheSize}. {threadMem} MB of memory will be used per MB of
+read cache specified, per bio thread.
+""".format(defaultUnits = Constants.lvmDefaultUnitsText,
+           suffixOptions = self.lvmOptionalSiSuffix,
+           readCacheSize=Defaults.readCacheSize,
+           threadMem = Defaults.bioThreadReadCacheOverheadMB),
+
+      'sparseIndex':
+        """Enables sparse indexing. The default is {sparseIndex}. Choices:
+{choices}.
+""".format(choices=', '.join(self.sparseIndexChoices),
+           sparseIndex=Defaults.sparseIndex),
+
+      'vdoAckThreads':
+        """Specifies the number of threads to use for acknowledging completion
+of requested VDO I/O operations. The default is {default}; the value must be at
+least {min} and less than or equal to {max}.
+""".format(min = Defaults.ackThreadsMin,
+           max = Defaults.ackThreadsMax,
+           default = Defaults.ackThreads),
+
+      'vdoBioRotationInterval':
+        """Specifies the number of I/O operations to enqueue for each
+bio-submission thread before directing work to the next. The default is
+{default}; the value must be at least {min} and less than or equal to {max}.
+""".format(min = Defaults.bioRotationIntervalMin,
+           max = Defaults.bioRotationIntervalMax,
+           default = Defaults.bioRotationInterval),
+
+      'vdoBioThreads':
+        """Specifies the number of threads to use for submitting I/O operations
+to the storage device. Minimum is {min}; maximum is {max}. The default is
+{default}; the value must be at least {min} and less than or equal to {max}.
+""".format(min = Defaults.bioThreadsMin,
+           max = Defaults.bioThreadsMax,
+           default = Defaults.bioThreads),
+
+      'vdoCpuThreads':
+"""Specifies the number of threads to use for CPU-intensive work such as
+hashing or compression. The default is {default}; the value must be at
+least {min} and less than or equal to {max}.
+""".format(min = Defaults.cpuThreadsMin,
+           max = Defaults.cpuThreadsMax,
+           default = Defaults.cpuThreads),
+
+      'vdoHashZoneThreads':
+"""Specifies the number of threads across which to subdivide parts of the VDO
+processing based on the hash value computed from the block data. The default is
+{default}; the value must be at least {min} and less than or equal to {max}.
+vdoHashZonesThreads, vdoLogicalThreads and vdoPhysicalThreads must be either
+all zero or all non-zero.
+""".format(min = Defaults.hashZoneThreadsMin,
+           max = Defaults.hashZoneThreadsMax,
+           default = Defaults.hashZoneThreads),
+
+      'vdoLogicalThreads':
+"""Specifies the number of threads across which to subdivide parts of the VDO
+processing based on logical block addresses. The default is {default}; the
+value must be at least {min} and less than or equal to {max}.
+vdoLogicalThreads, vdoHashZonesThreads and vdoPhysicalThreads must be either
+all zero or all non-zero.
+""".format(min = Defaults.logicalThreadsMin,
+           max = Defaults.logicalThreadsMax,
+           default = Defaults.logicalThreads),
+
+      'vdoLogLevel':
+        """Specifies the VDO driver log level; levels are case-sensitive. The
+default is {logLevel}. Levels: {levels}.
+""".format(logLevel=Defaults.vdoLogLevel,
+           levels=', '.join(self.vdoLogLevelChoices)),
+
+      'vdoLogicalSize':
+        """Specifies the logical VDO volume size in {defaultUnits}.
+{suffixOptions}. Used for over-provisioning volumes. This defaults to the size
+of the storage device.
+""".format(defaultUnits = Constants.lvmDefaultUnitsText,
+           suffixOptions = self.lvmOptionalSuffix),
+
+      'vdoPhysicalThreads':
+        """Specifies the number of threads across which to subdivide parts of
+the VDO processing based on physical block addresses. The default is {default};
+the value must be at least {min} and less than or equal to {max}.
+vdoPhysicalThreads, vdoHashZonesThreads and vdoLogicalThreads must be either
+all zero or all non-zero.
+""".format(min = Defaults.physicalThreadsMin,
+           max = Defaults.physicalThreadsMax,
+           default = Defaults.physicalThreads),
+
+      'vdoSlabSize':
+        """Specifies the size of the increment by which a VDO is grown. Using a
+smaller size constrains the total maximum physical size that can be
+accommodated. Must be a power of two between {minSize} and {maxSize}; the
+default is {defaultSlabSize}. {suffixOptions}. If no suffix is used, the value
+will be interpreted as {defaultUnits}.
+""".format(minSize = Defaults.slabSizeMin,
+           maxSize = Defaults.slabSizeMax,
+           defaultSlabSize = Defaults.slabSize,
+           suffixOptions = self.lvmOptionalSuffix,
+           defaultUnits = Constants.lvmDefaultUnitsText),
+
+      'verbose':
+        """Prints commands before executing them.""",
+
+      'writePolicy':
+        """Specifies the write policy, either 'sync' or 'async'. 'sync' means
+writes are acknowledged only after data is on stable storage. 'async' means
+that writes are acknowledged when data has been cached for writing to stable
+storage. The default is {writePolicy}. VDO is not supported with the 'sync'
+policy when the underlying storage is not also synchronous.
+""".format(writePolicy=Defaults.writePolicy),
+      }
+
+  def getOption(self, optionName):
+    """Returns the documentation string for a given option, or
+    optparse.SUPPRESS_HELP if there is none.
+
+    Arguments:
+      optionName (str): long option name without double dashes
+    """
+    try:
+      return self.options[optionName]
+    except KeyError:
+      return optparse.SUPPRESS_HELP
+
+  def addSubcommand(self, name, **kwargs):
+    """Add a subcommand to the end of the command table."""
+    cmd = {'name': name }
+    cmd.update(kwargs)
+    self._commandTable.append(cmd)
+
+  def getUsage(self):
+    """Formats the usage message and returns it as a string."""
+    #
+    # To get TextWrapper to format the string, we trick it into
+    # thinking the subcommands are a large hyphenated word, then
+    # replace the hyphens with "|". "$" is used to temporarily escape
+    # the hyphens we do want to preserve.
+    #
+    commandList = [c['name'] for c in self._commandTable]
+    initial = "%prog $$name=<volume>|$$all [<option>...] "
+    subsequent = ' ' * 34
+    wrapper = TextWrapper(initial_indent=initial, subsequent_indent=subsequent,
+                          break_long_words=False, width=self._displayWidth)
+    usage = wrapper.fill('-'.join(commandList))
+    usage = usage.replace('-', '|')
+    usage = usage.replace('$', '-')
+    return usage
+
+  def commands(self, parser):
+    """Prints a list of commands and short descriptions of each to stdout."""
+    cmdWidth = max([len(c['name']) for c in self._commandTable])
+    for cmd in self._commandTable:
+      if cmd['shortdesc']:
+        print("  {name}  {desc}".format(name=cmd['name'].ljust(cmdWidth),
+                                        desc=_(cmd['shortdesc'])))
+    print("")
+    print(parser.expand_prog_name(_(
+          'For help on a particular command, type "%prog help <command>"')))
+
+  def subcommand(self, name, parser):
+    """Prints help for a given subcommand.
+
+    Constructs a second command parser whose sole purpose in life is
+    to print out a help message; this ensures that formatting stays
+    consistent.
+
+    Raises:
+      ArgumentError
+    """
+    if name == 'commands':
+      self.commands(parser)
+      return
+    cmds = [c for c in self._commandTable if c['name'] == name]
+    if len(cmds) == 0:
+      raise ArgumentError(_("Command {cmd} not known").format(cmd=name))
+    for cmd in cmds:
+      p = optparse.OptionParser(usage=cmd['usage'],
+                                description=cmd['description'],
+                                add_help_option=False)
+      if 'options' in cmd:
+        self._copyOptions(p, parser, cmd['options'])
+      if 'otherOptions' in cmd:
+        otherDesc = "Other options"
+        otherGroup = optparse.OptionGroup(p, otherDesc)
+        self._copyOptions(otherGroup, parser, cmd['otherOptions'])
+        p.add_option_group(otherGroup)
+      p.print_help()
+
+  @staticmethod
+  def _copyOptions(dest, src, opts):
+    """Copy a set of options from one OptionParser to another."""
+    for opt in opts:
+      dest.add_option(src.get_option(opt))
+
+
+class ExtOption(optparse.Option):
+  """Option class decorated with additional types.
+
+  Note that when parsing options we check the format of the string
+  only, and do not do additional checking for things like file
+  existence or permissions.
+  """
+  TYPES = optparse.Option.TYPES + ("abspath", "indexmem", "pagesz", "blkdev",
+                                   "pagecachesz", "pow2", "siSize", "size",
+                                   "slabsz", "vdoname")
+  TYPE_CHECKER = copy.copy(optparse.Option.TYPE_CHECKER)
+  TYPE_CHECKER["abspath"] = Defaults.checkAbspath
+  TYPE_CHECKER["indexmem"] = Defaults.checkIndexmem
+  TYPE_CHECKER["blkdev"] = Defaults.checkBlkDev
+  TYPE_CHECKER["pagesz"] = Defaults.checkPagesz
+  TYPE_CHECKER["pagecachesz"] = Defaults.checkPageCachesz
+  TYPE_CHECKER["pow2"] = Defaults.checkPow2
+  TYPE_CHECKER["siSize"] = Defaults.checkSiSize
+  TYPE_CHECKER["size"] = Defaults.checkSize
+  TYPE_CHECKER["slabsz"] = Defaults.checkSlabSize
+  TYPE_CHECKER["vdoname"] = Defaults.checkVDOName
+
+
+def getVdoHelp():
+  """Sets up and returns the VdoHelp object for this command."""
+  STANDARD_OPTIONS = ['--name', '--all', '--confFile', '--logfile',
+                      '--verbose', '--noRun']
+  vdoHelp = VdoHelp()
+  vdoHelp.addSubcommand("activate",
+                    usage="%prog --name=<volume>|--all [<option>...] activate",
+                    shortdesc="Activates one or all VDO volumes.",
+                    description="""Activates one or more VDO
+volumes. Activated volumes can be started using the 'start' command.
+This command must be run with root privileges.""",
+                        options=STANDARD_OPTIONS)
+
+  vdoHelp.addSubcommand("deactivate",
+                  usage="%prog --name=<volume>|--all [<option>...] deactivate",
+                  shortdesc="Deactivates one or all VDO volumes.",
+                  description="""Deactivates one or more VDO
+volumes. Deactivated volumes cannot be started by the 'start' command.
+Deactivating a currently running volume does not stop it, but once
+stopped it must be activated before it can be started again. This
+command must be run with root privileges.""",
+                        options=STANDARD_OPTIONS)
+
+  vdoHelp.addSubcommand("create",
+                        usage="%prog --name=<volume> [<option>...] create",
+                        shortdesc="Creates a new VDO volume and optionally starts it.",
+                        description="""Creates a VDO volume and its
+associated Albireo index and makes it available unless --activate={disabled}
+is specified. This command must be run with root privileges.
+""".format(disabled = Constants.disabled),
+
+                        options=['--name', '--device'],
+                        otherOptions=['--activate',
+                                      '--blockMapCacheSize',
+                                      '--blockMapPeriod',
+                                      '--confFile',
+                                      '--compression',
+                                      '--deduplication',
+                                      '--emulate512',
+                                      '--indexMem',
+                                      '--readCache',
+                                      '--readCacheSize',
+                                      '--sparseIndex',
+                                      '--vdoAckThreads',
+                                      '--vdoBioRotationInterval',
+                                      '--vdoBioThreads',
+                                      '--vdoCpuThreads',
+                                      '--vdoHashZoneThreads',
+                                      '--vdoLogicalThreads',
+                                      '--vdoLogLevel',
+                                      '--vdoLogicalSize',
+                                      '--vdoPhysicalThreads',
+                                      '--vdoSlabSize',
+                                      '--verbose',
+                                      '--writePolicy',
+                                      '--noRun'])
+
+  vdoHelp.addSubcommand("remove",
+                        usage="%prog --name=<volume>|--all [<option>...] remove",
+                        shortdesc="Removes one or all existing VDO volumes.",
+                        description="""Removes one or more stopped VDO
+volumes and associated Albireo indexes. This command must be run with
+root privileges.""",
+                        options=STANDARD_OPTIONS + ['--force'])
+
+  vdoHelp.addSubcommand("start",
+                        usage="%prog --name=<volume>|--all [<option>...] start",
+                        shortdesc="Starts one or all VDO volumes.",
+                        description="""Starts one or more stopped,
+activated VDO volumes and associated Albireo services. This command must
+be run with root privileges.""",
+                        options=STANDARD_OPTIONS + ['--forceRebuild'])
+
+  vdoHelp.addSubcommand("stop",
+                        usage="%prog --name=<volume>|--all [<option>...] stop",
+                        shortdesc="Stops one or all  VDO volumes.",
+                        description="""Stops one or more running VDO
+volumes and associated Albireo services. This command must be run with
+root privileges.""",
+                        options=STANDARD_OPTIONS)
+
+  vdoHelp.addSubcommand("status",
+                        usage="%prog [<option>...] status",
+                        shortdesc="Displays VDO system status.",
+                        description="""Reports VDO system and volume
+status in YAML format. Status information will be incomplete if the
+command is not run with root privileges.""",
+                        options=STANDARD_OPTIONS)
+
+  vdoHelp.addSubcommand("list",
+                        usage="%prog list [--all]",
+                        shortdesc="Displays a list of VDO devices.",
+                        description="""Displays a list of started VDO
+volumes. If --all is specified it displays both started and non-started volumes.""",
+                        options = ['--all'])
+
+  vdoHelp.addSubcommand("modify",
+                        usage="%prog --name=<volume>|--all [<option>...] modify",
+                        shortdesc="Modifies configuration parameters of one or all VDO volumes.",
+                        description="""Modifies configuration parameters of
+one or all VDO volumes.
+
+Only some parameters can be changed. Changes take effect the next time the
+VDO device is started; already-running devices are not affected.""",
+                        options=STANDARD_OPTIONS + ['--blockMapCacheSize',
+                                                    '--blockMapPeriod',
+                                                    '--readCache',
+                                                    '--readCacheSize',
+                                                    '--vdoAckThreads',
+                                                    '--vdoBioThreads',
+                                                    '--vdoCpuThreads',
+                                                    '--vdoHashZoneThreads',
+                                                    '--vdoLogicalThreads',
+                                                    '--vdoPhysicalThreads',
+                                                    '--writePolicy'])
+
+  vdoHelp.addSubcommand("changeWritePolicy",
+                        usage="%prog --name=<volume>|--all [<option>...] changeWritePolicy",
+                        shortdesc="Modifies the write policy of one or all running VDO volumes.",
+                        description="""Modifies the write policy of one or all
+running VDO volumes. This command must be run with root privileges.""",
+                        options=STANDARD_OPTIONS + ['--writePolicy'])
+
+  vdoHelp.addSubcommand("enableDeduplication",
+                        usage="%prog --name=<volume>|--all [<option>...] enableDeduplication",
+                        shortdesc="Enables deduplication on one or all VDO volumes.",
+                        description="""Enables deduplication on one or
+more VDO volumes. If the VDO volume is running, deduplication will be
+started as well; otherwise, deduplication will be enabled the next
+time the VDO volume is started. This command must be run with root
+privileges.""",
+                        options=STANDARD_OPTIONS)
+
+  vdoHelp.addSubcommand("disableDeduplication",
+                        usage="%prog --name=<volume>|--all [<option>...] disableDeduplication",
+                        shortdesc="Disables deduplication on one or all VDO volumes.",
+                        description="""Disables deduplication on one
+more VDO volumes. If the VDO volume is running, deduplication will be
+stopped as well; otherwise, deduplication will be disabled the next
+time the VDO volume is started. This command must be run with root
+privileges.""",
+                        options=STANDARD_OPTIONS)
+
+  vdoHelp.addSubcommand("enableCompression",
+                        usage="%prog --name=<volume>|--all [<option>...] enableCompression",
+                        shortdesc="Enables compression on one or all VDO volumes.",
+                        description="""Enables compression on one or
+more VDO volumes. If the VDO volume is running, takes effect immediately;
+otherwise compression will be enabled the next time the VDO volume is
+started. This command must be run with root privileges.""",
+                        options=['--name', '--all', '--verbose', '--noRun'])
+
+  vdoHelp.addSubcommand("disableCompression",
+                        usage="%prog --name=<volume>|--all [<option>...] disableCompression",
+                        shortdesc="Disables compression on one or all VDO volumes.",
+                        description="""Disables compression on one or
+more VDO volumes. If the VDO volume is running, takes effect immediately;
+otherwise compression will be disabled the next time the VDO volume is
+started. This command must be run with root privileges.""",
+                        options=['--name', '--all', '--verbose', '--noRun'])
+
+  vdoHelp.addSubcommand("growLogical",
+                        usage="%prog --name=<volume> [<option>...] growLogical",
+                        shortdesc="Grows the logical size of a VDO volume.",
+                        description="""Grows the logical size of a
+VDO volume. The volume must exist and must be running. This command
+must be run with root privileges.""",
+                        options=STANDARD_OPTIONS + ['--vdoLogicalSize'])
+
+  vdoHelp.addSubcommand("growPhysical",
+                        usage="%prog --name=<volume> [<option>...] growPhysical",
+                        shortdesc="Grows the physical size of a VDO volume.",
+                        description="""Grows the physical size of a
+VDO volume. The volume must exist and must be running. This command
+must be run with root privileges.""",
+                        options=STANDARD_OPTIONS)
+
+  vdoHelp.addSubcommand("printConfigFile",
+                        usage="%prog printConfigFile",
+                        shortdesc="Displays the configuration file.",
+                        description="Prints the configuration file to stdout.",
+                        options=['--confFile'])
+
+  return vdoHelp
+
+def getOptionParser(vdoHelp):
+  """Sets up and returns the OptionParser for this command."""
+  parser = optparse.OptionParser(option_class=ExtOption,
+                                 usage=vdoHelp.getUsage())
+  parser.add_option("-a", "--all", help=vdoHelp.getOption("all"),
+                    action='store_true', dest='all')
+  parser.add_option("-f", "--confFile", help=vdoHelp.getOption("confFile"),
+                    metavar='<file>', default=Defaults.confFile)
+  parser.add_option("-d", "--debug", help=vdoHelp.getOption("debug"),
+                    action='store_true', dest='debug')
+  parser.add_option("--logfile", help=vdoHelp.getOption('logfile'),
+                    metavar='<pathname>')
+  parser.add_option("-n", "--name", help=vdoHelp.getOption("name"),
+                    type='vdoname', metavar='<volume>')
+  parser.add_option("--noRun", help=vdoHelp.getOption("noRun"),
+                    action='store_true', dest='noRun')
+  parser.add_option("--verbose", help=vdoHelp.getOption("verbose"),
+                    action='store_true', dest='verbose')
+
+  cGroup = optparse.OptionGroup(parser,
+                                "Options specific to the create command")
+  cGroup.add_option("--activate", help=vdoHelp.getOption("activate"),
+                    type='choice', choices=vdoHelp.activateChoices,
+                    metavar='<mode>')
+  cGroup.add_option("--compression",
+                    help=vdoHelp.getOption("compression"),
+                    type='choice', choices=vdoHelp.compressionChoices,
+                    metavar='<mode>', default=Defaults.compression)
+  cGroup.add_option("--deduplication",
+                    help=vdoHelp.getOption("deduplication"),
+                    type='choice', choices=vdoHelp.deduplicationChoices,
+                    metavar='<mode>', default=Defaults.deduplication)
+  cGroup.add_option("--device", help=vdoHelp.getOption("device"),
+                    metavar='<devicepath>', type='blkdev')
+  cGroup.add_option("--emulate512",
+                    help=vdoHelp.getOption("emulate512"),
+                    type='choice', choices=vdoHelp.emulate512Choices,
+                    metavar='<mode>')
+  cGroup.add_option("--indexMem", help=vdoHelp.getOption("indexMem"),
+                    metavar='<gigabytes>',
+                    type='indexmem', default=Defaults.indexMem)
+  cGroup.add_option("--sparseIndex", help=vdoHelp.getOption("sparseIndex"),
+                    type='choice', choices=vdoHelp.sparseIndexChoices,
+                    metavar='<mode>')
+  # Actual default logical size set up in VDOService::create().
+  cGroup.add_option("--vdoLogicalSize",
+                    help=vdoHelp.getOption("vdoLogicalSize"),
+                    metavar='<megabytes>', type='size', default='0')
+  cGroup.add_option("--vdoLogLevel", help=vdoHelp.getOption("vdoLogLevel"),
+                    metavar='<level>', choices=vdoHelp.vdoLogLevelChoices,
+                    default=Defaults.vdoLogLevel)
+  # Actual default slab size set up in VDOService::create().
+  cGroup.add_option("--vdoSlabSize", help=vdoHelp.getOption("vdoSlabSize"),
+                    metavar='<megabytes>', type='slabsz', default='0')
+  parser.add_option_group(cGroup)
+
+  mGroup = optparse.OptionGroup(parser,
+                                "Options specific to the create and modify"
+                                + " commands")
+  # These options cannot have defaults specified here, because of how
+  # the modify command detects which options are to be modified. If defaults
+  # are specified, then it is likely that modification of other parameters
+  # will trigger a reset to default value for unspecified parameters that
+  # that have such defaults specified here.
+  mGroup.add_option("--blockMapCacheSize",
+                    help=vdoHelp.getOption("blockMapCacheSize"),
+                    metavar='<megabytes>', type='pagecachesz')
+  mGroup.add_option("--blockMapPeriod",
+                    help=vdoHelp.getOption("blockMapPeriod"),
+                    metavar='<period>', type='int')
+  mGroup.add_option("--readCache", help=vdoHelp.getOption("readCache"),
+                    type='choice', choices=vdoHelp.readCacheChoices,
+                    metavar='<mode>')
+  mGroup.add_option("--readCacheSize",
+                    help=vdoHelp.getOption("readCacheSize"),
+                    metavar='<megabytes>', type='siSize')
+  mGroup.add_option("--vdoAckThreads", help=vdoHelp.getOption("vdoAckThreads"),
+                    metavar='<threadCount>', type='int')
+  mGroup.add_option("--vdoBioRotationInterval",
+                    help=vdoHelp.getOption("vdoBioRotationInterval"),
+                    metavar='<ioCount>', type='int')
+  mGroup.add_option("--vdoBioThreads", help=vdoHelp.getOption("vdoBioThreads"),
+                    metavar='<threadCount>', type='int')
+  mGroup.add_option("--vdoCpuThreads", help=vdoHelp.getOption("vdoCpuThreads"),
+                    metavar='<threadCount>', type='int')
+  mGroup.add_option("--vdoHashZoneThreads",
+                    help=vdoHelp.getOption("vdoHashZoneThreads"),
+                    metavar='<threadCount>', type='int')
+  mGroup.add_option("--vdoLogicalThreads",
+                    help=vdoHelp.getOption("vdoLogicalThreads"),
+                    metavar='<threadCount>', type='int')
+  mGroup.add_option("--vdoPhysicalThreads",
+                    help=vdoHelp.getOption("vdoPhysicalThreads"),
+                    metavar='<threadCount>', type='int')
+  mGroup.add_option("--writePolicy", help=vdoHelp.getOption("writePolicy"),
+                    type='choice', choices=vdoHelp.writePolicyChoices,
+                    metavar='<policy>')
+  parser.add_option_group(mGroup)
+
+  sGroup = optparse.OptionGroup(parser,
+                                "Options specific to the start command")
+  sGroup.add_option("--forceRebuild",
+                    help=vdoHelp.getOption("forceRebuild"),
+                    action='store_true', dest='forceRebuild')
+  parser.add_option_group(sGroup)
+
+  ssGroup = optparse.OptionGroup(parser,
+                                "Options specific to the stop and remove commands")
+  ssGroup.add_option("--force", help=vdoHelp.getOption("force"),
+                    action='store_true', dest='force')
+  parser.add_option_group(ssGroup)
+  return parser
+
+def main():
+  """The main program.
+
+     Exit codes:
+       0        SUCCESS  success
+       2        ERROR    error(s) occurred
+  """
+  SUCCESS = 0
+  ERROR   = 2
+
+  try:
+    import vdoInstrumentation
+  except ImportError:
+    pass
+  try:
+    locale.setlocale(locale.LC_ALL, '')
+  except locale.Error:
+    pass
+  vdoHelp = getVdoHelp()
+
+  parser = getOptionParser(vdoHelp)
+  parser.usage = vdoHelp.getUsage()
+  (options, args) = parser.parse_args()
+  Logger.configure(os.path.basename(sys.argv[0]), options)
+  mainLogger = Logger.getLogger(Logger.myname)
+  mainLogger.info(' '.join(['running'] + sys.argv))
+  Command.setDefaults(options)
+
+  if (len(args) in (1, 2)) and (args[0] == "help"):
+    if len(args) == 1:
+      parser.print_help()
+      sys.exit(SUCCESS)
+    else:
+      try:
+        vdoHelp.subcommand(args[1], parser)
+        sys.exit(SUCCESS)
+      except ArgumentError:
+        mainLogger.error(_("Unknown command \"{0}\"").format(args[1]))
+        sys.exit(ERROR)
+
+  if len(args) != 1:
+    mainLogger.error(_("Must specify exactly one command"))
+    parser.print_usage()
+    sys.exit(ERROR)
+
+  if options.name and options.all:
+    mainLogger.error(_("Only one of --name, --all can be specified"))
+    parser.print_usage()
+    sys.exit(ERROR)
+
+  operation = None
+  exitval = ERROR
+  try:
+    operation = vdoOperations[args[0]]
+  except KeyError:
+    mainLogger.error(_('Unknown command "{0}"'.format(args[0])))
+  try:
+    if operation is not None:
+      operation.run(options)
+      exitval = SUCCESS
+  except Exception as ex:
+    traceInfo = sys.exc_info()[2]
+    mainLogger.error(str(ex))
+    # By default (i.e., without --debug) this will log to the
+    # specified log file, if any, but not to stderr, because of the
+    # priority thresholds we set for the different logging
+    # destinations. We can't use mainLogger.exception because that
+    # logs at level ERROR which would go everywhere.
+    traceText = 'Traceback:\n' + ''.join(traceback.format_tb(traceInfo))
+    mainLogger.info(traceText.rstrip())
+
+  logging.shutdown()
+  sys.exit(exitval)
+
+if __name__ == "__main__":
+  main()

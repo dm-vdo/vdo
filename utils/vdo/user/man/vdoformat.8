@@ -1,0 +1,59 @@
+.TH VDOFORMAT 8 "2017-09-12" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdoformat \- format a VDO device
+.SH SYNOPSIS
+.B vdoformat
+.RI [ options... ]
+.I filename
+.SH DESCRIPTION
+.B vdoformat
+formats the file or block device named by
+.I filename
+as a VDO device. This is analogous to low-level device formatting.
+.PP
+.B vdoformat
+can also modify some of the formatting parameters.
+.SH OPTIONS
+.TP
+.B \-\-help
+Print this help message and exit.
+.TP
+.B \-\-index\-blocks
+The size of the dedupe index, in blocks.
+.TP
+.B \-\-logical\-size=\fIsize\fP
+Set the logical (provisioned) size of the VDO device to \fIsize\fP.
+A size suffix of K for kilobytes, M for megabytes, G for
+gigabytes, T for terabytes, or P for petabytes is optional. The
+default unit is megabytes.
+.TP
+.B \-\-physical\-size=\fIsize\fP
+Set the physical size of the VDO device to \fIsize\fP. A size suffix
+of K for kilobytes, M for megabytes, G for gigabytes, or T for
+terabytes is optional. The default unit is megabytes.
+.TP
+.B \-\-slab\-bits=\fIbits\fP
+Specify the slab size in bits. The maximum size is 23, and the
+default is 19.
+.TP
+.B \-\-uds\-checkpoint\-frequency=\fIfrequency\fP
+Specify the frequency of checkpoints.
+.TP
+.B \-\-uds\-memory\-size=\fIgigabytes\fP
+Specify the amount of memory, in gigabytes, to devote to the
+index. Accepted options are .25, .5, .75, and all positive
+integers.
+.TP
+.B \-\-uds\-sparse
+Specify whether or not to use a sparse index.
+.TP
+.B \-\-verbose
+Describe what is being formatted and with what parameters.
+.TP
+.B \-\-version
+Show the version of vdoformat.
+.
+.\" .SH EXAMPLES
+.\" .SH NOTES
+.SH SEE ALSO
+.BR vdo (8).

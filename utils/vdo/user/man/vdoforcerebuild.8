@@ -1,0 +1,16 @@
+.TH VDOFORCEREBUILD 8 "2017-09-12" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdoforcerebuild \- prepare a VDO device to exit read-only mode
+.SH SYNOPSIS
+.B vdoforcerebuild
+.I filename
+.SH DESCRIPTION
+.B vdoforcerebuild
+forces an existing VDO device to exit read-only
+mode and to attempt to regenerate as much metadata as possible.
+.SH OPTIONS
+.TP
+.I filename
+The name of the file or block device to be updated.
+.SH SEE ALSO
+.BR vdo (8).

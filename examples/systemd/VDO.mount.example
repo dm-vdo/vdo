@@ -1,0 +1,15 @@
+[Unit]
+Description = Mount filesystem that lives on VDO
+name = VDO.mount
+Requires = vdo.service systemd-remount-fs.service
+After = multi-user.target
+Conflicts = umount.target
+ 
+[Mount]
+What = /dev/mapper/my_vdo
+Where = /VDO
+Type = xfs
+Options = discard
+
+[Install]
+WantedBy = multi-user.target
