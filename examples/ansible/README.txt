@@ -8,7 +8,7 @@ To install this module:
 1. Install Ansible (via a package manager).
 
 2. Install the "vdo.py" module file by copying it into the site-packages
-   subdirectory for Ansible, on place the file in ./library/.
+   subdirectory for Ansible, or place the file in ./library/.
 
    Example for RHEL 7.3:
    /usr/lib/python2.7/site-packages/ansible/modules/extras/system/vdo.py
