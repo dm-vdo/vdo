@@ -9,6 +9,5 @@
     vdo:
       name: vdo1
       state: present
-      volumegroup: VDO
-      physicalsize: 260G
       logicalsize: 1T
+      device: /dev/volumegroup/logicalvolume

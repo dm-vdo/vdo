@@ -11,9 +11,8 @@
       state: present
       compression: enabled
       deduplication: enabled
-      volumegroup: VDO
-      physicalsize: 260G
       logicalsize: 1T
+      device: /dev/volumgroup/logicalvolume
       blockmapcachesize: 21G
       readcache: enabled
       readcachesize: 64M
