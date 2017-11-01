@@ -6,3 +6,4 @@ A spec file for VDO to create an RPM with.
 - Permissions of files and directoies are now undetermined, likely incorrect.
 - The service (/vdo.service) may need to be registered.
 - The configuration file (/etc/vdoconf.yml) may need to be listed as a ghost file.
+- A dependency on kvdo exists, but that package is not ready.
