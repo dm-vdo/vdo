@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoConfig.c#1 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoConfig.c#2 $
  */
 
 #include "vdoConfig.h"
@@ -130,10 +130,10 @@ static int configureVDO(VDO *vdo)
 
 /**********************************************************************/
 int formatVDO(const VDOConfig *config,
-              BlockCount       indexBlocks,
+              IndexConfig     *indexConfig,
               PhysicalLayer   *layer)
 {
-  return formatVDOWithNonce(config, indexBlocks, layer, nowUsec());
+  return formatVDOWithNonce(config, indexConfig, layer, nowUsec());
 }
 
 /**
@@ -180,7 +180,7 @@ static int clearPartition(PhysicalLayer *layer,
 
 /**********************************************************************/
 int formatVDOWithNonce(const VDOConfig *config,
-                       BlockCount       indexBlocks,
+                       IndexConfig     *indexConfig,
                        PhysicalLayer   *layer,
                        Nonce            nonce)
 {
@@ -194,7 +194,7 @@ int formatVDOWithNonce(const VDOConfig *config,
     return result;
   }
 
-  result = writeVolumeGeometry(layer, nonce, indexBlocks);
+  result = writeVolumeGeometry(layer, nonce, indexConfig);
   if (result != VDO_SUCCESS) {
     return result;
   }

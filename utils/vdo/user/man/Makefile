@@ -16,12 +16,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#3 $
 
 INSTALLFILES=vdodumpconfig.8  \
 	vdodumpmetadata.8  \
 	vdoforcerebuild.8  \
 	vdoformat.8
+
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+mandir ?= /usr/man
 
 INSTALLDIR=$(DESTDIR)/$(mandir)
 
@@ -31,7 +35,7 @@ all:;
 clean:;
 
 install:
-	install -d $(INSTALLDIR)/man8
+	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)/man8
 	for i in $(INSTALLFILES); do		\
-	  install $$i $(INSTALLDIR)/man8;	\
+	  $(INSTALL) $(INSTALLOWNER) -m 644 $$i $(INSTALLDIR)/man8;	\
 	done

@@ -7,19 +7,21 @@ vdoformat \- format a VDO device
 .I filename
 .SH DESCRIPTION
 .B vdoformat
-formats the file or block device named by
+formats the file named by
 .I filename
 as a VDO device. This is analogous to low-level device formatting.
+The device will not be formatted if it already contains a VDO, unless
+the --force flag is used.
 .PP
 .B vdoformat
 can also modify some of the formatting parameters.
 .SH OPTIONS
 .TP
+.B \-\-format
+Format the block device, even if there is already a VDO formatted thereupon.
+.TP
 .B \-\-help
 Print this help message and exit.
-.TP
-.B \-\-index\-blocks
-The size of the dedupe index, in blocks.
 .TP
 .B \-\-logical\-size=\fIsize\fP
 Set the logical (provisioned) size of the VDO device to \fIsize\fP.
@@ -37,7 +39,7 @@ Specify the slab size in bits. The maximum size is 23, and the
 default is 19.
 .TP
 .B \-\-uds\-checkpoint\-frequency=\fIfrequency\fP
-Specify the frequency of checkpoints.
+Specify the frequency of checkpoints. The default is never.
 .TP
 .B \-\-uds\-memory\-size=\fIgigabytes\fP
 Specify the amount of memory, in gigabytes, to devote to the

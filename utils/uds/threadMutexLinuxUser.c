@@ -16,10 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadMutexLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/threadMutexLinuxUser.c#3 $
  */
-
-#include "threadMutex.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -27,6 +25,7 @@
 #include "permassert.h"
 #include "stringUtils.h"
 #include "threadOnce.h"
+#include "threads.h"
 
 static enum MutexKind {
   FastAdaptive,

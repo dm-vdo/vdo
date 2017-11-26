@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.c#3 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.c#4 $
  */
 
 #include "fileUtils.h"
@@ -249,19 +249,6 @@ void trySyncAndCloseFile(int fd)
 }
 
 /**********************************************************************/
-int adviseFile(int   fd,
-               off_t offset,
-               off_t length,
-               int   advice)
-{
-  int error = posix_fadvise(fd, offset, length, advice);
-  if (error != 0) {
-    return logWarningWithStringError(error, "posix_fadvise error");
-  }
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
 int readBuffer(int fd, void *buffer, unsigned int length)
 {
   byte *ptr = buffer;
@@ -426,12 +413,6 @@ int writeBufferAtOffset(int           fd,
 }
 
 /**********************************************************************/
-int skipBuffer(int fd, off_t count)
-{
-  return loggingLseek(fd, count, SEEK_CUR, __func__, NULL);
-}
-
-/**********************************************************************/
 int getOpenFileSize(int fd, off_t *sizePtr)
 {
   struct stat statbuf;
@@ -461,21 +442,6 @@ int removeFile(const char *fileName)
     return UDS_SUCCESS;
   }
   return logWarningWithStringError(errno, "Failed to remove %s", fileName);
-}
-
-/**********************************************************************/
-int cleanUpFile(int         fd,
-                const char *fileName,
-                int         errorCode,
-                const char *format,
-                ...)
-{
-  va_list args;
-  va_start(args, format);
-  vLogWithStringError(LOG_ERR, errorCode, format, args);
-  tryCloseFile(fd);
-  removeFile(fileName);
-  return errorCode;
 }
 
 /**********************************************************************/

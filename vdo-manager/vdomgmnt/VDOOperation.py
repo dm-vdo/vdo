@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#3 $
 """
 from . import ArgumentError
 from . import CommandLock
@@ -40,6 +40,7 @@ import __main__ as main
 import os
 import re
 import sys
+import yaml
 
 vdoOperations = dict()
 
@@ -475,6 +476,9 @@ class RemoveOperation(VDOOperation):
     try:
       vdo.remove(args.force, removeSteps = removeSteps)
     except VDOServicePreviousOperationError:
+      print(_("A previous operation failed."))
+      print(_("Recovery from the failure either failed or was interrupted."))
+      print(_("Add '--force' to 'remove' to perform the following cleanup."))
       print(os.linesep.join(removeSteps))
       raise
 
@@ -522,22 +526,35 @@ class StatusOperation(VDOOperation):
       args.all = True
 
     try:
-      print(_("VDO status:"))
-      print(_("  Node: ")
-            + runCommand(['uname', '-n'], noThrow=True, strip=True))
-      print(_("  Date: ")
-            + runCommand(['date', '--rfc-3339=seconds'], noThrow=True,
-                         strip=True))
+      # To be consistent with previous output we must present each section as
+      # its own rather than organizing them into one structure to dump.
+      # Also, we gather all the info before printing it out to avoid
+      # interspersing command info when run in verbose mode.
+      values = {}
+      vdoStatus = { _("VDO status") : values }
+      values[_("Node")] = runCommand(['uname', '-n'], noThrow=True, strip=True)
+      values[_("Date")] = runCommand(['date', '--rfc-3339=seconds'],
+                                      noThrow=True, strip=True)
       if os.getuid() != 0:
-        print(_("  Note: not running as root,"
-                + " some status may be unavailable"))
-      print(os.linesep.join(VDOKernelModuleService().status("")))
+        values[_("Note")] = _("Not running as root,"
+                              + " some status may be unavailable")
 
-      print(os.linesep.join(conf.status("")))
+      kernelStatus = { _("Kernel module") : VDOKernelModuleService().status() }
 
-      print(_("VDOs: "))
+      confStatus = { _("Configuration") : conf.status() }
+
+      vdos = {}
+      perVdoStatus = { _("VDOs") : vdos }
       for vdo in self.getVdoServices(args, conf):
-        print(os.linesep.join(vdo.status("  ")))
+        vdos[vdo.getName()] = vdo.status()
+
+      # YAML adds a newline at the end.  To maintain consistency with the
+      # previous output we need to eliminate that.
+      print(yaml.dump(vdoStatus, default_flow_style = False)[:-1])
+      print(yaml.dump(kernelStatus, default_flow_style = False)[:-1])
+      print(yaml.dump(confStatus, default_flow_style = False)[:-1])
+      print(yaml.dump(perVdoStatus, default_flow_style = False)[:-1])
+
       sys.stdout.flush()
       sys.stderr.flush()
     except IOError as ex:

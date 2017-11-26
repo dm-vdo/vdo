@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/fileLayer.c#1 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/fileLayer.c#2 $
  */
 
 #include "fileLayer.h"
@@ -279,9 +279,8 @@ static int setupFileLayer(const char     *name,
     return result;
   }
 
-  // Make sure the physical size == size of the block device
-  off_t layerSize = (off_t) VDO_BLOCK_SIZE * (off_t) layer->blockCount;
-  off_t deviceSize;
+  // Make sure the physical blocks == size of the block device
+  BlockCount deviceBlocks;
   if (blockDevice) {
     uint64_t bytes;
     if (ioctl(layer->fd, BLKGETSIZE64, &bytes) < 0) {
@@ -290,7 +289,7 @@ static int setupFileLayer(const char     *name,
       FREE(layer);
       return result;
     }
-    deviceSize = (off_t) bytes;
+    deviceBlocks = bytes / VDO_BLOCK_SIZE;
   } else {
     struct stat statbuf;
     result = loggingStat(layer->name, &statbuf, __func__);
@@ -299,17 +298,16 @@ static int setupFileLayer(const char     *name,
       FREE(layer);
       return result;
     }
-    deviceSize = statbuf.st_size;
+    deviceBlocks = statbuf.st_size / VDO_BLOCK_SIZE;
   }
 
-  if (layerSize == 0) {
-    layer->blockCount = deviceSize / VDO_BLOCK_SIZE;
-  } else if (layerSize != deviceSize) {
+  if (layer->blockCount == 0) {
+    layer->blockCount = deviceBlocks;
+  } else if (layer->blockCount != deviceBlocks) {
     result = logErrorWithStringError(VDO_PARAMETER_MISMATCH,
-                                     "physical size %ld must match"
-                                     " physical size %ld of %s",
-                                     layerSize,
-                                     deviceSize,
+                                     "physical size %ld 4k blocks must match"
+                                     " physical size %ld 4k blocks of %s",
+                                     layer->blockCount, deviceBlocks,
                                      layer->name);
     tryCloseFile(layer->fd);
     FREE(layer);

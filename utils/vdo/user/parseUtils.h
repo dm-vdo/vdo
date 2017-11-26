@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/parseUtils.h#1 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/parseUtils.h#2 $
  */
 
 #ifndef PARSE_UTILS_H
@@ -39,16 +39,6 @@ int parseUInt(const char   *arg,
               unsigned int  lowest,
               unsigned int  highest,
               unsigned int *numPtr);
-
-/**
- * Parse a string argument as a uint64_t.
- *
- * @param [in]  arg      The argument to parse
- * @param [out] sizePtr  A pointer to return the parsed uint64_t
- *
- * @return VDO_SUCCESS or VDO_OUT_OF_RANGE.
- **/
-int parseUInt64T(const char  *arg, uint64_t *numPtr);
 
 /**
  * Parse a string argument as a size, optionally using LVM's concept

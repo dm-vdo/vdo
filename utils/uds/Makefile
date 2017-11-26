@@ -16,13 +16,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/uds/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/uds/Makefile#3 $
 
 # UDS_INTERNAL_VERSION is the short version name, which is used to version the
 # UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
 # version name used in distribution builds.  We extract these values from the
 # traditional location.
-UDS_VERSION      = 6.1.0.19
+UDS_VERSION      = 6.1.0.32
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -80,25 +80,97 @@ vpath %.c ./murmur
 vpath %.c ./util
 
 UDS_OBJECTS =	MurmurHash3.o			\
+		bits.o				\
+		blockIORegion.o			\
 		buffer.o			\
+		bufferedIORegion.o		\
+		bufferedReader.o		\
+		bufferedWriter.o		\
+		cacheCounters.o			\
+		cachedChapterIndex.o		\
+		chapterIndex.o			\
+		chapterWriter.o			\
+		chunkName.o			\
+		config.o			\
+		context.o			\
+		deltaIndex.o			\
+		deltaMemory.o			\
 		directoryReader.o		\
 		errors.o			\
+		eventCount.o			\
+		fileBufferedReader.o		\
+		fileIndexComponent.o		\
+		fileIndexState.o		\
+		fileIORegion.o			\
 		fileUtils.o			\
+		funnelQueue.o			\
+		geometry.o			\
+		grid.o				\
+		hashUtils.o			\
+		histogram.o			\
+		index.o				\
+		indexCheckpoint.o		\
+		indexComponent.o		\
+		indexConfig.o			\
+		indexInternals.o		\
+		indexLayoutLinuxUser.o		\
+		indexLayoutParser.o		\
+		indexPageMap.o			\
+		indexRouter.o			\
+		indexSession.o			\
+		indexState.o			\
+		indexStateData.o		\
+		indexZone.o			\
+		ioRegion.o			\
+		loadType.o			\
+		localIndexRouter.o		\
 		logger.o			\
 		loggerLinuxUser.o		\
+		masterIndex005.o		\
+		masterIndex006.o		\
+		masterIndexOps.o		\
 		memoryAlloc.o			\
 		memoryLinuxUser.o		\
+		multiFileLayout.o		\
 		minisyslog.o			\
 		numeric.o			\
+		nonce.o				\
+		openChapter.o			\
+		openChapterZone.o		\
+		pageCache.o			\
+		parameter.o			\
+		pathBuffer.o			\
 		permassert.o			\
 		permassertLinuxUser.o		\
+		radixSort.o			\
+		random.o			\
+		readOnlyVolume.o		\
+		recordPage.o			\
+		regionIndexComponent.o		\
+		regionIndexState.o		\
+		request.o			\
+		requestLimit.o			\
+		requestQueue.o			\
+		searchList.o			\
+		session.o			\
+		singleFileLayout.o		\
+		sha256.o			\
+		sparseCache.o			\
+		stringLinuxUser.o		\
 		stringUtils.o			\
 		syscalls.o			\
+		threadCondVarLinuxUser.o	\
 		threadsLinuxUser.o		\
 		threadMutexLinuxUser.o		\
+		threadSemaphoreLinuxUser.o	\
 		threadOnce.o			\
 		timeUtils.o			\
-		timeUtilsLinuxUser.o
+		timeUtilsLinuxUser.o		\
+		udsMain.o			\
+		udsState.o			\
+		volume.o			\
+		volumeInternals.o		\
+		zone.o
 
 .PHONY: all
 all: libuds.a

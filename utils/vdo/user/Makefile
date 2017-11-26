@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#2 $
 
-VDO_VERSION = 6.1.0.8
+VDO_VERSION = 6.1.0.61
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -100,13 +100,16 @@ clean:
 	rm -fr $(DEPDIR) tmpdir
 	rm -f  $(PROGS)
 
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+bindir ?= /usr/bin
 INSTALLDIR=$(DESTDIR)$(bindir)
 
 .PHONY: install
 install:
-	install -d $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
 	for i in $(PROGS); do \
-	  install $$i $(INSTALLDIR); \
+	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(INSTALLDIR); \
 	done
 	$(MAKE) -C man install
 

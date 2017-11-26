@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.h#3 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.h#4 $
  */
 
 #ifndef FILE_UTILS_H
@@ -163,19 +163,6 @@ int syncAndCloseFile(int fd, const char *errorMessage)
 void trySyncAndCloseFile(int fd);
 
 /**
- * Advise the kernel of caching needs or pattern of access for a file.
- *
- * @param fd     The file descriptor
- * @param offset The file offset at which to apply advice
- * @param length The number of bytes affected (zero means to end of file)
- * @param advice The advice code (see posix_fadvise manpage for codes)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int adviseFile(int fd, off_t offset, off_t length, int advice)
-  __attribute__((warn_unused_result));
-
-/**
  * Read into a buffer from a file.
  *
  * @param fd     The file descriptor from which to read
@@ -263,19 +250,6 @@ int writeBufferAtOffset(int           fd,
   __attribute__((warn_unused_result));
 
 /**
- * Skip some number of bytes in a file.  If the number of bytes is
- * positive, we skip forward over the bytes and neither read nor write
- * them.  If the number of bytes is negative, we skip backwards to reread
- * or rewrite the bytes.
- *
- * @param fd     The file descriptor to which to write
- * @param count  The number of bytes to skip
- *
- * @return UDS_SUCCESS or an error code
- **/
-int skipBuffer(int fd, off_t count) __attribute__((warn_unused_result));
-
-/**
  * Determine the size of an open file.
  *
  * @param fd        the file descriptor
@@ -304,26 +278,6 @@ int setOpenFileSize(int fd, off_t size);
  * @return              UDS_SUCCESS or error code.
  **/
 int removeFile(const char *fileName);
-
-/**
- * Clean up a file descriptor which we failed to write properly. The
- * descriptor will be closed and the file deleted.
- *
- * @param fd        The file descriptor
- * @param fileName  The name
- * @param errorCode The error code from the attempt to write the file
- * @param format    A printf() style format string to be included when
- *                  logging the error code, followed by any additional
- *                  arguments required by the format
- *
- * @return The supplied errorCode
- **/
-int cleanUpFile(int         fd,
-                const char *fileName,
-                int         errorCode,
-                const char *format,
-                ...)
-  __attribute__((format(printf, 4, 5), warn_unused_result));
 
 /**
  * Remove directory (and its contents if needed).

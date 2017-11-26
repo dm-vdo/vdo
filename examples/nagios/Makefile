@@ -16,13 +16,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/nagios/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/nagios/Makefile#2 $
 
 INSTALLFILES=nagios_check_albserver.pl		\
 	nagios_check_vdostats_logicalSpace.pl	\
 	nagios_check_vdostats_physicalSpace.pl	\
 	nagios_check_vdostats_savingPercent.pl
 
+
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+defaultdocdir ?= /usr/share/doc
+name ?= vdo
 
 INSTALLDIR=$(DESTDIR)/$(defaultdocdir)/$(name)/examples/nagios
 
@@ -32,7 +37,7 @@ all:;
 clean:;
 
 install:
-	install -d $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
 	for i in $(INSTALLFILES); do \
-	  install $$i $(INSTALLDIR); \
+	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(INSTALLDIR); \
 	done

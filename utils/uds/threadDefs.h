@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadDefs.h#2 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/threadDefs.h#3 $
  *
  * LINUX USER-SPACE VERSION
  */
@@ -80,6 +80,51 @@ int destroyCondAttr(pthread_condattr_t *cond_attr);
  * @return           UDS_SUCCESS or error code
  **/
 int initCondWithAttr(CondVar *cond, pthread_condattr_t *cond_attr);
+
+/**
+ * Initialize a mutex, optionally asserting if the mutex initialization fails.
+ * This function should only be called directly in places where making
+ * assertions is not safe.
+ *
+ * @param mutex         the mutex to initialize
+ * @param assertOnError if <code>true</code>, an error initializing the
+ *                      mutex will make an assertion
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int initializeMutex(Mutex *mutex, bool assertOnError);
+
+/**
+ * Initialize the default type (error-checking during development) mutex.
+ *
+ * @param mutex the mutex to initialize
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int initMutex(Mutex *mutex);
+
+/**
+ * Destroy a mutex (with error checking during development).
+ *
+ * @param mutex mutex to destroy
+ *
+ * @return UDS_SUCCESS or error code
+ **/
+int destroyMutex(Mutex *mutex);
+
+/**
+ * Lock a mutex, with optional error checking during development.
+ *
+ * @param mutex mutex to lock
+ **/
+void lockMutex(Mutex *mutex);
+
+/**
+ * Unlock a mutex, with optional error checking during development.
+ *
+ * @param mutex mutex to unlock
+ **/
+void unlockMutex(Mutex *mutex);
 
 /**
  * Retrieve the affinity mask.

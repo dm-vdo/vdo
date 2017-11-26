@@ -20,7 +20,7 @@
 """
   MgmntUtils - miscellaneous utilities for the VDO manager
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/MgmntUtils.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/MgmntUtils.py#2 $
 
 """
 from .Utils import Utils
@@ -32,12 +32,12 @@ class MgmntUtils(Utils):
   # Public methods
   ######################################################################
   @classmethod
-  def statusHelper(cls, commandList, tag):
+  def statusHelper(cls, commandList):
     """Helper function for returning status summaries."""
     try:
       s = runCommand(commandList,
                      environment={ 'UDS_LOG_LEVEL' : 'WARNING' },
                      strip=True)
-      return [tag + s.translate(None, "\"")]
+      return s.translate(None, "\"")
     except CommandError:
-      return [tag + _("not available")]
+      return _("not available")

@@ -16,13 +16,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoConfig.h#1 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoConfig.h#2 $
  */
 
 #ifndef VDO_CONFIG_H
 #define VDO_CONFIG_H
 
+#include "uds.h"
+
 #include "types.h"
+#include "volumeGeometry.h"
 
 // The VDOConfig structure is fully declared in types.h
 
@@ -34,13 +37,13 @@
  * called again.
  *
  * @param config       The configuration parameters for the VDO
- * @param indexBlocks  Size of the index in blocks
+ * @param indexConfig  The configuration parameters for the index
  * @param layer        The physical layer the VDO will sit on
  *
  * @return VDO_SUCCESS or an error
  **/
 int formatVDO(const VDOConfig *config,
-              BlockCount       indexBlocks,
+              IndexConfig     *indexConfig,
               PhysicalLayer   *layer)
   __attribute__((warn_unused_result));
 
@@ -65,6 +68,7 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
  * change.
  *
  * @param config       The configuration parameters for the VDO
+ * @param indexConfig  The configuration parameters for the index
  * @param indexBlocks  Size of the index in blocks
  * @param layer        The physical layer the VDO will sit on
  * @param nonce        The nonce for the VDO
@@ -72,7 +76,7 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
  * @return VDO_SUCCESS or an error
  **/
 int formatVDOWithNonce(const VDOConfig *config,
-                       BlockCount       indexBlocks,
+                       IndexConfig     *indexConfig,
                        PhysicalLayer   *layer,
                        Nonce            nonce)
   __attribute__((warn_unused_result));

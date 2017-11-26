@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/blockMapUtils.c#1 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/blockMapUtils.c#2 $
  */
 
 #include "blockMapUtils.h"
@@ -41,11 +41,8 @@ bool isValidDataBlock(const SlabDepot *depot, PhysicalBlockNumber pbn)
     return false;
   }
 
-  SlabCount slabNumber = (pbn - depot->firstBlock) >> depot->slabSizeShift;
-  PhysicalBlockNumber slabStart
-    = depot->firstBlock + (slabNumber << depot->slabSizeShift);
-
-  SlabBlockNumber sbn = pbn - slabStart;
+  PhysicalBlockNumber sbnMask = (1ULL << depot->slabSizeShift) - 1;
+  SlabBlockNumber     sbn     = (pbn - depot->firstBlock) & sbnMask;
   return (sbn < getSlabConfig(depot)->dataBlocks);
 }
 

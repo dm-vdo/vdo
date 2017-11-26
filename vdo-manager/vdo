@@ -22,7 +22,7 @@
 """
   vdo - Albireo VDO management utility
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdo#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdo#6 $
 
 """
 #pylint: disable=C0302
@@ -142,7 +142,10 @@ of 15%.
         """Tunes the quantity of block map updates that can accumulate before
 cache pages are flushed to disk. The default value of {period} means highest
 performance; a lower value means shorter recovery time but lower performance.
-""".format(period=Defaults.blockMapPeriod),
+The value must at least {minPeriod} and less than or equal to {maxPeriod}.
+""".format(period=Defaults.blockMapPeriod,
+           minPeriod=Defaults.blockMapPeriodMin,
+           maxPeriod=Defaults.blockMapPeriodMax),
 
       'confFile':
         """Specifies an alternate configuration file; the default is {file}.
@@ -178,9 +181,10 @@ The default is {emulate512}. Choices: {choices}.
 
       'indexMem':
         """Specifies the amount of index memory in gigabytes; the
-default is currently 0.25 GB. 0 requests the default.
-The special decimal values 0.25, 0.5, 0.75 can be used, as can any
-positive integer.""",
+default is currently 0.25 GB. The special decimal values 
+0.25, 0.5, 0.75 can be used, as can any positive integer. 
+(The special decimal values are matched as exact strings; 
+"0.5" works but "0.50" is not accepted.)""",
 
       'logfile':
         """Specify the path of the file to which this script's log messages are
@@ -202,11 +206,14 @@ default is {readCache}. Choices: {choices}.
       'readCacheSize':
         """Specifies the extra VDO device read cache size in {defaultUnits}.
 This space is in addition to a system-defined minimum. {suffixOptions}. The
-default is {readCacheSize}. {threadMem} MB of memory will be used per MB of
+default is {readCacheSize}; the value must be at least {minCacheSize} and
+less than {maxCachePlusOne}. {threadMem} MB of memory will be used per MB of
 read cache specified, per bio thread.
 """.format(defaultUnits = Constants.lvmDefaultUnitsText,
            suffixOptions = self.lvmOptionalSiSuffix,
            readCacheSize=Defaults.readCacheSize,
+           minCacheSize = Defaults.readCacheSizeMin,
+           maxCachePlusOne = Defaults.readCacheSizeMaxPlusOne,
            threadMem = Defaults.bioThreadReadCacheOverheadMB),
 
       'sparseIndex':
@@ -251,7 +258,7 @@ least {min} and less than or equal to {max}.
 """Specifies the number of threads across which to subdivide parts of the VDO
 processing based on the hash value computed from the block data. The default is
 {default}; the value must be at least {min} and less than or equal to {max}.
-vdoHashZonesThreads, vdoLogicalThreads and vdoPhysicalThreads must be either
+vdoHashZoneThreads, vdoLogicalThreads and vdoPhysicalThreads must be either
 all zero or all non-zero.
 """.format(min = Defaults.hashZoneThreadsMin,
            max = Defaults.hashZoneThreadsMax,
@@ -261,11 +268,15 @@ all zero or all non-zero.
 """Specifies the number of threads across which to subdivide parts of the VDO
 processing based on logical block addresses. The default is {default}; the
 value must be at least {min} and less than or equal to {max}.
-vdoLogicalThreads, vdoHashZonesThreads and vdoPhysicalThreads must be either
-all zero or all non-zero.
+vdoLogicalThreads, vdoHashZoneThreads and vdoPhysicalThreads must be either
+all zero or all non-zero. A logical thread count over {requiresCache} will
+require explicitly specifying a sufficiently large block map cache size, as
+well.
 """.format(min = Defaults.logicalThreadsMin,
            max = Defaults.logicalThreadsMax,
-           default = Defaults.logicalThreads),
+           default = Defaults.logicalThreads,
+           requiresCache = (Defaults.blockMapCacheSize.toBytes()
+                            / Defaults.blockMapCacheSizeMinPerLogicalThread)),
 
       'vdoLogLevel':
         """Specifies the VDO driver log level; levels are case-sensitive. The
@@ -276,15 +287,16 @@ default is {logLevel}. Levels: {levels}.
       'vdoLogicalSize':
         """Specifies the logical VDO volume size in {defaultUnits}.
 {suffixOptions}. Used for over-provisioning volumes. This defaults to the size
-of the storage device.
+of the storage device. The maximum size supported is {max}.
 """.format(defaultUnits = Constants.lvmDefaultUnitsText,
-           suffixOptions = self.lvmOptionalSuffix),
+           suffixOptions = self.lvmOptionalSuffix,
+           max = Defaults.logicalSizeMax),
 
       'vdoPhysicalThreads':
         """Specifies the number of threads across which to subdivide parts of
 the VDO processing based on physical block addresses. The default is {default};
 the value must be at least {min} and less than or equal to {max}.
-vdoPhysicalThreads, vdoHashZonesThreads and vdoLogicalThreads must be either
+vdoPhysicalThreads, vdoHashZoneThreads and vdoLogicalThreads must be either
 all zero or all non-zero.
 """.format(min = Defaults.physicalThreadsMin,
            max = Defaults.physicalThreadsMax,
@@ -405,18 +417,27 @@ class ExtOption(optparse.Option):
   existence or permissions.
   """
   TYPES = optparse.Option.TYPES + ("abspath", "indexmem", "pagesz", "blkdev",
-                                   "pagecachesz", "pow2", "siSize", "size",
-                                   "slabsz", "vdoname")
+                                   "periodval", "pagecachesz",
+                                   "physicalthreadcount",
+                                   "readcachesz", "rotationinterval",
+                                   "siSize", "size", "slabsz",
+                                   "threadcount0_100",
+                                   "threadcount1_100", "vdoname")
   TYPE_CHECKER = copy.copy(optparse.Option.TYPE_CHECKER)
   TYPE_CHECKER["abspath"] = Defaults.checkAbspath
   TYPE_CHECKER["indexmem"] = Defaults.checkIndexmem
   TYPE_CHECKER["blkdev"] = Defaults.checkBlkDev
   TYPE_CHECKER["pagesz"] = Defaults.checkPagesz
   TYPE_CHECKER["pagecachesz"] = Defaults.checkPageCachesz
-  TYPE_CHECKER["pow2"] = Defaults.checkPow2
+  TYPE_CHECKER["periodval"] = Defaults.checkBlockMapPeriod
+  TYPE_CHECKER["physicalthreadcount"] = Defaults.checkPhysicalThreadCount
+  TYPE_CHECKER["readcachesz"] = Defaults.checkReadCachesz
+  TYPE_CHECKER["rotationinterval"] = Defaults.checkRotationInterval
   TYPE_CHECKER["siSize"] = Defaults.checkSiSize
   TYPE_CHECKER["size"] = Defaults.checkSize
   TYPE_CHECKER["slabsz"] = Defaults.checkSlabSize
+  TYPE_CHECKER["threadcount0_100"] = Defaults.checkThreadCount0_100
+  TYPE_CHECKER["threadcount1_100"] = Defaults.checkThreadCount1_100
   TYPE_CHECKER["vdoname"] = Defaults.checkVDOName
 
 
@@ -674,31 +695,31 @@ def getOptionParser(vdoHelp):
                     metavar='<megabytes>', type='pagecachesz')
   mGroup.add_option("--blockMapPeriod",
                     help=vdoHelp.getOption("blockMapPeriod"),
-                    metavar='<period>', type='int')
+                    metavar='<period>', type='periodval')
   mGroup.add_option("--readCache", help=vdoHelp.getOption("readCache"),
                     type='choice', choices=vdoHelp.readCacheChoices,
                     metavar='<mode>')
   mGroup.add_option("--readCacheSize",
                     help=vdoHelp.getOption("readCacheSize"),
-                    metavar='<megabytes>', type='siSize')
+                    metavar='<megabytes>', type='readcachesz')
   mGroup.add_option("--vdoAckThreads", help=vdoHelp.getOption("vdoAckThreads"),
-                    metavar='<threadCount>', type='int')
+                    metavar='<threadCount>', type='threadcount0_100')
   mGroup.add_option("--vdoBioRotationInterval",
                     help=vdoHelp.getOption("vdoBioRotationInterval"),
-                    metavar='<ioCount>', type='int')
+                    metavar='<ioCount>', type='rotationinterval')
   mGroup.add_option("--vdoBioThreads", help=vdoHelp.getOption("vdoBioThreads"),
-                    metavar='<threadCount>', type='int')
+                    metavar='<threadCount>', type='threadcount1_100')
   mGroup.add_option("--vdoCpuThreads", help=vdoHelp.getOption("vdoCpuThreads"),
-                    metavar='<threadCount>', type='int')
+                    metavar='<threadCount>', type='threadcount1_100')
   mGroup.add_option("--vdoHashZoneThreads",
                     help=vdoHelp.getOption("vdoHashZoneThreads"),
-                    metavar='<threadCount>', type='int')
+                    metavar='<threadCount>', type='threadcount0_100')
   mGroup.add_option("--vdoLogicalThreads",
                     help=vdoHelp.getOption("vdoLogicalThreads"),
-                    metavar='<threadCount>', type='int')
+                    metavar='<threadCount>', type='threadcount0_100')
   mGroup.add_option("--vdoPhysicalThreads",
                     help=vdoHelp.getOption("vdoPhysicalThreads"),
-                    metavar='<threadCount>', type='int')
+                    metavar='<threadCount>', type='physicalthreadcount')
   mGroup.add_option("--writePolicy", help=vdoHelp.getOption("writePolicy"),
                     type='choice', choices=vdoHelp.writePolicyChoices,
                     metavar='<policy>')
@@ -766,6 +787,17 @@ def main():
   if options.name and options.all:
     mainLogger.error(_("Only one of --name, --all can be specified"))
     parser.print_usage()
+    sys.exit(ERROR)
+
+  if ((options.vdoHashZoneThreads == 0
+       or options.vdoLogicalThreads == 0
+       or options.vdoPhysicalThreads == 0)
+      and not (options.vdoHashZoneThreads == 0
+               and options.vdoLogicalThreads == 0
+               and options.vdoPhysicalThreads == 0)):
+    mainLogger.error(_("Options --vdoHashZoneThreads, --vdoLogicalThreads,"
+                       " and --vdoPhysicalThreads must either all be zero"
+                       " or all be nonzero"))
     sys.exit(ERROR)
 
   operation = None

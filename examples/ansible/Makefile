@@ -16,13 +16,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/ansible/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/ansible/Makefile#2 $
 
 INSTALLFILES=README.txt			\
 	test_vdocreate.yml		\
 	test_vdocreate_alloptions.yml	\
 	test_vdoremove.yml		\
 	vdo.py
+
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+defaultdocdir ?= /usr/share/doc
+name ?= vdo
 
 INSTALLDIR=$(DESTDIR)/$(defaultdocdir)/$(name)/examples/ansible
 
@@ -32,7 +37,7 @@ all:;
 clean:;
 
 install:
-	install -d $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
 	for i in $(INSTALLFILES); do \
-	  install $$i $(INSTALLDIR); \
+	  $(INSTALL) $(INSTALLOWNER) -m 644 $$i $(INSTALLDIR); \
 	done

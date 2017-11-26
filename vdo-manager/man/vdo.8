@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#1 $
+.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#5 $
 .
 .\" Formatting for per-command option lists: indented, no filling
 .nr optionListIndent 15
@@ -438,11 +438,10 @@ and less than 16T. The cache must be at least 16MB per logical thread. Note
 that there is a memory overhead of 15%.
 .TP
 .B \-\-blockMapPeriod=\fIperiod\fR
-A value between 1 and 16380 which determines the number of block
-map updates which may accumulate before cached pages are flushed
-to disk. Higher values decrease recovery time after a crash at
-the expense of decreased performance during normal operation.
-The default value is 16380.
+Tunes the quantity of block map updates that can accumulate before
+cache pages are flushed to disk. The default value of 16380 means highest
+performance; a lower value means shorter recovery time but lower performance.
+The value must at least 1 and less than or equal to 16380.
 .TP
 .B \-\-compression=\*[bool]
 Enables or disables compression within the VDO device. The
@@ -482,10 +481,10 @@ loss or corruption.\fP
 .TP
 .B \-\-indexMem=\fIgigabytes\fR
 Specifies the amount of index memory in gigabytes; the
-default is currently 0.25 GB. 0 requests the default.
-The special decimal values 0.25, 0.5, 0.75 can be used, as can any
-positive integer. (The special decimal values are matched as
-exact strings; "0.5" works but "0.50" is not accepted.)
+default is currently 0.25 GB. The special decimal values 
+0.25, 0.5, 0.75 can be used, as can any positive integer. 
+(The special decimal values are matched as exact strings; 
+"0.5" works but "0.50" is not accepted.)
 .PP
 .B \-\-help
 .br
@@ -523,9 +522,10 @@ Specifies the compressed block read cache size in megabytes.
 Using a value with a \fBB\fP (bytes), \fBK\fP (kilobytes), \fBM\fP (megabytes),
 \fBG\fP (gigabytes), \fBT\fP (terabytes), \fBP\fP (petabytes) or
 \fBE\fP (exabytes) suffix is optional. If no suffix is supplied, the value will
-be interpreted as megabytes. The default is 0. 1.12 MB of memory will be used
-per MB of read cache specified, per bio thread. With the default number of bio
-threads, 4.48MB of memory will be used per MB of read cache.
+be interpreted as megabytes. The default is 0; the value must be at least 0 and 
+less than 16T. 1.12 MB of memory will be used per MB of read cache specified, 
+per bio thread. With the default number of bio threads, 4.48MB of memory will 
+be used per MB of read cache.
 .TP
 .B \-\-sparseIndex=\*[bool]
 Enables sparse indexing.
@@ -557,15 +557,16 @@ Specifies the number of threads across which to
 subdivide parts of the VDO processing based on the
 hash value computed from the block data. The default is 1;
 the value must be at least 0 and less than or equal to 100.
-vdoHashZonesThreads, vdoLogicalThreads and vdoPhysicalThreads
+vdoHashZoneThreads, vdoLogicalThreads and vdoPhysicalThreads
 must be either all zero or all non-zero.
 .TP
 .B \-\-vdoLogicalThreads=\fIthread count\fR
 Specifies the number of threads across which to subdivide parts
 of the VDO processing based on logical block addresses. The default is 1;
 the value must be at least 0 and less than or equal to 100.
-vdoLogicalThreads, vdoHashZonesThreads and vdoPhysicalThreads must be either
-all zero or all non-zero.
+vdoLogicalThreads, vdoHashZoneThreads and vdoPhysicalThreads must be either
+all zero or all non-zero. A logical thread count over 8 will require
+explicitly specifying a sufficiently large block map cache size, as well.
 .TP
 .B \-\-vdoLogLevel=\fIlevel\fR
 Specifies the VDO driver log level: \fBcritical\fP, \fBerror\fP,
@@ -578,14 +579,15 @@ Specifies the logical VDO volume size in megabytes. Using a value with a
 \fBG\fP (gigabytes), \fBT\fP (terabytes), \fBP\fP (petabytes) or
 \fBE\fP (exabytes) suffix is optional. If no suffix is supplied, the value will
 be interpreted as megabytes. Used for over-provisioning volumes. This defaults
-to the size of the storage device.
+to the size of the storage device. The maximum size supported is
+4096T (4P).
 .TP
 .B \-\-vdoPhysicalThreads=\fIthread count\fR
 Specifies the number of threads across which to subdivide parts
 of the VDO processing based on physical block addresses. Each
 additional thread after the first will use an additional 10 MB of
 RAM. The default is 1; the value must be at least 0 and less than or equal to
-100. vdoPhysicalThreads, vdoHashZonesThreads and vdoLogicalThreads must be
+16. vdoPhysicalThreads, vdoHashZoneThreads and vdoLogicalThreads must be
 either all zero or all non-zero.
 .TP
 .B \-\-vdoSlabSize=\fImegabytes\fR

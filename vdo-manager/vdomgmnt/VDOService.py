@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#2 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#5 $
 
 """
 
@@ -225,7 +225,7 @@ class VDOService(Service):
       self.log.announce(_("VDO instance {0} volume is ready at {1}").format(
         self.getInstanceNumber(), self.getPath()))
     elif wasCreated:
-      self.log.announce(_("VDO volume created at {0}").format(self.getPath()))  
+      self.log.announce(_("VDO volume created at {0}").format(self.getPath()))
     elif not self.activated:
       self.log.announce(_("VDO volume cannot be started (not activated)"))
 
@@ -458,6 +458,13 @@ class VDOService(Service):
 
     self.config.removeVdo(self.getName())
 
+    # We delete the metadata after we remove the entry from the config 
+    # file because if we do it before and the removal from the config 
+    # fails, we will end up with a valid looking entry in the config
+    # that has no valid metadata.
+    self._clearMetadata()
+
+
   ######################################################################
   def running(self):
     """Returns True if the VDO service is available."""
@@ -523,83 +530,52 @@ class VDOService(Service):
       raise
 
   ######################################################################
-  def status(self, prefix):
-    """Returns a list of strings representing the status of this object.
+  def status(self):
+    """Returns a dictionary representing the status of this object.
     """
     self._handlePreviousOperationFailure()
 
-    status = [prefix + self.getName() + ":"]
-
-    prefix = "{0}  ".format(prefix)
-    status.append(prefix + _("Storage device: {0}").format(self.device))
-
-    status.extend([prefix + "{0}: {1}".format(self.vdoBlockMapCacheSizeKey,
-                                              self.blockMapCacheSize),
-                   prefix + "{0}: {1}".format(self.vdoBlockMapPeriodKey,
-                                              self.blockMapPeriod),
-                   prefix + "{0}: {1}".format(self.vdoBlockSizeKey,
-                                              Constants.VDO_BLOCK_SIZE)])
-    status.append(prefix +
-                  _("Emulate 512 byte: {0}").format(
-                    Constants.enableString(self.logicalBlockSize == 512)))
-
-    status.extend([prefix + _("Activate: {0}").format(
-                    Constants.enableString(self.activated)),
-                   prefix + "{0}: {1}".format(
-                    self.readCacheKey,
-                    Constants.enableString(self.enableReadCache)),
-                  prefix + "{0}: {1}".format(self.readCacheSizeKey,
-                                             self.readCacheSize),
-                  prefix + "{0}: {1}".format(
-                    self.vdoCompressionEnabledKey,
-                    Constants.enableString(self.enableCompression)),
-                  prefix + "{0}: {1}".format(
-                    self.vdoDeduplicationEnabledKey,
-                    Constants.enableString(self.enableDeduplication)),
-                  prefix + "{0}: {1}".format(self.vdoLogicalSizeKey,
-                                             self.logicalSize),
-                  prefix + "{0}: {1}".format(self.vdoPhysicalSizeKey,
-                                             self.physicalSize),
-                  prefix + "{0}: {1}".format(self.vdoAckThreadsKey,
-                                             self.ackThreads),
-                  prefix + "{0}: {1}".format(self.vdoBioSubmitThreadsKey,
-                                             self.bioThreads),
-                  prefix + _("Bio rotation interval: {0}").format(
-                                              self.bioRotationInterval),
-                  prefix + "{0}: {1}".format(self.vdoCpuThreadsKey,
-                                             self.cpuThreads),
-                  prefix + "{0}: {1}".format(self.vdoHashZoneThreadsKey,
-                                              self.hashZoneThreads),
-                  prefix + "{0}: {1}".format(self.vdoLogicalThreadsKey,
-                                             self.logicalThreads),
-                  prefix + "{0}: {1}".format(self.vdoPhysicalThreadsKey,
-                                             self.physicalThreads),
-                  prefix + _("Slab size: {0}").format(self.slabSize),
-                  prefix + "{0}: {1}".format(self.vdoWritePolicyKey,
-                                             self.writePolicy),
-                  prefix + _("Index checkpoint frequency: {0}").format(
-                    self.indexCfreq),
-                  prefix + _("Index memory setting: {0}").format(
-                    self.indexMemory),
-                  prefix + _("Index parallel factor: {0}").format(
-                    self.indexThreads),
-                  prefix + _("Index sparse: {0}").format(
-                    Constants.enableString(self.indexSparse)),
-                  prefix + _("Index status: {0}").format(
-                    self._getDeduplicationStatus())])
+    status = {}
+    status[_("Storage device")] = self.device
+    status[self.vdoBlockMapCacheSizeKey] = str(self.blockMapCacheSize)
+    status[self.vdoBlockMapPeriodKey] = self.blockMapPeriod
+    status[self.vdoBlockSizeKey] = Constants.VDO_BLOCK_SIZE
+    status[_("Emulate 512 byte")] = Constants.enableString(
+                                      self.logicalBlockSize == 512)
+    status[_("Activate")] = Constants.enableString(self.activated)
+    status[self.readCacheKey] = Constants.enableString(self.enableReadCache)
+    status[self.readCacheSizeKey] = str(self.readCacheSize)
+    status[self.vdoCompressionEnabledKey] = Constants.enableString(
+                                              self.enableCompression)
+    status[self.vdoDeduplicationEnabledKey] = Constants.enableString(
+                                                self.enableDeduplication)
+    status[self.vdoLogicalSizeKey] = str(self.logicalSize)
+    status[self.vdoPhysicalSizeKey] = str(self.physicalSize)
+    status[self.vdoAckThreadsKey] = self.ackThreads
+    status[self.vdoBioSubmitThreadsKey] = self.bioThreads
+    status[_("Bio rotation interval")] = self.bioRotationInterval
+    status[self.vdoCpuThreadsKey] = self.cpuThreads
+    status[self.vdoHashZoneThreadsKey] = self.hashZoneThreads
+    status[self.vdoLogicalThreadsKey] = self.logicalThreads
+    status[self.vdoPhysicalThreadsKey] = self.physicalThreads
+    status[_("Slab size")] = str(self.slabSize)
+    status[self.vdoWritePolicyKey] = self.writePolicy
+    status[_("Index checkpoint frequency")] = self.indexCfreq
+    status[_("Index memory setting")] = self.indexMemory
+    status[_("Index parallel factor")] = self.indexThreads
+    status[_("Index sparse")] = Constants.enableString(self.indexSparse)
+    status[_("Index status")] = self._getDeduplicationStatus()
 
     if os.getuid() == 0:
-      status.extend(MgmntUtils.statusHelper(
-                      ['dmsetup', 'status', self.getName()],
-                      prefix + _("Device mapper status: ")))
+      status[_("Device mapper status")] = MgmntUtils.statusHelper(
+                                            ['dmsetup', 'status',
+                                             self.getName()])
 
       try:
         result = runCommand(['vdostats', '--verbose', self.getPath()])
-        status.append(prefix + "{0}: ".format(self.vdoStatisticsKey))
-        status.extend([prefix + '  ' + line for line in result.splitlines()])
+        status[self.vdoStatisticsKey] = yaml.safe_load(result)
       except Exception:
-        status.append(prefix + "{0}: {1}".format(self.vdoStatisticsKey,
-                                                 _("not available")))
+        status[self.vdoStatisticsKey] = _("not available")
 
     return status
 
@@ -1045,6 +1021,16 @@ class VDOService(Service):
     self.blockMapPeriod = min(self.blockMapPeriod, Defaults.blockMapPeriodMax)
 
   ######################################################################
+  def _clearMetadata(self):
+    """Clear the VDO metadata from the storage device"""
+    command = ["dd", 
+               "if=/dev/zero", 
+               "of={devicePath}".format(devicePath=self.device),
+               "bs=4096",
+               "count=1"]
+    runCommand(command)
+
+  ######################################################################
   def _computedConfig(self):
     """Update the instance properties as necessary and return the
     configuration instance.
@@ -1270,17 +1256,22 @@ class VDOService(Service):
     return " ".join([dmTable[key] for key in tableOrder.split(" ")])
 
   ######################################################################
-  def _generatePreviousOperationFailureResponse(self):
+  def _generatePreviousOperationFailureResponse(self, operation = "create"):
     """Generates the required response to a previous operation failure.
 
     Logs a message indicating that the previous operation failed and raises the
     VDOServicePreviousOperationError exception with the same message.
 
+    Arguments:
+      operation (str) - the operation that failed; default to "create" as that
+                        is currently the only operation that is not
+                        automatically recovered
+
     Raises:
       VDOServicePreviousOperationError
     """
-    msg = _("VDO volume {0} previous operation is incomplete").format(
-            self.getName())
+    msg = _("VDO volume {0} previous operation ({1}) is incomplete").format(
+            self.getName(), operation)
     raise VDOServicePreviousOperationError(msg)
 
   ######################################################################
