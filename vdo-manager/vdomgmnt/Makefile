@@ -16,20 +16,25 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/vdo-manager/vdomgmnt/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/vdo-manager/vdomgmnt/Makefile#2 $
 
 SRC_DIR = ../../..
 
 PYTHON_MODULES  = $(wildcard *.py)
+
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+python_sitelib ?= /usr/lib/python2.7/site-packages
+name ?= vdo
 
 INSTALLDIR=$(DESTDIR)/$(python_sitelib)/$(name)/vdomgmnt
 
 all:;
 
 install:
-	install -d $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
 	for i in $(PYTHON_MODULES); do	\
-	  install $$i $(INSTALLDIR);	\
+	  $(INSTALL) $(INSTALLOWNER) -m 644 $$i $(INSTALLDIR);	\
 	done
 
 clean:

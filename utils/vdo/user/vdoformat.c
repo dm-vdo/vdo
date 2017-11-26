@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoFormat.c#1 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoFormat.c#8 $
  */
 
 #include <err.h>
@@ -28,6 +28,8 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
+#include "uds.h"
+
 #include "fileUtils.h"
 #include "logger.h"
 #include "stringUtils.h"
@@ -38,6 +40,7 @@
 #include "types.h"
 #include "vdo.h"
 #include "vdoConfig.h"
+#include "vdoLoad.h"
 
 #include "fileLayer.h"
 #include "parseUtils.h"
@@ -47,17 +50,11 @@ enum {
   DEFAULT_SLAB_BITS    = 19,
 };
 
-typedef enum {
-  BLOCK_DEVICE = 1,
-  NEW_FILE,
-  EXISTING_FILE,
-} StorageType;
-
 typedef struct {
   char *sparse;
   char *memorySize;
   char *checkpointFrequency;
-} IndexConfig;
+} ConfigStrings;
 
 static const char usageString[] =
   " [--help] [options...] filename";
@@ -69,17 +66,20 @@ static const char helpString[] =
   "  vdoformat [options] filename\n"
   "\n"
   "DESCRIPTION\n"
-  "  vdoformat formats the file or block device named by filename as a\n"
-  "  VDO device.  This is analogous to low-level device formatting.\n"
+  "  vdoformat formats the block device named by filename as a VDO device\n"
+  "  This is analogous to low-level device formatting. The device will not\n"
+  "  be formatted if it already contains a VDO, unless the --force flag is\n"
+  "  used.\n"
   "\n"
   "  vdoformat can also modify some of the formatting parameters.\n"
   "\n"
   "OPTIONS\n"
+  "    --force\n"
+  "       Format the block device, even if there is already a VDO formatted\n"
+  "       thereupon.\n"
+  "\n"
   "    --help\n"
   "       Print this help message and exit.\n"
-  "\n"
-  "    --index-blocks\n"
-  "       The size of the dedupe index, in blocks.\n"
   "\n"
   "    --logical-size=<size>\n"
   "       Set the logical (provisioned) size of the VDO device to <size>.\n"
@@ -97,7 +97,7 @@ static const char helpString[] =
   "       default is 19.\n"
   "\n"
   "    --uds-checkpoint-frequency=<frequency>\n"
-  "       Specify the frequency of checkpoints.\n"
+  "       Specify the frequency of checkpoints. The default is never.\n"
   "\n"
   "    --uds-memory-size=<gigabytes>\n"
   "       Specify the amount of memory, in gigabytes, to devote to the\n"
@@ -116,8 +116,8 @@ static const char helpString[] =
 
 // N.B. the option array must be in sync with the option string.
 static struct option options[] = {
+  { "force",                    no_argument,       NULL, 'f' },
   { "help",                     no_argument,       NULL, 'h' },
-  { "index-blocks",             required_argument, NULL, 'n' },
   { "logical-size",             required_argument, NULL, 'l' },
   { "physical-size",            required_argument, NULL, 'p' },
   { "slab-bits",                required_argument, NULL, 'S' },
@@ -128,227 +128,101 @@ static struct option options[] = {
   { "version",                  no_argument,       NULL, 'V' },
   { NULL,                       0,                 NULL,  0  },
 };
-static char optionString[] = "hn:il:p:S:c:m:svV";
+static char optionString[] = "fhil:p:S:c:m:svV";
 
 static void usage(const char *progname, const char *usageOptionsString)
 {
   errx(1, "Usage: %s%s\n", progname, usageOptionsString);
 }
 
-/**
- * Read an integer from a file of the given name.
- *
- * @param [in]  filename  The file to read
- * @param [out] intPtr    The uint64_t to read into
- *
- * @return VDO_SUCCESS or an error
- **/
-static int readIntFromFile(char *filename, uint64_t *intPtr)
+static int parseMem(char *string, uint32_t *sizePtr)
 {
-  FILE *file = fopen(filename, "r");
-  int scanned = fscanf(file, "%" PRIu64, intPtr);
-  if (scanned != 1) {
-    return UDS_SHORT_READ;
+  UdsMemoryConfigSize mem;
+  if (strcmp(string, "0.25") == 0) {
+    mem = UDS_MEMORY_CONFIG_256MB;
+  } else if (strcmp(string, "0.5") == 0) {
+    mem = UDS_MEMORY_CONFIG_512MB;
+  } else if (strcmp(string, "0.75") == 0) {
+    mem = UDS_MEMORY_CONFIG_768MB;
+  } else {
+    unsigned long number;
+    if (stringToUnsignedLong(string, &number) != UDS_SUCCESS) {
+      return -EINVAL;
+    }
+    mem = number;
+    if (mem != number) {
+      return -EINVAL;
+    }
   }
-  fclose(file);
+  *sizePtr = mem;
+  return UDS_SUCCESS;
+}
+
+/**
+ * Parse ConfigStrings into an IndexConfig.
+ *
+ * @param [in]  configStrings  The configStrings read.
+ * @param [out] configPtr      A pointer to return the IndexConfig.
+ **/
+static int parseUdsConfigStrings(ConfigStrings *configStrings,
+                                 IndexConfig   *configPtr)
+{
+  IndexConfig config;
+  memset(&config, 0, sizeof(config));
+
+  config.mem = UDS_MEMORY_CONFIG_256MB;
+  if (configStrings->memorySize != NULL) {
+    int result = parseMem(configStrings->memorySize, &config.mem);
+    if (result != UDS_SUCCESS) {
+      return result;
+    }
+  }
+
+  if (configStrings->checkpointFrequency != NULL) {
+    unsigned long number;
+    int result = stringToUnsignedLong(configStrings->checkpointFrequency, &number);
+    if (result != UDS_SUCCESS) {
+      return result;
+    }
+    if (number != (unsigned int) number) {
+      return UDS_OUT_OF_RANGE;
+    }
+    config.checkpointFrequency = number;
+  }
+
+  if (configStrings->sparse != NULL) {
+    config.sparse = (strcmp(configStrings->sparse, "0") == 0);
+  }
+
+  *configPtr = config;
   return VDO_SUCCESS;
 }
 
-/**
- * Write a buffer into the file of the given name.
- *
- * @param [in] filename  The file to write
- * @param [in] buffer    The buffer to write from
- *
- * @return VDO_SUCCESS or an error
- **/
-static int writeFile(char *filename, char *buffer)
-{
-  int fd;
-  int result = openFile(filename, FU_CREATE_WRITE_ONLY, &fd);
-  if (result != VDO_SUCCESS) {
-    return logErrorWithStringError(result, "File open on %s failed",
-                                   filename);
-  }
-
-  size_t size = strnlen(buffer, VDO_BLOCK_SIZE);
-  result = writeBuffer(fd, buffer, size);
-  if (result != VDO_SUCCESS) {
-    return logErrorWithStringError(result, "File write on %s failed",
-                                   filename);
-  }
-
-  return closeFile(fd, "File close failed");
-}
-
-/**
- *  Set a configuration sysfs node.
- *
- * @param what        The reason to allocate a sysfs node name string
- * @param deviceName  The name of the UDS device
- * @param param       The name of the configuration parameter
- * @param value       The value to set the configuration parameter to
- *
- * @return VDO_SUCCESS or an error
- **/
-static int setConfigurationSysfsNode(const char *what,
-                                     char       *deviceName,
-                                     char       *param,
-                                     char       *value)
-{
-  char *sysfsFilename;
-  int result = allocSprintf(what, &sysfsFilename,
-                            "/sys/uds/configuration/%s/%s", deviceName, param);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = writeFile(sysfsFilename, value);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-  return VDO_SUCCESS;
-}
-
-/**
- * Use an extant UDS device config to format appropriately.
- *
- * @param [in]  config          The UDS config
- * @param [in]  filename        The actual name of the device being formatted
- * @param [in]  tempDeviceName  The temporary name of the UDS configuration
- * @param [out] indexBytesPtr   A pointer to return the size of the index
- *
- * @return VDO_SUCCESS or an error
- **/
-static int doFormat(IndexConfig  *config,
-                    char         *filename,
-                    char         *tempDeviceName,
-                    uint64_t     *indexBytesPtr)
-{
-  int result = VDO_SUCCESS;
-  if (config->checkpointFrequency != NULL) {
-    result = setConfigurationSysfsNode("checkpoint frequency sysfs node",
-                                       tempDeviceName, "checkpoint_frequency",
-                                       config->checkpointFrequency);
-    if (result != VDO_SUCCESS) {
-      return result;
-    }
-  }
-
-  if (config->memorySize != NULL) {
-    result = setConfigurationSysfsNode("memory size sysfs node",
-                                       tempDeviceName, "mem",
-                                       config->memorySize);
-    if (result != VDO_SUCCESS) {
-      return result;
-    }
-  }
-
-  if (config->sparse != NULL) {
-    result = setConfigurationSysfsNode("sparse sysfs node", tempDeviceName,
-                                       "sparse", config->sparse);
-    if (result != VDO_SUCCESS) {
-      return result;
-    }
-  }
-
-  char *configString;
-  result = allocSprintf("UDS configuration string", &configString,
-                        "dev=%s offset=4096", filename);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  // Do the formatting.
-  result = setConfigurationSysfsNode("UDS formatting sysfs node",
-                                     tempDeviceName, "create_index",
-                                     configString);
-
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = writeFile("/sys/uds/close_index", configString);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  char *sizeFilename;
-  result = allocSprintf("size sysfs node", &sizeFilename,
-                        "/sys/uds/configuration/%s/size", tempDeviceName);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  return readIntFromFile(sizeFilename, indexBytesPtr);
-}
-
-/**
- * Format the device for UDS.
- *
- * @param [in]  config          The UDS config
- * @param [in]  filename        The name of the device being formatted
- * @param [out] indexBytesPtr   A pointer to return the size of the index
- *
- * @return VDO_SUCCESS or an error
- **/
-static int formatUDS(IndexConfig *config,
-                     char        *filename,
-                     uint64_t    *indexBytesPtr)
-{
-  char *tempDeviceName;
-  int result = allocSprintf("temporary UDS device name", &tempDeviceName,
-                            "%" PRIu64, nowUsec());
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = writeFile("/sys/uds/create_config", tempDeviceName);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = doFormat(config, filename, tempDeviceName, indexBytesPtr);
-  // In case of error, we still need to delete the config.
-
-  int result2 = writeFile("/sys/uds/delete_config", tempDeviceName);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  return result2;
-}
-
+/**********************************************************************/
 int main(int argc, char *argv[])
 {
-  uint64_t     indexBlocks  = 0;
   uint64_t     logicalSize  = 0; // defaults to physicalSize
   uint64_t     physicalSize = 0;
   unsigned int slabBits     = DEFAULT_SLAB_BITS;
 
-  IndexConfig udsConfig;
-  memset(&udsConfig, 0, sizeof(udsConfig));
+  ConfigStrings configStrings;
+  memset(&configStrings, 0, sizeof(configStrings));
 
   int c;
   uint64_t sizeArg;
   int result;
   static bool verbose = false;
+  static bool force   = false;
 
   while ((c = getopt_long(argc, argv, optionString, options, NULL)) != -1) {
     switch (c) {
+    case 'f':
+      force = true;
+      break;
+
     case 'h':
       printf("%s", helpString);
       exit(0);
-      break;
-
-    case 'n':
-      // XXX If uds-memory-size is the only way to pass UDS size, this should
-      // go away.
-      result = parseSize(optarg, true, &sizeArg);
-      if (result != VDO_SUCCESS) {
-        usage(argv[0], usageString);
-      }
-      indexBlocks = sizeArg;
       break;
 
     case 'l':
@@ -377,15 +251,15 @@ int main(int argc, char *argv[])
       break;
 
     case 'c':
-      udsConfig.checkpointFrequency = optarg;
+      configStrings.checkpointFrequency = optarg;
       break;
 
     case 'm':
-      udsConfig.memorySize = optarg;
+      configStrings.memorySize = optarg;
       break;
 
     case 's':
-      udsConfig.sparse = "1";
+      configStrings.sparse = "1";
       break;
 
     case 'v':
@@ -411,75 +285,32 @@ int main(int argc, char *argv[])
 
   openLogger();
 
-  StorageType storageType;
   struct stat statbuf;
   result = loggingStatMissingOk(filename, &statbuf, "Getting status");
   if (result != UDS_SUCCESS && result != ENOENT) {
     errx(result, "unable to get status of %s", filename);
   }
 
-  if (result == ENOENT) {
-    storageType = NEW_FILE;
-  } else if (S_ISREG(statbuf.st_mode)) {
-    storageType = EXISTING_FILE;
-  } else if (S_ISBLK(statbuf.st_mode)) {
-    storageType = BLOCK_DEVICE;
-  } else {
-    errx(1, "%s must be a file or block device", filename);
-  }
-
-  if (storageType == NEW_FILE) {
-    if (physicalSize == 0) {
-      errx(1, "missing required physical size");
-    }
-    if (logicalSize == 0) {
-      logicalSize = physicalSize;
-    }
+  if (!S_ISBLK(statbuf.st_mode)) {
+    errx(1, "%s must be a block device", filename);
   }
 
   int fd;
-  if (storageType == NEW_FILE) {
-    result = openFile(filename, FU_CREATE_READ_WRITE, &fd);
-  } else {
-    result = openFile(filename, FU_READ_WRITE, &fd);
-  }
+  result = openFile(filename, FU_READ_WRITE, &fd);
   if (result != UDS_SUCCESS) {
     errx(result, "unable to open %s", filename);
   }
 
-  if (storageType == BLOCK_DEVICE) {
-    uint64_t bytes;
-    if (ioctl(fd, BLKGETSIZE64, &bytes) < 0) {
-      errx(errno, "unable to get size of %s", filename);
-    }
-    if (physicalSize == 0) {
-      physicalSize = bytes;
-    } else if (physicalSize != bytes) {
-      errx(1, "physical size must be the size of the underlying block device");
-    }
-    if (logicalSize == 0) {
-      logicalSize = physicalSize;
-    }
-  } else {
-    if (storageType == EXISTING_FILE) {
-      if (physicalSize == 0) {
-        physicalSize = statbuf.st_size;
-      } else {
-        if (physicalSize != (uint64_t) statbuf.st_size) {
-          errx(1, "physical size must be the size of the underlying file");
-        }
-      }
-      if (logicalSize == 0) {
-        logicalSize = physicalSize;
-      }
-    }
-    if (storageType == NEW_FILE) {
-      if (ftruncate(fd, physicalSize) != 0) {
-        errx(errno, "unable to extend %s to %ld bytes",
-             filename, physicalSize);
-      }
-    }
+  uint64_t bytes;
+  if (ioctl(fd, BLKGETSIZE64, &bytes) < 0) {
+    errx(errno, "unable to get size of %s", filename);
   }
+  if (physicalSize == 0) {
+    physicalSize = bytes;
+  } else if (physicalSize != bytes) {
+    errx(1, "physical size must be the size of the underlying block device");
+  }
+
   result = closeFile(fd, "cannot close file");
   if (result != UDS_SUCCESS) {
     errx(1, "cannot close %s", filename);
@@ -487,13 +318,8 @@ int main(int argc, char *argv[])
 
   BlockCount physicalBlocks = physicalSize / VDO_BLOCK_SIZE;
 
-  if ((physicalBlocks * VDO_BLOCK_SIZE) != (BlockCount) physicalSize) {
-    errx(1, "physical size must be a multiple of block size %d",
-         VDO_BLOCK_SIZE);
-  }
-
   if (logicalSize == 0) {
-    logicalSize = physicalSize;
+    logicalSize = physicalBlocks * VDO_BLOCK_SIZE;
   }
 
   BlockCount logicalBlocks = logicalSize / VDO_BLOCK_SIZE;
@@ -517,17 +343,38 @@ int main(int argc, char *argv[])
     errx(result, "makeFileLayer failed on '%s'", filename);
   }
 
-  uint64_t indexBytes;
-  result = formatUDS(&udsConfig, filename, &indexBytes);
-  if (result != VDO_SUCCESS) {
-    errx(result, "formatUDS failed on '%s': %s",
-         filename, stringError(result, errorBuffer, sizeof(errorBuffer)));
+  // Check whether there's a VDO on this device already...
+  VDO *vdo;
+  result = loadVDO(layer, false, NULL, &vdo);
+  if (result == VDO_SUCCESS) {
+    if (force) {
+      warnx("Formatting device already containing a valid VDO.");
+    } else {
+      errx(EPERM, "Cannot format device already containing a valid VDO!\n"
+           "If you are sure you want to format this device again, use the\n"
+           "--force option.");
+    }
+    freeVDO(&vdo);
   }
 
-  indexBlocks = indexBytes / VDO_BLOCK_SIZE;
-  if ((indexBlocks * VDO_BLOCK_SIZE) != (BlockCount) indexBytes) {
-    errx(1, "index size must be a multiple of block size %d",
-         VDO_BLOCK_SIZE);
+  IndexConfig indexConfig;
+  result = parseUdsConfigStrings(&configStrings, &indexConfig);
+  if (result != UDS_SUCCESS) {
+    errx(result, "parseUdsConfigStrings failed: %s",
+         stringError(result, errorBuffer, sizeof(errorBuffer)));
+  }
+
+  // Zero out the UDS superblock in case there's already a UDS there.
+  char *zeroBuffer;
+  result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
+                                   "zero buffer", &zeroBuffer);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  result = layer->writer(layer, 1, 1, zeroBuffer, NULL);
+  if (result != VDO_SUCCESS) {
+    return result;
   }
 
   VDOConfig config = {
@@ -544,7 +391,7 @@ int main(int argc, char *argv[])
            filename, logicalBlocks, physicalBlocks, (uint64_t) VDO_BLOCK_SIZE);
   }
 
-  result = formatVDO(&config, indexBlocks, layer);
+  result = formatVDO(&config, &indexConfig, layer);
   if (result != VDO_SUCCESS) {
     errx(result, "formatVDO failed on '%s': %s",
          filename, stringError(result, errorBuffer, sizeof(errorBuffer)));

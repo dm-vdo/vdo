@@ -1,6 +1,6 @@
 # vdo
 
-A set of userspace tools for managing pools deduplicated and/or compressed
+A set of userspace tools for managing pools of deduplicated and/or compressed
 block storage.
 
 ## Background
@@ -76,11 +76,32 @@ project allows interested parties to begin using VDO immediately. The
 technology itself is thoroughly tested, mature, and in production use since
 2014 in its previous proprietary form.
 
+## Building
+
+In order to build the user-level programs, invoke the following command
+from the top directory of this tree:
+
+        make
+
+After building the user-level programs, they may be installed in the
+standard locations by invoking the following command from the top directory
+of this tree, as the root user:
+
+        make install
+
 ## Communication channels
 
 Community feedback, participation and patches are welcome to the
 vdo-devel@redhat.com mailing list -- subscribe
 [here](https://www.redhat.com/mailman/listinfo/vdo-devel).
+
+## Contributing
+
+This project is currently a stepping stone towards integration with the Linux
+kernel. As such, contributions are welcome via a process similar to that for
+Linux kernel development. Patches should be submitted to the
+vdo-devel@redhat.com mailing list, where they will be considered for
+inclusion. This project does not accept pull requests.
 
 ## Licensing
 

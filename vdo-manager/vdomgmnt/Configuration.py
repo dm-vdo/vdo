@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Configuration.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Configuration.py#2 $
 
 """
 from . import ArgumentError, MgmntLogger
@@ -212,29 +212,25 @@ class Configuration(YAMLObject):
     self._dirty = True
 
   ######################################################################
-  def status(self, prefix):
-    """Returns a list of strings representing the status of this object.
-
-    Args:
-      prefix (str): A string to print before every line.
+  def status(self):
+    """Returns a dictionary representing the status of this object.
     """
-    status = [prefix + "Configuration:"]
+    status = {}
 
     st = None
     try:
       st = os.stat(self.filepath)
-      status.append(prefix + "  File: " + self.filepath)
+      status[_("File")] = self.filepath
     except OSError as ex:
       if ex.errno != errno.ENOENT:
         raise
-      status.append(prefix + _("  File: does not exist"))
+      status[_("File")] = _("does not exist")
 
     if st is None:
-      status.append(prefix + _("  Last modified: not available"))
+      status[_("Last modified")] = _("not available")
     else:
-      status.append(prefix + _("  Last modified: ") +
-                    time.strftime('%Y-%m-%d %H:%M:%S',
-                                  time.localtime(st[ST_MTIME])))
+      status[_("Last modified")] = time.strftime('%Y-%m-%d %H:%M:%S',
+                                                 time.localtime(st[ST_MTIME]))
 
     return status
 

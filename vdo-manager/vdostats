@@ -22,9 +22,12 @@
 """
   vdoStats - Report statistics from an Albireo VDO.
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdoStats#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdoStats#2 $
 """
 
+from __future__ import print_function
+
+import errno
 import gettext
 import locale
 import os
@@ -80,13 +83,15 @@ def enumerateDevices():
 
   :return: A list of VDO device names
   """
+  names = []
   try:
-    lines = runCommand(["dmsetup", "ls", "--target", "dedupe"]).split("\n")
-    names = [line.split()[0] for line in lines if len(line) > 0]
-    paths = ["/dev/mapper/" + name for name in names]
-    return filter(os.path.exists, paths)
+    names = [name for name in runCommand(["vdo", "list"]).splitlines()
+              if len(name) > 0]
+    paths = [os.path.sep.join(["", "dev", "mapper", name]) for name in names]
+    names = filter(os.path.exists, paths)
   except CommandError as e:
-    print >> sys.stderr, _("Error enumerating VDO devices: {0}".format(e))
+    print(_("Error enumerating VDO devices: {0}".format(e)), file = sys.stderr)
+  return names
 
 def getDeviceStats(devices, assays):
   """
@@ -95,14 +100,47 @@ def getDeviceStats(devices, assays):
   :param devices:  A list of devices to sample. If empty, all VDOs will
                    be sampled.
   :param assays:   The types of samples to take for each device
+
+  :return:  A tuple whose first entry is the Samples and whose second entry
+            is the exit status to use if no subsequent error occurs.
   """
+  exitStatus = 0
   if not devices:
     mustBeVDO = False
     devices = enumerateDevices()
   else:
     mustBeVDO = True
+    # Filter out any specified devices that do not exist.
+    #
+    # Any specified device that passes os.path.exists is passed through.
+    # If it fails os.path.exists and is not a full path it is checked
+    # against being an entry in either /dev/mapper or /proc/vdo.
+    # If either of those exists the original device is passed through
+    # unchanged.
+    existingPaths = []
+    for device in devices:
+      if os.path.exists(device):
+        existingPaths.append(device)
+      else:
+        name = device
+        exists = False
+        if (not os.path.isabs(device)):
+          exists = os.path.exists(os.path.sep.join(["", "dev", "mapper",
+                                                    device]))
+          if (not exists):
+            device = os.path.sep.join(["", "proc", "vdo", device])
 
-  return Samples.assayDevices(assays, devices, mustBeVDO)
+        if ((not exists) and (not os.path.exists(device))):
+          print("'{0}': {1}".format(name, os.strerror(errno.ENOENT)),
+                file = sys.stderr)
+          exitStatus = 1
+        else:
+          existingPaths.append(name)
+    devices = existingPaths
+
+  if len(devices) > 0:
+    return (Samples.assayDevices(assays, devices, mustBeVDO), exitStatus)
+  return (None, exitStatus)
 
 def formatSize(size, options):
   """
@@ -203,18 +241,21 @@ def main():
   else:
     statsTypes = [VDOStatistics()]
 
+  exitStatus = 0
   try:
-    stats = getDeviceStats(devices, statsTypes)
+    (stats, exitStatus) = getDeviceStats(devices, statsTypes)
     if not stats:
-      sys.exit(0)
+      return exitStatus
   except Exception as e:
-    print >> sys.stderr, e
-    sys.exit(1)
+    print(e, file = sys.stderr)
+    return 1
 
   if options.verbose:
     printYAML(stats, dedupeFormatter)
   else:
     printDF(stats, options)
 
+  return exitStatus
+
 if __name__ == "__main__":
-  main()
+  sys.exit(main())

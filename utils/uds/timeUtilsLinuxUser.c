@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/timeUtilsLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/timeUtilsLinuxUser.c#5 $
  */
 
 #include "timeUtils.h"
@@ -37,7 +37,7 @@ static const struct timespec invalidTime = {
 static const long BILLION = 1000 * 1000 * 1000;
 
 /*****************************************************************************/
-inline bool isValidTime(AbsTime time)
+bool isValidTime(AbsTime time)
 {
   if (time.tv_nsec < 0 || time.tv_nsec >= BILLION) {
     return false;
@@ -46,7 +46,7 @@ inline bool isValidTime(AbsTime time)
 }
 
 /*****************************************************************************/
-inline AbsTime currentTime(ClockType clock)
+AbsTime currentTime(ClockType clock)
 {
   struct timespec ts;
   if (clock_gettime(clock, &ts) != 0) {

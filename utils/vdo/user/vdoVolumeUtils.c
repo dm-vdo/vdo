@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoVolumeUtils.c#1 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoVolumeUtils.c#2 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -133,9 +133,11 @@ int loadSlabSummarySync(VDO *vdo, SlabSummary **summaryPtr)
                            NULL, &summary);
   if (result != VDO_SUCCESS) {
     warnx("Could not create in-memory slab summary");
-    return result;
   }
   freeThreadConfig(&threadConfig);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
 
   PhysicalBlockNumber origin
     = getFixedLayoutPartitionOffset(slabSummaryPartition);

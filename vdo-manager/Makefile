@@ -16,11 +16,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/vdo-manager/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/vdo-manager/Makefile#2 $
 
 SUBDIRS=man statistics utils vdomgmnt
 
 PROGS=vdo vdostats
+
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+bindir ?= /usr/bin
+INSTALLDIR=$(DESTDIR)$(bindir)
 
 .PHONY: all clean install
 all clean:
@@ -30,12 +35,12 @@ all clean:
 	done
 
 install:
-	install -d $(DESTDIR)$(bindir)
-	set -e;					\
-	for p in $(PROGS); do			\
-	  install $$p $(DESTDIR)$(bindir);	\
+	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
+	set -e;						\
+	for p in $(PROGS); do				\
+	  $(INSTALL) $(INSTALLOWNER) $$p $(INSTALLDIR);	\
 	done
-	set -e;					\
-	for d in $(SUBDIRS); do			\
-	  $(MAKE) -C $$d install || exit 1;	\
+	set -e;						\
+	for d in $(SUBDIRS); do				\
+	  $(MAKE) -C $$d install || exit 1;		\
 	done

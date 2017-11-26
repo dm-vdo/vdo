@@ -20,12 +20,13 @@
 """
   KernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/KernelModuleService.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/KernelModuleService.py#2 $
 
 """
 from . import Defaults, Service
 from utils import Command, CommandError, runCommand
 import string
+import yaml
 
 
 class KernelModuleService(Service):
@@ -51,14 +52,12 @@ class KernelModuleService(Service):
     runCommand(['modprobe', self._name])
 
   ######################################################################
-  def status(self, prefix):
-    """Returns a list of strings representing the status of this object.
+  def status(self):
+    """Returns a dictionary representing the status of this object.
     """
-    return [prefix + _("Kernel module:"),
-            prefix + _("  Name: ") + self._name,
-            prefix + _("  Loaded: ") + str(self.running(False)),
-            prefix + _("  Version information: "),
-            prefix +   "    " + self.version()]
+    return { _("Name") : self._name,
+             _("Loaded") : self.running(False),
+             _("Version information") : yaml.safe_load(self.version()) }
 
   ######################################################################
   def stop(self):

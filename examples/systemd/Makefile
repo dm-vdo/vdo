@@ -16,10 +16,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/systemd/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/systemd/Makefile#2 $
 
 SERVICEFILE=vdo.service
 EXAMPLEFILES=VDO.mount.example
+
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+unitdir ?= /lib/systemd/system
+defaultdocdir ?= /usr/share/doc
+name ?= vdo
 
 INSTALLDIR=$(DESTDIR)/$(unitdir)
 EXAMPLESDIR=$(DESTDIR)/$(defaultdocdir)/$(name)/examples/systemd
@@ -30,9 +36,9 @@ all:;
 clean:;
 
 install:
-	install -d $(INSTALLDIR)
-	install $(SERVICEFILE) $(INSTALLDIR)
-	install -d $(EXAMPLESDIR)
+	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -m 644 $(SERVICEFILE) $(INSTALLDIR)
+	$(INSTALL) -d $(EXAMPLESDIR)
 	for i in $(EXAMPLEFILES); do \
-	  install $$i $(EXAMPLESDIR); \
+	  $(INSTALL) $(INSTALLOWNER) -m 644 $$i $(EXAMPLESDIR); \
 	done

@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Defaults.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Defaults.py#4 $
 
 """
 from . import Constants, MgmntLogger, MgmntUtils, SizeString
@@ -61,6 +61,7 @@ class Defaults(object):
   blockMapCacheSize = SizeString("128M")
   blockMapCacheSizeMaxPlusOne = SizeString("16T")
   blockMapCacheSizeMin = SizeString("128M")
+  blockMapCacheSizeMinPerLogicalThread = 16 * MgmntUtils.MiB
   blockMapPeriod = 16380
   blockMapPeriodMax = 16380
   blockMapPeriodMin = 1
@@ -77,15 +78,18 @@ class Defaults(object):
   hashZoneThreadsMin = 0
   indexMem = 0.25
   log = MgmntLogger.getLogger(MgmntLogger.myname + '.Defaults')
+  logicalSizeMax = SizeString("4096T")
   logicalThreads = 1
   logicalThreadsMax = 100
   logicalThreadsMin = 0
   mdRaid5Mode = 'on'
   physicalThreads = 1
-  physicalThreadsMax = 100
+  physicalThreadsMax = 16
   physicalThreadsMin = 0
   readCache = Constants.disabled
   readCacheSize = SizeString("0")
+  readCacheSizeMaxPlusOne = SizeString("16T")
+  readCacheSizeMin = SizeString("0")
   slabSize = SizeString("2G")
   slabSizeMax = SizeString("32G")
   slabSizeMin = SizeString("128M")
@@ -132,6 +136,24 @@ class Defaults(object):
 
   ######################################################################
   @staticmethod
+  def checkBlockMapPeriod(unused_option, opt, value):
+    """Checks that an option is an acceptable value for the block map period.
+    The number must be at least 1 and no bigger than 16380.
+
+    Arguments:
+      opt (str): Name of the option being checked.
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The value converted to an int.
+    Raises:
+      OptionValueError
+    """
+    return Defaults._rangeCheck(Defaults.blockMapPeriodMin,
+                                Defaults.blockMapPeriodMax,
+                                opt, value)
+
+  ######################################################################
+  @staticmethod
   def checkIndexmem(unused_option, opt, value):
     """Checks that an option is a legitimate index memory setting.
 
@@ -146,7 +168,9 @@ class Defaults(object):
     try:
       if value == '0.25' or value == '0.5' or value == '0.75':
         return value
-      int(value)
+      newValue = int(value)
+      if newValue < 1:
+        raise ValueError(_("incorrect value \"{value}\"").format(value=value))
       return value
     except ValueError:
       pass
@@ -175,6 +199,30 @@ class Defaults(object):
         _("option {0!s}: must be at least {1} and less than {2}")
           .format(opt, Defaults.blockMapCacheSizeMin,
                   Defaults.blockMapCacheSizeMaxPlusOne))
+    return ss
+
+  ######################################################################
+  @staticmethod
+  def checkReadCachesz(unused_option, opt, value):
+    """Checks that an option is an acceptable value for the read cache size.
+    Read cache sizes will be rounded to a multiple of 4k, and must be less
+    than 16T.
+
+    Arguments:
+      opt (str): Name of the option being checked.
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The value converted to a SizeString.
+    Raises:
+      OptionValueError
+    """
+    ss = Defaults.checkSiSize(unused_option, opt, value)
+    if (not (Defaults.readCacheSizeMin
+             <= ss < Defaults.readCacheSizeMaxPlusOne)):
+      raise optparse.OptionValueError(
+        _("option {0!s}: must be at least {1} and less than {2}")
+          .format(opt, Defaults.readCacheSizeMin,
+                  Defaults.readCacheSizeMaxPlusOne))
     return ss
 
   ######################################################################
@@ -217,8 +265,8 @@ class Defaults(object):
 
   ######################################################################
   @staticmethod
-  def checkPow2(unused_option, opt, value):
-    """Checks that an option is an integer power of two.
+  def checkPhysicalThreadCount(unused_option, opt, value):
+    """Checks that an option is a valid "physical" thread count.
 
     Arguments:
       opt (str): Name of the option being checked.
@@ -227,15 +275,29 @@ class Defaults(object):
       The value converted to an integer.
     Raises:
       OptionValueError
+
     """
-    try:
-      n = int(value)
-      if MgmntUtils.isPowerOfTwo(n):
-        return n
-    except ValueError:
-      pass
-    raise optparse.OptionValueError(
-      _("option {0!s}: must be an integer power of 2").format(opt))
+    return Defaults._rangeCheck(Defaults.physicalThreadsMin,
+                                Defaults.physicalThreadsMax,
+                                opt, value)
+
+  ######################################################################
+  @staticmethod
+  def checkRotationInterval(unused_option, opt, value):
+    """Checks that an option is a valid bio rotation interval.
+
+    Arguments:
+      opt (str): Name of the option being checked.
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The value converted to an integer.
+    Raises:
+      OptionValueError
+
+    """
+    return Defaults._rangeCheck(Defaults.bioRotationIntervalMin,
+                                Defaults.bioRotationIntervalMax,
+                                opt, value)
 
   ######################################################################
   @staticmethod
@@ -314,6 +376,40 @@ class Defaults(object):
 
   ######################################################################
   @staticmethod
+  def checkThreadCount0_100(unused_option, opt, value):
+    """Checks that an option is a valid thread count, for worker thread
+    types requiring between 0 and 100 threads, inclusive.
+
+    Arguments:
+      opt (str): Name of the option being checked.
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The value converted to an integer.
+    Raises:
+      OptionValueError
+
+    """
+    return Defaults._rangeCheck(0, 100, opt, value)
+
+  ######################################################################
+  @staticmethod
+  def checkThreadCount1_100(unused_option, opt, value):
+    """Checks that an option is a valid thread count, for worker thread
+    types requiring between 1 and 100 threads, inclusive.
+
+    Arguments:
+      opt (str): Name of the option being checked.
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The value converted to an integer.
+    Raises:
+      OptionValueError
+
+    """
+    return Defaults._rangeCheck(1, 100, opt, value)
+
+  ######################################################################
+  @staticmethod
   def checkVDOName(unused_option, opt, value):
     """Checks that an option is a valid VDO device name.
 
@@ -355,3 +451,30 @@ class Defaults(object):
   ######################################################################
   def __init__(self):
     pass
+
+  ######################################################################
+  @staticmethod
+  def _rangeCheck(minValue, maxValue, opt, value):
+    """Checks that an option is a valid integer within a desired range.
+
+    Arguments:
+      minValue (int): The minimum acceptable value.
+      maxValue (int): The maximum acceptable value.
+      opt (str): Name of the option being checked.
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The value converted to an integer.
+    Raises:
+      OptionValueError
+
+    """
+    try:
+      number = int(value)
+      if minValue <= number <= maxValue:
+        return number
+    except ValueError:
+      pass
+    raise optparse.OptionValueError(
+      _("option {0!s}: must be an integer at least {1} and less than"
+        " or equal to {2}")
+      .format(opt, minValue, maxValue))

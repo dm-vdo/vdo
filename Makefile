@@ -16,11 +16,15 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/Makefile#2 $
+
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+defaultdocdir ?= /usr/share/doc
+name ?= vdo
+INSTALLDIR=$(DESTDIR)/$(defaultdocdir)/$(name)
 
 SUBDIRS = examples utils vdo-manager
-
-INSTALLDIR=$(DESTDIR)/$(defaultdocdir)/$(name)
 
 .PHONY: all clean install
 all clean:
@@ -29,8 +33,8 @@ all clean:
 	done
 
 install:
-	install -d $(INSTALLDIR)
-	install COPYING $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -m 644 COPYING $(INSTALLDIR)
 	for d in $(SUBDIRS); do         \
 	  $(MAKE) -C $$d $@ || exit 1; \
 	done
