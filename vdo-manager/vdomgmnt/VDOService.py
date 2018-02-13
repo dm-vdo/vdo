@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#5 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#17 $
 
 """
 
@@ -31,7 +31,7 @@ from . import MgmntLogger, MgmntUtils
 from . import Service, ServiceError, ServiceStateError
 from . import SizeString
 from . import VDOKernelModuleService
-from utils import Command, runCommand
+from utils import Command, CommandError, runCommand
 from utils import Transaction, transactional
 
 import functools
@@ -113,7 +113,7 @@ class VDOService(Service):
     slabSize (SizeString): The size increment by which a VDO is grown. Using
       a smaller size constrains the maximum physical size that can be
       accomodated. Must be a power of two between 128M and 32G.
-    writePolicy (str): sync or async.
+    writePolicy (str): sync, async or auto.
   """
   log = MgmntLogger.getLogger(MgmntLogger.myname + '.Service.VDOService')
   yaml_tag = u"!VDOService"
@@ -154,6 +154,7 @@ class VDOService(Service):
   # hence the mapping.
   modifiableOptions = {
     'blockMapCacheSize'     : 'blockMapCacheSize',
+    'blockMapPeriod'        : 'blockMapPeriod',
     'readCache'             : 'readCache',
     'readCacheSize'         : 'readCacheSize',
     'vdoAckThreads'         : 'ackThreads',
@@ -163,7 +164,6 @@ class VDOService(Service):
     'vdoHashZoneThreads'    : 'hashZoneThreads',
     'vdoLogicalThreads'     : 'logicalThreads',
     'vdoPhysicalThreads'    : 'physicalThreads',
-    'writePolicy'           : 'writePolicy',
   }
 
   # States in the process of constructing a vdo.
@@ -198,7 +198,7 @@ class VDOService(Service):
       args  - arguments passed from the user
     """
     for option in cls.fixedOptions:
-      if getattr(args, option) is not None:
+      if getattr(args, option, None) is not None:
         msg = _("Cannot change option {0} after VDO creation").format(
                   option)
         raise ServiceError(msg)
@@ -241,7 +241,7 @@ class VDOService(Service):
 
   ######################################################################
   @transactional
-  def create(self):
+  def create(self, force = False):
     """Creates and starts a VDO target."""
     self.log.announce(_("Creating VDO {0}").format(self.getName()))
     self.log.debug("confFile is {0}".format(self.config.filepath))
@@ -251,6 +251,39 @@ class VDOService(Service):
     if self.isConstructed:
       msg = _("VDO volume {0} already exists").format(self.getName())
       raise VDOServiceExistsError(msg)
+
+    # Check that we have enough kernel memory to at least create the index.
+    self._validateAvailableMemory(self.indexMemory);
+
+    # Check that the hash zone, logical and physical threads are consistent.
+    self._validateModifiableThreadCounts(self.hashZoneThreads,
+                                         self.logicalThreads,
+                                         self.physicalThreads)
+
+    # Perform a verification that the storage device doesn't already
+    # have something on it. We want to perform the same checks that
+    # LVM does (which doesn't yet include checking for an
+    # already-formatted VDO volume, but vdoformat does that), so we do
+    # it by...actually making LVM do it for us!
+    if not force:
+      try:
+        runCommand(['pvcreate', '-qq', '--test', self.device])
+      except CommandError as e:
+        # Messages from pvcreate aren't localized, so we can look at
+        # the message generated and pick it apart. This will need
+        # fixing if the message format changes or it gets localized.
+        lines = e.getStandardError().splitlines()
+        if ((len(lines) > 1)
+            and (re.match(r"\s*TEST MODE", lines[0]) is not None)):
+          detectionMatch = re.match(r"WARNING: (.* detected .*)\.\s+Wipe it\?",
+                                    lines[1])
+          if detectionMatch is not None:
+            raise VDOServiceError('{0}; use --force to override'
+                                  .format(detectionMatch.group(1)))
+          # Skip the TEST MODE message and use the next one.
+          e.setMessage(lines[1])
+        # No TEST MODE message, just keep going.
+        raise e
 
     # Make certain the kernel module is installed.
     self._installKernelModule(self.vdoLogLevel)
@@ -265,7 +298,7 @@ class VDOService(Service):
     transaction.addUndoStage(functools.partial(self.config.removeVdo,
                                                self.getName()))
 
-    self._constructVdoFormat()
+    self._constructVdoFormat(force)
     self._constructServiceStart()
 
     # The create is done.
@@ -327,9 +360,13 @@ class VDOService(Service):
       raise ServiceError(msg)
 
     newLogicalSize.roundToBlock()
-    if newLogicalSize <= self.logicalSize:
+    if newLogicalSize < self.logicalSize:
       msg = _("Can't shrink a VDO volume (old size {0})").format(
               self.logicalSize)
+      raise ServiceError(msg)
+    elif newLogicalSize == self.logicalSize:
+      msg = _("Can't grow a VDO volume by less than {0} bytes").format(
+              Constants.VDO_BLOCK_SIZE)
       raise ServiceError(msg)
 
     # Do the grow.
@@ -458,8 +495,8 @@ class VDOService(Service):
 
     self.config.removeVdo(self.getName())
 
-    # We delete the metadata after we remove the entry from the config 
-    # file because if we do it before and the removal from the config 
+    # We delete the metadata after we remove the entry from the config
+    # file because if we do it before and the removal from the config
     # fails, we will end up with a valid looking entry in the config
     # that has no valid metadata.
     self._clearMetadata()
@@ -494,6 +531,9 @@ class VDOService(Service):
           self.getName()))
       return
 
+    # Check that we have enough kernel memory to at least create the index.
+    self._validateAvailableMemory(self.indexMemory);
+
     self._installKernelModule()
     self._checkConfiguration()
 
@@ -505,7 +545,7 @@ class VDOService(Service):
           self.log.error(_("Device {0} not read-only").format(self.getName()))
           raise
 
-      runCommand(["dmsetup", "create", self._name,
+      runCommand(["dmsetup", "create", self._name, "--uuid", self._getUUID(),
                   "--table", self._generateDeviceMapperTable()])
       if not self.enableDeduplication:
         try:
@@ -559,7 +599,7 @@ class VDOService(Service):
     status[self.vdoLogicalThreadsKey] = self.logicalThreads
     status[self.vdoPhysicalThreadsKey] = self.physicalThreads
     status[_("Slab size")] = str(self.slabSize)
-    status[self.vdoWritePolicyKey] = self.writePolicy
+    status[_("Configured write policy")] = self.writePolicy
     status[_("Index checkpoint frequency")] = self.indexCfreq
     status[_("Index memory setting")] = self.indexMemory
     status[_("Index parallel factor")] = self.indexThreads
@@ -744,12 +784,24 @@ class VDOService(Service):
 
     Argument:
       args  - arguments passed from the user
+
+    Raises:
+      ArgumentError
     """
     self._handlePreviousOperationFailure()
 
+    # Check that any modification to hash zone, logical and physical threads
+    # maintain consistency.
+    self._validateModifiableThreadCounts(getattr(args, "vdoHashZoneThreads",
+                                                 self.hashZoneThreads),
+                                         getattr(args, "vdoLogicalThreads",
+                                                 self.logicalThreads),
+                                         getattr(args, "vdoPhysicalThreads",
+                                                 self.physicalThreads))
+
     modified = False
     for option in self.modifiableOptions:
-      value = getattr(args, option)
+      value = getattr(args, option, None)
       if value is not None:
         setattr(self, self.modifiableOptions[option], value)
         modified = True
@@ -1023,9 +1075,20 @@ class VDOService(Service):
   ######################################################################
   def _clearMetadata(self):
     """Clear the VDO metadata from the storage device"""
-    command = ["dd", 
-               "if=/dev/zero", 
+    try:
+      mode = os.stat(self.device).st_mode
+      if not stat.S_ISBLK(mode):
+        self.log.debug("Not clearing {devicePath}, not a block device".format(
+          devicePath=self.device))
+        return
+    except OSError as ex:
+        self.log.debug("Not clearing {devicePath}, cannot stat: {ex}".format(
+          devicePath=self.device, ex=ex))
+        return
+    command = ["dd",
+               "if=/dev/zero",
                "of={devicePath}".format(devicePath=self.device),
+               "oflag=direct",
                "bs=4096",
                "count=1"]
     runCommand(command)
@@ -1141,12 +1204,12 @@ class VDOService(Service):
     transaction.addUndoStage(self.stop)
 
   ######################################################################
-  def _constructVdoFormat(self):
+  def _constructVdoFormat(self, force = False):
     self.log.debug("construction - formatting logical volume; vdo {0}"
                     .format(self.getName()))
 
     transaction = Transaction.transaction()
-    self._formatTarget()
+    self._formatTarget(force)
     transaction.addUndoStage(self.remove)
 
     vdoConfig = self._getConfigFromVDO()
@@ -1176,7 +1239,7 @@ class VDOService(Service):
     runCommand(['vdoforcerebuild', self.device])
 
   ######################################################################
-  def _formatTarget(self):
+  def _formatTarget(self, force):
     """Formats the VDO target."""
     commandLine = ['vdoformat']
     commandLine.append("--uds-checkpoint-frequency=" + str(self.indexCfreq))
@@ -1197,6 +1260,8 @@ class VDOService(Service):
       commandLine.append("--physical-size=" + self.physicalSize.asLvmText())
     if self.slabSize != Defaults.slabSize:
       commandLine.append("--slab-bits=" + str(self._computeSlabBits()))
+    if force:
+      commandLine.append("--force")
     commandLine.append(self.device)
     runCommand(commandLine)
 
@@ -1215,7 +1280,7 @@ class VDOService(Service):
                                   "hash=" + str(self.hashZoneThreads),
                                   "logical=" + str(self.logicalThreads),
                                   "physical=" + str(self.physicalThreads)])
-    vdoConf = " ".join(["0", str(numSectors), "dedupe",
+    vdoConf = " ".join(["0", str(numSectors), Defaults.vdoTargetName,
                         self.device,
                         str(self.logicalBlockSize),
                         Constants.enableString(self.enableReadCache),
@@ -1270,8 +1335,10 @@ class VDOService(Service):
     Raises:
       VDOServicePreviousOperationError
     """
-    msg = _("VDO volume {0} previous operation ({1}) is incomplete").format(
-            self.getName(), operation)
+    msg = _("VDO volume {0} previous operation ({1}) is incomplete{2}").format(
+            self.getName(), operation,
+            "; recover by performing 'remove --force'"
+              if operation == "create" else "")
     raise VDOServicePreviousOperationError(msg)
 
   ######################################################################
@@ -1353,6 +1420,14 @@ class VDOService(Service):
     config = yaml.safe_load(runCommand(["vdodumpconfig",
                                         self.device]))
     return config["VDOConfig"]
+
+  ######################################################################
+  def _getUUID(self):
+    """Returns the uuid as reported from the actual vdo storage.
+    """
+    config = yaml.safe_load(runCommand(["vdodumpconfig",
+                                        self.device]))
+    return "VDO-" + config["UUID"]
 
   ######################################################################
   def _getDeduplicationStatus(self):
@@ -1579,3 +1654,61 @@ class VDOService(Service):
         "Starting" if enable else "Stopping", self.getName()))
     runCommand(["dmsetup", "message", self.getName(), "0",
                 "compression", "on" if enable else "off"])
+
+  ######################################################################
+  def _validateAvailableMemory(self, indexMemory):
+    """Validates whether there is likely enough kernel memory to at least 
+    create the index. If there is an error getting the info, don't 
+    fail the create, just let the real check be done in vdoformat.
+
+    Arguments:
+      indexMemory - the amount of memory requested or default.
+
+    Raises:
+      ArgumentError
+    """
+    memoryNeeded = SizeString("{0}g".format(indexMemory))
+    memoryAvailable = None
+    try:
+      result = runCommand(['grep', 'MemAvailable', '/proc/meminfo'])
+      for line in result.splitlines():
+        memory = re.match(r"MemAvailable:\s*(\d+)", line)
+        if memory is not None:
+          available = memory.group(1)
+          memoryAvailable = SizeString("{0}k".format(available))
+    except Exception:
+      pass
+
+    if memoryAvailable is None:
+      self.log.info("Unable to validate available memory")
+      return;
+
+    if (memoryNeeded.toBytes() >= memoryAvailable.toBytes()):
+      raise ArgumentError(_("Not enough available memory in system"
+                            " for index requirement of {needed}".format(
+                              needed = memoryNeeded)));
+
+  ######################################################################
+  def _validateModifiableThreadCounts(self, hashZone, logical, physical):
+    """Validates that the hash zone, logical and physical thread counts
+    are consistent (all zero or all non-zero).
+
+    Arguments:
+      hashZone  - hash zone thread count to use, may be None
+      logical   - logical thread count to use, may be None
+      physical  - physical thread count to use, may be None
+
+    Raises:
+      ArgumentError
+    """
+    if hashZone is None:
+      hashZone = self.hashZoneThreads
+    if logical is None:
+      logical = self.logicalThreads
+    if physical is None:
+      physical = self.physicalThreads
+
+    if (((hashZone == 0) or (logical == 0) or (physical == 0))
+        and (not ((hashZone == 0) and (logical == 0) and (physical == 0)))):
+      raise ArgumentError(_("hash zone, logical and physical threads must"
+                            " either all be zero or all be non-zero"))

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.c#4 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.c#5 $
  */
 
 #include "fileUtils.h"
@@ -27,7 +27,6 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#include "directoryReader.h"
 #include "errors.h"
 #include "logger.h"
 #include "memoryAlloc.h"
@@ -108,51 +107,6 @@ int fileExists(const char *path, bool *exists)
 
   return result;
 }
-
-/**********************************************************************/
-int isDirectory(const char *path, bool *directory)
-{
-  struct stat statBuf;
-  int result = loggingStatMissingOk(path, &statBuf, __func__);
-  if (result == UDS_SUCCESS) {
-    *directory = (bool) S_ISDIR(statBuf.st_mode);
-  }
-  return result;
-}
-
-/**********************************************************************/
-static bool emptyDirProcessor(struct dirent *entry     __attribute__((unused)),
-                              const char    *directory __attribute__((unused)),
-                              void          *context,
-                              int           *result)
-{
-  *((bool *) context) = false;
-  *result = UDS_SUCCESS;
-  return true;
-}
-
-/**********************************************************************/
-int isEmptyDirectory(const char *path, bool *isEmptyPtr)
-{
-  if (path == NULL) {
-    return logWarningWithStringError(UDS_INVALID_ARGUMENT,
-                                     "no directory");
-  }
-
-  if (isEmptyPtr == NULL) {
-    return logWarningWithStringError(UDS_INVALID_ARGUMENT,
-                                     "no result pointer");
-  }
-
-  bool isEmpty = true;
-  int result = readDirectory(path, "possibly empty", emptyDirProcessor,
-                             &isEmpty);
-  if (result == UDS_SUCCESS) {
-    *isEmptyPtr = isEmpty;
-  }
-  return result;
-}
-
 /**********************************************************************/
 int openFile(const char *path, FileAccess access, int *fd)
 {
@@ -445,59 +399,6 @@ int removeFile(const char *fileName)
 }
 
 /**********************************************************************/
-static bool fileDeleter(struct dirent *entry,
-                        const char    *directory,
-                        void          *context,
-                        int           *result)
-{
-  char pathbuf[PATH_MAX];
-  int rc = fixedSprintf(__func__, pathbuf, sizeof(pathbuf),
-                        UDS_INDEX_PATH_TOO_LONG,
-                        "%s/%s", directory, entry->d_name);
-
-  if (rc != UDS_SUCCESS) {
-    *result = rc;
-    return true;
-  }
-
-  rc = unlink(pathbuf);
-  if (rc == 0 || errno == ENOENT) {
-    *result = UDS_SUCCESS;
-  } else if (errno == EISDIR) {
-    *result = removeDirectory(pathbuf, context);
-    if (*result != UDS_SUCCESS) {
-      return true;
-    }
-  } else {
-    *result = logErrorWithStringError(errno, "cannot remove %s", pathbuf);
-    return true;
-  }
-  return false;
-}
-
-/**********************************************************************/
-int removeDirectory(const char *directory, const char *what)
-{
-  bool isDir = false;
-  int result = isDirectory(directory, &isDir);
-  if (result == ENOENT) {
-    return UDS_SUCCESS;
-  }
-  // let readDirectory process the error code
-  result = readDirectory(directory, what, fileDeleter, NULL);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  if (rmdir(directory) < 0) {
-    return logErrorWithStringError(errno, "cannot remove %s directory %s",
-                                   (what != NULL) ? what : "the", directory);
-  }
-
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
 bool fileNameMatch(const char *pattern, const char *string, int flags)
 {
   int result = fnmatch(pattern, string, flags);
@@ -657,28 +558,6 @@ int makeDirectory(const char *path,
   return logWithStringError(((errno == EEXIST) ? LOG_WARNING : LOG_ERR),
                             errno, "%s failed in %s making %s directory %s",
                             __func__, context, directoryType, path);
-}
-
-/**********************************************************************/
-int openDirectory(const char  *name,
-                  const char  *directoryType,
-                  const char  *context,
-                  DIR        **directoryPtr)
-{
-  DIR *directory = opendir(name);
-  if (directory == NULL) {
-    return logErrorWithStringError(errno, "%s failed in %s on %s directory %s",
-                                   __func__, context, directoryType, name);
-  }
-
-  *directoryPtr = directory;
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-int closeDirectory(DIR* dir, const char *context)
-{
-  return checkSystemCall(closedir(dir), __func__, context);
 }
 
 /**********************************************************************/

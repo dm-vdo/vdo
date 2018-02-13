@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   MgmntLogger - VDO manager logging
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/MgmntLogger.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/MgmntLogger.py#2 $
 
 """
 from utils import Logger
@@ -32,7 +32,6 @@ class MgmntLogger(Logger):
   # Overridden methods
   ######################################################################
   @classmethod
-  def configure(cls, name, options):
-    options.debug = (options.debug
-                      or (int(os.environ.get('VDO_DEBUG', '0')) > 0))
-    super(MgmntLogger, cls).configure(name, options)
+  def configure(cls, name, logfile = None, debug = False):
+    debug = debug or (int(os.environ.get('VDO_DEBUG', '0')) > 0)
+    super(MgmntLogger, cls).configure(name, logfile, debug)

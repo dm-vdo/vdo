@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/parseUtils.c#3 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/parseUtils.c#4 $
  */
 
 #include "parseUtils.h"
@@ -100,5 +100,64 @@ int parseSize(const char *arg, bool lvmMode, uint64_t *sizePtr)
   }
 
   *sizePtr = actualSize;
+  return VDO_SUCCESS;
+}
+
+static int parseMem(char *string, uint32_t *sizePtr)
+{
+  UdsMemoryConfigSize mem;
+  if (strcmp(string, "0.25") == 0) {
+    mem = UDS_MEMORY_CONFIG_256MB;
+  } else if (strcmp(string, "0.5") == 0) {
+    mem = UDS_MEMORY_CONFIG_512MB;
+  } else if (strcmp(string, "0.75") == 0) {
+    mem = UDS_MEMORY_CONFIG_768MB;
+  } else {
+    unsigned long number;
+    if (stringToUnsignedLong(string, &number) != UDS_SUCCESS) {
+      return -EINVAL;
+    }
+    mem = number;
+    if (mem != number) {
+      return -EINVAL;
+    }
+  }
+  *sizePtr = mem;
+  return UDS_SUCCESS;
+}
+
+/**********************************************************************/
+int parseIndexConfig(UdsConfigStrings *configStrings,
+                     IndexConfig      *configPtr)
+{
+  IndexConfig config;
+  memset(&config, 0, sizeof(config));
+
+  config.mem = UDS_MEMORY_CONFIG_256MB;
+  if (configStrings->memorySize != NULL) {
+    int result = parseMem(configStrings->memorySize, &config.mem);
+    if (result != UDS_SUCCESS) {
+      return result;
+    }
+  }
+
+  if (configStrings->checkpointFrequency != NULL) {
+    unsigned long number;
+    int result = stringToUnsignedLong(configStrings->checkpointFrequency,
+                                      &number);
+    if (result != UDS_SUCCESS) {
+      return result;
+    }
+    if (number != (unsigned int) number) {
+      return UDS_OUT_OF_RANGE;
+    }
+    config.checkpointFrequency = number;
+  }
+
+  if (configStrings->sparse != NULL) {
+    config.sparse = (strcmp(configStrings->sparse, "0") == 0);
+  }
+
+  *configPtr = config;
   return VDO_SUCCESS;
 }

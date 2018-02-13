@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/indexLayoutLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/indexLayoutLinuxUser.c#5 $
  */
 
 #include "errors.h"
@@ -25,12 +25,8 @@
 #include "indexLayoutParser.h"
 #include "logger.h"
 #include "memoryAlloc.h"
-#include "multiFileLayout.h"
 #include "singleFileLayout.h"
 #include "uds.h"
-#ifdef TEST_INTERNAL
-#include "doryIORegion.h"
-#endif /* TEST_INTERNAL */
 
 /*****************************************************************************/
 int makeIndexLayout(const char              *name,
@@ -39,13 +35,11 @@ int makeIndexLayout(const char              *name,
                     IndexLayout            **layoutPtr)
 {
   char     *file   = NULL;
-  char     *dir    = NULL;
   uint64_t  offset = 0;
   uint64_t  size   = 0;
 
   LayoutParameter parameterTable[] = {
-    { "directory", LP_STRING | LP_DEFAULT, { .str = &dir    } },
-    { "file",      LP_STRING,              { .str = &file   } },
+    { "file",      LP_STRING|LP_DEFAULT,   { .str = &file   } },
     { "size",      LP_UINT64,              { .num = &size   } },
     { "offset",    LP_UINT64,              { .num = &offset } },
   };
@@ -59,23 +53,10 @@ int makeIndexLayout(const char              *name,
     return result;
   }
 
-  // note dir and file will be set to memory owned by params
+  // note file will be set to memory owned by params
   //
   result = parseLayoutString(params, parameterTable, numParameters);
   if (result != UDS_SUCCESS) {
-    FREE(params);
-    return result;
-  }
-
-  if (dir && file) {
-    FREE(params);
-    return logErrorWithStringError(UDS_INDEX_NAME_REQUIRED,
-                                   "ambiguous index parameters, "
-                                   "both file and directory supplied");
-  }
-
-  if (dir) {
-    result = makeMultiFileLayout(dir, layoutPtr);
     FREE(params);
     return result;
   }
@@ -85,6 +66,7 @@ int makeIndexLayout(const char              *name,
     return logErrorWithStringError(UDS_INDEX_NAME_REQUIRED,
                                    "no index specified");
   }
+
   if (newLayout && size == 0) {
     result = udsComputeIndexSize(config, 0, &size);
     if (result != UDS_SUCCESS) {
@@ -109,13 +91,6 @@ int makeIndexLayout(const char              *name,
     return result;
   }
 
-#ifdef TEST_INTERNAL
-  result = openDoryRegion(region, &region);
-  if (result != UDS_SUCCESS) {
-    closeIORegion(&region);
-    return result;
-  }
-#endif /* TEST_INTERNAL */
 
   if (newLayout) {
     result = createSingleFileLayout(region, offset, size, config, layoutPtr);

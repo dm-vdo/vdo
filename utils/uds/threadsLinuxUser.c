@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadsLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/threadsLinuxUser.c#4 $
  */
 
 #include "threads.h"
@@ -152,7 +152,6 @@ static void *threadStarter(void *arg)
 int createThread(void      (*threadFunc)(void *),
                  void       *threadData,
                  const char *name,
-                 size_t      stackLimit,
                  pthread_t  *newThread)
 {
   ThreadStartInfo *tsi;
@@ -169,14 +168,6 @@ int createThread(void      (*threadFunc)(void *),
   if (result != UDS_SUCCESS) {
     FREE(tsi);
     return UDS_ENOTHREADS;
-  }
-  if (stackLimit != 0) {
-    result = setThreadStackSize(&attr, stackLimit);
-    if (result != UDS_SUCCESS) {
-      destroyThreadAttr(&attr);
-      FREE(tsi);
-      return UDS_ENOTHREADS;
-    }
   }
   result = pthread_create(newThread, &attr, threadStarter, tsi);
   if (result != 0) {

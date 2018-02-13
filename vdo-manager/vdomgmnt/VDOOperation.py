@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#3 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#6 $
 """
 from . import ArgumentError
 from . import CommandLock
@@ -31,7 +31,7 @@ from . import MgmntLogger
 from . import MgmntUtils
 from . import Service
 from . import VDOKernelModuleService
-from . import VDOService, VDOServicePreviousOperationError
+from . import VDOService, VDOServiceError, VDOServicePreviousOperationError
 from utils import Command, CommandError, runCommand
 from utils import Transaction, transactional
 from functools import partial
@@ -315,7 +315,7 @@ class CreateOperation(VDOOperation):
     vdo = VDOService(args.name, conf, **argsDict)
 
     transaction = Transaction.transaction()
-    vdo.create()
+    vdo.create(args.force)
     transaction.addUndoStage(vdo.remove)
 
     conf.persist()
@@ -396,7 +396,7 @@ class ListOperation(VDOOperation):
   def execute(self, args):
     vdos = set()
     for line in runCommand(['dmsetup', 'status'], noThrow=True).splitlines():
-      m = re.match(r"(.+?): \d \d+ dedupe", line)
+      m = re.match(r"(.+?): \d \d+ " + Defaults.vdoTargetName, line)
       if m:
         vdos.add(m.group(1))
 
@@ -546,7 +546,10 @@ class StatusOperation(VDOOperation):
       vdos = {}
       perVdoStatus = { _("VDOs") : vdos }
       for vdo in self.getVdoServices(args, conf):
-        vdos[vdo.getName()] = vdo.status()
+        try:
+          vdos[vdo.getName()] = vdo.status()
+        except VDOServiceError as ex:
+          vdos[vdo.getName()] = str(ex)
 
       # YAML adds a newline at the end.  To maintain consistency with the
       # previous output we need to eliminate that.

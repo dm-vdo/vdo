@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/fileLayer.c#2 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/fileLayer.c#3 $
  */
 
 #include "fileLayer.h"
@@ -34,7 +34,6 @@
 
 #include "constants.h"
 #include "statusCodes.h"
-#include "volumeGeometry.h"
 
 typedef struct fileLayer {
   PhysicalLayer common;
@@ -62,19 +61,6 @@ static CRC32Checksum updateCRC32(CRC32Checksum  crc,
 static BlockCount getBlockCount(PhysicalLayer *header)
 {
   return asFileLayer(header)->blockCount;
-}
-
-/**********************************************************************/
-static BlockCount getDataRegionOffset(PhysicalLayer *header)
-{
-  VolumeGeometry *geometry;
-  int result = loadVolumeGeometry(header, &geometry);
-  if (result != VDO_SUCCESS) {
-    return 0;
-  }
-  PhysicalBlockNumber offset = geometry->partitions[DATA_REGION].startBlock;
-  FREE(geometry);
-  return offset;
 }
 
 /**********************************************************************/
@@ -317,7 +303,6 @@ static int setupFileLayer(const char     *name,
   layer->common.destroy             = freeLayer;
   layer->common.updateCRC32         = updateCRC32;
   layer->common.getBlockCount       = getBlockCount;
-  layer->common.getDataRegionOffset = getDataRegionOffset;
   layer->common.allocateIOBuffer    = bufferAllocator;
   layer->common.reader              = fileReader;
   layer->common.writer              = readOnly ? noWriter : fileWriter;

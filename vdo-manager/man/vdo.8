@@ -1,6 +1,6 @@
 .TH VDO 8 "2017-09-12" "Red Hat" \" -*- nroff -*-
 .\"
-.\" Copyright (c) 2017 Red Hat, Inc.
+.\" Copyright (c) 2018 Red Hat, Inc.
 .\"
 .\" This program is free software; you can redistribute it and/or
 .\" modify it under the terms of the GNU General Public License
@@ -17,7 +17,68 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#5 $
+.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#11 $
+.
+.\" Constants (as strings, for ease of use and consistency)
+.ds ackThreadsDefault 1
+.ds ackThreadsMin 0
+.ds ackThreadsMax 100
+.ds bioRotationDefault 64
+.ds bioRotationMin 1
+.ds bioRotationMax 1024
+.ds bioThreadOverheadMB 18
+.ds bioThreadsDefault 4
+.ds bioThreadsMin 1
+.ds bioThreadsMax 100
+.ds blockMapCacheSizeDefault 128M
+.ds blockMapCacheSizeMin 128M
+.ds blockMapCacheSizeMaxPlusOne 16T
+.ds blockMapPeriodDefault 16380
+.ds blockMapPeriodMin 1
+.ds blockMapPeriodMax 16380
+.ds compressionDefault enabled
+.ds confFileDefault /etc/vdoconf.yml
+.ds cpuThreadsDefault 2
+.ds cpuThreadsMin 1
+.ds cpuThreadsMax 100
+.ds deduplicationDefault enabled
+.ds emulate512Default disabled
+.ds hashZoneThreadsDefault 2
+.ds hashZoneThreadsMin 1
+.ds hashZoneThreadsMax 100
+.ds indexMemDefault 0.25
+.ds indexMemIntMin 1
+.ds indexMemIntMax 1024
+.ds logicalSizeMax 4P
+.ds logicalThreadsBlockMapCacheSizeThreshold 9
+.ds logicalThreadsDefault 1
+.ds logicalThreadsMin 0
+.ds logicalThreadsMax 100
+.ds logLevelChoices \fBcritical\fP, \fBerror\fP, \
+\fBwarning\fP, \fBnotice\fP, \fBinfo\fP, or \fBdebug\fP
+.ds logLevelDefault \fBinfo\fP
+.ds lvmOptionalSiSuffix Using a value with a \fBB\fP (bytes), \
+\fBK\fP (kilobytes), \fBM\fP (megabytes), \fBG\fP (gigabytes), \fBT\fP \
+(terabytes), \fBP\fP (petabytes) or \fBE\fP (exabytes) suffix is optional
+.ds lvmOptionalSuffix Using a value with a \fBS\fP (sectors), \
+\fBB\fP (bytes), \fBK\fP (kilobytes), \fBM\fP (megabytes), \
+\fBG\fP (gigabytes), \fBT\fP (terabytes), \fBP\fP (petabytes) or \
+\fBE\fP (exabytes) suffix is optional
+.ds lvmUnitsDefault megabytes
+.ds pageSizeDefault 4096
+.ds physicalThreadOverheadMB 10
+.ds physicalThreadsDefault 1
+.ds physicalThreadsMin 0
+.ds physicalThreadsMax 16
+.ds readCacheBioThreadOverheadMB 1.12
+.ds readCacheDefault disabled
+.ds readCacheSizeDefault 0
+.ds readCacheSizeMin 0
+.ds readCacheSizeMaxPlusOne 16T
+.ds slabSizeDefault 2G
+.ds slabSizeMin 128M
+.ds slabSizeMax 32G
+.ds sparseIndexDefault disabled
 .
 .\" Formatting for per-command option lists: indented, no filling
 .nr optionListIndent 15
@@ -34,7 +95,9 @@
 .\" Value string for options. Show the possible values, properly
 .\" italicized, but restore the original font when we're done.
 .ds bool \fR{ \fP\fI enabled \fP\fR | \fP\fI disabled \fP\fR } \fP
-.ds writePolicy \fR{ \fP\fI sync \fP\fR | \fP\fI async \fP\fR } \fP
+.ds writePolicy \fR{ \fP\fI sync \fP\fR | \fP\fI async \fP\fR | \fP\fI auto \fP\fR} \fP
+.ds targetSpec \fR{ \fP\-\-all\fP | \fP\-\-name=\fIvolume\fP\fR }\fP
+.ds targetSpecRequired \*[targetSpec]\fR (required)\fP
 .
 .\" Save the default hyphenation mode, so we can suspend (.nh) and
  \" resume.
@@ -51,52 +114,77 @@ vdo \- manage kernel VDO devices and related configuration information
 .in +6
 .ti -6
 .B vdo
-.RI [ options... ]
+.RI
 {
-.B create
-|
-.B remove
-|
-.B start
-|
-.B stop
-|
 .B activate
-|
-.B deactivate
-|
-.B status
-|
-.B list
-|
-.B modify
 |
 .B changeWritePolicy
 |
-.B enableDeduplication
+.B create
+|
+.B deactivate
+|
+.B disableCompression
 |
 .B disableDeduplication
 |
 .B enableCompression
 |
-.B disableCompression
+.B enableDeduplication
 |
 .B growLogical
 |
 .B growPhysical
 |
+.B list
+|
+.B modify
+|
 .B printConfigFile
+|
+.B remove
+|
+.B start
+|
+.B status
+|
+.B stop
 }
+[ options... ]
 .in -6
 .RE
 .SH DESCRIPTION
 .hyResume
 The commands available are:
 .TP
+.B activate
+Activates one or more VDO volumes. Activated volumes can be started
+using the \fBstart\fR command. This command must be run with root
+privileges. Applicable options include:
+.startOptionList
+\*[targetSpecRequired]
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B changeWritePolicy
+Modifies the write policy of one or all running VDO
+volumes. This command must be run with root privileges.
+Applicable options include:
+.startOptionList
+\*[targetSpecRequired]
+\-\-writePolicy=\*[writePolicy]\fR (required)\fP
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
 .B create
-Creates a VDO volume and its associated UDS index and makes
-it available unless the \fB\-\-activate=disabled\fP option is
-provided. This command must be run with root
+Creates a VDO volume and its associated index and makes it available. If
+\fB\-\-activate=disabled\fP is specified the VDO volume is created but not
+made available. Will not overwrite an existing file system or formatted VDO
+volume unless \fB\-\-force\fP is given. This command must be run with root
 privileges. Applicable options include:
 .startOptionList
 \-\-name=\fIvolume\fP\fR (required)\fP
@@ -105,7 +193,6 @@ privileges. Applicable options include:
 \-\-blockMapCacheSize=\fIsize\fP
 \-\-blockMapPeriod=\fIperiod\fP
 \-\-compression=\*[bool]
-\-\-confFile=\fIfile\fP
 \-\-deduplication=\*[bool]
 \-\-emulate512=\*[bool]
 \-\-indexMem=\fIsize\fP
@@ -122,114 +209,117 @@ privileges. Applicable options include:
 \-\-vdoLogicalSize=\fIsize\fP
 \-\-vdoPhysicalThreads=\fIthread count\fP
 \-\-vdoSlabSize=\fIsize\fP
-\-\-verbose
 \-\-writePolicy=\*[writePolicy]
+\-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
-\-\-noRun
+\-\-verbose
 .endOptionList
 .
 .TP
-.B remove
-Removes one or more stopped VDO volumes and associated UDS
-indexes. This command must be run with root privileges.
-Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-force
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B start
-Starts one or more stopped, activated VDO volumes and associated
-UDS services. This command must be run with root
-privileges. Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-forceRebuild
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B stop
-Stops one or more running VDO volumes and associated UDS
-services. This command must be run with root privileges.
-Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-force
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B activate
-Activates one or more VDO volumes. Activated volumes can be started
-using the \fBstart\fR command. This command must be run with root
-privileges. Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
 .B deactivate
-Deactivates one or more VDO volumes. Deactivated volumes cannot be started
-by the \fBstart\fR command. Deactivating a currently running volume
-does not stop it, but once stopped it must be activated before it can be
-started again. This command must be run with root privileges.
+Deactivates one or more VDO volumes. Deactivated volumes cannot be started by
+the \fBstart\fR command. Deactivating a currently running volume does not
+stop it. Once stopped a deactivated VDO volume must be activated before it
+can be started again. This command must be run with root privileges.
 Applicable options include:
 .startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
+\*[targetSpecRequired]
 \-\-confFile=\fIfile\fP
-\-\-verbose
-\-\-noRun
 \-\-logfile=\fIfile\fP
+\-\-verbose
 .endOptionList
 .TP
-.B status
-Reports VDO system and volume status in YAML format. Status
-information will be incomplete if the command is not run with
-root privileges. Applicable options include:
+.B disableCompression
+Disables compression on one or more VDO volumes. If the VDO volume is
+running, takes effect immediately.  If the VDO volume is not running
+compression will be disabled the next time the VDO volume is started. This
+command must be run with root privileges. Applicable options include:
 .startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
+\*[targetSpecRequired]
 \-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
 .endOptionList
-.RS
-See below for the output provided.
-.RE
+.TP
+.B disableDeduplication
+Disables deduplication on one or more VDO volumes. If the VDO volume is
+running, takes effect immediately. If the VDO volume is not running
+deduplication will be disabled the next time the VDO volume is started. This
+command must be run with root privileges. Applicable options include:
+.startOptionList
+\*[targetSpecRequired]
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B enableCompression
+Enables compression on one or more VDO volumes. If the VDO volume is running,
+takes effect immediately. If the VDO volume is not running compression will
+be enabled the next time the VDO volume is started. This command must be run
+with root privileges.
+Applicable options include:
+.startOptionList
+\*[targetSpecRequired]
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B enableDeduplication
+Enables deduplication on one or more VDO volumes. If the VDO volume is
+running, takes effect immediately. If the VDO volume is not running
+deduplication will be enabled the next time the VDO volume is started. This
+command must be run with root privileges. Applicable options include:
+.startOptionList
+\*[targetSpecRequired]
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B growLogical
+Grows the logical size of a VDO volume. The volume must
+exist and must be running. This command must be run
+with root privileges. Applicable options include:
+.startOptionList
+\-\-name=\fIvolume\fP\fR (required)\fP
+\-\-vdoLogicalSize=\fIsize\fP\fR (required)\fP
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B growPhysical
+Grows the physical size of a VDO volume. The volume must
+exist and must be running. This command must be run
+with root privileges. Applicable options include:
+.startOptionList
+\-\-name=\fIvolume\fP\fR (required)\fP
+\-\-confFile=\fIfile\fP
+\-\-verbose
+\-\-logfile=\fIfile\fP
+.endOptionList
 .TP
 .B list
-Displays a list of started VDO volumes. If \fB\-\-all\fP is specified it displays both started and non-started volumes. Applicable options include:
+Displays a list of started VDO volumes. If \fB\-\-all\fP is specified it
+displays both started and non-started volumes. This command must be run with
+root privileges. Applicable options include:
 .startOptionList
 \-\-all
 \-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
 .endOptionList
 .TP
 .B modify
-Modifies configuration parameters of one or all existing VDO
-volumes. Changes take effect when the VDO volume is next
-started; running volumes are not affected. Only a limited set
-of parameters may be modified; applicable options include:
+Modifies configuration parameters of one or all VDO volumes. Changes take
+effect the next time the VDO device is started; already-running devices are
+not affected. Applicable options include:
 .startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
+\*[targetSpecRequired]
 \-\-blockMapCacheSize=\fIsize\fP
 \-\-blockMapPeriod=\fIperiod\fP
-\-\-confFile=\fIfile\fP
 \-\-readCache=\*[bool]
 \-\-readCacheSize=\fIsize\fP
 \-\-vdoAckThreads=\fIthread count\fP
@@ -238,105 +328,66 @@ of parameters may be modified; applicable options include:
 \-\-vdoHashZoneThreads=\fIthread count\fP
 \-\-vdoLogicalThreads=\fIthread count\fP
 \-\-vdoPhysicalThreads=\fIthread count\fP
-\-\-writePolicy=\*[writePolicy]
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B changeWritePolicy
-Modifies the write policy of one or all running VDO
-volumes. This command must be run with root privileges.
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-writePolicy=\*[writePolicy]
 \-\-confFile=\fIfile\fP
-\-\-verbose
-\-\-noRun
 \-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B enableDeduplication
-Enables deduplication on one or more VDO volumes.  This command
-must be run with root privileges. Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
 \-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B disableDeduplication
-Disables deduplication on one or more VDO volumes. This command
-must be run with root privileges. Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B enableCompression
-Enables compression on one or more VDO volumes. This command
-must be run with root privileges. Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B disableCompression
-Disables compression on one or more VDO volumes. This command
-must be run with root privileges. Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-.endOptionList
-.TP
-.B growLogical
-Adds logical space to a VDO volume. The volume must
-exist and must be running. This command must be run
-with root privileges. Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
-\-\-vdoLogicalSize=\fIsize\fP
-.endOptionList
-.TP
-.B growPhysical
-Adds physical space to a VDO volume. The volume must
-exist and must be running. This command must be run
-with root privileges. Applicable options include:
-.startOptionList
-\-\-name=\fIvolume\fP
-\-\-all
-\-\-confFile=\fIfile\fP
-\-\-verbose
-\-\-noRun
-\-\-logfile=\fIfile\fP
 .endOptionList
 .TP
 .B printConfigFile
-Prints the configuration file to stdout. Available options
-include:
+Prints the configuration file to stdout. This command does not require root
+privileges. Applicable options include:
 .startOptionList
 \-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B remove
+Removes one or more stopped VDO volumes and associated
+indexes. This command must be run with root privileges.
+Applicable options include:
+.startOptionList
+\*[targetSpecRequired]
+\-\-force
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B start
+Starts one or more stopped, activated VDO volumes and associated services. This
+command must be run with root privileges. Applicable options include:
+.startOptionList
+\*[targetSpecRequired]
+\-\-forceRebuild
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B status
+Reports VDO system and volume status in YAML format. This command does not
+require root privileges though information will be incomplete if run without.
+Applicable options include:
+.startOptionList
+\*[targetSpec]
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.RS
+See below for the output provided.
+.RE
+.TP
+.B stop
+Stops one or more running VDO volumes and associated services. This command
+must be run with root privileges. Applicable options include:
+.startOptionList
+\*[targetSpecRequired]
+\-\-force
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
 .endOptionList
 .
 .PP
@@ -428,76 +479,79 @@ VDO volumes. May not be used with \fB\-\-name\fP.
 .RE
 .TP
 .B \-\-blockMapCacheSize=\fImegabytes\fR
-Specifies the amount of memory allocated for caching block map
-pages; the value must be a multiple of 4 KB.  Using a value with
-a \fBB\fP (bytes), \fBK\fP (kilobytes), \fBM\fP (megabytes),
-\fBG\fP (gigabytes), \fBT\fP (terabytes), \fBP\fP (petabytes) or \fBE\fP
-(exabytes) suffix is optional. If no suffix is supplied, the value will be
-interpreted as megabytes. The default is 128M; the value must be at least 128M
-and less than 16T. The cache must be at least 16MB per logical thread. Note
-that there is a memory overhead of 15%.
+Specifies the amount of memory allocated for caching block map pages; the
+value must be a multiple of \*[pageSizeDefault].  \*[lvmOptionalSiSuffix]. If
+no suffix is supplied, the value will be interpreted as
+\fB\*[lvmUnitsDefault]\fP. The value must be at least
+\*[blockMapCacheSizeMin] and less than \*[blockMapCacheSizeMaxPlusOne]. The
+cache must be at least 16MB per logical thread. Note that there is a memory
+overhead of 15%. The default is \*[blockMapCacheSizeDefault].
 .TP
 .B \-\-blockMapPeriod=\fIperiod\fR
-Tunes the quantity of block map updates that can accumulate before
-cache pages are flushed to disk. The default value of 16380 means highest
-performance; a lower value means shorter recovery time but lower performance.
-The value must at least 1 and less than or equal to 16380.
+Tunes the quantity of block map updates that can accumulate before cache
+pages are flushed to disk. The value must at least \*[blockMapPeriodMin] and
+less than or equal to \*[blockMapPeriodMax]. A lower value means shorter
+recovery time but lower performance. The default value is
+\*[blockMapPeriodDefault].
 .TP
 .B \-\-compression=\*[bool]
-Enables or disables compression within the VDO device. The
-default is enabled. Compression may be disabled if necessary
-to maximize performance or to speed processing of data that
-is unlikely to compress.
+Enables or disables compression when creating a VDO volume. The default is
+\*[compressionDefault]. Compression may be disabled if necessary to maximize
+performance or to speed processing of data that is unlikely to compress.
 .PP
 .B \-\-confFile=\fIfile\fR
 .br
 .B \-f\fIfile\fR
 .br
 .RS
-Specifies an alternate configuration file. The default is
-\f[CR]/etc/vdoconf.yml\fP.
+Specifies an alternate configuration file; the default is
+\f[CR]\*[confFileDefault]\fP.
 .RE
 .TP
 .B \-\-deduplication=\*[bool]
-Enables or disables deduplication within the VDO device.
-The default is enabled. Deduplication may be disabled in
-instances where data is not expected to have good
-deduplication rates but compression is still desired.
+Enables or disables deduplication when creating a VDO volume. The default is
+\*[deduplicationDefault]. Deduplication may be disabled in instances where
+data is not expected to have good deduplication rates but compression is
+still desired.
 .TP
 .B \-\-device=\fIabsolute_path\fR
-Specifies the absolute path of the storage device to use.
+Specifies the absolute path of the device to use for VDO storage.
 .TP
 .B \-\-emulate512=\*[bool]
-Selects 512-byte block device emulation mode.
+Specifies that the VDO volume is to emulate a 512 byte block device. The
+default is \*[emulate512Default].
 .TP
 .B \-\-force
-Unmounts mounted file systems before stopping a VDO volume.
+When creating a volume, ignores any existing file system or VDO
+signature already present in the storage device. When stopping or
+removing a VDO volume, first unmounts the file system stored on the
+device if mounted.
 .TP
 .B \-\-forceRebuild
-Forces an offline rebuild before starting a read-only VDO volume
-so that it may be brought back online and made
-available. \fBThis option may result in data
-loss or corruption.\fP
+Forces an offline rebuild of a read-only VDO's metadata before starting so
+that it may be brought back online and made available. \fBThis option may
+result in data loss or corruption.\fP
 .TP
 .B \-\-indexMem=\fIgigabytes\fR
-Specifies the amount of index memory in gigabytes; the
-default is currently 0.25 GB. The special decimal values 
-0.25, 0.5, 0.75 can be used, as can any positive integer. 
-(The special decimal values are matched as exact strings; 
-"0.5" works but "0.50" is not accepted.)
+Specifies the amount of index memory in gigabytes; the default is
+currently \*[indexMemDefault] GB. The special decimal values 0.25, 0.5,
+0.75 can be used, as can any integer value at least \*[indexMemIntMin] and less
+than or equal to \*[indexMemIntMax]. (The special deciml values are matched as
+exact strings; "0.5" works but "0.50" is not accepted.)
 .PP
 .B \-\-help
 .br
 .B \-h
 .br
 .RS
-Displays documentation for the \fBvdo\fP utility.
+If specified with \fBvdo\fP only, displays documentation for the \fBvdo\fP utility.
+If specified with a command, displays documentation for that command.
 .RE
 .TP
 .B \-\-logfile=pathname
-Specify the file to which this script's log messages are
-directed. Warning and error messages are always logged to syslog
-as well.
+Specify the path of the file to which log messages are directed. If
+unspecified, log messages will go to syslog. Warning and error messages are
+always logged to syslog.
 .PP
 .B \-\-name=\fIvolume\fR
 .br
@@ -508,96 +562,91 @@ Operates on the specified VDO volume. May not be used with
 \fB\-\-all\fP.
 .RE
 .TP
-.B \-\-noRun
-Prints commands instead of executing them.
-.TP
 .B \-\-readCache=\*[bool]
-Enables or disables the read cache within the VDO device. The
-default is disabled. The cache should be enabled if write
-workloads are expected to have high levels of deduplication, or
-for read intensive workloads of highly compressible data.
+Enables or disables the read cache within the VDO device. The cache should be
+enabled if write workloads are expected to have high levels of deduplication,
+or for read intensive workloads of highly compressible data. The default is
+\*[readCacheDefault].
 .TP
 .B \-\-readCacheSize=\fImegabytes\fR
-Specifies the compressed block read cache size in megabytes.
-Using a value with a \fBB\fP (bytes), \fBK\fP (kilobytes), \fBM\fP (megabytes),
-\fBG\fP (gigabytes), \fBT\fP (terabytes), \fBP\fP (petabytes) or
-\fBE\fP (exabytes) suffix is optional. If no suffix is supplied, the value will
-be interpreted as megabytes. The default is 0; the value must be at least 0 and 
-less than 16T. 1.12 MB of memory will be used per MB of read cache specified, 
-per bio thread. With the default number of bio threads, 4.48MB of memory will 
-be used per MB of read cache.
+Specifies the extra VDO device read cache size in \*[lvmUnitsDefault]. This
+space is in addition to a system-defined minimum. \*[lvmOptionalSiSuffix].
+The value must be at least \*[readCacheSizeMin] and less than
+\*[readCacheSizeMaxPlusOne]. \*[readCacheBioThreadOverheadMB] MB of memory
+will be used per MB of read cache specified, per bio thread. The default is
+\*[readCacheSizeDefault].
 .TP
 .B \-\-sparseIndex=\*[bool]
-Enables sparse indexing.
+Enables sparse indexing. The default is \*[sparseIndexDefault].
 .TP
 .B \-\-vdoAckThreads=\fIthread count\fR
-Specifies the number of threads to use for acknowledging
-completion of requested VDO I/O operations. The default is 1; the value must be
-at least 0 and less than or equal to 100.
+Specifies the number of threads to use for acknowledging completion of
+requested VDO I/O operations. The value must be at least \*[ackThreadsMin]
+and less than or equal to \*[ackThreadsMax]. The default is
+\*[ackThreadsDefault].
 .TP
 .B \-\-vdoBioRotationInterval=\fII/O count\fR
-Specifies the number of I/O operations to enqueue for each block
-I/O submission thread before directing work to the next thread. The default is
-64; the value must be at least 1 and less than or equal to 1024.
+Specifies the number of I/O operations to enqueue for each bio-submission
+thread before directing work to the next. The value must be at least
+\*[bioRotationMin] and less than or equal to \*[bioRotationMax]. The default
+is \*[bioRotationDefault].
 .TP
 .B \-\-vdoBioThreads=\fIthread count\fR
-Specifies the number of threads to use for submitting I/O
-operations to the storage device. Each additional thread after
-the first will use an additional 18 MB of RAM, plus 1.12 MB RAM
-per megabyte of configured read cache size. The default is 4;
-the value must be at least 1 and less than or equal to 100.
+Specifies the number of threads to use for submitting I/O operations to the
+storage device. The value must be at least \*[bioThreadsMin] and less than or
+equal to \*[bioThreadsMax]. Each additional thread after the first will use
+an additional \*[bioThreadOverheadMB] MB of RAM, plus
+\*[readCacheBioThreadOverheadMB] MB of RAM per megabyte of configured read
+cache size. The default is \*[bioThreadsDefault].
 .TP
 .B \-\-vdoCpuThreads=\fIthread count\fR
-Specifies the number of threads to use for CPU-intensive work
-such as hashing or compression. The default is 2; the value must be at least
-1 and less than or equal to 100.
+Specifies the number of threads to use for CPU-intensive work such as hashing
+or compression. The value must be at least \*[cpuThreadsMin] and less than or
+equal to \*[cpuThreadsMax]. The default is \*[cpuThreadsDefault].
 .TP
 .B \-\-vdoHashZoneThreads=\fIthread count\fR
-Specifies the number of threads across which to
-subdivide parts of the VDO processing based on the
-hash value computed from the block data. The default is 1;
-the value must be at least 0 and less than or equal to 100.
-vdoHashZoneThreads, vdoLogicalThreads and vdoPhysicalThreads
-must be either all zero or all non-zero.
+Specifies the number of threads across which to subdivide parts of the VDO
+processing based on the hash value computed from the block data. The value
+must be at least \*[hashZoneThreadsMin] and less than or equal to
+\*[hashZoneThreadsMax]. vdoHashZonesThreads, vdoLogicalThreads and
+vdoPhysicalThreads must be either all zero or all non-zero. The default is
+\*[hashZoneThreadsDefault].
 .TP
 .B \-\-vdoLogicalThreads=\fIthread count\fR
-Specifies the number of threads across which to subdivide parts
-of the VDO processing based on logical block addresses. The default is 1;
-the value must be at least 0 and less than or equal to 100.
-vdoLogicalThreads, vdoHashZoneThreads and vdoPhysicalThreads must be either
-all zero or all non-zero. A logical thread count over 8 will require
-explicitly specifying a sufficiently large block map cache size, as well.
-.TP
-.B \-\-vdoLogLevel=\fIlevel\fR
-Specifies the VDO driver log level: \fBcritical\fP, \fBerror\fP,
-\fBwarning\fP, \fBnotice\fP, \fBinfo\fP, or \fBdebug\fP. Levels are
-case sensitive; the default is \fBinfo\fP.
+Specifies the number of threads across which to subdivide parts of the VDO
+processing based on the hash value computed from the block data. The value
+must be at least \*[logicalThreadsMin] and less than or equal to
+\*[logicalThreadsMax]. A logical thread count of
+\*[logicalThreadsBlockMapCacheSizeThreshold] or more will require explicitly
+specifying a sufficiently large block map cache size, as well.
+vdoHashZonesThreads, vdoLogicalThreads and vdoPhysicalThreads must be either
+all zero or all non-zero. The default is \*[logicalThreadsDefault].
 .TP
 .B \-\-vdoLogicalSize=\fImegabytes\fR
-Specifies the logical VDO volume size in megabytes. Using a value with a
-\fBS\fP (sectors), \fBB\fP (bytes), \fBK\fP (kilobytes), \fBM\fP (megabytes),
-\fBG\fP (gigabytes), \fBT\fP (terabytes), \fBP\fP (petabytes) or
-\fBE\fP (exabytes) suffix is optional. If no suffix is supplied, the value will
-be interpreted as megabytes. Used for over-provisioning volumes. This defaults
-to the size of the storage device. The maximum size supported is
-4096T (4P).
+Specifies the logical VDO volume size in \*[lvmUnitsDefault].
+\*[lvmOptionalSuffix]. Used for over-provisioning volumes. The maximum size
+supported is \*[logicalSizeMax]. The default is the size of the storage
+device.
+.TP
+.B \-\-vdoLogLevel=\fIlevel\fR
+Specifies the VDO driver log level: \*[logLevelChoices]. Levels are
+case sensitive; the default is \*[logLevelDefault].
 .TP
 .B \-\-vdoPhysicalThreads=\fIthread count\fR
-Specifies the number of threads across which to subdivide parts
-of the VDO processing based on physical block addresses. Each
-additional thread after the first will use an additional 10 MB of
-RAM. The default is 1; the value must be at least 0 and less than or equal to
-16. vdoPhysicalThreads, vdoHashZoneThreads and vdoLogicalThreads must be
-either all zero or all non-zero.
+Specifies the number of threads across which to subdivide parts of the VDO
+processing based on physical block addresses. The value must be at least
+\*[physicalThreadsMin] and less than or equal to \*[physicalThreadsMax]. Each
+additional thread after the first will use an additional
+\*[physicalThreadOverheadMB] MB of RAM. vdoPhysicalThreads,
+vdoHashZonesThreads and vdoLogicalThreads must be either all zero or all
+non-zero. The default is \*[physicalThreadsDefault].
 .TP
 .B \-\-vdoSlabSize=\fImegabytes\fR
-Specifies the slab size in megabytes. A slab is the smallest
-a VDO volume can be grown. Using a smaller size than the maximum constrains the
-maximum total physical volume size. Must be a power of two between 128M and
-32G; the default is 2G. Using a value with a \fBS\fP (sectors),
-\fBB\fP (bytes), \fBK\fP (kilobytes), \fBM\fP (megabytes), \fBG\fP (gigabytes),
-\fBT\fP (terabytes), \fBP\fP (petabytes) or \fBE\fP (exabytes) suffix is
-optional. If no suffix is supplied, the value will be interpreted as megabytes.
+Specifies the size of the increment by which a VDO is grown. Using a smaller
+size constrains the total maximum physical size that can be accommodated.
+Must be a power of two between \*[slabSizeMin] and \*[slabSizeMax].
+\*[lvmOptionalSuffix]. If no suffix is used, the value will be interpreted as
+\*[lvmUnitsDefault]. The default is \*[slabSizeDefault].
 .TP
 .B \-\-verbose
 Prints commands before executing them.
@@ -607,22 +656,26 @@ Specifies the write policy:
 .RS
 .TP
 .B sync
-Writes are acknowledged only after data is stably
-written. This is the default policy. \fBThis policy is not supported
-if the underlying storage is not also synchronous.\fP
+Writes are acknowledged only after data is stably written. \fBThis 
+policy is not supported if the underlying storage is not also synchronous.\fP
 .TP
 .B async
-Writes are acknowledged after data has been
-\fIcached\fP for writing to stable storage. Data which has not been
-flushed is not guaranteed to persist in this mode.
+Writes are acknowledged after data has been \fIcached\fP for writing to
+stable storage. Data which has not been flushed is not guaranteed to persist
+in this mode.
+.TP
+.B auto
+VDO will check the storage device and determine whether it supports 
+flushes. If it does, VDO will run in async mode, otherwise it will run
+in sync mode. This is the default.
 .RE
 .
 .
 .SH FILES
 .TP
 .ft CR
-/etc/vdoconf.yml
-The default configuration file, used if the \fB\-\-confFile\fP option
+\*[confFileDefault]
+The default configuration file; used if the \fB\-\-confFile\fP option
 is not provided.
 .SH EXAMPLES
 Creation of a VDO device named \fBvdo0\fP, with a 10 terabyte

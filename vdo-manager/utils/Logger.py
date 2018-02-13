@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   Logger - VDO manager logging
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Logger.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Logger.py#2 $
 
 """
 import logging
@@ -53,11 +53,11 @@ class Logger(object):
 
   ######################################################################
   @classmethod
-  def configure(cls, name, options):
-    """Configure the logging system according to command line options."""
+  def configure(cls, name, logfile = None, debug = False):
+    """Configure the logging system according to the arguments."""
     cls.myname  = name
-    cls.logfile = options.logfile
-    debugging   = options.debug
+    cls.logfile = logfile
+    debugging   = debug
     formatBase  = ': %(levelname)s - %(message)s'
     debugBase   = (': %(name)s' if debugging else '') + formatBase
 

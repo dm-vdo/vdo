@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 """
   vdoStats - Report statistics from an Albireo VDO.
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdoStats#2 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdoStats#3 $
 """
 
 from __future__ import print_function
@@ -62,6 +62,7 @@ parser.add_option("--version", action="store_true", dest="version",
 
 UNITS = [ 'B', 'K', 'M', 'G', 'T' ]
 
+########################################################################
 def makeDedupeFormatter(options):
   """
   Make the formatter for dedupe stats if needed.
@@ -77,6 +78,7 @@ def makeDedupeFormatter(options):
                         { 'indent': '  ', 'namer' : True }],
                        hierarchical=False)
 
+########################################################################
 def enumerateDevices():
   """
   Enumerate the list of VDO devices on this host.
@@ -93,6 +95,45 @@ def enumerateDevices():
     print(_("Error enumerating VDO devices: {0}".format(e)), file = sys.stderr)
   return names
 
+########################################################################
+def transformDevices(devices):
+  """
+  Iterates over the list of provided devices transforming any standalone device
+  name or absolute path that represents a resolved vdo device to the name/path
+  of the vdo device using the vdo name specified at its creation.
+
+  Returns a list of sampling dictionaries.
+
+  :param devices: A list of devices to sample.
+
+  :return:  The dictionary list of devices to sample.
+  """
+  paths = enumerateDevices()
+  names = [os.path.basename(x) for x in paths]
+  resolvedPaths = [os.path.realpath(x) for x in paths]
+  resolvedNames = [os.path.basename(x) for x in resolvedPaths]
+  resolvedToVdoName = dict(zip(resolvedNames, names))
+  resolvedToVdoPath = dict(zip(resolvedPaths, paths))
+
+  transformedDevices = []
+  for (original, (head, tail)) in [(x, os.path.split(x)) for x in devices]:
+    if tail in names:
+      transformedDevices.append(Samples.samplingDevice(original, original))
+      continue
+    if tail in resolvedNames:
+      if head == '':
+        transformedDevices.append(
+          Samples.samplingDevice(original, resolvedToVdoName[tail]))
+        continue
+      if os.path.isabs(original) and (original in resolvedPaths):
+        transformedDevices.append(
+          Samples.samplingDevice(original, resolvedToVdoPath[original]))
+        continue
+    transformedDevices.append(Samples.samplingDevice(original, original))
+
+  return transformedDevices
+
+########################################################################
 def getDeviceStats(devices, assays):
   """
   Get the statistics for a given device.
@@ -107,9 +148,14 @@ def getDeviceStats(devices, assays):
   exitStatus = 0
   if not devices:
     mustBeVDO = False
-    devices = enumerateDevices()
+    devices = [Samples.samplingDevice(x, x) for x in enumerateDevices()]
   else:
     mustBeVDO = True
+
+    # Get the device dictionary containing transformations of references to a
+    # vdo device's resolved name/path to references to its symbolic name/path.
+    devices = transformDevices(devices)
+
     # Filter out any specified devices that do not exist.
     #
     # Any specified device that passes os.path.exists is passed through.
@@ -117,31 +163,33 @@ def getDeviceStats(devices, assays):
     # against being an entry in either /dev/mapper or /proc/vdo.
     # If either of those exists the original device is passed through
     # unchanged.
-    existingPaths = []
+    existingDevices = []
     for device in devices:
-      if os.path.exists(device):
-        existingPaths.append(device)
+      user = device["user"]
+      sample = device["sample"]
+      if os.path.exists(sample):
+        existingDevices.append(device)
       else:
-        name = device
         exists = False
-        if (not os.path.isabs(device)):
+        if (not os.path.isabs(sample)):
           exists = os.path.exists(os.path.sep.join(["", "dev", "mapper",
-                                                    device]))
+                                                    sample]))
           if (not exists):
-            device = os.path.sep.join(["", "proc", "vdo", device])
+            sample = os.path.sep.join(["", "proc", "vdo", sample])
 
-        if ((not exists) and (not os.path.exists(device))):
-          print("'{0}': {1}".format(name, os.strerror(errno.ENOENT)),
+        if ((not exists) and (not os.path.exists(sample))):
+          print("'{0}': {1}".format(user, os.strerror(errno.ENOENT)),
                 file = sys.stderr)
           exitStatus = 1
         else:
-          existingPaths.append(name)
-    devices = existingPaths
+          existingDevices.append(device)
+    devices = existingDevices
 
   if len(devices) > 0:
     return (Samples.assayDevices(assays, devices, mustBeVDO), exitStatus)
   return (None, exitStatus)
 
+########################################################################
 def formatSize(size, options):
   """
   Format a size (in KB) for printing.
@@ -166,6 +214,7 @@ def formatSize(size, options):
 
   return "{0:>.1f}{1}".format(size, UNITS[unit])
 
+########################################################################
 def formatPercent(value):
   """
   Format a percentage for printing.
@@ -176,6 +225,7 @@ def formatPercent(value):
   """
   return value if isinstance(value, NotAvailable) else "{0}%".format(value)
 
+########################################################################
 def dfStats(sample, options):
   """
   Extract the values needed for df-style output from a sample.
@@ -189,6 +239,7 @@ def dfStats(sample, options):
           + [formatPercent(sample.getStat(statName))
              for statName in ["usedPercent", "savingPercent"]])
 
+########################################################################
 def printDF(stats, options):
   """
   Print stats in df-style.
@@ -204,6 +255,7 @@ def printDF(stats, options):
     print(apply(dfFormat.format,
                 [stat.getDevice()] + dfStats(stat.getSamples()[0], options)))
 
+########################################################################
 def printYAML(stats, dedupeFormatter):
   """
   Print stats as (pseudo) YAML.
@@ -217,6 +269,7 @@ def printYAML(stats, dedupeFormatter):
       dedupeFormatter.output(LabeledValue.make(stat.getDevice(),
                                                [s.labeled() for s in samples]))
 
+########################################################################
 def main():
   try:
     locale.setlocale(locale.LC_ALL, '')
@@ -257,5 +310,6 @@ def main():
 
   return exitStatus
 
+########################################################################
 if __name__ == "__main__":
   sys.exit(main())

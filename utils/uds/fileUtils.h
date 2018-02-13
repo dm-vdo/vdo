@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,13 +16,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.h#4 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.h#5 $
  */
 
 #ifndef FILE_UTILS_H
 #define FILE_UTILS_H 1
 
-#include <dirent.h>
 #include <sys/stat.h>
 
 #include "accessMode.h"
@@ -81,30 +80,6 @@ int getBufferSizeInfo(int          fd,
  * @return UDS_SUCCESS or an error code
  **/
 int fileExists(const char *path, bool *exists)
-  __attribute__((warn_unused_result));
-
-/**
- * Determine whether or not the given path is a directory
- *
- * @param path      The path to the possible directory
- * @param directory A pointer to a bool which will be set to true if
- *                  the specified path is a directory
- *
- * @return UDS_SUCCESS or an error code
- **/
-int isDirectory(const char *path, bool *directory)
-  __attribute__((warn_unused_result));
-
-/**
- * Determine whether or not the given directory is empty
- *
- * @param path  The path to the directory
- * @param isEmptyPtr  A pointer to hold the result which will be true if the
- * directory is empty
- *
- * @return UDS_SUCCESS or an error code
- **/
-int isEmptyDirectory(const char *path, bool *isEmptyPtr)
   __attribute__((warn_unused_result));
 
 /**
@@ -280,18 +255,6 @@ int setOpenFileSize(int fd, off_t size);
 int removeFile(const char *fileName);
 
 /**
- * Remove directory (and its contents if needed).
- *
- * @param directory     The directory.
- * @param what          The use of the directory, for logging.
- *
- * @return              UDS_SUCCESS or an error code.
- *
- * @note                Logs errors encountered.
- **/
-int removeDirectory(const char *directory, const char *what);
-
-/**
  * Match file or path name.
  *
  * @param pattern       A shell wildcard pattern.
@@ -432,32 +395,6 @@ int makeDirectory(const char *path,
                   const char *directoryType,
                   const char *context)
   __attribute__((warn_unused_result));
-
-/**
- * Wrap the opendir(2) system call.
- *
- * @param name          The name of the directory to open
- * @param directoryType The type of directory (for error reporting)
- * @param context       The calling context (for logging)
- * @param directoryPtr  A pointer to hold the new file offset
- *
- * @return UDS_SUCCESS or an error code
- **/
-int openDirectory(const char  *name,
-                  const char  *directoryType,
-                  const char  *context,
-                  DIR        **directoryPtr)
-  __attribute__((warn_unused_result));
-
-/**
- * Wrap the closedir(2) system call.
- *
- * @param dir     The directory to close
- * @param context The calling context (for logging)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int closeDirectory(DIR* dir, const char *context);
 
 /**
  * Wrap the pathconf(2) system call.

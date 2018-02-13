@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   Command - runs commands and manages their results
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Command.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Command.py#3 $
 
 """
 from .Logger import Logger
@@ -47,6 +47,10 @@ class CommandError(Exception):
   ######################################################################
   def getExitCode(self):
     return self._exitCode
+
+  ######################################################################
+  def getStandardError(self):
+    return self._stderr
 
   ######################################################################
   def logOutputs(self, logMethod):
@@ -107,17 +111,18 @@ class Command(object):
 
   ######################################################################
   @classmethod
-  def setDefaults(cls, options):
-    """Sets the verbose and noRun default values from command line options.
+  def setDefaults(cls, verbose = False, noRun = False):
+    """Sets the verbose and noRun default values.
 
     Arguments:
-      options: The OptionParser argument object.
+      verbose:  (boolean) If True, operate verbosely.
+      noRun:    (boolean) If True, do not actually execute.
     """
-    if options.noRun:
-      cls.defaultNoRun   = options.noRun
+    if noRun:
+      cls.defaultNoRun   = noRun
       cls.defaultVerbose = True
-    if options.verbose:
-      cls.defaultVerbose = options.verbose
+    if verbose:
+      cls.defaultVerbose = verbose
 
   ######################################################################
   def commandName(self):

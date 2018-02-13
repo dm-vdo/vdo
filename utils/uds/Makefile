@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,13 +16,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/uds/Makefile#3 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/uds/Makefile#4 $
 
 # UDS_INTERNAL_VERSION is the short version name, which is used to version the
 # UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
 # version name used in distribution builds.  We extract these values from the
 # traditional location.
-UDS_VERSION      = 6.1.0.32
+UDS_VERSION      = 6.1.1.6
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -95,12 +95,9 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		context.o			\
 		deltaIndex.o			\
 		deltaMemory.o			\
-		directoryReader.o		\
 		errors.o			\
 		eventCount.o			\
 		fileBufferedReader.o		\
-		fileIndexComponent.o		\
-		fileIndexState.o		\
 		fileIORegion.o			\
 		fileUtils.o			\
 		funnelQueue.o			\
@@ -131,7 +128,6 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		masterIndexOps.o		\
 		memoryAlloc.o			\
 		memoryLinuxUser.o		\
-		multiFileLayout.o		\
 		minisyslog.o			\
 		numeric.o			\
 		nonce.o				\

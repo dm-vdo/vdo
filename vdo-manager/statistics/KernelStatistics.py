@@ -1,5 +1,5 @@
 """
-  Copyright (c) 2017 Red Hat, Inc.
+  Copyright (c) 2018 Red Hat, Inc.
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -61,6 +61,30 @@ class MemoryUsage(StatStruct):
       Uint64Field("peakBioCount"),
     ], procRoot="vdo", **kwargs)
 
+# UDS index statistics
+class IndexStatistics(StatStruct):
+  def __init__(self, name="IndexStatistics", **kwargs):
+    super(IndexStatistics, self).__init__(name, [
+      # Number of chunk names stored in the index
+      Uint64Field("entriesIndexed"),
+      # Number of post calls that found an existing entry
+      Uint64Field("postsFound"),
+      # Number of post calls that added a new entry
+      Uint64Field("postsNotFound"),
+      # Number of query calls that found an existing entry
+      Uint64Field("queriesFound"),
+      # Number of query calls that added a new entry
+      Uint64Field("queriesNotFound"),
+      # Number of update calls that found an existing entry
+      Uint64Field("updatesFound"),
+      # Number of update calls that added a new entry
+      Uint64Field("updatesNotFound"),
+      # Current number of dedupe queries that are in flight
+      Uint32Field("currDedupeQueries", label = "current dedupe queries"),
+      # Maximum number of dedupe queries that have been in flight
+      Uint32Field("maxDedupeQueries", label = "maximum dedupe queries"),
+    ], procRoot="vdo", **kwargs)
+
 class KernelStatistics(StatStruct):
   def __init__(self, name="KernelStatistics", **kwargs):
     super(KernelStatistics, self).__init__(name, [
@@ -73,10 +97,6 @@ class KernelStatistics(StatStruct):
       Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
       # Maximum number of active VIOs
       Uint32Field("maxVIOs", label = "maximum VDO IO requests in progress"),
-      # Current number of Dedupe queries that are in flight
-      Uint32Field("currDedupeQueries", label = "current dedupe queries"),
-      # Maximum number of Dedupe queries that have been in flight
-      Uint32Field("maxDedupeQueries", label = "maximum dedupe queries"),
       # Number of times the Albireo advice proved correct
       Uint64Field("dedupeAdviceValid"),
       # Number of times the Albireo advice proved incorrect
@@ -109,9 +129,11 @@ class KernelStatistics(StatStruct):
       ReadCacheStats("readCache"),
       # Memory usage stats.
       MemoryUsage("memoryUsage", labelPrefix = "KVDO module"),
+      # The statistics for the UDS index
+      IndexStatistics("index"),
     ], procFile="kernel_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 24
+  statisticsVersion = 26
 
   def sample(self, device):
     sample = super(KernelStatistics, self).sample(device)

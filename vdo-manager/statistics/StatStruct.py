@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   StatStruct -- classes for sampling statistics from a VDO via ioctls
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/StatStruct.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/StatStruct.py#2 $
 """
 
 from ctypes import *
@@ -41,12 +41,14 @@ class Samples(object):
     Create a new set of samples by sampling a VDO device.
 
     :param assays:    The types of samples to take
-    :param device:    The name of the device to sample
+    :param devices:   The device to sample (a dictionary containing
+                      the user-supplied name and the name to use for sampling)
     :param mustBeVDO: If set to False, errors resulting from the device not
                       being a VDO will be suppressed
     """
-    self.device = device
-    self.samples = [assay.sample(os.path.basename(device)) for assay in assays]
+    self.device = device["user"]
+    self.samples = [assay.sample(os.path.basename(device["sample"]))
+                    for assay in assays]
 
   def getDevice(self):
     """
@@ -70,7 +72,8 @@ class Samples(object):
     Assay a device.
 
     :param assays:    The types of samples to take
-    :param device:    The name of the device to sample
+    :param devices:   The device to sample (a dictionary containing
+                      the user-supplied name and the name to use for sampling)
     :param mustBeVDO: If set to False, errors resulting from the device not
                       being a VDO will be suppressed
 
@@ -80,11 +83,12 @@ class Samples(object):
     try:
       return Samples(assays, device, mustBeVDO)
     except IOError as ioe:
+      user = device["user"]
       if (ioe.errno == 22):
         if mustBeVDO:
-          raise Exception("Device {0} is not a VDO".format(device))
+          raise Exception("Device {0} is not a VDO".format(user))
         return None
-      raise Exception("Error sampling device {0}: {1}".format(device, ioe))
+      raise Exception("Error sampling device {0}: {1}".format(user, ioe))
 
   @staticmethod
   def assayDevices(assays, devices, mustBeVDO=True):
@@ -92,7 +96,8 @@ class Samples(object):
     Assay a list of devices.
 
     :param assays:    The types of samples to take
-    :param devices:   The names of the devices to sample
+    :param devices:   The devices to sample (a list of dictionaries containing
+                      the user-supplied name and the name to use for sampling)
     :param mustBeVDO: If set to False, errors resulting from the device not
                       being a VDO will be suppressed
 
@@ -101,6 +106,26 @@ class Samples(object):
     """
     return filter(None, [Samples.assay(assays, device, mustBeVDO)
                          for device in devices])
+
+  @staticmethod
+  def samplingDevice(user, sample):
+    """
+    Returns a dictionary used for sampling purposes.
+
+    The dictionary is structured as:
+      { "user"   : <user-specified name>,
+        "sample" : <sample name> }
+
+    The user-specified name is used for display purposes.
+    The sample name is used to perform the actual sampling.
+    The two names may be identical.
+
+    :param user:    user-specified name
+    :param sample:  the name to use for sampling
+
+    :return:  A sampling dictionary.
+    """
+    return { "user" : user, "sample" : sample }
 
 class Sample(object):
   """
