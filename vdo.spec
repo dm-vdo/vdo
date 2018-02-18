@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.1.8
+Version: 6.1.1.12
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -191,4 +191,7 @@ systemctl disable vdo.service || :
 
 
 %changelog
-* Mon Feb 12 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.8-1
+* Sat Feb 17 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.12-1
+- Added support for 4.15 kernels.
+- Modified spec files to support building on more distros.
+- Removed unused code from the UDS module.
