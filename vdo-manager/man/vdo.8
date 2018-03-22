@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#11 $
+.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#13 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -43,8 +43,8 @@
 .ds cpuThreadsMax 100
 .ds deduplicationDefault enabled
 .ds emulate512Default disabled
-.ds hashZoneThreadsDefault 2
-.ds hashZoneThreadsMin 1
+.ds hashZoneThreadsDefault 1
+.ds hashZoneThreadsMin 0
 .ds hashZoneThreadsMax 100
 .ds indexMemDefault 0.25
 .ds indexMemIntMin 1
@@ -453,8 +453,8 @@ The logical size of the VDO volume.
 .B Physical size
 The size of a VDO volume's underlying physical storage.
 .TP
-.B Write policy
-The configured value of the write policy (sync or async).
+.B Configured write policy
+The configured value of the write policy (sync, async or auto).
 .TP
 .B VDO Statistics
 Output of the \fBvdostats\fP utility.

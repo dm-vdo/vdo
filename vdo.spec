@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.1.12
+Version: 6.1.1.24
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -30,6 +30,7 @@ BuildRequires: python-devel
 BuildRequires: systemd
 BuildRequires: valgrind-devel
 BuildRequires: zlib-devel
+%{?systemd_requires}
 
 # Disable an automatic dependency due to a file in examples/nagios.
 %define __requires_exclude perl
@@ -50,13 +51,16 @@ make
 make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
   defaultdocdir=%{_defaultdocdir} name=%{name} \
   python_sitelib=%{python_sitelib} mandir=%{_mandir} \
-  unitdir=%{_unitdir}
+  unitdir=%{_unitdir} presetdir=%{_presetdir}
 
 %post
-systemctl enable vdo.service || :
+%systemd_post vdo.service
 
 %preun
-systemctl disable vdo.service || :
+%systemd_preun vdo.service
+
+%postun
+%systemd_postun_with_restart vdo.service
 
 %files
 #defattr(-,root,root)
@@ -162,6 +166,7 @@ systemctl disable vdo.service || :
 %{python_sitelib}/%{name}/utils/__init__.pyc
 %{python_sitelib}/%{name}/utils/__init__.pyo
 %{_unitdir}/vdo.service
+%{_presetdir}/97-vdo.preset
 %dir %{_defaultdocdir}/%{name}
 %license %{_defaultdocdir}/%{name}/COPYING
 %dir %{_defaultdocdir}/%{name}/examples
@@ -191,7 +196,11 @@ systemctl disable vdo.service || :
 
 
 %changelog
-* Sat Feb 17 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.12-1
-- Added support for 4.15 kernels.
-- Modified spec files to support building on more distros.
-- Removed unused code from the UDS module.
+* Thu Mar 22 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.24-1
+- Modified spec files to work with the Fedora copr repository.
+- Removed obsolete nagios module.
+- Fixed prerun handling of loaded kernel modules
+- Modified spec files to use systemd macros
+- Updated the vdo.8 man page
+- Improved some error messages
+
