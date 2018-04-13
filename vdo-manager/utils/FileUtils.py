@@ -21,10 +21,13 @@
 
   FileUtils - Provides dmmgmnt file-related capabilities.
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/FileUtils.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/FileUtils.py#1 $
 
 """
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import errno
 import fcntl
@@ -371,83 +374,3 @@ class FileLock(FileOpen):
   # Private methods
   ######################################################################
 
-########################################################################
-class FileTemp(FileOpen):
-  """The FileTemp object; a context manager providing temporary files
-  with specified (or default) owner and permissions.
-  An optional destination parameter specifies the location to which the
-  temp file should be moved at exit, if no exception is encountered.
-  The move, if specified, is performed after performing the owner
-  manipulations.
-
-  Class attributes:
-    log (logging.Logger) - logger for this class
-  Attributes:
-    None
-  """
-  log = logging.getLogger('utils.FileTemp')
-
-  ######################################################################
-  # Public methods
-  ######################################################################
-
-  ######################################################################
-  # Overridden methods
-  ######################################################################
-  def __init__(self, owner = None, ownerPerm = None, destination = None,
-               *args, **kwargs):
-    """
-    Arguments:
-      owner - (str) the owner to set for the file
-      ownerPerm - (str) the permissions to set for the owner
-      destination (str) the path to which to move the temp file on exit
-    Returns:
-      Nothing
-    """
-    tmpFile = tempfile.mkstemp()
-
-    super(FileTemp, self).__init__(tmpFile[1], "r+", fd = tmpFile[0])
-
-    if not owner:
-      owner = str(os.geteuid())
-    if not ownerPerm:
-      ownerPerm = "rw"
-
-    self.__owner = owner
-    self.__ownerPerm = ownerPerm
-    self.__destination = destination
-
-  ######################################################################
-  def __exit__(self, exceptionType, exceptionValue, traceback):
-    exception = exceptionType
-
-    if (exception is None) and (self.__destination is not None):
-      try:
-        cmd = Command(["chown", self.__owner, self.path])
-        cmd.run()
-        cmd = Command(["chmod", "=".join(["u", self.__ownerPerm]), self.path])
-        cmd.run()
-        self.file.close() # need to close the file to save data before move.
-        cmd = Command(["mv", self.path, self.__destination])
-        cmd.run()
-      except Exception as ex:
-        exception = ex
-
-    if (exception is not None) or (self.__destination is None):
-      try:
-        cmd = Command(["rm", self.path])
-        cmd.run()
-      except:
-        pass
-
-    return super(FileTemp, self).__exit__(exceptionType,
-                                          exceptionValue,
-                                          traceback)
-
-  ######################################################################
-  # Protected methods
-  ######################################################################
-
-  ######################################################################
-  # Private methods
-  ######################################################################

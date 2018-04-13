@@ -20,10 +20,14 @@
 """
   Field - base class for a field of a collection of statistics
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/Field.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/Field.py#1 $
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 from ctypes import *
-from LabeledValue import LabeledValue
+from .LabeledValue import LabeledValue
 import re
 
 class Field(object):

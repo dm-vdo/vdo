@@ -20,9 +20,13 @@
 """
   SizeString - LVM-style size strings
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/SizeString.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/SizeString.py#1 $
 
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 import locale
 from . import Constants
 
@@ -59,14 +63,53 @@ class SizeString(object):
     return self._bytes != 0
 
   ######################################################################
-  def __cmp__(self, rhs):
-    result = 0
+  def __eq__(self, rhs):
     if not isinstance(rhs, SizeString):
       result = NotImplemented
     else:
-      result = cmp(self._bytes, rhs.toBytes())
+      result = (self._bytes == rhs.toBytes())
     return result
-
+              
+  ######################################################################
+  def __ne__(self, rhs):
+    if not isinstance(rhs, SizeString):
+      result = NotImplemented
+    else:
+      result = (self._bytes != rhs.toBytes())
+    return result
+              
+  ######################################################################
+  def __lt__(self, rhs):
+    if not isinstance(rhs, SizeString):
+      result = NotImplemented
+    else:
+      result = (self._bytes < rhs.toBytes())
+    return result
+              
+  ######################################################################
+  def __le__(self, rhs):
+    if not isinstance(rhs, SizeString):
+      result = NotImplemented
+    else:
+      result = (self._bytes <= rhs.toBytes())
+    return result
+              
+  ######################################################################
+  def __gt__(self, rhs):
+    if not isinstance(rhs, SizeString):
+      result = NotImplemented
+    else:
+      result = (self._bytes > rhs.toBytes())
+    return result
+              
+  ######################################################################
+  def __ge__(self, rhs):
+    if not isinstance(rhs, SizeString):
+      result = NotImplemented
+    else:
+      result = (self._bytes >= rhs.toBytes())
+    return result
+              
   ######################################################################
   def __iadd__(self, rhs):
     self._bytes += int(rhs)
@@ -117,7 +160,7 @@ class SizeString(object):
   def toSectors(self):
     """Returns this object as a count of 512-byte sectors, rounding up."""
     bytesPerSector = Constants.lvmSuffixSizeMap[Constants.lvmSectorSuffix]
-    return (self._bytes + (bytesPerSector - 1)) / bytesPerSector
+    return (self._bytes + (bytesPerSector - 1)) // bytesPerSector
 
   ######################################################################
   # Overridden methods

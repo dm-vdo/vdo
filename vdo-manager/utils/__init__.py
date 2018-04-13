@@ -21,8 +21,7 @@ import gettext
 gettext.install("utils")
 
 from .Command import Command, CommandError, runCommand, tryCommandsUntilSuccess
-from .Logger import Logger
-from .FileUtils import FileLock, FileOpen, FileTouch, FileTemp
+from .FileUtils import FileLock
 from .Timeout import Timeout, TimeoutError
 from .Transaction import Transaction, transactional
 from .YAMLObject import YAMLObject

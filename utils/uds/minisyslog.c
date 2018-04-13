@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/minisyslog.c#2 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/minisyslog.c#1 $
  */
 
 #include <fcntl.h>
@@ -216,6 +216,7 @@ void miniSyslogPack(int         priority,
 void miniVsyslog(int priority, const char *format, va_list ap)
 {
   va_list dummy;
+  memset(&dummy, 0, sizeof(dummy));
   lockMutex(&mutex);
   logIt(priority, NULL, format, ap, NULL, dummy);
   unlockMutex(&mutex);

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadDefs.h#3 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/threadDefs.h#1 $
  *
  * LINUX USER-SPACE VERSION
  */

@@ -20,8 +20,12 @@
 """
   Command -- a command which is implemented as an ioctl
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/Command.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/Command.py#1 $
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import fcntl
 

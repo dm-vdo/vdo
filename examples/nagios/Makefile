@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/nagios/Makefile#3 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/examples/nagios/Makefile#1 $
 
 INSTALLFILES=nagios_check_vdostats_logicalSpace.pl	\
 	nagios_check_vdostats_physicalSpace.pl	\

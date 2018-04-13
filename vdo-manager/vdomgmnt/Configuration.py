@@ -20,22 +20,27 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Configuration.py#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#1 $
 
 """
-from . import ArgumentError, MgmntLogger
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from . import ArgumentError
+from . import StateExitStatus
 from . import VDOService
 from utils import Command, runCommand
 from utils import FileLock, YAMLObject
 
 import errno
+import logging
 import os
 from stat import ST_MTIME
 import time
 import yaml
 
-
-class BadConfigurationFileError(Exception):
+class BadConfigurationFileError(StateExitStatus, Exception):
   """Exception raised to indicate an error in processing the
   configuration file, such as a parse error or missing data.
   """
@@ -43,8 +48,8 @@ class BadConfigurationFileError(Exception):
   ######################################################################
   # Overridden methods
   ######################################################################
-  def __init__(self, msg):
-    super(BadConfigurationFileError, self).__init__()
+  def __init__(self, msg, *args, **kwargs):
+    super(BadConfigurationFileError, self).__init__(*args, **kwargs)
     self._msg = msg
 
   ######################################################################
@@ -53,29 +58,14 @@ class BadConfigurationFileError(Exception):
 
 ########################################################################
 class Configuration(YAMLObject):
-  """Configuration of VDO volumes and associated Albireo servers.
-
-  This class is designed for use with the "with" statement. If
-  Command.noRunMode is True, the file will still be opened and read
-  but writes will not be performed.
-
-  The Configuration is stored in a simple XML format; see
-  vdoconfig.dtd.
-
-  Attributes:
-    _vdos: A dictionary of VDOServices, indexed by name.
-    _filename: The name of the configuration file.
-    _readonly: True iff this Configuration is read-only.
-    _dirty: True iff this Configuration has been modified but the
-      changes have not been persisted.
-    _mustExist: If True, the file must exist (otherwise a missing
-      file is treated as an empty configuration).
-  """
-  log = MgmntLogger.getLogger(MgmntLogger.myname + '.Configuration')
+  "Configuration of VDO volumes."
+  
+  log = logging.getLogger('vdo.vdomgmnt.Configuration')
   supportedSchemaVersions = [0x20170907]
   modifiableSingltons = {}
   singletonLock = '/var/lock/vdo-config-singletons'
-  yaml_tag = u"!Configuration"
+  yaml_tag = "!Configuration"
+  yaml_has_unicode_ctors = False
 
   ######################################################################
   # Public methods
@@ -122,9 +112,11 @@ class Configuration(YAMLObject):
   def asYAMLForUser(self):
     """Returns the configuration's YAML representation to present to users.
     """
-    return yaml.dump({ "filename" : self.filepath,
-                       "config"   : self},
-                      default_flow_style = False)
+    s = yaml.dump({ "filename" : self.filepath,
+                    "config"   : self},
+                  default_flow_style = False)
+    return s.replace("!!python/unicode ", "")
+
 
   ######################################################################
   @property
@@ -289,6 +281,9 @@ class Configuration(YAMLObject):
     self._dirty = False
     self._mustExist = mustExist
     self._schemaVersion = 0x20170907
+    if not self.yaml_has_unicode_ctors:
+      self._fix_constructors()
+      self.yaml_has_unicode_ctors = True
     if self._mustExist and not os.path.exists(self.filepath):
       raise ArgumentError(_("Configuration file {0} does not exist.").format(
           self.filepath))
@@ -336,6 +331,7 @@ class Configuration(YAMLObject):
     """Reads in a Configuration from a file."""
     self.log.debug("Reading configuration from {0}".format(self.filepath))
     try:
+      fh.seek(0, 0)
       conf = yaml.safe_load(fh)
     except yaml.scanner.ScannerError:
       raise BadConfigurationFileError(_("Bad configuration file"))

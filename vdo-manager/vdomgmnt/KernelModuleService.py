@@ -20,12 +20,15 @@
 """
   KernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/KernelModuleService.py#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/KernelModuleService.py#1 $
 
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 from . import Defaults, Service
 from utils import Command, CommandError, runCommand
-import string
 import yaml
 
 
@@ -38,11 +41,10 @@ class KernelModuleService(Service):
     """Returns True if the module is loaded and DM target is available."""
     retries = 20 if wait else 1
     try:
-      runCommand(string.split("lsmod | grep -q '" + self._name + "'"),
+      runCommand(["lsmod", "|", "grep", "-q", "'" + self._name + "'"],
                  shell=True, retries=retries)
-      runCommand(string.split("dmsetup targets | grep -q " 
-                              + Defaults.vdoTargetName),
-                 shell=True, retries=retries)
+      runCommand(["dmsetup", "targets", "|", "grep", "-q",
+                  Defaults.vdoTargetName], shell=True, retries=retries)
       return True
     except CommandError:
       return False

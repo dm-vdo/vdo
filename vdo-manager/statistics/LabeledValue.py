@@ -21,8 +21,12 @@
   LabeledValue - A sampled statistic with a label. Used for formatting stats
   output.
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/LabeledValue.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/LabeledValue.py#1 $
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 class LabeledValue(object):
   """

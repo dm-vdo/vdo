@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/timeUtilsLinuxUser.c#5 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/timeUtilsLinuxUser.c#1 $
  */
 
 #include "timeUtils.h"

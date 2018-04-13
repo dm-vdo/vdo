@@ -20,8 +20,12 @@
 """
   StatStruct -- classes for sampling statistics from a VDO via ioctls
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/StatStruct.py#2 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/StatStruct.py#1 $
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 from ctypes import *
 import collections
@@ -29,8 +33,8 @@ import fcntl
 import os
 import sys
 
-from Field import Field
-from LabeledValue import LabeledValue
+from .Field import Field
+from .LabeledValue import LabeledValue
 
 class Samples(object):
   """
@@ -240,7 +244,7 @@ class StatStruct(Field):
     if not cType:
       fieldList = [(field.name, field.cType) for field in self.fields
                    if field.inStruct]
-      cType = type(className, (Structure,), { '_fields_': fieldList });
+      cType = type(str(className), (Structure,), { '_fields_': fieldList });
       self.cClasses[className] = cType
 
     return cType

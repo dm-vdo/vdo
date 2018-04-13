@@ -17,9 +17,13 @@
   02110-1301, USA. 
 """
 
-from Field import *
-from StatStruct import *
-from VDOReleaseVersions import *
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from .Field import *
+from .StatStruct import *
+from .VDOReleaseVersions import *
 
 class BlockAllocatorStatistics(StatStruct):
   def __init__(self, name="BlockAllocatorStatistics", **kwargs):
@@ -154,11 +158,25 @@ class BlockMapStatistics(StatStruct):
       Uint64Field("flushCount"),
     ], labelPrefix="block map", procRoot="vdo", **kwargs)
 
+# The dedupe statistics from hash locks
+class HashLockStatistics(StatStruct):
+  def __init__(self, name="HashLockStatistics", **kwargs):
+    super(HashLockStatistics, self).__init__(name, [
+      # Number of times the UDS advice proved correct
+      Uint64Field("dedupeAdviceValid"),
+      # Number of times the UDS advice proved incorrect
+      Uint64Field("dedupeAdviceStale"),
+      # Number of writes with the same data as another in-flight write
+      Uint64Field("concurrentDataMatches"),
+      # Number of writes whose hash collided with an in-flight write
+      Uint64Field("concurrentHashCollisions"),
+    ], procRoot="vdo", **kwargs)
+
 # Counts of error conditions in VDO.
 class ErrorStatistics(StatStruct):
   def __init__(self, name="ErrorStatistics", **kwargs):
     super(ErrorStatistics, self).__init__(name, [
-      # number of times VDO got an invalid dedupe advice PBN from albireo
+      # number of times VDO got an invalid dedupe advice PBN from UDS
       Uint64Field("invalidAdvicePBNCount"),
       # number of times a VIO completed with a VDO_NO_SPACE error
       Uint64Field("noSpaceErrorCount"),
@@ -182,12 +200,12 @@ class VDOStatistics(StatStruct):
       Uint64Field("physicalBlocks"),
       # number of logical blocks
       Uint64Field("logicalBlocks"),
-      Uint64Field("oneKBlocks", label = "1K-blocks", derived = "$physicalBlocks * $blockSize / 1024"),
-      Uint64Field("oneKBlocksUsed", label = "1K-blocks used", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize / 1024", available = "not $inRecoveryMode"),
-      Uint64Field("oneKBlocksAvailable", label = "1K-blocks available", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize / 1024", available = "not $inRecoveryMode"),
-      Uint8Field("usedPercent", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) / $physicalBlocks) + 0.5)", available = "((not $inRecoveryMode) and ($mode != 'read-only'))"),
-      Uint8Field("savings", display = False, derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) / $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1", available = "not $inRecoveryMode"),
-      Uint8Field("savingPercent", derived = "$savings if ($savings >= 0) else NotAvailable()", available = "((not $inRecoveryMode) and ($mode != 'read-only'))"),
+      Uint64Field("oneKBlocks", label = "1K-blocks", derived = "$physicalBlocks * $blockSize // 1024"),
+      Uint64Field("oneKBlocksUsed", label = "1K-blocks used", available = "not $inRecoveryMode", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024"),
+      Uint64Field("oneKBlocksAvailable", label = "1K-blocks available", available = "not $inRecoveryMode", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024"),
+      Uint8Field("usedPercent", available = "((not $inRecoveryMode) and ($mode != 'read-only'))", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)"),
+      Uint8Field("savings", display = False, available = "not $inRecoveryMode", derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1"),
+      Uint8Field("savingPercent", available = "((not $inRecoveryMode) and ($mode != 'read-only'))", derived = "$savings if ($savings >= 0) else NotAvailable()"),
       # Size of the block map page cache, in bytes
       Uint64Field("blockMapCacheSize"),
       # String describing the active write policy of the VDO
@@ -218,11 +236,13 @@ class VDOStatistics(StatStruct):
       RefCountsStatistics("refCounts"),
       # The statistics for the block map
       BlockMapStatistics("blockMap"),
+      # The dedupe statistics from hash locks
+      HashLockStatistics("hashLock"),
       # Counts of error conditions
       ErrorStatistics("errors"),
     ], procFile="dedupe_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 26
+  statisticsVersion = 29
 
   def sample(self, device):
     sample = super(VDOStatistics, self).sample(device)

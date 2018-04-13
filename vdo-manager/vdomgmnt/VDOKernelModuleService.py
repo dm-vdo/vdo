@@ -20,9 +20,13 @@
 """
   VDOKernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
 
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 from . import Defaults
 from .KernelModuleService import KernelModuleService
 from utils import runCommand

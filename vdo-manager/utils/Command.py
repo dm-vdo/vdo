@@ -20,10 +20,13 @@
 """
   Command - runs commands and manages their results
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Command.py#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/Command.py#1 $
 
 """
-from .Logger import Logger
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 from subprocess import Popen, PIPE
 import copy
 import logging
@@ -99,7 +102,7 @@ class Command(object):
   """
   defaultNoRun   = False
   defaultVerbose = 0
-  log            = logging.getLogger(Logger.myname + '.Command')
+  log            = logging.getLogger('utils.Command')
 
   ######################################################################
   # Public methods
@@ -249,7 +252,7 @@ class Command(object):
     try:
       p = Popen(command,
                 stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True,
-                env=self.env, shell=self.shell)
+                env=self.env, shell=self.shell, universal_newlines=True)
       stdoutdata, stderrdata = p.communicate(stdin)
       return self._checkResults(p.returncode, "".join(stdoutdata),
                                 "".join(stderrdata))

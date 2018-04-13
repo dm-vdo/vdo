@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.h#5 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/fileUtils.h#1 $
  */
 
 #ifndef FILE_UTILS_H
@@ -56,7 +56,6 @@ static INLINE FileAccess fileAccessMode(IOAccessMode access)
 /**
  * Determine the best size for IO buffers.
  *
- * @param fd          The file descriptor
  * @param defaultSize The default size to use if a better size can't be
  *                    determined
  * @param blockSize   A pointer to hold basic block size of the system
@@ -64,10 +63,7 @@ static INLINE FileAccess fileAccessMode(IOAccessMode access)
  *
  * @return UDS_SUCCESS or an error code
  **/
-int getBufferSizeInfo(int          fd,
-                      size_t       defaultSize,
-                      size_t      *blockSize,
-                      size_t      *bestSize)
+int getBufferSizeInfo(size_t defaultSize, size_t *blockSize, size_t *bestSize)
   __attribute__((warn_unused_result));
 
 /**

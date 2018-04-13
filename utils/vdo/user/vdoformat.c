@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoFormat.c#11 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoFormat.c#1 $
  */
 
 #include <err.h>
@@ -81,11 +81,6 @@ static const char helpString[] =
   "       gigabytes, T for terabytes, or P for petabytes is optional. The\n"
   "       default unit is megabytes.\n"
   "\n"
-  "    --physical-size=<size>\n"
-  "       Set the physical size of the VDO device to <size>. A size suffix\n"
-  "       of K for kilobytes, M for megabytes, G for gigabytes, or T for\n"
-  "       terabytes is optional. The default unit is megabytes.\n"
-  "\n"
   "    --slab-bits=<bits>\n"
   "       Specify the slab size in bits. The maximum size is 23, and the\n"
   "       default is 19.\n"
@@ -113,7 +108,6 @@ static struct option options[] = {
   { "force",                    no_argument,       NULL, 'f' },
   { "help",                     no_argument,       NULL, 'h' },
   { "logical-size",             required_argument, NULL, 'l' },
-  { "physical-size",            required_argument, NULL, 'p' },
   { "slab-bits",                required_argument, NULL, 'S' },
   { "uds-checkpoint-frequency", required_argument, NULL, 'c' },
   { "uds-memory-size",          required_argument, NULL, 'm' },
@@ -122,7 +116,7 @@ static struct option options[] = {
   { "version",                  no_argument,       NULL, 'V' },
   { NULL,                       0,                 NULL,  0  },
 };
-static char optionString[] = "fhil:p:S:c:m:svV";
+static char optionString[] = "fhil:S:c:m:svV";
 
 static void usage(const char *progname, const char *usageOptionsString)
 {
@@ -133,7 +127,6 @@ static void usage(const char *progname, const char *usageOptionsString)
 int main(int argc, char *argv[])
 {
   uint64_t     logicalSize  = 0; // defaults to physicalSize
-  uint64_t     physicalSize = 0;
   unsigned int slabBits     = DEFAULT_SLAB_BITS;
 
   UdsConfigStrings configStrings;
@@ -162,14 +155,6 @@ int main(int argc, char *argv[])
         usage(argv[0], usageString);
       }
       logicalSize = sizeArg;
-      break;
-
-    case 'p':
-      result = parseSize(optarg, true, &sizeArg);
-      if ((result != VDO_SUCCESS) || (sizeArg == 0)) {
-        usage(argv[0], usageString);
-      }
-      physicalSize = sizeArg;
       break;
 
     case 'S':
@@ -232,20 +217,14 @@ int main(int argc, char *argv[])
     errx(result, "unable to open %s", filename);
   }
 
-  uint64_t bytes;
-  if (ioctl(fd, BLKGETSIZE64, &bytes) < 0) {
+  uint64_t physicalSize;
+  if (ioctl(fd, BLKGETSIZE64, &physicalSize) < 0) {
     errx(errno, "unable to get size of %s", filename);
   }
 
-  if (bytes > MAXIMUM_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE) {
+  if (physicalSize > MAXIMUM_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE) {
     errx(1, "underlying block device size exceeds the maximum (%" PRIu64 ")",
         MAXIMUM_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE);
-  }
-
-  if (physicalSize == 0) {
-    physicalSize = bytes;
-  } else if (physicalSize != bytes) {
-    errx(1, "physical size must be the size of the underlying block device");
   }
 
   result = closeFile(fd, "cannot close file");

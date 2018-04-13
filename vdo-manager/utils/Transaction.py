@@ -20,16 +20,30 @@
 """
   Transaction - provides transactional support
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Transaction.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/Transaction.py#1 $
 
 """
-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 from functools import wraps
 import gettext
 import sys
 import threading
 
 gettext.install('Transaction')
+
+#####################################################################
+if (sys.version_info > (3, 0)):
+  def reraise(ex, val, tb):
+    #pylint: disable=E0710
+    raise ex.with_traceback(tb)
+else:
+  exec("""def reraise(ex, val, tb):
+    raise type(ex), val, tb
+    """)
+
 
 class Transaction(object):
   """Client-visible transaction object.
@@ -209,10 +223,7 @@ def transactional(func):
       result = func(*args, **kwargs)
     except Exception as ex:
       transaction.undo(ex)
-
-      # Re-raise the Exception, preserving the stack trace from its origin.
-      #pylint: disable=E0710
-      raise type(ex), ex, sys.exc_info()[2]
+      reraise(ex, ex, sys.exc_info()[2])
     finally:
       _Transaction.removeTransaction()
 

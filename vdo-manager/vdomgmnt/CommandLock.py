@@ -20,10 +20,14 @@
 """
   CommandLock - simple process locking
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/CommandLock.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/CommandLock.py#1 $
 
 """
-from utils import Command, FileLock, Logger
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from utils import Command, FileLock
 
 class CommandLockError(Exception):
   """Exception raised to indicate an error acquiring a CommandLock."""
@@ -42,7 +46,6 @@ class CommandLockError(Exception):
 class CommandLock(FileLock):
   """Simple process locking.
   """
-  log = Logger.getLogger(Logger.myname + '.CommandLock')
 
   ######################################################################
   # Overridden methods

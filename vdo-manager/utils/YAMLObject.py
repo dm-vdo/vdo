@@ -21,9 +21,13 @@
 
   YAMLObject - Provides mapping to/from YAML.
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/YAMLObject.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/YAMLObject.py#1 $
 
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import gettext
 import yaml
@@ -123,7 +127,7 @@ class YAMLObject(yaml.YAMLObject):
       representation
     """
     return dict([(key, value)
-                  for key, value in self.__dict__.iteritems()
+                  for key, value in list(self.__dict__.items())
                   if ((key in self._yamlAttributeKeys)
                     and (key not in self._yamlSpeciallyHandledAttributes))])
 
@@ -169,3 +173,17 @@ class YAMLObject(yaml.YAMLObject):
     these attributes.
     """
     return []
+
+  ######################################################################
+  @staticmethod
+  def _construct_yaml_str(_loader, node):
+    "Provide a constructor for Python Unicode objects."
+    return node.value
+
+  ######################################################################
+  @staticmethod
+  def _fix_constructors():
+    yaml.Loader.add_constructor('tag:yaml.org,2002:python/unicode',
+                                YAMLObject._construct_yaml_str)
+    yaml.SafeLoader.add_constructor('tag:yaml.org,2002:python/unicode',
+                                    YAMLObject._construct_yaml_str)

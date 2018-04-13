@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileIORegion.c#3 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/fileIORegion.c#1 $
  */
 
 #include "fileIORegion.h"
@@ -281,7 +281,7 @@ int makeFileRegion(int fd, FileAccess access, IORegion **regionPtr)
   size_t blockSize = 1024;
   size_t bestSize  = 4096;
 
-  int result = getBufferSizeInfo(fd, bestSize, &blockSize, &bestSize);
+  int result = getBufferSizeInfo(bestSize, &blockSize, &bestSize);
   if (result != UDS_SUCCESS) {
     return result;
   }

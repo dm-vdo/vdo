@@ -22,10 +22,12 @@
 """
   vdoStats - Report statistics from an Albireo VDO.
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdoStats#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdoStats#1 $
 """
-
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import errno
 import gettext
@@ -90,7 +92,7 @@ def enumerateDevices():
     names = [name for name in runCommand(["vdo", "list"]).splitlines()
               if len(name) > 0]
     paths = [os.path.sep.join(["", "dev", "mapper", name]) for name in names]
-    names = filter(os.path.exists, paths)
+    names = list(filter(os.path.exists, paths))
   except CommandError as e:
     print(_("Error enumerating VDO devices: {0}".format(e)), file = sys.stderr)
   return names
@@ -112,8 +114,8 @@ def transformDevices(devices):
   names = [os.path.basename(x) for x in paths]
   resolvedPaths = [os.path.realpath(x) for x in paths]
   resolvedNames = [os.path.basename(x) for x in resolvedPaths]
-  resolvedToVdoName = dict(zip(resolvedNames, names))
-  resolvedToVdoPath = dict(zip(resolvedPaths, paths))
+  resolvedToVdoName = dict(list(zip(resolvedNames, names)))
+  resolvedToVdoPath = dict(list(zip(resolvedPaths, paths)))
 
   transformedDevices = []
   for (original, (head, tail)) in [(x, os.path.split(x)) for x in devices]:
@@ -252,8 +254,8 @@ def printDF(stats, options):
                         "Size" if options.humanReadable else "1K-blocks",
                         "Used", "Available", "Use%", "Space saving%"))
   for stat in stats:
-    print(apply(dfFormat.format,
-                [stat.getDevice()] + dfStats(stat.getSamples()[0], options)))
+    lst = [stat.getDevice()] + dfStats(stat.getSamples()[0], options)
+    print(dfFormat.format(*lst))
 
 ########################################################################
 def printYAML(stats, dedupeFormatter):

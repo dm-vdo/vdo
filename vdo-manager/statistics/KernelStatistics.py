@@ -17,9 +17,13 @@
   02110-1301, USA. 
 """
 
-from Field import *
-from StatStruct import *
-from VDOReleaseVersions import *
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from .Field import *
+from .StatStruct import *
+from .VDOReleaseVersions import *
 
 class BioStats(StatStruct):
   def __init__(self, name="BioStats", **kwargs):
@@ -97,17 +101,13 @@ class KernelStatistics(StatStruct):
       Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
       # Maximum number of active VIOs
       Uint32Field("maxVIOs", label = "maximum VDO IO requests in progress"),
-      # Number of times the Albireo advice proved correct
-      Uint64Field("dedupeAdviceValid"),
-      # Number of times the Albireo advice proved incorrect
-      Uint64Field("dedupeAdviceStale"),
-      # Number of times the Albireo server was too slow in responding
+      # Number of times the UDS index was too slow in responding
       Uint64Field("dedupeAdviceTimeouts"),
       # Number of flush requests submitted to the storage device
       Uint64Field("flushOut"),
       # Logical block size
       Uint64Field("logicalBlockSize", display = False),
-      FloatField("writeAmplificationRatio", derived = "round(($biosMeta[\"write\"] + $biosOut[\"write\"]) / float($biosIn[\"write\"]), 2) if $biosIn[\"write\"] > 0 else 0.00"),
+      FloatField("writeAmplificationRatio", derived = "round(($biosMeta[\"write\"] + $biosOut[\"write\"]) // float($biosIn[\"write\"]), 2) if $biosIn[\"write\"] > 0 else 0.00"),
       # Bios submitted into VDO from above
       BioStats("biosIn", labelPrefix = "bios in"),
       BioStats("biosInPartial", labelPrefix = "bios in partial"),
@@ -133,7 +133,7 @@ class KernelStatistics(StatStruct):
       IndexStatistics("index"),
     ], procFile="kernel_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 26
+  statisticsVersion = 29
 
   def sample(self, device):
     sample = super(KernelStatistics, self).sample(device)

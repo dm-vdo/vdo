@@ -20,22 +20,27 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#6 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#1 $
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 from . import ArgumentError
 from . import CommandLock
 from . import Configuration
 from . import Constants
 from . import Defaults
-from . import MgmntLogger
 from . import MgmntUtils
 from . import Service
 from . import VDOKernelModuleService
 from . import VDOService, VDOServiceError, VDOServicePreviousOperationError
+from . import ExitStatus, SystemExitStatus, UserExitStatus
 from utils import Command, CommandError, runCommand
 from utils import Transaction, transactional
 from functools import partial
 import inspect
+import logging
 import __main__ as main
 import os
 import re
@@ -69,7 +74,8 @@ def sharedlock(func):
     return lock(False, func, *args, **kwargs)
   return wrap
 
-class OperationError(Exception):
+########################################################################
+class OperationError(ExitStatus, Exception):
   """Exception raised to indicate an error executing an operation."""
 
   ######################################################################
@@ -83,8 +89,8 @@ class OperationError(Exception):
   ######################################################################
   # Protected methods
   ######################################################################
-  def __init__(self, msg):
-    super(OperationError, self).__init__()
+  def __init__(self, msg, *args, **kwargs):
+    super(OperationError, self).__init__(*args, **kwargs)
     self._msg = msg
 
   def __str__(self):
@@ -177,7 +183,7 @@ class VDOOperation(object):
     """
     if self.requiresRoot and (os.getuid() != 0):
       msg = _("You must be root to use the \"{0}\" command").format(self.name)
-      raise OperationError(msg)
+      raise OperationError(msg, exitStatus = UserExitStatus)
 
     if self.checkBinaries:
       for executable in ['vdodumpconfig',
@@ -185,11 +191,11 @@ class VDOOperation(object):
                          'vdoformat']:
         if not MgmntUtils.which(executable):
           msg = _("executable '{0}' not found in $PATH").format(executable)
-          raise OperationError(msg)
+          raise OperationError(msg, exitStatus = SystemExitStatus)
 
     if self.requiresRunMode and Command.noRunMode():
       msg = _("{0} command not available with --noRun").format(self.name)
-      raise OperationError(msg)
+      raise OperationError(msg, exitStatus = UserExitStatus)
 
   ######################################################################
   def run(self, args):
@@ -216,8 +222,7 @@ class VDOOperation(object):
   def __init__(self, **kwargs):
     name = re.sub('Operation$', '', type(self).__name__)
     self.name            = name[0].lower() + name[1:]
-    self.log             = MgmntLogger.getLogger(MgmntLogger.myname
-                                                  + '.VDOOperations')
+    self.log             = logging.getLogger('vdo.vdomgmnt.VDOOperation')
     self.requiresRoot    = kwargs.get('requiresRoot', True)
     self.checkBinaries   = kwargs.get('checkBinaries', False)
     self.requiresRunMode = kwargs.get('requiresRunMode', False)
@@ -553,10 +558,11 @@ class StatusOperation(VDOOperation):
 
       # YAML adds a newline at the end.  To maintain consistency with the
       # previous output we need to eliminate that.
-      print(yaml.dump(vdoStatus, default_flow_style = False)[:-1])
-      print(yaml.dump(kernelStatus, default_flow_style = False)[:-1])
-      print(yaml.dump(confStatus, default_flow_style = False)[:-1])
-      print(yaml.dump(perVdoStatus, default_flow_style = False)[:-1])
+      print(yaml.safe_dump(vdoStatus, default_flow_style = False)[:-1])
+      print(yaml.safe_dump(kernelStatus, default_flow_style = False)[:-1])
+      print(yaml.safe_dump(confStatus, default_flow_style = False)[:-1])
+      print(yaml.safe_dump(perVdoStatus, default_flow_style = False, 
+                           width=float("inf"))[:-1])
 
       sys.stdout.flush()
       sys.stderr.flush()
@@ -623,9 +629,8 @@ class OptionToggle(VDOOperation):
   def _configure(self, args, vdo):
     """Actually update the configuration for this operation. This method must
     be overridden by derived classes."""
-    msg = _("Don't know how to update configuration for {0}").format(
-            self._optionName)
-    raise OperationError(msg)
+    self.log.error(_("{0} unimplemented").format(self.name))
+    raise NotImplementedError
 
 ########################################################################
 class DisableCompressionOperation(OptionToggle):

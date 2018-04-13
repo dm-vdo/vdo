@@ -20,10 +20,26 @@
 """
   DisplaySpec
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/StatFormatter.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/StatFormatter.py#1 $
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import sys
+
+# Define a utility function, isstr(), that returns true if its argument
+# is a string type. Avoids depending on the six library to test for
+# strings in Python 2/3 code.
+try:
+    # Throws an exception if basestring isn't available
+    basestring
+    def isstr(s):
+        return isinstance(s, basestring)
+except NameError:
+    def isstr(s):
+        return isinstance(s, str)
 
 class StatFormatter(object):
   """
@@ -114,7 +130,7 @@ class StatFormatter(object):
     :param lv: The values to format
     """
     try:
-      print self.format(lv)
+      print(self.format(lv))
       sys.stdout.flush()
     except IOError:
       # Someone must have closed stdout. Don't die.
@@ -136,7 +152,7 @@ class DisplaySpec(object):
     self.formatter       = formatter
     self.parent          = None
     self.child           = child
-    self.displayFilter   = parameters.get('displayFilter', lambda(lv): True)
+    self.displayFilter   = parameters.get('displayFilter', lambda lv: True)
     self.indent          = parameters.get('indent', '')
     self.joiner          = parameters.get('joiner',
                                           "\n" if formatter.yaml else ' ')
@@ -160,14 +176,14 @@ class DisplaySpec(object):
       return lambda lv: None
 
     if isinstance(nameType, list):
-      if isinstance(nameType[0], str):
+      if isstr(nameType[0]):
         name = [nameType[0], nameType[1:]]
       else:
         name = ['', nameType]
       return lambda lv: (name[0]
                          + ' '.join(str(lv.value[n].value) for n in name[1]))
 
-    if (isinstance(nameType, str)):
+    if isstr(nameType):
       if (nameType == '='):
         self.nameJoiner = '='
         return lambda lv: None if lv.isMultiValued() else lv.label

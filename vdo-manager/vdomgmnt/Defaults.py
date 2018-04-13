@@ -20,22 +20,26 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Defaults.py#13 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#1 $
 
 """
-from . import Constants, MgmntLogger, MgmntUtils, SizeString
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from . import Constants, MgmntUtils, SizeString, UserExitStatus
 import os
 import re
 import stat
 
-class ArgumentError(Exception):
+class ArgumentError(UserExitStatus, Exception):
   """Exception raised to indicate an error with an argument."""
 
   ######################################################################
   # Overridden methods
   ######################################################################
-  def __init__(self, msg):
-    super(ArgumentError, self).__init__()
+  def __init__(self, msg, *args, **kwargs):
+    super(ArgumentError, self).__init__(*args, **kwargs)
     self._msg = msg
 
   ######################################################################
@@ -80,7 +84,6 @@ class Defaults(object):
   indexMem = 0.25
   indexMemIntMax = 1024
   indexMemIntMin = 1
-  log = MgmntLogger.getLogger(MgmntLogger.myname + '.Defaults')
   logicalSizeMax = SizeString("4096T")
   logicalThreads = 1
   logicalThreadsBlockMapCacheSizeThreshold = 9

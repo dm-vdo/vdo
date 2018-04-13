@@ -4,16 +4,15 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.1.24
+Version: 6.2.0.4
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
 URL: http://github.com/dm-vdo/vdo
 Distribution: RHEL 7.3
 Requires: PyYAML >= 3.10
-Requires: libuuid >= 2.23  
-Requires: kmod-kvdo >= 6.1
-Requires: lvm2 >= 2.02.171
+Requires: libuuid >= 2.23
+#Requires: kvdo-kmod >= 6.2
 Provides: kvdo-kmod-common = %{version}
 ExclusiveArch: x86_64
 ExcludeArch: s390
@@ -85,12 +84,12 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python_sitelib}/%{name}/vdomgmnt/Defaults.py
 %{python_sitelib}/%{name}/vdomgmnt/Defaults.pyc
 %{python_sitelib}/%{name}/vdomgmnt/Defaults.pyo
+%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.py
+%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.pyc
+%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.pyo
 %{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.py
 %{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.pyc
 %{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.pyo
-%{python_sitelib}/%{name}/vdomgmnt/MgmntLogger.py
-%{python_sitelib}/%{name}/vdomgmnt/MgmntLogger.pyc
-%{python_sitelib}/%{name}/vdomgmnt/MgmntLogger.pyo
 %{python_sitelib}/%{name}/vdomgmnt/MgmntUtils.py
 %{python_sitelib}/%{name}/vdomgmnt/MgmntUtils.pyc
 %{python_sitelib}/%{name}/vdomgmnt/MgmntUtils.pyo
@@ -103,6 +102,9 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python_sitelib}/%{name}/vdomgmnt/Utils.py
 %{python_sitelib}/%{name}/vdomgmnt/Utils.pyc
 %{python_sitelib}/%{name}/vdomgmnt/Utils.pyo
+%{python_sitelib}/%{name}/vdomgmnt/VDOArgumentParser.py
+%{python_sitelib}/%{name}/vdomgmnt/VDOArgumentParser.pyc
+%{python_sitelib}/%{name}/vdomgmnt/VDOArgumentParser.pyo
 %{python_sitelib}/%{name}/vdomgmnt/VDOService.py
 %{python_sitelib}/%{name}/vdomgmnt/VDOService.pyc
 %{python_sitelib}/%{name}/vdomgmnt/VDOService.pyo
@@ -150,9 +152,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python_sitelib}/%{name}/utils/FileUtils.py
 %{python_sitelib}/%{name}/utils/FileUtils.pyc
 %{python_sitelib}/%{name}/utils/FileUtils.pyo
-%{python_sitelib}/%{name}/utils/Logger.py
-%{python_sitelib}/%{name}/utils/Logger.pyc
-%{python_sitelib}/%{name}/utils/Logger.pyo
 %{python_sitelib}/%{name}/utils/Timeout.py
 %{python_sitelib}/%{name}/utils/Timeout.pyc
 %{python_sitelib}/%{name}/utils/Timeout.pyo
@@ -177,7 +176,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdoremove.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.py
 # Fedora doesn't byte-compile the examples.
-%if 0%{?rhel} 
+%if 0%{?rhel}
 %doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.pyc
 %doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.pyo
 %endif
@@ -196,11 +195,13 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Thu Mar 22 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.24-1
-- Modified spec files to work with the Fedora copr repository.
-- Removed obsolete nagios module.
-- Fixed prerun handling of loaded kernel modules
-- Modified spec files to use systemd macros
-- Updated the vdo.8 man page
-- Improved some error messages
+* Fri Apr 13 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.4-1
+- Initial pre-release for RHEL 8.
+Please be aware that this version is not compatible with previous
+versions of VDO. Support for loading or upgrading devices created with
+VDO version 6.1 will be available soon.
+- Management tools will work with both python 2 and python 3.
+- Dedupe path improvements.
+- Beginnings of support for non-x86 architectures.
+- Removed obsolete code from UDS.
 

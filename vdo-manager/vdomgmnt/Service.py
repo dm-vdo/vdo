@@ -20,14 +20,24 @@
 """
   Service - Abstract superclass for services
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Service.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Service.py#1 $
 
 """
-from utils import Logger, YAMLObject
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+from . import ExitStatus
+from utils import YAMLObject
 
-class ServiceError(Exception):
+class ServiceError(ExitStatus, Exception):
   """Base class for service errors.
   """
+
+  ######################################################################
+  # Public methods
+  ######################################################################
+
   ######################################################################
   # Overridden methods
   ######################################################################
@@ -39,16 +49,9 @@ class ServiceError(Exception):
   def __str__(self):
     return self._msg
 
-########################################################################
-class ServiceStateError(Exception):
-  """Exception for service in an unexpected state.
-  This includes scenarios where a user request is redundant.
-  """
   ######################################################################
-  # Overridden methods
+  # Protected methods
   ######################################################################
-  def __init__(self, msg = _("service state error"), *args, **kwargs):
-    super(ServiceStateError, self).__init__(msg, *args, **kwargs)
 
 ########################################################################
 class Service(YAMLObject):
@@ -75,8 +78,7 @@ class Service(YAMLObject):
              configuration file
     status   returns the status of the service in YAML format
   """
-  log      = Logger.getLogger(Logger.myname + '.Service')
-  yaml_tag = u"!Service"
+  yaml_tag = "!Service"
 
   ######################################################################
   # Public methods

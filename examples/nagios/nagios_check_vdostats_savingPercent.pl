@@ -36,7 +36,7 @@
 #
 # The "vdostats" program must be in the path used by "sudo".
 #
-# $Id: //eng/vdo-releases/magnesium/src/tools/nagios/nagios_check_vdostats_savingPercent.pl#1 $
+# $Id: //eng/vdo-releases/aluminum/src/tools/nagios/nagios_check_vdostats_savingPercent.pl#1 $
 #
 ##
 
