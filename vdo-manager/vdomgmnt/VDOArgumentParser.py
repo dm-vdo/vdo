@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#2 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -998,7 +998,7 @@ suffix is optional""").format(options
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoSlabSize",
                         type = self.__optionCheck(Defaults.checkSlabSize),
-                        default = "0",
+                        default = Defaults.slabSize,
                         metavar = "<megabytes>",
                         help = _("""
       Specifies the size of the increment by which a VDO is grown. Using a

@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#3 $
 
 """
 from __future__ import absolute_import
@@ -41,6 +41,7 @@ from utils import Command, CommandError, runCommand
 from utils import Transaction, transactional
 
 import functools
+import locale
 import logging
 import math
 import os
@@ -279,10 +280,12 @@ class VDOService(Service):
     # one boot cycle to the next.
     realpath = os.path.realpath(self.device)
     idDir = '/dev/disk/by-id'
-    aliases = [absname
-               for absname in (os.path.join(idDir, name)
-                               for name in os.listdir(idDir))
-               if os.path.realpath(absname) == realpath]
+    aliases = []
+    if os.path.isdir(idDir):
+      aliases = [absname
+                 for absname in (os.path.join(idDir, name)
+                                 for name in os.listdir(idDir))
+                 if os.path.realpath(absname) == realpath]
     if len(aliases) > 0:
       self.log.debug("found aliases for {original}: {aliases}"
                      .format(original = realpath, aliases = aliases))
@@ -1760,7 +1763,8 @@ class VDOService(Service):
     Raises:
       ArgumentError
     """
-    memoryNeeded = SizeString("{0}g".format(indexMemory))
+    # SizeString respects locale, so convert to localized representation
+    memoryNeeded = SizeString("{0}g".format(locale.str(float(indexMemory))))
     memoryAvailable = None
     try:
       result = runCommand(['grep', 'MemAvailable', '/proc/meminfo'])

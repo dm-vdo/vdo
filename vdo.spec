@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.0.4
+Version: 6.2.0.32
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -195,13 +195,15 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Fri Apr 13 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.4-1
-- Initial pre-release for RHEL 8.
-Please be aware that this version is not compatible with previous
-versions of VDO. Support for loading or upgrading devices created with
-VDO version 6.1 will be available soon.
-- Management tools will work with both python 2 and python 3.
-- Dedupe path improvements.
-- Beginnings of support for non-x86 architectures.
-- Removed obsolete code from UDS.
+* Tue Apr 24 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.32-1
+Note: This is a pre-release version, future versions of VDO may not support
+      VDO devices created with this version.
+- Add a library, libuser.a, to provide easy access to VDO user space code
+  for other projects.
+- Fixed a bug in vdo script when /dev/disk/by-id does not exist.
+- Fixed an internationalization bug in the vdo script's --indexMemory
+  option.
+- Changed vdo script to not accept --vdoSlabSize=0 as a way of specifying
+  the default since it was confusing. The default can be obtained by merely 
+  omitting the parameter entirely.
 

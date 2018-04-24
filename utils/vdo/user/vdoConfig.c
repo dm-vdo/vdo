@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.c#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.c#3 $
  */
 
 #include <uuid/uuid.h>
@@ -307,7 +307,7 @@ static int prepareSuperBlock(VDO *vdo)
     return result;
   }
 
-  vdo->loadConfig.firstBlockOffset = getDataRegionOffset(geometry);
+  setLoadConfigFromGeometry(&geometry, &vdo->loadConfig);
   result = loadSuperBlock(vdo->layer, getFirstBlockOffset(vdo),
                           &vdo->superBlock);
   if (result != VDO_SUCCESS) {
@@ -317,12 +317,6 @@ static int prepareSuperBlock(VDO *vdo)
   result = validateVDOVersion(vdo);
   if (result != VDO_SUCCESS) {
     return result;
-  }
-
-  if (upgradeRequired(vdo)) {
-    return logErrorWithStringError(VDO_UNSUPPORTED_VERSION,
-                                   "Can't reconfigure, "
-                                   "VDO version not current");
   }
 
   return decodeVDOComponent(vdo);
