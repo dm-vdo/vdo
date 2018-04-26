@@ -1,6 +1,6 @@
 The Red Hat VDO Team:
   Principal Engineer/Lead Architect:
-    J. corwin Coburn <corwin@redhat.com>
+    J. Corwin Coburn <corwin@redhat.com>
 
   Primary Authors:
     Joseph Chapman <jochapma@redhat.com>
