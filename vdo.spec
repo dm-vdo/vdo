@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.0.32
+Version: 6.2.0.35
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -195,15 +195,11 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Tue Apr 24 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.32-1
+* Fri Apr 27 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.35-1
 Note: This is a pre-release version, future versions of VDO may not support
-      VDO devices created with this version.
-- Add a library, libuser.a, to provide easy access to VDO user space code
-  for other projects.
-- Fixed a bug in vdo script when /dev/disk/by-id does not exist.
-- Fixed an internationalization bug in the vdo script's --indexMemory
-  option.
-- Changed vdo script to not accept --vdoSlabSize=0 as a way of specifying
-  the default since it was confusing. The default can be obtained by merely 
-  omitting the parameter entirely.
-
+VDO devices created with this version.
+- Added validation that the release version numbers in the geometry and
+  super block match on load.
+- Fixed bug where VDO would always be created with a dense index even when
+  a sparse index was requested.
+- Fixed compilation problems on newer versions of GCC.

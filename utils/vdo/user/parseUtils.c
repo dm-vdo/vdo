@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/parseUtils.c#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/parseUtils.c#2 $
  */
 
 #include "parseUtils.h"
@@ -155,7 +155,7 @@ int parseIndexConfig(UdsConfigStrings *configStrings,
   }
 
   if (configStrings->sparse != NULL) {
-    config.sparse = (strcmp(configStrings->sparse, "0") == 0);
+    config.sparse = (strcmp(configStrings->sparse, "0") != 0);
   }
 
   *configPtr = config;
