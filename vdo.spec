@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.0.149
+Version: 6.1.0.168
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -187,5 +187,5 @@ systemctl disable vdo.service || :
 
 
 %changelog
-* Sun Apr 29 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.0.149-1
-HASH(0x2919780)
+* Sun Apr 29 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.0.168-1
+HASH(0x32eeb58)
