@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoFormat.c#8 $
+ * $Id: //eng/vdo-releases/magnesium-rhel7.5/src/c++/vdo/user/vdoFormat.c#1 $
  */
 
 #include <err.h>
@@ -49,12 +49,6 @@ enum {
   MIN_SLAB_BITS        =  4,
   DEFAULT_SLAB_BITS    = 19,
 };
-
-typedef struct {
-  char *sparse;
-  char *memorySize;
-  char *checkpointFrequency;
-} ConfigStrings;
 
 static const char usageString[] =
   " [--help] [options...] filename";
@@ -135,69 +129,6 @@ static void usage(const char *progname, const char *usageOptionsString)
   errx(1, "Usage: %s%s\n", progname, usageOptionsString);
 }
 
-static int parseMem(char *string, uint32_t *sizePtr)
-{
-  UdsMemoryConfigSize mem;
-  if (strcmp(string, "0.25") == 0) {
-    mem = UDS_MEMORY_CONFIG_256MB;
-  } else if (strcmp(string, "0.5") == 0) {
-    mem = UDS_MEMORY_CONFIG_512MB;
-  } else if (strcmp(string, "0.75") == 0) {
-    mem = UDS_MEMORY_CONFIG_768MB;
-  } else {
-    unsigned long number;
-    if (stringToUnsignedLong(string, &number) != UDS_SUCCESS) {
-      return -EINVAL;
-    }
-    mem = number;
-    if (mem != number) {
-      return -EINVAL;
-    }
-  }
-  *sizePtr = mem;
-  return UDS_SUCCESS;
-}
-
-/**
- * Parse ConfigStrings into an IndexConfig.
- *
- * @param [in]  configStrings  The configStrings read.
- * @param [out] configPtr      A pointer to return the IndexConfig.
- **/
-static int parseUdsConfigStrings(ConfigStrings *configStrings,
-                                 IndexConfig   *configPtr)
-{
-  IndexConfig config;
-  memset(&config, 0, sizeof(config));
-
-  config.mem = UDS_MEMORY_CONFIG_256MB;
-  if (configStrings->memorySize != NULL) {
-    int result = parseMem(configStrings->memorySize, &config.mem);
-    if (result != UDS_SUCCESS) {
-      return result;
-    }
-  }
-
-  if (configStrings->checkpointFrequency != NULL) {
-    unsigned long number;
-    int result = stringToUnsignedLong(configStrings->checkpointFrequency, &number);
-    if (result != UDS_SUCCESS) {
-      return result;
-    }
-    if (number != (unsigned int) number) {
-      return UDS_OUT_OF_RANGE;
-    }
-    config.checkpointFrequency = number;
-  }
-
-  if (configStrings->sparse != NULL) {
-    config.sparse = (strcmp(configStrings->sparse, "0") == 0);
-  }
-
-  *configPtr = config;
-  return VDO_SUCCESS;
-}
-
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
@@ -205,7 +136,7 @@ int main(int argc, char *argv[])
   uint64_t     physicalSize = 0;
   unsigned int slabBits     = DEFAULT_SLAB_BITS;
 
-  ConfigStrings configStrings;
+  UdsConfigStrings configStrings;
   memset(&configStrings, 0, sizeof(configStrings));
 
   int c;
@@ -305,6 +236,12 @@ int main(int argc, char *argv[])
   if (ioctl(fd, BLKGETSIZE64, &bytes) < 0) {
     errx(errno, "unable to get size of %s", filename);
   }
+
+  if (bytes > MAXIMUM_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE) {
+    errx(1, "underlying block device size exceeds the maximum (%" PRIu64 ")",
+        MAXIMUM_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE);
+  }
+
   if (physicalSize == 0) {
     physicalSize = bytes;
   } else if (physicalSize != bytes) {
@@ -316,20 +253,21 @@ int main(int argc, char *argv[])
     errx(1, "cannot close %s", filename);
   }
 
-  BlockCount physicalBlocks = physicalSize / VDO_BLOCK_SIZE;
+  VDOConfig config = {
+    .logicalBlocks       = logicalSize / VDO_BLOCK_SIZE,
+    .physicalBlocks      = physicalSize / VDO_BLOCK_SIZE,
+    .slabSize            = 1 << slabBits,
+    .slabJournalBlocks   = DEFAULT_SLAB_JOURNAL_SIZE,
+    .recoveryJournalSize = DEFAULT_RECOVERY_JOURNAL_SIZE,
+  };
 
-  if (logicalSize == 0) {
-    logicalSize = physicalBlocks * VDO_BLOCK_SIZE;
-  }
-
-  BlockCount logicalBlocks = logicalSize / VDO_BLOCK_SIZE;
-  if ((logicalBlocks * VDO_BLOCK_SIZE) != (BlockCount) logicalSize) {
+  if ((config.logicalBlocks * VDO_BLOCK_SIZE) != (BlockCount) logicalSize) {
     errx(1, "logical size must be a multiple of block size %d",
          VDO_BLOCK_SIZE);
   }
 
   char errorBuffer[ERRBUF_SIZE];
-  if (logicalBlocks > MAXIMUM_LOGICAL_BLOCKS) {
+  if (config.logicalBlocks > MAXIMUM_LOGICAL_BLOCKS) {
     errx(VDO_OUT_OF_RANGE,
          "%" PRIu64 " requested logical space exceeds the maximum "
          "(%" PRIu64 "): %s",
@@ -338,7 +276,7 @@ int main(int argc, char *argv[])
   }
 
   PhysicalLayer *layer;
-  result = makeFileLayer(filename, physicalBlocks, &layer);
+  result = makeFileLayer(filename, config.physicalBlocks, &layer);
   if (result != VDO_SUCCESS) {
     errx(result, "makeFileLayer failed on '%s'", filename);
   }
@@ -358,9 +296,9 @@ int main(int argc, char *argv[])
   }
 
   IndexConfig indexConfig;
-  result = parseUdsConfigStrings(&configStrings, &indexConfig);
+  result = parseIndexConfig(&configStrings, &indexConfig);
   if (result != UDS_SUCCESS) {
-    errx(result, "parseUdsConfigStrings failed: %s",
+    errx(result, "parseIndexConfig failed: %s",
          stringError(result, errorBuffer, sizeof(errorBuffer)));
   }
 
@@ -377,24 +315,28 @@ int main(int argc, char *argv[])
     return result;
   }
 
-  VDOConfig config = {
-    .logicalBlocks       = logicalBlocks,
-    .physicalBlocks      = physicalBlocks,
-    .slabSize            = 1 << slabBits,
-    .slabJournalBlocks   = DEFAULT_SLAB_JOURNAL_SIZE,
-    .recoveryJournalSize = DEFAULT_RECOVERY_JOURNAL_SIZE,
-  };
-
   if (verbose) {
-    printf("Formatting '%s' with %" PRIu64 " logical and %" PRIu64
-           " physical blocks of %" PRIu64 " bytes.\n",
-           filename, logicalBlocks, physicalBlocks, (uint64_t) VDO_BLOCK_SIZE);
+    if (logicalSize > 0) {
+      printf("Formatting '%s' with %" PRIu64 " logical and %" PRIu64
+             " physical blocks of %u bytes.\n",
+             filename, config.logicalBlocks, config.physicalBlocks,
+             VDO_BLOCK_SIZE);
+    } else {
+      printf("Formatting '%s' with default logical and %" PRIu64
+             " physical blocks of %u bytes.\n",
+             filename, config.physicalBlocks, VDO_BLOCK_SIZE);
+    }
   }
 
-  result = formatVDO(&config, &indexConfig, layer);
+  BlockCount logicalBlocks;
+  result = formatVDO(&config, &indexConfig, layer, &logicalBlocks);
   if (result != VDO_SUCCESS) {
     errx(result, "formatVDO failed on '%s': %s",
          filename, stringError(result, errorBuffer, sizeof(errorBuffer)));
+  }
+
+  if (logicalSize == 0) {
+    printf("Logical blocks defaulted to %" PRIu64 " blocks", logicalBlocks);
   }
 
   // Close and sync the underlying file.

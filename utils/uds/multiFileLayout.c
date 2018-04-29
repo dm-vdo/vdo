@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/src/uds/multiFileLayout.c#5 $
+ * $Id: //eng/uds-releases/flanders-rhel7.5/src/uds/multiFileLayout.c#1 $
  */
 
 #include "multiFileLayoutInternals.h"
@@ -30,9 +30,6 @@
 #include "logger.h"
 #include "memoryAlloc.h"
 #include "stringUtils.h"
-#ifdef TEST_INTERNAL
-#include "doryIORegion.h"
-#endif /* TEST_INTERNAL */
 
 /*****************************************************************************/
 /**
@@ -198,13 +195,6 @@ static int mfl_writeConfig(IndexLayout *layout, UdsConfiguration config)
   if (result != UDS_SUCCESS) {
     return logErrorWithStringError(result, "failed to open config file");
   }
-#ifdef TEST_INTERNAL
-  result = openDoryRegion(region, &region);
-  if (result != UDS_SUCCESS) {
-    return logErrorWithStringError(result,
-                                   "failed to wrap config file in dory");
-  }
-#endif /* TEST_INTERNAL */
   if (mfl->fiddleRegion != NULL) {
     int result = mfl->fiddleRegion(region);
     if (result != UDS_SUCCESS) {
@@ -291,13 +281,6 @@ static int mfl_openVolumeRegion(IndexLayout   *layout,
   if (result != UDS_SUCCESS) {
     return logErrorWithStringError(result, "cannot open volume %u", indexId);
   }
-#ifdef TEST_INTERNAL
-  result = openDoryRegion(region, &region);
-  if (result != UDS_SUCCESS) {
-    return logErrorWithStringError(result, "cannot volume %u in dory",
-                                   indexId);
-  }
-#endif /* TEST_INTERNAL */
   if (mfl->fiddleRegion != NULL) {
     int result = mfl->fiddleRegion(region);
     if (result != UDS_SUCCESS) {

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOKernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.5/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
 
 """
 from . import Defaults

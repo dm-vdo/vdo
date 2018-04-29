@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -15,9 +15,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/base/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium-rhel7.5/src/packaging/src-dist/user/utils/vdo/base/Makefile#1 $
 
-VDO_VERSION = 6.1.0.61
+VDO_VERSION = 6.1.0.149
 
 UDS_DIR      = ../../uds
 

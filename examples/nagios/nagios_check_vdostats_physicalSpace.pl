@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -36,7 +36,7 @@
 #
 # The "vdostats" program must be in the path used by "sudo".
 #
-# $Id: //eng/vdo-releases/magnesium/src/tools/nagios/nagios_check_vdostats_physicalSpace.pl#1 $
+# $Id: //eng/vdo-releases/magnesium-rhel7.5/src/tools/nagios/nagios_check_vdostats_physicalSpace.pl#1 $
 #
 ##
 

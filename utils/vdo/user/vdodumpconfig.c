@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,18 +16,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoDumpConfig.c#1 $
+ * $Id: //eng/vdo-releases/magnesium-rhel7.5/src/c++/vdo/user/vdoDumpConfig.c#1 $
  */
 
 #include <err.h>
 #include <getopt.h>
+#include <uuid/uuid.h>
 #include <stdio.h>
 
 #include "logger.h"
+#include "memoryAlloc.h"
 
 #include "constants.h"
 #include "types.h"
 #include "vdoInternal.h"
+#include "volumeGeometry.h"
 
 #include "vdoVolumeUtils.h"
 
@@ -94,7 +97,9 @@ static const char *processArgs(int argc, char *argv[])
 }
 
 /**********************************************************************/
-static VDOConfig readVDOConfig(const char *vdoBacking)
+static void readVDOConfig(const char *vdoBacking,
+                          VDOConfig  *configPtr,
+                          UUID       *uuidPtr)
 {
   VDO *vdo;
   int result = makeVDOFromFile(vdoBacking, true, &vdo);
@@ -102,10 +107,16 @@ static VDOConfig readVDOConfig(const char *vdoBacking)
     errx(1, "Could not load VDO from '%s'", vdoBacking);
   }
 
-  VDOConfig config = vdo->config;
-  freeVDOFromFile(&vdo);
+  *configPtr = vdo->config;
 
-  return config;
+  VolumeGeometry geometry;
+  result = loadVolumeGeometry(vdo->layer, &geometry);
+  if (result != VDO_SUCCESS) {
+    errx(1, "Could not read VDO geometry from '%s'", vdoBacking);
+  }
+  memcpy(*uuidPtr, geometry.uuid, sizeof(UUID));
+
+  freeVDOFromFile(&vdo);
 }
 
 /**********************************************************************/
@@ -115,7 +126,13 @@ int main(int argc, char *argv[])
 
   openLogger();
 
-  VDOConfig   config     = readVDOConfig(vdoBacking);
+  VDOConfig config;
+  UUID      rawUuid;
+  readVDOConfig(vdoBacking, &config, &rawUuid);
+
+  char prettyUuid[37];
+  uuid_unparse(rawUuid, prettyUuid);
+
   printf("VDOConfig:\n");
   printf("  blockSize: %d\n", VDO_BLOCK_SIZE);
   printf("  logicalBlocks: %" PRIu64 "\n", config.logicalBlocks);
@@ -123,5 +140,6 @@ int main(int argc, char *argv[])
   printf("  slabSize: %" PRIu64 "\n", config.slabSize);
   printf("  recoveryJournalSize: %" PRIu64 "\n", config.recoveryJournalSize);
   printf("  slabJournalBlocks: %" PRIu64 "\n", config.slabJournalBlocks);
+  printf("UUID: %s\n", prettyUuid);
   exit(0);
 }

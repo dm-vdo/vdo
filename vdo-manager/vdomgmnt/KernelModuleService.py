@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   KernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/KernelModuleService.py#2 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.5/src/python/vdo/vdomgmnt/KernelModuleService.py#1 $
 
 """
 from . import Defaults, Service
@@ -40,8 +40,9 @@ class KernelModuleService(Service):
     try:
       runCommand(string.split("lsmod | grep -q '" + self._name + "'"),
                  shell=True, retries=retries)
-      runCommand(string.split("dmsetup targets | grep -q dedupe"), shell=True,
-                 retries=retries)
+      runCommand(string.split("dmsetup targets | grep -q " 
+                              + Defaults.vdoTargetName),
+                 shell=True, retries=retries)
       return True
     except CommandError:
       return False

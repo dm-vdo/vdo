@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#2 $
+# $Id: //eng/vdo-releases/magnesium-rhel7.5/src/packaging/src-dist/user/utils/vdo/user/Makefile#1 $
 
-VDO_VERSION = 6.1.0.61
+VDO_VERSION = 6.1.0.149
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -69,7 +69,7 @@ CFLAGS 	  = -fPIC $(GLOBAL_CFLAGS) $(INCLUDES) -Wno-write-strings \
 	    -DINTERNAL -DCURRENT_VERSION="\"$(VDO_VERSION)\""
 
 LDFLAGS   = $(GLOBAL_LDFLAGS)
-LDPRFLAGS = -ldl -pthread -lz -lrt -lm
+LDPRFLAGS = -ldl -pthread -lz -lrt -lm -luuid
 
 DEPLIBS  = $(VDO_BASE_DIR)/libvdo.a $(UDS_DIR)/libuds.a
 LIBFLAGS = -pthread -lrt

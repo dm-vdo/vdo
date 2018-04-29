@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -329,9 +329,6 @@ def add_vdooptions(params):
     if ('readcachesize' in params) and (params['readcachesize'] is not None):
         options.append("--readCacheSize=" + params['readcachesize'])
 
-    if ('writepolicy' in params) and (params['writepolicy'] == 'async'):
-        options.append("--writePolicy=async")
-
     if ('slabsize' in params) and (params['slabsize'] is not None):
         options.append("--vdoSlabSize=" + params['slabsize'])
 
@@ -406,7 +403,7 @@ def run_module():
         emulate512=dict(choices=['enabled', 'disabled'],
                         required=False, default=None),
         slabsize=dict(type='str', required=False),
-        writepolicy=dict(choices=['sync', 'async'],
+        writepolicy=dict(choices=['sync', 'async', 'auto'],
                          required=False, default=None),
         indexmem=dict(type='str', required=False),
         indexmode=dict(choices=['dense', 'sparse'],
@@ -524,7 +521,7 @@ def run_module():
                            'Physical threads',
                            'Read cache',
                            'Read cache size',
-                           'Write policy',
+                           'Configured write policy',
                            'Compression',
                            'Deduplication']
 
@@ -539,7 +536,7 @@ def run_module():
             'Block map cache size': 'blockmapcachesize',
             'Read cache': 'readcache',
             'Read cache size': 'readcachesize',
-            'Write policy': 'writepolicy',
+            'Configured write policy': 'writepolicy',
             'Acknowledgement threads': 'ackthreads',
             'Bio submission threads': 'biothreads',
             'CPU-work threads': 'cputhreads',
@@ -579,19 +576,19 @@ def run_module():
         result['currentparams'] = currentparams
 
         if diffparams:
-            result['changed'] = True
             result['diffparams'] = diffparams
             vdocmdoptions = add_vdooptions(diffparams)
             result['vdocmdoptions'] = vdocmdoptions
-            rc, _, err = module.run_command("%s modify --name=%s %s"
-                                            % (vdo_cmd,
-                                               desiredvdo,
-                                               vdocmdoptions))
-            if rc == 0:
-                result['changed'] = True
-            else:
-                module.fail_json(msg="Modifying VDO %s failed."
-                                 % desiredvdo, rc=rc, err=err)
+            if vdocmdoptions:
+                rc, _, err = module.run_command("%s modify --name=%s %s"
+                                                % (vdo_cmd,
+                                                   desiredvdo,
+                                                   vdocmdoptions))
+                if rc == 0:
+                    result['changed'] = True
+                else:
+                    module.fail_json(msg="Modifying VDO %s failed."
+                                     % desiredvdo, rc=rc, err=err)
 
             if 'deduplication' in diffparams.keys():
                 dedupemod = diffparams['deduplication']
@@ -600,12 +597,25 @@ def run_module():
                     rc, _, err = module.run_command("%s disableDeduplication "
                                                     "--name=%s"
                                                     % (vdo_cmd, desiredvdo))
+                    if rc == 0:
+                        result['changed'] = True
+                    else:
+                        module.fail_json(msg="Changing deduplication on "
+                                             "VDO volume %s failed."
+                                         % desiredvdo, rc=rc, err=err)
 
                 if dedupemod == 'enabled':
                     result['dedupeopt'] = dedupemod
                     rc, _, err = module.run_command("%s enableDeduplication "
                                                     "--name=%s"
                                                     % (vdo_cmd, desiredvdo))
+
+                    if rc == 0:
+                        result['changed'] = True
+                    else:
+                        module.fail_json(msg="Changing deduplication on "
+                                             "VDO volume %s failed."
+                                         % desiredvdo, rc=rc, err=err)
 
             if 'compression' in diffparams.keys():
                 compressmod = diffparams['compression']
@@ -615,11 +625,73 @@ def run_module():
                                                     "--name=%s"
                                                     % (vdo_cmd, desiredvdo))
 
+                    if rc == 0:
+                        result['changed'] = True
+                    else:
+                        module.fail_json(msg="Changing compression on "
+                                             "VDO volume %s failed."
+                                         % desiredvdo, rc=rc, err=err)
+
                 if compressmod == 'enabled':
                     result['compressopt'] = compressmod
                     rc, _, err = module.run_command("%s enableCompression "
                                                     "--name=%s"
                                                     % (vdo_cmd, desiredvdo))
+                    if rc == 0:
+                        result['changed'] = True
+                    else:
+                        module.fail_json(msg="Changing compression on "
+                                             "VDO volume %s failed."
+                                         % desiredvdo, rc=rc, err=err)
+            if 'writepolicy' in diffparams.keys():
+                writepolmod = diffparams['writepolicy']
+                if writepolmod == 'auto':
+                    rc, _, err = module.run_command("%s "
+                                                    "changeWritePolicy "
+                                                    "--name=%s "
+                                                    "--writePolicy=%s"
+                                                    % (vdo_cmd,
+                                                       desiredvdo,
+                                                       writepolmod))
+
+                    if rc == 0:
+                        result['changed'] = True
+                    else:
+                        module.fail_json(msg="Changing write policy on "
+                                             "VDO volume %s failed."
+                                         % desiredvdo, rc=rc, err=err)
+
+                if writepolmod == 'sync':
+                    rc, _, err = module.run_command("%s "
+                                                    "changeWritePolicy "
+                                                    "--name=%s "
+                                                    "--writePolicy=%s"
+                                                    % (vdo_cmd,
+                                                       desiredvdo,
+                                                       writepolmod))
+
+                    if rc == 0:
+                        result['changed'] = True
+                    else:
+                        module.fail_json(msg="Changing write policy on "
+                                             "VDO volume %s failed."
+                                         % desiredvdo, rc=rc, err=err)
+
+                if writepolmod == 'async':
+                    rc, _, err = module.run_command("%s "
+                                                    "changeWritePolicy "
+                                                    "--name=%s "
+                                                    "--writePolicy=%s"
+                                                    % (vdo_cmd,
+                                                       desiredvdo,
+                                                       writepolmod))
+
+                    if rc == 0:
+                        result['changed'] = True
+                    else:
+                        module.fail_json(msg="Changing write policy on "
+                                             "VDO volume %s failed."
+                                         % desiredvdo, rc=rc, err=err)
 
         # Process the size parameters, to determine of a growPhysical or
         # growLogical operation needs to occur.

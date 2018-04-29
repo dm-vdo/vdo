@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -29,7 +29,8 @@ from .Defaults import Defaults, ArgumentError
 from .Service import Service, ServiceError, ServiceStateError
 from .KernelModuleService import KernelModuleService
 from .VDOKernelModuleService import VDOKernelModuleService
-from .VDOService import VDOService, VDOServicePreviousOperationError
+from .VDOService import (VDOService, VDOServiceError,
+                         VDOServicePreviousOperationError)
 from .CommandLock import CommandLock, CommandLockError
-from .Configuration import Configuration, BadConfigVersionError
+from .Configuration import Configuration
 from .VDOOperation import VDOOperation, OperationError, vdoOperations

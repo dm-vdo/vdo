@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Configuration.py#2 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.5/src/python/vdo/vdomgmnt/Configuration.py#1 $
 
 """
 from . import ArgumentError, MgmntLogger
@@ -35,14 +35,16 @@ import time
 import yaml
 
 
-class BadConfigVersionError(Exception):
-  """Exception raised to indicate an error running a command."""
+class BadConfigurationFileError(Exception):
+  """Exception raised to indicate an error in processing the
+  configuration file, such as a parse error or missing data.
+  """
 
   ######################################################################
   # Overridden methods
   ######################################################################
   def __init__(self, msg):
-    super(BadConfigVersionError, self).__init__()
+    super(BadConfigurationFileError, self).__init__()
     self._msg = msg
 
   ######################################################################
@@ -333,8 +335,15 @@ class Configuration(YAMLObject):
   def _read(self, fh):
     """Reads in a Configuration from a file."""
     self.log.debug("Reading configuration from {0}".format(self.filepath))
-    conf = yaml.safe_load(fh)
-    self._schemaVersion = conf["config"].version
+    try:
+      conf = yaml.safe_load(fh)
+    except yaml.scanner.ScannerError:
+      raise BadConfigurationFileError(_("Bad configuration file"))
+    try:
+      self._schemaVersion = conf["config"].version
+    except (KeyError, TypeError):
+      raise BadConfigurationFileError(_("Bad configuration file"
+                                        " (missing 'config' section?)"))
     self._vdos = conf["config"].vdos
     for vdo in self._vdos:
       self._vdos[vdo].setConfig(self)
@@ -369,8 +378,8 @@ class Configuration(YAMLObject):
       ver (str): the schema version string to check
 
     Raises:
-      BadConfigVersionError: version not supported.
+      BadConfigurationFileError: version not supported.
     """
     if ver not in cls.supportedSchemaVersions:
-      raise BadConfigVersionError(_(
+      raise BadConfigurationFileError(_(
           "Configuration file version {v} not supported").format(v=ver))

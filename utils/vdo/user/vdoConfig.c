@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,8 +16,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoConfig.c#2 $
+ * $Id: //eng/vdo-releases/magnesium-rhel7.5/src/c++/vdo/user/vdoConfig.c#1 $
  */
+
+#include <uuid/uuid.h>
 
 #include "vdoConfig.h"
 
@@ -29,11 +31,12 @@
 #include "blockMap.h"
 #include "blockMapInternals.h"
 #include "constants.h"
+#include "forest.h"
 #include "numUtils.h"
 #include "recoveryJournal.h"
 #include "releaseVersions.h"
 #include "slab.h"
-#include "slabDepotInternals.h"
+#include "slabDepot.h"
 #include "slabSummary.h"
 #include "statusCodes.h"
 #include "vdoInternal.h"
@@ -68,11 +71,10 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
 __attribute__((warn_unused_result))
 static int configureVDO(VDO *vdo)
 {
-  PhysicalLayer *layer = vdo->layer;
   // The layout starts 1 block past the beginning of the data region, as the
   // data region contains the super block but the layout does not.
   int result = makeVDOLayoutFromConfig(&vdo->config,
-                                       layer->getDataRegionOffset(layer) + 1,
+                                       getFirstBlockOffset(vdo) + 1,
                                        &vdo->layout);
   if (result != VDO_SUCCESS) {
     return result;
@@ -109,6 +111,14 @@ static int configureVDO(VDO *vdo)
     return result;
   }
 
+  if (vdo->config.logicalBlocks == 0) {
+    BlockCount dataBlocks
+      = slabConfig.dataBlocks * calculateSlabCount(vdo->depot);
+    vdo->config.logicalBlocks
+      = dataBlocks - computeForestSize(dataBlocks,
+                                       DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
+  }
+
   Partition *blockMapPartition = getVDOPartition(vdo->layout,
                                                  BLOCK_MAP_PARTITION);
   result = makeBlockMap(vdo->config.logicalBlocks, getThreadConfig(vdo), 0,
@@ -125,15 +135,23 @@ static int configureVDO(VDO *vdo)
   }
 
   vdo->state = VDO_NEW;
-  return saveVDOComponents(vdo);
+  return VDO_SUCCESS;
 }
 
 /**********************************************************************/
 int formatVDO(const VDOConfig *config,
               IndexConfig     *indexConfig,
-              PhysicalLayer   *layer)
+              PhysicalLayer   *layer,
+              BlockCount      *logicalBlocksPtr)
 {
-  return formatVDOWithNonce(config, indexConfig, layer, nowUsec());
+  STATIC_ASSERT(sizeof(uuid_t) == sizeof(UUID));
+
+  // Generate a UUID.
+  uuid_t uuid;
+  uuid_generate(uuid);
+
+  return formatVDOWithNonce(config, indexConfig, layer, nowUsec(), uuid,
+                            logicalBlocksPtr);
 }
 
 /**
@@ -178,37 +196,30 @@ static int clearPartition(PhysicalLayer *layer,
   return result;
 }
 
-/**********************************************************************/
-int formatVDOWithNonce(const VDOConfig *config,
-                       IndexConfig     *indexConfig,
-                       PhysicalLayer   *layer,
-                       Nonce            nonce)
+/**
+ * Construct a VDO and write out its super block.
+ *
+ * @param [in]  config            The configuration parameters for the VDO
+ * @param [in]  layer             The physical layer the VDO will sit on
+ * @param [in]  geometry          The geometry of the physical layer
+ * @param [out] logicalBlocksPtr  If not NULL, will be set to the number of
+ *                                logical blocks the VDO was formatted to have
+ **/
+static int makeAndWriteVDO(const VDOConfig      *config,
+                           PhysicalLayer        *layer,
+                           VolumeGeometry       *geometry,
+                           BlockCount           *logicalBlocksPtr)
 {
-  int result = registerStatusCodes();
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = validateVDOConfig(config, layer->getBlockCount(layer));
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = writeVolumeGeometry(layer, nonce, indexConfig);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
   VDO *vdo;
-  result = makeVDO(layer, &vdo);
+  int result = makeVDO(layer, &vdo);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  vdo->config = *config;
-  vdo->nonce  = nonce;
+  vdo->config                      = *config;
+  vdo->nonce                       = geometry->nonce;
+  vdo->loadConfig.firstBlockOffset = getDataRegionOffset(*geometry);
   result = configureVDO(vdo);
-
   if (result != VDO_SUCCESS) {
     freeVDO(&vdo);
     return result;
@@ -224,9 +235,59 @@ int formatVDOWithNonce(const VDOConfig *config,
   result = clearPartition(layer, vdo->layout, RECOVERY_JOURNAL_PARTITION);
   if (result != VDO_SUCCESS) {
     logErrorWithStringError(result, "cannot clear recovery journal partition");
+    freeVDO(&vdo);
+    return result;
+  }
+
+  result = saveVDOComponents(vdo);
+  if (result != VDO_SUCCESS) {
+    freeVDO(&vdo);
+    return result;
+  }
+
+  if (logicalBlocksPtr != NULL) {
+    *logicalBlocksPtr = vdo->config.logicalBlocks;
   }
 
   freeVDO(&vdo);
+  return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+int formatVDOWithNonce(const VDOConfig *config,
+                       IndexConfig     *indexConfig,
+                       PhysicalLayer   *layer,
+                       Nonce            nonce,
+                       UUID             uuid,
+                       BlockCount      *logicalBlocksPtr)
+{
+  int result = registerStatusCodes();
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  result = validateVDOConfig(config, layer->getBlockCount(layer), false);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  VolumeGeometry geometry;
+  result = initializeVolumeGeometry(nonce, uuid, indexConfig, &geometry);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  result = clearVolumeGeometry(layer);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  result = makeAndWriteVDO(config, layer, &geometry, logicalBlocksPtr);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  result = writeVolumeGeometry(layer, &geometry);
   return result;
 }
 
@@ -240,7 +301,15 @@ int formatVDOWithNonce(const VDOConfig *config,
 __attribute__((warn_unused_result))
 static int prepareSuperBlock(VDO *vdo)
 {
-  int result = loadSuperBlock(vdo->layer, &vdo->superBlock);
+  VolumeGeometry geometry;
+  int result = loadVolumeGeometry(vdo->layer, &geometry);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  vdo->loadConfig.firstBlockOffset = getDataRegionOffset(geometry);
+  result = loadSuperBlock(vdo->layer, getFirstBlockOffset(vdo),
+                          &vdo->superBlock);
   if (result != VDO_SUCCESS) {
     return result;
   }

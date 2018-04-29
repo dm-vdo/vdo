@@ -5,8 +5,8 @@ After=systemd-remount-fs.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/vdo --confFile /etc/vdoconf.yml --vdoLogLevel info --all start
-ExecStop=/usr/bin/vdo --confFile /etc/vdoconf.yml --vdoLogLevel info --all stop
+ExecStart=/usr/bin/vdo start --all --confFile /etc/vdoconf.yml
+ExecStop=/usr/bin/vdo stop --all --confFile /etc/vdoconf.yml
 
 [Install]
 WantedBy=multi-user.target

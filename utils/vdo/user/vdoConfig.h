@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 Red Hat, Inc.
+ * Copyright (c) 2018 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoConfig.h#2 $
+ * $Id: //eng/vdo-releases/magnesium-rhel7.5/src/c++/vdo/user/vdoConfig.h#1 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -31,20 +31,22 @@
 
 /**
  * Format a physical layer to function as a new VDO. This function must be
- * called on a physical layer before a VDO can be loaded for the first time
- * on a given layer. Once a layer has been formatted, it can be loaded and
- * shut down repeatedly. If a new VDO is desired, this function should be
- * called again.
+ * called on a physical layer before a VDO can be loaded for the first time on a
+ * given layer. Once a layer has been formatted, it can be loaded and shut down
+ * repeatedly. If a new VDO is desired, this function should be called again.
  *
- * @param config       The configuration parameters for the VDO
- * @param indexConfig  The configuration parameters for the index
- * @param layer        The physical layer the VDO will sit on
+ * @param [in]  config            The configuration parameters for the VDO
+ * @param [in]  indexConfig       The configuration parameters for the index
+ * @param [in]  layer             The physical layer the VDO will sit on
+ * @param [out] logicalBlocksPtr  If not NULL, will be set to the number of
+ *                                logical blocks the VDO was formatted to have
  *
  * @return VDO_SUCCESS or an error
  **/
 int formatVDO(const VDOConfig *config,
               IndexConfig     *indexConfig,
-              PhysicalLayer   *layer)
+              PhysicalLayer   *layer,
+              BlockCount      *logicalBlocksPtr)
   __attribute__((warn_unused_result));
 
 /**
@@ -63,22 +65,27 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
 
 /**
  * This is a version of formatVDO() which allows the caller to supply the
- * desired VDO nonce. This function exists to facilitate unit tests which
- * attempt to ensure that version numbers are properly updated when formats
- * change.
+ * desired VDO nonce and uuid. This function exists to facilitate unit tests
+ * which attempt to ensure that version numbers are properly updated when
+ * formats change.
  *
- * @param config       The configuration parameters for the VDO
- * @param indexConfig  The configuration parameters for the index
- * @param indexBlocks  Size of the index in blocks
- * @param layer        The physical layer the VDO will sit on
- * @param nonce        The nonce for the VDO
+ * @param [in]  config            The configuration parameters for the VDO
+ * @param [in]  indexConfig       The configuration parameters for the index
+ * @param [in]  indexBlocks       Size of the index in blocks
+ * @param [in]  layer             The physical layer the VDO will sit on
+ * @param [in]  nonce             The nonce for the VDO
+ * @param [in]  uuid              The uuid for the VDO
+ * @param [out] logicalBlocksPtr  If not NULL, will be set to the number of
+ *                                logical blocks the VDO was formatted to have
  *
  * @return VDO_SUCCESS or an error
  **/
 int formatVDOWithNonce(const VDOConfig *config,
                        IndexConfig     *indexConfig,
                        PhysicalLayer   *layer,
-                       Nonce            nonce)
+                       Nonce            nonce,
+                       UUID             uuid,
+                       BlockCount      *logicalBlocksPtr)
   __attribute__((warn_unused_result));
 
 /**

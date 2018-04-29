@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 Red Hat, Inc.
+# Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@
   LabeledValue - A sampled statistic with a label. Used for formatting stats
   output.
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/LabeledValue.py#1 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.5/src/python/vdo/statistics/LabeledValue.py#1 $
 """
 
 class LabeledValue(object):

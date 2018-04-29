@@ -1,5 +1,5 @@
 """
-  Copyright (c) 2017 Red Hat, Inc.
+  Copyright (c) 2018 Red Hat, Inc.
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -160,10 +160,6 @@ class ErrorStatistics(StatStruct):
     super(ErrorStatistics, self).__init__(name, [
       # number of times VDO got an invalid dedupe advice PBN from albireo
       Uint64Field("invalidAdvicePBNCount"),
-      # number of times VDO got an invalid rollover confirmation PBN from albireo
-      Uint64Field("invalidRolloverPBNCount"),
-      # number of times the dedupe deadlock avoidance mechanism fired
-      Uint64Field("dedupeDeadlockAvoidanceCount"),
       # number of times a VIO completed with a VDO_NO_SPACE error
       Uint64Field("noSpaceErrorCount"),
       # number of times a VIO completed with a VDO_READ_ONLY error
@@ -226,7 +222,7 @@ class VDOStatistics(StatStruct):
       ErrorStatistics("errors"),
     ], procFile="dedupe_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 24
+  statisticsVersion = 26
 
   def sample(self, device):
     sample = super(VDOStatistics, self).sample(device)
