@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#17 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#25 $
 
 """
 
@@ -28,13 +28,16 @@ from . import ArgumentError
 from . import Constants
 from . import Defaults
 from . import MgmntLogger, MgmntUtils
-from . import Service, ServiceError, ServiceStateError
+from . import Service, ServiceError
 from . import SizeString
 from . import VDOKernelModuleService
+from . import DeveloperExitStatus, StateExitStatus
+from . import SystemExitStatus, UserExitStatus
 from utils import Command, CommandError, runCommand
 from utils import Transaction, transactional
 
 import functools
+import locale
 import math
 import os
 import re
@@ -50,28 +53,41 @@ class VDOServiceError(ServiceError):
   ######################################################################
   # Overriden methods
   ######################################################################
-  def __init__(self, msg = _("VDO volume error")):
-    super(VDOServiceError, self).__init__(msg)
+  def __init__(self, msg = _("VDO volume error"), *args, **kwargs):
+    super(VDOServiceError, self).__init__(msg, *args, **kwargs)
 
 ########################################################################
-class VDOServiceExistsError(VDOServiceError):
+class VDOServiceExistsError(UserExitStatus, VDOServiceError):
   """VDO service exists exception.
   """
   ######################################################################
   # Overriden methods
   ######################################################################
-  def __init__(self, msg = _("VDO volume exists")):
-    super(VDOServiceExistsError, self).__init__(msg)
+  def __init__(self, msg = _("VDO volume exists"), *args, **kwargs):
+    super(VDOServiceExistsError, self).__init__(msg, *args, **kwargs)
 
 ########################################################################
-class VDOServicePreviousOperationError(VDOServiceError):
+class VDOMissingDeviceError(StateExitStatus, VDOServiceError):
+  """VDO underlying device does not exist exception.
+  """
+  ######################################################################
+  # Overriden methods
+  ######################################################################
+  def __init__(self, msg = _("Underlying device does not exist"),
+               *args, **kwargs):
+    super(VDOMissingDeviceError, self).__init__(msg, *args, **kwargs)
+
+########################################################################
+class VDOServicePreviousOperationError(StateExitStatus, VDOServiceError):
   """VDO volume previous operation was not completed.
   """
   ######################################################################
   # Overriden methods
   ######################################################################
-  def __init__(self, msg = _("VDO volume previous operation is incomplete")):
-    super(VDOServicePreviousOperationError, self).__init__(msg)
+  def __init__(self, msg = _("VDO volume previous operation is incomplete"),
+               *args, **kwargs):
+    super(VDOServicePreviousOperationError, self).__init__(msg,
+                                                           *args, **kwargs)
 
 ########################################################################
 class VDOService(Service):
@@ -201,7 +217,7 @@ class VDOService(Service):
       if getattr(args, option, None) is not None:
         msg = _("Cannot change option {0} after VDO creation").format(
                   option)
-        raise ServiceError(msg)
+        raise ServiceError(msg, exitStatus = UserExitStatus)
 
   ######################################################################
   def activate(self):
@@ -261,29 +277,42 @@ class VDOService(Service):
                                          self.physicalThreads)
 
     # Perform a verification that the storage device doesn't already
-    # have something on it. We want to perform the same checks that
-    # LVM does (which doesn't yet include checking for an
-    # already-formatted VDO volume, but vdoformat does that), so we do
-    # it by...actually making LVM do it for us!
+    # have something on it.
     if not force:
-      try:
-        runCommand(['pvcreate', '-qq', '--test', self.device])
-      except CommandError as e:
-        # Messages from pvcreate aren't localized, so we can look at
-        # the message generated and pick it apart. This will need
-        # fixing if the message format changes or it gets localized.
-        lines = e.getStandardError().splitlines()
-        if ((len(lines) > 1)
-            and (re.match(r"\s*TEST MODE", lines[0]) is not None)):
-          detectionMatch = re.match(r"WARNING: (.* detected .*)\.\s+Wipe it\?",
-                                    lines[1])
-          if detectionMatch is not None:
-            raise VDOServiceError('{0}; use --force to override'
-                                  .format(detectionMatch.group(1)))
-          # Skip the TEST MODE message and use the next one.
-          e.setMessage(lines[1])
-        # No TEST MODE message, just keep going.
-        raise e
+      self._createCheckCleanDevice()
+
+    # Find a stable name for the real device, that won't change from
+    # one boot cycle to the next.
+    realpath = os.path.realpath(self.device)
+    idDir = '/dev/disk/by-id'
+    aliases = []
+    if os.path.isdir(idDir):
+      aliases = [absname
+                 for absname in (os.path.join(idDir, name)
+                                 for name in os.listdir(idDir))
+                 if os.path.realpath(absname) == realpath]
+    if len(aliases) > 0:
+      self.log.debug("found aliases for {original}: {aliases}"
+                     .format(original = realpath, aliases = aliases))
+      # A device can have multiple names; dm-name-*, dm-uuid-*, ata-*,
+      # wwn-*, etc.  Do we have a way to prioritize them?
+      #
+      # LVM volumes and MD arrays can be renamed; prioritize dm-name-*
+      # below dm-uuid-* and likewise for md-*.
+      #
+      # Otherwise, just sort and take the first name; that'll at least
+      # be consistent from run to run.
+      uuidAliases = [a
+                     for a in aliases
+                     if re.match(r".*/[dm][dm]-uuid-", a) is not None]
+      if len(uuidAliases) > 0:
+        aliases = uuidAliases
+      aliases.sort()
+      self.device = aliases[0]
+      self.log.debug("using {new}".format(new = self.device))
+    else:
+      self.log.debug("no aliases for {original} found in {idDir}!"
+                     .format(original = realpath, idDir = idDir))
 
     # Make certain the kernel module is installed.
     self._installKernelModule(self.vdoLogLevel)
@@ -357,17 +386,17 @@ class VDOService(Service):
 
     if not self.running():
       msg = _("VDO volume {0} must be running").format(self.getName())
-      raise ServiceError(msg)
+      raise ServiceError(msg, exitStatus = StateExitStatus)
 
     newLogicalSize.roundToBlock()
     if newLogicalSize < self.logicalSize:
       msg = _("Can't shrink a VDO volume (old size {0})").format(
               self.logicalSize)
-      raise ServiceError(msg)
+      raise ServiceError(msg, exitStatus = UserExitStatus)
     elif newLogicalSize == self.logicalSize:
       msg = _("Can't grow a VDO volume by less than {0} bytes").format(
               Constants.VDO_BLOCK_SIZE)
-      raise ServiceError(msg)
+      raise ServiceError(msg, exitStatus = UserExitStatus)
 
     # Do the grow.
     self._setOperationState(self.OperationState.beginGrowLogical)
@@ -417,7 +446,7 @@ class VDOService(Service):
 
     if not self.running():
       msg = _("VDO volume {0} must be running").format(self.getName())
-      raise ServiceError(msg)
+      raise ServiceError(msg, exitStatus = StateExitStatus)
 
     # Do the grow.
     self._setOperationState(self.OperationState.beginGrowPhysical)
@@ -492,6 +521,17 @@ class VDOService(Service):
           _("Steps to clean up VDO {0}:").format(self.getName()))
         removeSteps.extend(["    {0}".format(s) for s in localRemoveSteps])
       raise
+
+    # Fail if the device does not exist and --force is not specified. If
+    # this remove is being run to undo a failed create, the device will
+    # exist.
+    try:
+      os.stat(self.device)
+    except OSError:
+      if not force:
+        msg = _("Device {0} not found. Remove VDO with --force.").format(
+          self.device)
+        raise VDOMissingDeviceError(msg)
 
     self.config.removeVdo(self.getName())
 
@@ -651,6 +691,10 @@ class VDOService(Service):
             self.getName()))
         return
 
+    if self._hasHolders():
+      msg = _("cannot stop VDO volume {0}: in use").format(self.getName())
+      raise ServiceError(msg, exitStatus = StateExitStatus)
+
     if self._hasMounts() or (not execute):
       command = ["umount", "-f", self.getPath()]
       if removeSteps is not None:
@@ -662,7 +706,7 @@ class VDOService(Service):
         else:
           msg = _("cannot stop VDO volume with mounts {0}").format(
                   self.getName())
-          raise ServiceError(msg)
+          raise ServiceError(msg, exitStatus = StateExitStatus)
 
     # The udevd daemon can wake up at any time and use the blkid command on our
     # vdo device.  In fact, it can be triggered to do so by the unmount command
@@ -696,7 +740,7 @@ class VDOService(Service):
 
     if self.running():
       msg = _("cannot stop VDO service {0}").format(self.getName())
-      raise ServiceError(msg)
+      raise ServiceError(msg, exitStatus = SystemExitStatus)
 
   ######################################################################
   def setCompression(self, enable):
@@ -766,7 +810,8 @@ class VDOService(Service):
           pass
         elif status == Constants.deduplicationStatusError:
           raise ServiceError(_("Error enabling deduplication for {0}")
-                             .format(self.getName()))
+                             .format(self.getName()),
+                             exitStatus = SystemExitStatus)
         elif status == Constants.deduplicationStatusOpening:
           message = (_("Timeout enabling deduplication for {0}, continuing")
                      .format(self.getName()))
@@ -774,7 +819,7 @@ class VDOService(Service):
         else:
           message = (_("Unexpected kernel status {0} enabling deduplication for {0}")
                      .format(status, self.getName()))
-          raise ServiceError(message)
+          raise ServiceError(message, exitStatus = SystemExitStatus)
       else:
         self.disconnect()
 
@@ -1066,7 +1111,7 @@ class VDOService(Service):
     cachePages = self.blockMapCacheSize.toBlocks()
     if cachePages < 2 * 2048 * self.logicalThreads:
       msg = _("Insufficient block map cache for {0}").format(self.getName())
-      raise ServiceError(msg)
+      raise ServiceError(msg, exitStatus = UserExitStatus)
 
     # Adjust the block map period to be in its acceptable range.
     self.blockMapPeriod = max(self.blockMapPeriod, Defaults.blockMapPeriodMin)
@@ -1220,6 +1265,38 @@ class VDOService(Service):
     self.logicalSize = SizeString("{0}s".format(logicalSize))
 
   ######################################################################
+  def _createCheckCleanDevice(self):
+    """Performs a verification for create that the storage device doesn't
+    already have something on it.
+
+    Raises:
+      VDOServiceError
+    """
+    # Perform the same checks that LVM does (which doesn't yet include checking
+    # for an already-formatted VDO volume, but vdoformat does that), so we do
+    # it by...actually making LVM do it for us!
+    try:
+      runCommand(['pvcreate', '-qq', '--test', self.device])
+    except CommandError as e:
+      # Messages from pvcreate aren't localized, so we can look at
+      # the message generated and pick it apart. This will need
+      # fixing if the message format changes or it gets localized.
+      lines = e.getStandardError().splitlines()
+      if ((len(lines) > 1)
+          and (re.match(r"\s*TEST MODE", lines[0]) is not None)):
+        for line in lines[1:]:
+          detectionMatch = re.match(r"WARNING: (.* detected .*)\.\s+Wipe it\?",
+                                    line)
+          if detectionMatch is not None:
+            raise VDOServiceError('{0}; use --force to override'
+                                  .format(detectionMatch.group(1)),
+                                  exitStatus = StateExitStatus)
+        # Skip the TEST MODE message and use the next one.
+        e.setMessage(lines[1])
+      # No TEST MODE message, just keep going.
+      raise e
+
+  ######################################################################
   def _determineInstanceNumber(self):
     """Determine the instance number of a running VDO using sysfs."""
     path = "/sys/kvdo/{0}/instance".format(self.getName())
@@ -1256,8 +1333,6 @@ class VDOService(Service):
       commandLine.append("--uds-sparse")
     if self.logicalSize.toBytes() > 0:
       commandLine.append("--logical-size=" + self.logicalSize.asLvmText())
-    if self.physicalSize.toBytes() > 0:
-      commandLine.append("--physical-size=" + self.physicalSize.asLvmText())
     if self.slabSize != Defaults.slabSize:
       commandLine.append("--slab-bits=" + str(self._computeSlabBits()))
     if force:
@@ -1372,7 +1447,7 @@ class VDOService(Service):
         not in self.OperationState.specificOperationStates()):
       msg = _("VDO volume {0} in unknown operation state: {1}").format(
               self.getName(), self.operationState)
-      raise VDOServiceError(msg)
+      raise VDOServiceError(msg, exitStatus = DeveloperExitStatus)
     elif self.operationState == self.OperationState.beginCreate:
       # Create is not automatically recovered.
       self._generatePreviousOperationFailureResponse()
@@ -1385,7 +1460,7 @@ class VDOService(Service):
     else:
       msg = _("Missing handler for recover from operation state: {0}").format(
               self.operationState)
-      raise VDOServiceError(msg)
+      raise VDOServiceError(msg, exitStatus = DeveloperExitStatus)
 
     self._previousOperationFailure = False
 
@@ -1441,6 +1516,32 @@ class VDOService(Service):
       pass
 
     return status
+
+  ######################################################################
+  def _hasHolders(self):
+    """Tests whether other devices are holding the VDO device open. This
+    handles the case where there are LVM entities stacked on top of us.
+
+    Returns:
+      True iff the VDO device has something holding it open.
+    """
+    try:
+      st = os.stat(self.getPath())
+      major = os.major(st.st_rdev)
+      minor = os.minor(st.st_rdev)
+    except OSError:
+      return False
+
+    holdersDirectory = "/sys/dev/block/{major}:{minor}/holders".format(
+      major=major, minor=minor)
+
+    if os.path.isdir(holdersDirectory):
+      holders = os.listdir(holdersDirectory)
+      if len(holders) > 0:
+        self.log.info("{path} is being held open by {holders}".format(
+          path=self.getPath(), holders=" ".join(holders)))
+        return True
+    return False
 
   ######################################################################
   def _hasMounts(self):
@@ -1509,7 +1610,7 @@ class VDOService(Service):
     elif self.operationState != self.OperationState.beginGrowLogical:
       msg = _("Previous operation failure for VDO volume {0} not from"
               " grow logical").format(self.getName())
-      raise VDOServiceError(msg)
+      raise VDOServiceError(msg, exitStatus = DeveloperExitStatus)
     else:
       # Get the correct logical size from vdo.
       vdoConfig = self._getConfigFromVDO()
@@ -1541,7 +1642,7 @@ class VDOService(Service):
     elif self.operationState != self.OperationState.beginGrowPhysical:
       msg = _("Previous operation failure for VDO volume {0} not from"
               " grow physical").format(self.getName())
-      raise VDOServiceError(msg)
+      raise VDOServiceError(msg, exitStatus = DeveloperExitStatus)
     else:
       # Get the correct physical size from vdo.
       vdoConfig = self._getConfigFromVDO()
@@ -1574,7 +1675,7 @@ class VDOService(Service):
     elif self.operationState != self.OperationState.beginRunningSetWritePolicy:
       msg = _("Previous operation failure for VDO volume {0} not from"
               " set write policy").format(self.getName())
-      raise VDOServiceError(msg)
+      raise VDOServiceError(msg, exitStatus = DeveloperExitStatus)
     else:
       # Perform the recovery only if the vdo is actually running (indicating
       # the user aborted the command).
@@ -1667,7 +1768,8 @@ class VDOService(Service):
     Raises:
       ArgumentError
     """
-    memoryNeeded = SizeString("{0}g".format(indexMemory))
+    # SizeString respects locale, so convert to localized representation
+    memoryNeeded = SizeString("{0}g".format(locale.str(float(indexMemory))))
     memoryAvailable = None
     try:
       result = runCommand(['grep', 'MemAvailable', '/proc/meminfo'])

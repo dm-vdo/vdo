@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#3 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#4 $
 
-VDO_VERSION = 6.1.1.24
+VDO_VERSION = 6.1.1.84
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -100,6 +100,10 @@ clean:
 	rm -fr $(DEPDIR) tmpdir
 	rm -f  $(PROGS)
 
+libuser.a: $(USER_OBJS)
+	$(RM) $@
+	$(AR) cr $@ $^
+
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
 bindir ?= /usr/bin
@@ -130,7 +134,7 @@ $(DEPDIR)/%.d: %.c
 	$(CC) $(CFLAGS) -MM -MF $@ -MP -MT $*.o $<
 
 .SECONDEXPANSION:
-$(PROGS): $$@.o $(USER_OBJS) $(DEPLIBS)
+$(PROGS): $$@.o libuser.a $(DEPLIBS)
 	echo "Building $@ from $^"
 	$(CC) $(LDFLAGS) $^ $(LDPRFLAGS) -o $@
 

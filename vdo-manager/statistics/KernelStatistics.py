@@ -97,11 +97,7 @@ class KernelStatistics(StatStruct):
       Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
       # Maximum number of active VIOs
       Uint32Field("maxVIOs", label = "maximum VDO IO requests in progress"),
-      # Number of times the Albireo advice proved correct
-      Uint64Field("dedupeAdviceValid"),
-      # Number of times the Albireo advice proved incorrect
-      Uint64Field("dedupeAdviceStale"),
-      # Number of times the Albireo server was too slow in responding
+      # Number of times the UDS index was too slow in responding
       Uint64Field("dedupeAdviceTimeouts"),
       # Number of flush requests submitted to the storage device
       Uint64Field("flushOut"),
@@ -133,7 +129,7 @@ class KernelStatistics(StatStruct):
       IndexStatistics("index"),
     ], procFile="kernel_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 26
+  statisticsVersion = 28
 
   def sample(self, device):
     sample = super(KernelStatistics, self).sample(device)

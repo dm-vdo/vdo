@@ -20,13 +20,16 @@
 import gettext
 gettext.install('vdomgmnt')
 
+from .ExitStatusMixins import (DeveloperExitStatus, ExitStatus,
+                               StateExitStatus, SystemExitStatus,
+                               UserExitStatus)
 from .MgmntLogger import MgmntLogger
 from .Constants import Constants
 from .SizeString import SizeString
 from .Utils import Utils
 from .MgmntUtils import MgmntUtils
 from .Defaults import Defaults, ArgumentError
-from .Service import Service, ServiceError, ServiceStateError
+from .Service import Service, ServiceError
 from .KernelModuleService import KernelModuleService
 from .VDOKernelModuleService import VDOKernelModuleService
 from .VDOService import (VDOService, VDOServiceError,

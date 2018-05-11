@@ -154,11 +154,25 @@ class BlockMapStatistics(StatStruct):
       Uint64Field("flushCount"),
     ], labelPrefix="block map", procRoot="vdo", **kwargs)
 
+# The dedupe statistics from hash locks
+class HashLockStatistics(StatStruct):
+  def __init__(self, name="HashLockStatistics", **kwargs):
+    super(HashLockStatistics, self).__init__(name, [
+      # Number of times the UDS advice proved correct
+      Uint64Field("dedupeAdviceValid"),
+      # Number of times the UDS advice proved incorrect
+      Uint64Field("dedupeAdviceStale"),
+      # Number of writes with the same data as another in-flight write
+      Uint64Field("concurrentDataMatches"),
+      # Number of writes whose hash collided with an in-flight write
+      Uint64Field("concurrentHashCollisions"),
+    ], procRoot="vdo", **kwargs)
+
 # Counts of error conditions in VDO.
 class ErrorStatistics(StatStruct):
   def __init__(self, name="ErrorStatistics", **kwargs):
     super(ErrorStatistics, self).__init__(name, [
-      # number of times VDO got an invalid dedupe advice PBN from albireo
+      # number of times VDO got an invalid dedupe advice PBN from UDS
       Uint64Field("invalidAdvicePBNCount"),
       # number of times a VIO completed with a VDO_NO_SPACE error
       Uint64Field("noSpaceErrorCount"),
@@ -218,11 +232,13 @@ class VDOStatistics(StatStruct):
       RefCountsStatistics("refCounts"),
       # The statistics for the block map
       BlockMapStatistics("blockMap"),
+      # The dedupe statistics from hash locks
+      HashLockStatistics("hashLock"),
       # Counts of error conditions
       ErrorStatistics("errors"),
     ], procFile="dedupe_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 26
+  statisticsVersion = 28
 
   def sample(self, device):
     sample = super(VDOStatistics, self).sample(device)

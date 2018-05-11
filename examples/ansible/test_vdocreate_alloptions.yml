@@ -19,7 +19,7 @@
       writepolicy: async
       emulate512: enabled
       slabsize: 16G
-      albireomem: 0.5
+      indexmem: 0.5
       ackthreads: 2
       biothreads: 4
       cputhreads: 6

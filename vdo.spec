@@ -4,14 +4,14 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.1.24
+Version: 6.1.1.84
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
 URL: http://github.com/dm-vdo/vdo
 Distribution: RHEL 7.3
 Requires: PyYAML >= 3.10
-Requires: libuuid >= 2.23  
+Requires: libuuid >= 2.23
 Requires: kmod-kvdo >= 6.1
 Requires: lvm2 >= 2.02.171
 Provides: kvdo-kmod-common = %{version}
@@ -85,6 +85,9 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python_sitelib}/%{name}/vdomgmnt/Defaults.py
 %{python_sitelib}/%{name}/vdomgmnt/Defaults.pyc
 %{python_sitelib}/%{name}/vdomgmnt/Defaults.pyo
+%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.py
+%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.pyc
+%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.pyo
 %{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.py
 %{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.pyc
 %{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.pyo
@@ -177,7 +180,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdoremove.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.py
 # Fedora doesn't byte-compile the examples.
-%if 0%{?rhel} 
+%if 0%{?rhel}
 %doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.pyc
 %doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.pyo
 %endif
@@ -196,11 +199,5 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Thu Mar 22 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.24-1
-- Modified spec files to work with the Fedora copr repository.
-- Removed obsolete nagios module.
-- Fixed prerun handling of loaded kernel modules
-- Modified spec files to use systemd macros
-- Updated the vdo.8 man page
-- Improved some error messages
-
+* Fri May 11 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.84-1
+HASH(0x211f1b0)

@@ -20,22 +20,22 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Defaults.py#13 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Defaults.py#16 $
 
 """
-from . import Constants, MgmntLogger, MgmntUtils, SizeString
+from . import Constants, MgmntLogger, MgmntUtils, SizeString, UserExitStatus
 import os
 import re
 import stat
 
-class ArgumentError(Exception):
+class ArgumentError(UserExitStatus, Exception):
   """Exception raised to indicate an error with an argument."""
 
   ######################################################################
   # Overridden methods
   ######################################################################
-  def __init__(self, msg):
-    super(ArgumentError, self).__init__()
+  def __init__(self, msg, *args, **kwargs):
+    super(ArgumentError, self).__init__(*args, **kwargs)
     self._msg = msg
 
   ######################################################################
@@ -180,13 +180,22 @@ class Defaults(object):
   def checkIndexmem(value):
     """Checks that an option is a legitimate index memory setting.
 
+    To handle non-US locales while still supporting the documented
+    behavior, we allow either a period or a comma as the decimal
+    separator. This will be normalized to the decimal-point
+    representation; internally indexMem is always either the string
+    representation of an integer or one of the exact strings '0.25',
+    '0.5', or '0.75' regardless of locale.
+
     Arguments:
       value (str): Value provided as an argument to the option.
     Returns:
       The memory setting as a string.
     Raises:
       ArgumentError
+
     """
+    value = value.replace(",", ".")
     try:
       if value == '0.25' or value == '0.5' or value == '0.75':
         return value
@@ -372,9 +381,6 @@ class Defaults(object):
     try:
       ss = SizeString(value)
       size = ss.toBytes()
-      if size == 0:
-        # We must be using the default.
-        return ss
       if ((not MgmntUtils.isPowerOfTwo(size))
           or (not (Defaults.slabSizeMin <= ss <= Defaults.slabSizeMax))):
         raise ArgumentError(

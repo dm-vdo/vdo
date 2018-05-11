@@ -20,10 +20,11 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Configuration.py#3 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Configuration.py#4 $
 
 """
 from . import ArgumentError, MgmntLogger
+from . import StateExitStatus
 from . import VDOService
 from utils import Command, runCommand
 from utils import FileLock, YAMLObject
@@ -35,7 +36,7 @@ import time
 import yaml
 
 
-class BadConfigurationFileError(Exception):
+class BadConfigurationFileError(StateExitStatus, Exception):
   """Exception raised to indicate an error in processing the
   configuration file, such as a parse error or missing data.
   """
@@ -43,8 +44,8 @@ class BadConfigurationFileError(Exception):
   ######################################################################
   # Overridden methods
   ######################################################################
-  def __init__(self, msg):
-    super(BadConfigurationFileError, self).__init__()
+  def __init__(self, msg, *args, **kwargs):
+    super(BadConfigurationFileError, self).__init__(*args, **kwargs)
     self._msg = msg
 
   ######################################################################

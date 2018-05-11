@@ -22,7 +22,7 @@
 """
   vdo - VDO management utility
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdo#15 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdo#17 $
 
 """
 #pylint: disable=C0302
@@ -1007,7 +1007,7 @@ suffix is optional""").format(options
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoSlabSize",
                         type = self.__optionCheck(Defaults.checkSlabSize),
-                        default = "0",
+                        default = Defaults.slabSize,
                         metavar = "<megabytes>",
                         help = _("""
       Specifies the size of the increment by which a VDO is grown. Using a
@@ -1139,10 +1139,10 @@ def main():
 
      Exit codes:
        0        SUCCESS  success
-       2        ERROR    error(s) occurred
+       1        ERROR    error(s) occurred
   """
   SUCCESS = 0
-  ERROR   = 2
+  ERROR   = 1
 
   try:
     import vdoInstrumentation
@@ -1171,6 +1171,10 @@ def main():
       operation.run(arguments)
       exitval = SUCCESS
   except Exception as ex:
+    if isinstance(ex, ExitStatus):
+      # pylint: disable=E1101
+      # If it's an instance of ExitStatus we know it has exitStatus.
+      exitval = ex.exitStatus
     traceInfo = sys.exc_info()[2]
     mainLogger.error(str(ex))
     # By default (i.e., without --debug) this will log to the

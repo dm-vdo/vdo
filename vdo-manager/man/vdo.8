@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#13 $
+.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#14 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -515,7 +515,10 @@ data is not expected to have good deduplication rates but compression is
 still desired.
 .TP
 .B \-\-device=\fIabsolute_path\fR
-Specifies the absolute path of the device to use for VDO storage.
+Specifies an absolute path of the device to use for VDO storage.
+This might not be the path that gets used to access the storage device
+by future command invocations; see the \fBDEVICE NAMES\fP section
+below.
 .TP
 .B \-\-emulate512=\*[bool]
 Specifies that the VDO volume is to emulate a 512 byte block device. The
@@ -536,7 +539,7 @@ result in data loss or corruption.\fP
 Specifies the amount of index memory in gigabytes; the default is
 currently \*[indexMemDefault] GB. The special decimal values 0.25, 0.5,
 0.75 can be used, as can any integer value at least \*[indexMemIntMin] and less
-than or equal to \*[indexMemIntMax]. (The special deciml values are matched as
+than or equal to \*[indexMemIntMax]. (The special decimal values are matched as
 exact strings; "0.5" works but "0.50" is not accepted.)
 .PP
 .B \-\-help
@@ -671,6 +674,38 @@ in sync mode. This is the default.
 .RE
 .
 .
+.SH DEVICE NAMES
+Device recognition order can change at boot time, and devices can be
+added to or removed from a system, both possibly affecting device
+naming at boot time, so a device recognized as /dev/sda at one time
+may be /dev/sdb after a reboot.
+.PP
+In the directory /dev/disk/by-id, \fBudev\fP normally creates symbolic
+links after booting when devices are identified, and are named based
+on device serial numbers, UUIDs, WWNs, etc., so they should be more
+stable names across reboots for referring to the device in question.
+.PP
+When a VDO device is created, \fBvdo\fP will look for links in
+/dev/disk/by-id that refer to the same block device as the one
+supplied on the command line, and if some are found, use one of those
+instead. This name will be written into the config file for future
+use. If no such links are found, the device name as supplied is used.
+.PP
+This may cause problems if a VDO storage volume needs to be copied
+from a failing device to a replacement, or from a small device to a
+larger one to allow for expansion. In cases like these, the config
+file may need to be edited to refer to the new device; there is
+currently no automated way to make this change with the administrative
+tools. (If a logical volume is used as the VDO storage volume, VDO
+will find the storage via the volume's UUID; the standard LVM tools
+can be used to manage the migration or growth of the volume.)
+.PP
+If a multipath device is used, \fBudev\fP should be configured to
+either not create any /dev/disk/by-id symbolic links for any of the
+devices used, or to only create a link for the multipath device
+itself.
+.
+.
 .SH FILES
 .TP
 .ft CR
@@ -698,4 +733,5 @@ the underlying storage has sufficient space available for the
 resulting compressed, unique data blocks plus metadata overhead.
 .\" .SH NOTES
 .SH SEE ALSO
+.BR udev (7),
 .BR vdostats (8).
