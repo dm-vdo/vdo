@@ -16,16 +16,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/vdo-manager/statistics/Makefile#1 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/vdo-manager/statistics/Makefile#2 $
 
 PYTHON_MODULES  = $(wildcard *.py)
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
-python_sitelib ?= /usr/lib/python2.7/site-packages
+python3_sitelib ?= \
+	 $(shell python3 -c "import site; print(site.getsitepackages()[0])")
 name ?= vdo
 
-INSTALLDIR=$(DESTDIR)/$(python_sitelib)/$(name)/statistics
+INSTALLDIR=$(DESTDIR)/$(python3_sitelib)/$(name)/statistics
 
 .PHONY: all clean install
 

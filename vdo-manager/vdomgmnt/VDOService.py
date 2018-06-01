@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#5 $
 
 """
 from __future__ import absolute_import
@@ -37,8 +37,8 @@ from . import SizeString
 from . import VDOKernelModuleService
 from . import DeveloperExitStatus, StateExitStatus
 from . import SystemExitStatus, UserExitStatus
-from utils import Command, CommandError, runCommand
-from utils import Transaction, transactional
+from vdo.utils import Command, CommandError, runCommand
+from vdo.utils import Transaction, transactional
 
 import functools
 import locale
@@ -70,6 +70,17 @@ class VDOServiceExistsError(UserExitStatus, VDOServiceError):
   ######################################################################
   def __init__(self, msg = _("VDO volume exists"), *args, **kwargs):
     super(VDOServiceExistsError, self).__init__(msg, *args, **kwargs)
+
+########################################################################
+class VDOMissingDeviceError(StateExitStatus, VDOServiceError):
+  """VDO underlying device does not exist exception.
+  """
+  ######################################################################
+  # Overriden methods
+  ######################################################################
+  def __init__(self, msg = _("Underlying device does not exist"),
+               *args, **kwargs):
+    super(VDOMissingDeviceError, self).__init__(msg, *args, **kwargs)
 
 ########################################################################
 class VDOServicePreviousOperationError(StateExitStatus, VDOServiceError):
@@ -516,6 +527,17 @@ class VDOService(Service):
           _("Steps to clean up VDO {0}:").format(self.getName()))
         removeSteps.extend(["    {0}".format(s) for s in localRemoveSteps])
       raise
+
+    # Fail if the device does not exist and --force is not specified. If
+    # this remove is being run to undo a failed create, the device will
+    # exist.
+    try:
+      os.stat(self.device)
+    except OSError:
+      if not force:
+        msg = _("Device {0} not found. Remove VDO with --force.").format(
+          self.device)
+        raise VDOMissingDeviceError(msg)
 
     self.config.removeVdo(self.getName())
 

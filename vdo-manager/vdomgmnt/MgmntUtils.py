@@ -20,7 +20,7 @@
 """
   MgmntUtils - miscellaneous utilities for the VDO manager
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/MgmntUtils.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/MgmntUtils.py#2 $
 
 """
 from __future__ import absolute_import
@@ -28,7 +28,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from .Utils import Utils
-from utils import CommandError, runCommand
+from vdo.utils import CommandError, runCommand
 
 class MgmntUtils(Utils):
 

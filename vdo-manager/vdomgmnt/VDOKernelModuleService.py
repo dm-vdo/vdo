@@ -20,7 +20,7 @@
 """
   VDOKernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#2 $
 
 """
 from __future__ import absolute_import
@@ -29,7 +29,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from . import Defaults
 from .KernelModuleService import KernelModuleService
-from utils import runCommand
+from vdo.utils import runCommand
 import string
 
 class VDOKernelModuleService(KernelModuleService):

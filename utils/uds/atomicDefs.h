@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/gloria/userLinux/uds/atomicDefs.h#1 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/atomicDefs.h#3 $
  */
 
 #ifndef LINUX_USER_ATOMIC_DEFS_H
@@ -37,6 +37,15 @@ typedef struct {
 } atomic64_t;
 
 #define ATOMIC_INIT(i)  { (i) }
+
+/*
+ * Prevent the compiler from merging or refetching accesses.  The compiler is
+ * also forbidden from reordering successive instances of ACCESS_ONCE(), but
+ * only when the compiler is aware of some particular ordering.  One way to
+ * make the compiler aware of ordering is to put the two invocations of
+ * ACCESS_ONCE() in different C statements.
+ */
+#define ACCESS_ONCE(x) (*(volatile __typeof__(x) *)&(x))
 
 /*****************************************************************************
  * Beginning of the barrier methods.
@@ -248,7 +257,7 @@ static INLINE void atomic_inc(atomic_t *atom)
  **/
 static INLINE int atomic_read(const atomic_t *atom)
 {
-  return *(const volatile int *) &atom->value;
+  return ACCESS_ONCE(atom->value);
 }
 
 /**
@@ -258,7 +267,7 @@ static INLINE int atomic_read(const atomic_t *atom)
  **/
 static INLINE int atomic_read_acquire(const atomic_t *atom)
 {
-  int value = *(const volatile int *) &atom->value;
+  int value = ACCESS_ONCE(atom->value);
   smp_mb();
   return value;
 }
@@ -357,13 +366,26 @@ static INLINE void atomic64_inc(atomic64_t *atom)
 }
 
 /**
+ * Increment a 64-bit atomic variable.  The addition is properly atomic, and
+ * there are memory barriers.
+ *
+ * @param atom  a pointer to the atomic variable
+ *
+ * @return the new value of the atom after the increment
+ **/
+static INLINE long atomic64_inc_return(atomic64_t *atom)
+{
+  return atomic64_add_return(1, atom);
+}
+
+/**
  * Read a 64-bit atomic variable, without any memory barriers.
  *
  * @param atom   a pointer to the atomic variable
  **/
 static INLINE long atomic64_read(const atomic64_t *atom)
 {
-  return *(const volatile long *) &atom->value;
+  return ACCESS_ONCE(atom->value);
 }
 
 /**
@@ -373,7 +395,7 @@ static INLINE long atomic64_read(const atomic64_t *atom)
  **/
 static INLINE long atomic64_read_acquire(const atomic64_t *atom)
 {
-  long value = *(const volatile long *) &atom->value;
+  long value = ACCESS_ONCE(atom->value);
   smp_mb();
   return value;
 }

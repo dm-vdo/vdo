@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 #
 # Copyright (c) 2018 Red Hat, Inc.
@@ -22,7 +22,7 @@
 """
   vdo - VDO management utility
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdo#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdo#3 $
 
 """
 #pylint: disable=C0302
@@ -43,15 +43,8 @@ import sys
 from textwrap import TextWrapper
 import traceback
 
-# Temporary patch to address layout changes
-for dir in sys.path:
-  vdoDir = os.path.join(dir, 'vdo')
-  if os.path.isdir(vdoDir):
-    sys.path.append(vdoDir)
-    break
-
-from utils import Command
-from vdomgmnt import *
+from vdo.utils import Command
+from vdo.vdomgmnt import *
 
 gettext.install('vdo')
 

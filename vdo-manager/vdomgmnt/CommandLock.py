@@ -20,14 +20,14 @@
 """
   CommandLock - simple process locking
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/CommandLock.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/CommandLock.py#2 $
 
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from utils import Command, FileLock
+from vdo.utils import Command, FileLock
 
 class CommandLockError(Exception):
   """Exception raised to indicate an error acquiring a CommandLock."""

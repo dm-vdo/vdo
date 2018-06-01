@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#2 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -36,8 +36,8 @@ from . import Service
 from . import VDOKernelModuleService
 from . import VDOService, VDOServiceError, VDOServicePreviousOperationError
 from . import ExitStatus, SystemExitStatus, UserExitStatus
-from utils import Command, CommandError, runCommand
-from utils import Transaction, transactional
+from vdo.utils import Command, CommandError, runCommand
+from vdo.utils import Transaction, transactional
 from functools import partial
 import inspect
 import logging

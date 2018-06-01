@@ -4,14 +4,14 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.0.35
+Version: 6.2.0.71
 Release: %{spec_release}
 License: GPLv2
-Source: %{name}-%{version}.tgz
+Source0: %{name}-%{version}.tgz
 URL: http://github.com/dm-vdo/vdo
-Distribution: RHEL 7.3
-Requires: PyYAML >= 3.10
+Requires: python3-PyYAML >= 3.10
 Requires: libuuid >= 2.23
+Requires: lvm2
 #Requires: kvdo-kmod >= 6.2
 Provides: kvdo-kmod-common = %{version}
 ExclusiveArch: x86_64
@@ -24,8 +24,8 @@ ExcludeArch: aarch64
 ExcludeArch: i686
 BuildRequires: gcc
 BuildRequires: libuuid-devel
-BuildRequires: python
-BuildRequires: python-devel
+BuildRequires: python3
+BuildRequires: python3-devel
 BuildRequires: systemd
 BuildRequires: valgrind-devel
 BuildRequires: zlib-devel
@@ -49,7 +49,7 @@ make
 %install
 make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
   defaultdocdir=%{_defaultdocdir} name=%{name} \
-  python_sitelib=%{python_sitelib} mandir=%{_mandir} \
+  python3_sitelib=/%{python3_sitelib} mandir=%{_mandir} \
   unitdir=%{_unitdir} presetdir=%{_presetdir}
 
 %post
@@ -70,100 +70,103 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_bindir}/vdoformat
 %{_bindir}/vdoprepareupgrade
 %{_bindir}/vdoreadonly
-%dir %{python_sitelib}/%{name}
-%dir %{python_sitelib}/%{name}/vdomgmnt/
-%{python_sitelib}/%{name}/vdomgmnt/CommandLock.py
-%{python_sitelib}/%{name}/vdomgmnt/CommandLock.pyc
-%{python_sitelib}/%{name}/vdomgmnt/CommandLock.pyo
-%{python_sitelib}/%{name}/vdomgmnt/Configuration.py
-%{python_sitelib}/%{name}/vdomgmnt/Configuration.pyc
-%{python_sitelib}/%{name}/vdomgmnt/Configuration.pyo
-%{python_sitelib}/%{name}/vdomgmnt/Constants.py
-%{python_sitelib}/%{name}/vdomgmnt/Constants.pyc
-%{python_sitelib}/%{name}/vdomgmnt/Constants.pyo
-%{python_sitelib}/%{name}/vdomgmnt/Defaults.py
-%{python_sitelib}/%{name}/vdomgmnt/Defaults.pyc
-%{python_sitelib}/%{name}/vdomgmnt/Defaults.pyo
-%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.py
-%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.pyc
-%{python_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.pyo
-%{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.py
-%{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.pyc
-%{python_sitelib}/%{name}/vdomgmnt/KernelModuleService.pyo
-%{python_sitelib}/%{name}/vdomgmnt/MgmntUtils.py
-%{python_sitelib}/%{name}/vdomgmnt/MgmntUtils.pyc
-%{python_sitelib}/%{name}/vdomgmnt/MgmntUtils.pyo
-%{python_sitelib}/%{name}/vdomgmnt/Service.py
-%{python_sitelib}/%{name}/vdomgmnt/Service.pyc
-%{python_sitelib}/%{name}/vdomgmnt/Service.pyo
-%{python_sitelib}/%{name}/vdomgmnt/SizeString.py
-%{python_sitelib}/%{name}/vdomgmnt/SizeString.pyc
-%{python_sitelib}/%{name}/vdomgmnt/SizeString.pyo
-%{python_sitelib}/%{name}/vdomgmnt/Utils.py
-%{python_sitelib}/%{name}/vdomgmnt/Utils.pyc
-%{python_sitelib}/%{name}/vdomgmnt/Utils.pyo
-%{python_sitelib}/%{name}/vdomgmnt/VDOArgumentParser.py
-%{python_sitelib}/%{name}/vdomgmnt/VDOArgumentParser.pyc
-%{python_sitelib}/%{name}/vdomgmnt/VDOArgumentParser.pyo
-%{python_sitelib}/%{name}/vdomgmnt/VDOService.py
-%{python_sitelib}/%{name}/vdomgmnt/VDOService.pyc
-%{python_sitelib}/%{name}/vdomgmnt/VDOService.pyo
-%{python_sitelib}/%{name}/vdomgmnt/VDOKernelModuleService.py
-%{python_sitelib}/%{name}/vdomgmnt/VDOKernelModuleService.pyc
-%{python_sitelib}/%{name}/vdomgmnt/VDOKernelModuleService.pyo
-%{python_sitelib}/%{name}/vdomgmnt/VDOOperation.py
-%{python_sitelib}/%{name}/vdomgmnt/VDOOperation.pyc
-%{python_sitelib}/%{name}/vdomgmnt/VDOOperation.pyo
-%{python_sitelib}/%{name}/vdomgmnt/__init__.py
-%{python_sitelib}/%{name}/vdomgmnt/__init__.pyc
-%{python_sitelib}/%{name}/vdomgmnt/__init__.pyo
-%dir %{python_sitelib}/%{name}/statistics/
-%{python_sitelib}/%{name}/statistics/Command.py
-%{python_sitelib}/%{name}/statistics/Command.pyc
-%{python_sitelib}/%{name}/statistics/Command.pyo
-%{python_sitelib}/%{name}/statistics/Field.py
-%{python_sitelib}/%{name}/statistics/Field.pyc
-%{python_sitelib}/%{name}/statistics/Field.pyo
-%{python_sitelib}/%{name}/statistics/KernelStatistics.py
-%{python_sitelib}/%{name}/statistics/KernelStatistics.pyc
-%{python_sitelib}/%{name}/statistics/KernelStatistics.pyo
-%{python_sitelib}/%{name}/statistics/LabeledValue.py
-%{python_sitelib}/%{name}/statistics/LabeledValue.pyc
-%{python_sitelib}/%{name}/statistics/LabeledValue.pyo
-%{python_sitelib}/%{name}/statistics/StatFormatter.py
-%{python_sitelib}/%{name}/statistics/StatFormatter.pyc
-%{python_sitelib}/%{name}/statistics/StatFormatter.pyo
-%{python_sitelib}/%{name}/statistics/StatStruct.py
-%{python_sitelib}/%{name}/statistics/StatStruct.pyc
-%{python_sitelib}/%{name}/statistics/StatStruct.pyo
-%{python_sitelib}/%{name}/statistics/VDOReleaseVersions.py
-%{python_sitelib}/%{name}/statistics/VDOReleaseVersions.pyc
-%{python_sitelib}/%{name}/statistics/VDOReleaseVersions.pyo
-%{python_sitelib}/%{name}/statistics/VDOStatistics.py
-%{python_sitelib}/%{name}/statistics/VDOStatistics.pyc
-%{python_sitelib}/%{name}/statistics/VDOStatistics.pyo
-%{python_sitelib}/%{name}/statistics/__init__.py
-%{python_sitelib}/%{name}/statistics/__init__.pyc
-%{python_sitelib}/%{name}/statistics/__init__.pyo
-%dir %{python_sitelib}/%{name}/utils/
-%{python_sitelib}/%{name}/utils/Command.py
-%{python_sitelib}/%{name}/utils/Command.pyc
-%{python_sitelib}/%{name}/utils/Command.pyo
-%{python_sitelib}/%{name}/utils/FileUtils.py
-%{python_sitelib}/%{name}/utils/FileUtils.pyc
-%{python_sitelib}/%{name}/utils/FileUtils.pyo
-%{python_sitelib}/%{name}/utils/Timeout.py
-%{python_sitelib}/%{name}/utils/Timeout.pyc
-%{python_sitelib}/%{name}/utils/Timeout.pyo
-%{python_sitelib}/%{name}/utils/Transaction.py
-%{python_sitelib}/%{name}/utils/Transaction.pyc
-%{python_sitelib}/%{name}/utils/Transaction.pyo
-%{python_sitelib}/%{name}/utils/YAMLObject.py
-%{python_sitelib}/%{name}/utils/YAMLObject.pyc
-%{python_sitelib}/%{name}/utils/YAMLObject.pyo
-%{python_sitelib}/%{name}/utils/__init__.py
-%{python_sitelib}/%{name}/utils/__init__.pyc
-%{python_sitelib}/%{name}/utils/__init__.pyo
+%dir %{python3_sitelib}/%{name}
+%{python3_sitelib}/%{name}/__pycache__/__init__.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/__pycache__/__init__.cpython-36.pyc
+%{python3_sitelib}/%{name}/__init__.py
+%dir %{python3_sitelib}/%{name}/vdomgmnt/
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/CommandLock.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/CommandLock.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Configuration.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Configuration.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Constants.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Constants.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Defaults.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Defaults.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/ExitStatusMixins.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/ExitStatusMixins.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/KernelModuleService.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/KernelModuleService.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/MgmntUtils.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/MgmntUtils.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Service.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Service.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/SizeString.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/SizeString.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Utils.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/Utils.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/VDOArgumentParser.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/VDOArgumentParser.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/VDOKernelModuleService.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/VDOKernelModuleService.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/VDOOperation.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/VDOOperation.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/VDOService.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/VDOService.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/__init__.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/__pycache__/__init__.cpython-36.pyc
+%{python3_sitelib}/%{name}/vdomgmnt/CommandLock.py
+%{python3_sitelib}/%{name}/vdomgmnt/Configuration.py
+%{python3_sitelib}/%{name}/vdomgmnt/Constants.py
+%{python3_sitelib}/%{name}/vdomgmnt/Defaults.py
+%{python3_sitelib}/%{name}/vdomgmnt/ExitStatusMixins.py
+%{python3_sitelib}/%{name}/vdomgmnt/KernelModuleService.py
+%{python3_sitelib}/%{name}/vdomgmnt/MgmntUtils.py
+%{python3_sitelib}/%{name}/vdomgmnt/Service.py
+%{python3_sitelib}/%{name}/vdomgmnt/SizeString.py
+%{python3_sitelib}/%{name}/vdomgmnt/Utils.py
+%{python3_sitelib}/%{name}/vdomgmnt/VDOArgumentParser.py
+%{python3_sitelib}/%{name}/vdomgmnt/VDOService.py
+%{python3_sitelib}/%{name}/vdomgmnt/VDOKernelModuleService.py
+%{python3_sitelib}/%{name}/vdomgmnt/VDOOperation.py
+%{python3_sitelib}/%{name}/vdomgmnt/__init__.py
+%dir %{python3_sitelib}/%{name}/statistics/
+%{python3_sitelib}/%{name}/statistics/Command.py
+%{python3_sitelib}/%{name}/statistics/Field.py
+%{python3_sitelib}/%{name}/statistics/KernelStatistics.py
+%{python3_sitelib}/%{name}/statistics/LabeledValue.py
+%{python3_sitelib}/%{name}/statistics/StatFormatter.py
+%{python3_sitelib}/%{name}/statistics/StatStruct.py
+%{python3_sitelib}/%{name}/statistics/VDOReleaseVersions.py
+%{python3_sitelib}/%{name}/statistics/VDOStatistics.py
+%{python3_sitelib}/%{name}/statistics/__init__.py
+%{python3_sitelib}/%{name}/statistics/__pycache__/Command.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/Command.cpython-36.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/Field.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/Field.cpython-36.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/KernelStatistics.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/KernelStatistics.cpython-36.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/LabeledValue.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/LabeledValue.cpython-36.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/StatFormatter.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/StatFormatter.cpython-36.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/StatStruct.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/StatStruct.cpython-36.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/VDOReleaseVersions.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/VDOReleaseVersions.cpython-36.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/VDOStatistics.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/VDOStatistics.cpython-36.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/__init__.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/statistics/__pycache__/__init__.cpython-36.pyc
+%dir %{python3_sitelib}/%{name}/utils/
+%{python3_sitelib}/%{name}/utils/Command.py
+%{python3_sitelib}/%{name}/utils/FileUtils.py
+%{python3_sitelib}/%{name}/utils/Timeout.py
+%{python3_sitelib}/%{name}/utils/Transaction.py
+%{python3_sitelib}/%{name}/utils/YAMLObject.py
+%{python3_sitelib}/%{name}/utils/__init__.py
+%{python3_sitelib}/%{name}/utils/__pycache__/Command.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/Command.cpython-36.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/FileUtils.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/FileUtils.cpython-36.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/Timeout.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/Timeout.cpython-36.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/Transaction.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/Transaction.cpython-36.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/YAMLObject.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/YAMLObject.cpython-36.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/__init__.cpython-36.opt-1.pyc
+%{python3_sitelib}/%{name}/utils/__pycache__/__init__.cpython-36.pyc
 %{_unitdir}/vdo.service
 %{_presetdir}/97-vdo.preset
 %dir %{_defaultdocdir}/%{name}
@@ -177,8 +180,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.py
 # Fedora doesn't byte-compile the examples.
 %if 0%{?rhel}
-%doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.pyc
-%doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.pyo
 %endif
 %dir %{_defaultdocdir}/%{name}/examples/nagios
 %doc %{_defaultdocdir}/%{name}/examples/nagios/nagios_check_vdostats_logicalSpace.pl
@@ -195,11 +196,5 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Fri Apr 27 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.35-1
-Note: This is a pre-release version, future versions of VDO may not support
-VDO devices created with this version.
-- Added validation that the release version numbers in the geometry and
-  super block match on load.
-- Fixed bug where VDO would always be created with a dense index even when
-  a sparse index was requested.
-- Fixed compilation problems on newer versions of GCC.
+* Fri Jun 01 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.71-1
+HASH(0x2042988)

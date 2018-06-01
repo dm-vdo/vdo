@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/blockMapUtils.c#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/blockMapUtils.c#3 $
  */
 
 #include "blockMapUtils.h"
@@ -85,11 +85,11 @@ static int readAndExaminePage(VDO                 *vdo,
     .slot = 0,
   };
   for (; blockMapSlot.slot < BLOCK_MAP_ENTRIES_PER_PAGE; blockMapSlot.slot++) {
-    BlockMapEntry       *entry = &page->entries[blockMapSlot.slot];
-    PhysicalBlockNumber  mappedPBN
-      = unpackOffsetPBN(entry, page->header.entryOffset);
+    BlockMapEntry       *entry        = &page->entries[blockMapSlot.slot];
+    PhysicalBlockNumber  mappedPBN    = unpackPBN(entry);
+    BlockMappingState    mappingState = unpackMappingState(entry);
 
-    result = examiner(blockMapSlot, height, mappedPBN, entry->mappingState);
+    result = examiner(blockMapSlot, height, mappedPBN, mappingState);
     if (result != VDO_SUCCESS) {
       FREE(page);
       return result;
@@ -188,8 +188,8 @@ static int readSlotFromPage(VDO                 *vdo,
   }
 
   BlockMapEntry *entry = &page->entries[slot];
-  *mappedStatePtr = entry->mappingState;
-  *mappedPBNPtr   = unpackOffsetPBN(entry, page->header.entryOffset);
+  *mappedStatePtr = unpackMappingState(entry);
+  *mappedPBNPtr   = unpackPBN(entry);
   FREE(page);
   return VDO_SUCCESS;
 }

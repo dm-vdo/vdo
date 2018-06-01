@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 #
 # Copyright (c) 2018 Red Hat, Inc.
@@ -22,7 +22,7 @@
 """
   vdoStats - Report statistics from an Albireo VDO.
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdoStats#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdoStats#3 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -37,15 +37,8 @@ import sys
 
 from optparse import OptionParser
 
-# Temporary patch to address layout changes
-for dir in sys.path:
-  vdoDir = os.path.join(dir, 'vdo')
-  if os.path.isdir(vdoDir):
-    sys.path.append(vdoDir)
-    break
-
-from statistics import *
-from utils import Command, CommandError, runCommand
+from vdo.statistics import *
+from vdo.utils import Command, CommandError, runCommand
 
 gettext.install('vdo')
 

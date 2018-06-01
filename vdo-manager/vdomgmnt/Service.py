@@ -20,7 +20,7 @@
 """
   Service - Abstract superclass for services
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Service.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Service.py#2 $
 
 """
 from __future__ import absolute_import
@@ -28,7 +28,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from . import ExitStatus
-from utils import YAMLObject
+from vdo.utils import YAMLObject
 
 class ServiceError(ExitStatus, Exception):
   """Base class for service errors.

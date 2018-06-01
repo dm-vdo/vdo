@@ -21,7 +21,7 @@
   LabeledValue - A sampled statistic with a label. Used for formatting stats
   output.
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/LabeledValue.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/LabeledValue.py#2 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -106,6 +106,8 @@ class LabeledValue(object):
     :param displaySpec: The display specification
     :param joiner:      The string for joining subvalues
     """
+    if isinstance(self.value, bytes):
+      return self.value.decode("ASCII")
     return str(self.value)
 
 class LabeledValueList(LabeledValue):

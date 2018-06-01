@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#2 $
 
 """
 from __future__ import absolute_import
@@ -30,8 +30,8 @@ from __future__ import unicode_literals
 from . import ArgumentError
 from . import StateExitStatus
 from . import VDOService
-from utils import Command, runCommand
-from utils import FileLock, YAMLObject
+from vdo.utils import Command, runCommand
+from vdo.utils import FileLock, YAMLObject
 
 import errno
 import logging

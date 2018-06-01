@@ -20,14 +20,14 @@
 """
   Utils - miscellaneous utilities for the VDO manager
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Utils.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Utils.py#2 $
 
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from utils import CommandError, runCommand
+from vdo.utils import CommandError, runCommand
 import distutils.spawn
 import errno
 import os
