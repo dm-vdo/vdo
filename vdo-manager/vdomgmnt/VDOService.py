@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#25 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#26 $
 
 """
 
@@ -55,6 +55,16 @@ class VDOServiceError(ServiceError):
   ######################################################################
   def __init__(self, msg = _("VDO volume error"), *args, **kwargs):
     super(VDOServiceError, self).__init__(msg, *args, **kwargs)
+
+########################################################################
+class VDODeviceAlreadyConfiguredError(UserExitStatus, VDOServiceError):
+  """The specified device is already configured for a VDO.
+  """
+  ######################################################################
+  # Overriden methods
+  ######################################################################
+  def __init__(self, msg = _("Device already configured"), *args, **kwargs):
+    super(VDODeviceAlreadyConfiguredError, self).__init__(msg, *args, **kwargs)
 
 ########################################################################
 class VDOServiceExistsError(UserExitStatus, VDOServiceError):
@@ -267,6 +277,12 @@ class VDOService(Service):
     if self.isConstructed:
       msg = _("VDO volume {0} already exists").format(self.getName())
       raise VDOServiceExistsError(msg)
+
+    # Check that there isn't already a vdo using the device we were given.
+    if self.config.isDeviceConfigured(self.device):
+      msg = _("Device {0} already configured for VDO use").format(
+              self.device)
+      raise VDODeviceAlreadyConfiguredError(msg)
 
     # Check that we have enough kernel memory to at least create the index.
     self._validateAvailableMemory(self.indexMemory);
@@ -1758,8 +1774,8 @@ class VDOService(Service):
 
   ######################################################################
   def _validateAvailableMemory(self, indexMemory):
-    """Validates whether there is likely enough kernel memory to at least 
-    create the index. If there is an error getting the info, don't 
+    """Validates whether there is likely enough kernel memory to at least
+    create the index. If there is an error getting the info, don't
     fail the create, just let the real check be done in vdoformat.
 
     Arguments:

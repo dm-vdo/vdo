@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.1.84
+Version: 6.1.1.99
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -199,5 +199,5 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Fri May 11 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.84-1
-HASH(0x211f1b0)
+* Wed Jun 20 2018 - J. corwin Coburn <corwin@redhat.com> - 6.1.1.99-1
+HASH(0x2364d88)

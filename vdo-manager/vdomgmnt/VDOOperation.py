@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#7 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#8 $
 """
 from . import ArgumentError
 from . import CommandLock
@@ -406,6 +406,11 @@ class ListOperation(VDOOperation):
       conf = Configuration(self.confFile)
       vdos |= set(conf.getAllVdos().keys())
 
+    # We want to provide a stable ordering and a set, while great for
+    # avoiding duplicates, doesn't guarantee ordering.  So, make a list
+    # from the set and sort it.
+    vdos = list(vdos)
+    vdos.sort()
     print(os.linesep.join(vdos))
 
 ########################################################################
