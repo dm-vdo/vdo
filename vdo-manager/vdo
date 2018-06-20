@@ -22,7 +22,7 @@
 """
   vdo - VDO management utility
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdo#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdo#4 $
 
 """
 #pylint: disable=C0302
@@ -107,6 +107,10 @@ def main():
     pass
 
   arguments = VDOArgumentParser().parse_args()
+  if arguments.command is None:
+    # There does not appear to be a convenient way to get a command list.
+    VDOArgumentParser().print_usage()
+    sys.exit(ERROR)
   configureLogger(os.path.basename(sys.argv[0]),
                   arguments.logfile, arguments.debug)
   mainLogger = logging.getLogger(os.path.basename(sys.argv[0]))

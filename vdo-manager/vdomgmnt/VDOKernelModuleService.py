@@ -20,7 +20,7 @@
 """
   VDOKernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#2 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#3 $
 
 """
 from __future__ import absolute_import
@@ -30,7 +30,6 @@ from __future__ import unicode_literals
 from . import Defaults
 from .KernelModuleService import KernelModuleService
 from vdo.utils import runCommand
-import string
 
 class VDOKernelModuleService(KernelModuleService):
   """KernelModuleService manages the kvdo kernel module on the local node."""
@@ -41,8 +40,8 @@ class VDOKernelModuleService(KernelModuleService):
   def setLogLevel(self, level):
     """Sets the module log level."""
     if level != Defaults.vdoLogLevel:
-      runCommand(string.split("echo" + level + " > /sys/" + self._name
-                              + "/log_level"), shell=True, noThrow=True)
+      commandStr = "echo " + level + " > /sys/" + self._name + "/log_level"
+      runCommand(commandStr.split(), shell=True, noThrow=True)
 
   ######################################################################
   # Overridden methods

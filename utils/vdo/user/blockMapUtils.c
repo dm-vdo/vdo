@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/blockMapUtils.c#3 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/blockMapUtils.c#5 $
  */
 
 #include "blockMapUtils.h"
@@ -75,7 +75,7 @@ static int readAndExaminePage(VDO                 *vdo,
     return result;
   }
 
-  if (!page->header.initialized) {
+  if (!isBlockMapPageInitialized(page)) {
     FREE(page);
     return VDO_SUCCESS;
   }
@@ -85,22 +85,21 @@ static int readAndExaminePage(VDO                 *vdo,
     .slot = 0,
   };
   for (; blockMapSlot.slot < BLOCK_MAP_ENTRIES_PER_PAGE; blockMapSlot.slot++) {
-    BlockMapEntry       *entry        = &page->entries[blockMapSlot.slot];
-    PhysicalBlockNumber  mappedPBN    = unpackPBN(entry);
-    BlockMappingState    mappingState = unpackMappingState(entry);
+    DataLocation mapped
+      = unpackBlockMapEntry(&page->entries[blockMapSlot.slot]);
 
-    result = examiner(blockMapSlot, height, mappedPBN, mappingState);
+    result = examiner(blockMapSlot, height, mapped.pbn, mapped.state);
     if (result != VDO_SUCCESS) {
       FREE(page);
       return result;
     }
 
-    if (isUnmapped(entry)) {
+    if (!isMappedLocation(&mapped)) {
       continue;
     }
 
-    if ((height > 0) && isValidDataBlock(vdo->depot, mappedPBN)) {
-      result = readAndExaminePage(vdo, mappedPBN, height - 1, examiner);
+    if ((height > 0) && isValidDataBlock(vdo->depot, mapped.pbn)) {
+      result = readAndExaminePage(vdo, mapped.pbn, height - 1, examiner);
       if (result != VDO_SUCCESS) {
         FREE(page);
         return result;
@@ -180,16 +179,19 @@ static int readSlotFromPage(VDO                 *vdo,
     return result;
   }
 
-  if (!page->header.initialized) {
-    *mappedStatePtr = MAPPING_STATE_UNMAPPED;
-    *mappedPBNPtr   = ZERO_BLOCK;
-    FREE(page);
-    return VDO_SUCCESS;
+  DataLocation mapped;
+  if (isBlockMapPageInitialized(page)) {
+    mapped = unpackBlockMapEntry(&page->entries[slot]);
+  } else {
+    mapped = (DataLocation) {
+      .state = MAPPING_STATE_UNMAPPED,
+      .pbn   = ZERO_BLOCK,
+    };
   }
 
-  BlockMapEntry *entry = &page->entries[slot];
-  *mappedStatePtr = unpackMappingState(entry);
-  *mappedPBNPtr   = unpackPBN(entry);
+  *mappedStatePtr = mapped.state;
+  *mappedPBNPtr   = mapped.pbn;
+
   FREE(page);
   return VDO_SUCCESS;
 }
@@ -278,9 +280,9 @@ int readBlockMapPage(PhysicalLayer        *layer,
 
   if (validity == BLOCK_MAP_PAGE_BAD) {
     warnx("Expected page %" PRIu64 " but got page %" PRIu64,
-          pbn, page->header.pbn);
+          pbn, getBlockMapPagePBN(page));
   }
 
-  page->header.initialized = false;
+  markBlockMapPageInitialized(page, false);
   return VDO_SUCCESS;
 }

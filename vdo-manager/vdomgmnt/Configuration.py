@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#2 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#3 $
 
 """
 from __future__ import absolute_import
@@ -59,7 +59,7 @@ class BadConfigurationFileError(StateExitStatus, Exception):
 ########################################################################
 class Configuration(YAMLObject):
   "Configuration of VDO volumes."
-  
+
   log = logging.getLogger('vdo.vdomgmnt.Configuration')
   supportedSchemaVersions = [0x20170907]
   modifiableSingltons = {}
@@ -143,6 +143,20 @@ class Configuration(YAMLObject):
   def haveVdo(self, name):
     """Returns True if we have a VDO with a given name."""
     return name in self._vdos
+
+  ######################################################################
+  def isDeviceConfigured(self, device):
+    """Returns a boolean indicating if the configuration contains a VDO using
+    the specified device.
+
+    Both the specified device and the device from the vdos present in the
+    configuration are fully resolved for the check.
+    """
+    device = os.path.realpath(device)
+    for vdo in self._vdos:
+      if device == os.path.realpath(self._vdos[vdo].device):
+        return True
+    return False
 
   ######################################################################
   def persist(self):

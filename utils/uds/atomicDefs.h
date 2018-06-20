@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/gloria/userLinux/uds/atomicDefs.h#3 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/atomicDefs.h#4 $
  */
 
 #ifndef LINUX_USER_ATOMIC_DEFS_H
@@ -37,15 +37,6 @@ typedef struct {
 } atomic64_t;
 
 #define ATOMIC_INIT(i)  { (i) }
-
-/*
- * Prevent the compiler from merging or refetching accesses.  The compiler is
- * also forbidden from reordering successive instances of ACCESS_ONCE(), but
- * only when the compiler is aware of some particular ordering.  One way to
- * make the compiler aware of ordering is to put the two invocations of
- * ACCESS_ONCE() in different C statements.
- */
-#define ACCESS_ONCE(x) (*(volatile __typeof__(x) *)&(x))
 
 /*****************************************************************************
  * Beginning of the barrier methods.
@@ -181,6 +172,25 @@ static INLINE void smp_read_barrier_depends(void)
 }
 
 /*****************************************************************************
+ * Beginning of the methods for defeating compiler optimization.
+ *****************************************************************************/
+
+#define READ_ONCE(x)        (x)
+#define WRITE_ONCE(x, val)  ((x) = (val))
+
+/*
+ * Prevent the compiler from merging or refetching accesses.  The compiler is
+ * also forbidden from reordering successive instances of ACCESS_ONCE(), but
+ * only when the compiler is aware of some particular ordering.  One way to
+ * make the compiler aware of ordering is to put the two invocations of
+ * ACCESS_ONCE() in different C statements.
+ *
+ * XXX RHEL8 no longer uses ACCESS_ONCE, so we need to use READ_ONCE or
+ *     WRITE_ONCE instead.
+ */
+#define ACCESS_ONCE(x) (*(volatile __typeof__(x) *)&(x))
+
+/*****************************************************************************
  * Beginning of the 32 bit atomic support.
  *****************************************************************************/
 
@@ -257,7 +267,7 @@ static INLINE void atomic_inc(atomic_t *atom)
  **/
 static INLINE int atomic_read(const atomic_t *atom)
 {
-  return ACCESS_ONCE(atom->value);
+  return READ_ONCE(atom->value);
 }
 
 /**
@@ -267,7 +277,7 @@ static INLINE int atomic_read(const atomic_t *atom)
  **/
 static INLINE int atomic_read_acquire(const atomic_t *atom)
 {
-  int value = ACCESS_ONCE(atom->value);
+  int value = READ_ONCE(atom->value);
   smp_mb();
   return value;
 }
@@ -385,7 +395,7 @@ static INLINE long atomic64_inc_return(atomic64_t *atom)
  **/
 static INLINE long atomic64_read(const atomic64_t *atom)
 {
-  return ACCESS_ONCE(atom->value);
+  return READ_ONCE(atom->value);
 }
 
 /**
@@ -395,7 +405,7 @@ static INLINE long atomic64_read(const atomic64_t *atom)
  **/
 static INLINE long atomic64_read_acquire(const atomic64_t *atom)
 {
-  long value = ACCESS_ONCE(atom->value);
+  long value = READ_ONCE(atom->value);
   smp_mb();
   return value;
 }
@@ -441,8 +451,7 @@ static INLINE void atomic64_set_release(atomic64_t *atom, long value)
  * @return the old value
  */
 #define xchg(PTR,NEWVAL)                                                \
-  __extension__                                                         \
-  ({                                                                    \
+  __extension__ ({                                                      \
     __typeof__(*(PTR)) __xchg_result;                                   \
     barrier(); /* paranoia, for old gcc bugs */                         \
     __xchg_result = __atomic_exchange_n((PTR), (NEWVAL), __ATOMIC_SEQ_CST); \

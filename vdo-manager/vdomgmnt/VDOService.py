@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#5 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#6 $
 
 """
 from __future__ import absolute_import
@@ -60,6 +60,16 @@ class VDOServiceError(ServiceError):
   ######################################################################
   def __init__(self, msg = _("VDO volume error"), *args, **kwargs):
     super(VDOServiceError, self).__init__(msg, *args, **kwargs)
+
+########################################################################
+class VDODeviceAlreadyConfiguredError(UserExitStatus, VDOServiceError):
+  """The specified device is already configured for a VDO.
+  """
+  ######################################################################
+  # Overriden methods
+  ######################################################################
+  def __init__(self, msg = _("Device already configured"), *args, **kwargs):
+    super(VDODeviceAlreadyConfiguredError, self).__init__(msg, *args, **kwargs)
 
 ########################################################################
 class VDOServiceExistsError(UserExitStatus, VDOServiceError):
@@ -273,6 +283,12 @@ class VDOService(Service):
     if self.isConstructed:
       msg = _("VDO volume {0} already exists").format(self.getName())
       raise VDOServiceExistsError(msg)
+
+    # Check that there isn't already a vdo using the device we were given.
+    if self.config.isDeviceConfigured(self.device):
+      msg = _("Device {0} already configured for VDO use").format(
+              self.device)
+      raise VDODeviceAlreadyConfiguredError(msg)
 
     # Check that we have enough kernel memory to at least create the index.
     self._validateAvailableMemory(self.indexMemory);
