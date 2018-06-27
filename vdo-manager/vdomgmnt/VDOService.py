@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#6 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#7 $
 
 """
 from __future__ import absolute_import
@@ -626,6 +626,7 @@ class VDOService(Service):
         self.log.error(_("Could not enable compression for {0}").format(
             self.getName()))
         raise
+      self._startFullnessMonitoring()
     except Exception:
       self.log.error(_("Could not set up device mapper for {0}").format(
           self.getName()))
@@ -739,6 +740,8 @@ class VDOService(Service):
     if execute:
       runCommand(command, noThrow=True)
 
+    self._stopFullnessMonitoring(execute, removeSteps)
+    
     # In a modern Linux, we would use "dmsetup remove --retry".
     # But SQUEEZE does not have the --retry option.
     command = ["dmsetup", "remove", self.getName()]
@@ -1732,6 +1735,7 @@ class VDOService(Service):
       self.log.error(_("Can't resume VDO volume {0}; {1!s}").format(
           self.getName(), ex))
       raise
+    self._startFullnessMonitoring()
     self.log.info(_("Resumed VDO volume {0}").format(self.getName()))
 
   ######################################################################
@@ -1757,15 +1761,33 @@ class VDOService(Service):
     self._toggleCompression(True)
 
   ######################################################################
+  def _startFullnessMonitoring(self):
+    try:
+      runCommand(["vdodmeventd", "-r", self.getName()])
+    except Exception:
+      self.log.info(_("Could not register {0}"
+                      " with dmeventd").format(self.getName()))
+      pass
+
+  ######################################################################
   def _stopCompression(self):
     """Stops compression on a VDO volume if it is running.
     """
     self._toggleCompression(False)
 
   ######################################################################
+  def _stopFullnessMonitoring(self, execute, removeSteps):
+    command = ["vdodmeventd", "-u", self.getName()]
+    if removeSteps is not None:
+      removeSteps.append(" ".join(command))
+    if execute:
+      runCommand(command, noThrow=True)
+
+  ######################################################################
   def _suspend(self):
     """Suspends a running VDO."""
     self.log.info(_("Suspending VDO volume {0}").format(self.getName()))
+    self._stopFullnessMonitoring(True, None)
     try:
       runCommand(["dmsetup", "suspend", self.getName()])
     except Exception as ex:

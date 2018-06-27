@@ -16,9 +16,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#1 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#2 $
 
-INSTALLFILES=vdodumpconfig.8  \
+INSTALLFILES=vdodmeventd.8 \
+        vdodumpconfig.8    \
 	vdodumpmetadata.8  \
 	vdoforcerebuild.8  \
 	vdoformat.8

@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#2 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#3 $
 
-VDO_VERSION = 6.2.0.109
+VDO_VERSION = 6.2.0.132
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -83,11 +83,14 @@ USER_OBJS   = blockMapUtils.o  \
 # To add a new program X, add X to the variable PROGS (and possibly
 # also DIST_PROGS).
 
-PROGS = vdodumpconfig      \
+PROGS = vdodmeventd        \
+        vdodumpconfig      \
         vdoforcerebuild    \
         vdoformat          \
         vdoprepareupgrade  \
         vdoreadonly
+
+DMEVENT_LIB = libdevmapper-event-lvm2vdo.so
 
 .PHONY: all
 all: $(PROGS)
@@ -129,6 +132,8 @@ install:
 		$(MV) $(DEPDIR)/$*.d.new $(DEPDIR)/$*.d ;	 \
 	fi
 
+vdodmeventd.o: CFLAGS += "-DPLUGIN_NAME=\"$(DMEVENT_LIB)\""
+
 $(DEPDIR)/%.d: %.c
 	@mkdir -p $(DEPDIR)
 	$(CC) $(CFLAGS) -MM -MF $@ -MP -MT $*.o $<
@@ -137,6 +142,8 @@ $(DEPDIR)/%.d: %.c
 $(PROGS): $$@.o libuser.a $(DEPLIBS)
 	echo "Building $@ from $^"
 	$(CC) $(LDFLAGS) $^ $(LDPRFLAGS) -o $@
+
+vdodmeventd: LDPRFLAGS += "-ldevmapper-event"
 
 ifneq ($(MAKECMDGOALS),clean)
 DEPSOURCES = $(wildcard *.c)

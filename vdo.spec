@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.0.109
+Version: 6.2.0.132
 Release: %{spec_release}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -65,6 +65,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 #defattr(-,root,root)
 %{_bindir}/vdo
 %{_bindir}/vdostats
+%{_bindir}/vdodmeventd
 %{_bindir}/vdodumpconfig
 %{_bindir}/vdoforcerebuild
 %{_bindir}/vdoformat
@@ -189,6 +190,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/systemd/VDO.mount.example
 %{_mandir}/man8/vdo.8.gz
 %{_mandir}/man8/vdostats.8.gz
+%{_mandir}/man8/vdodmeventd.8.gz
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdodumpmetadata.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
@@ -196,5 +198,5 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Wed Jun 20 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.109-1
-HASH(0x1ba9e60)
+* Wed Jun 27 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.132-1
+HASH(0x2a55770)

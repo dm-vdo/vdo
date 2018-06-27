@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#4 $
 
 """
 from __future__ import absolute_import
@@ -290,7 +290,7 @@ class Configuration(YAMLObject):
       ArgumentError
     """
     self._vdos = {}
-    self._filename = filename
+    self._filename = os.path.abspath(filename)
     self._readonly = readonly
     self._dirty = False
     self._mustExist = mustExist
