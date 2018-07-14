@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#26 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#28 $
 
 """
 
@@ -620,6 +620,7 @@ class VDOService(Service):
         self.log.error(_("Could not enable compression for {0}").format(
             self.getName()))
         raise
+      self._startFullnessMonitoring()
     except Exception:
       self.log.error(_("Could not set up device mapper for {0}").format(
           self.getName()))
@@ -733,6 +734,8 @@ class VDOService(Service):
     if execute:
       runCommand(command, noThrow=True)
 
+    self._stopFullnessMonitoring(execute, removeSteps)
+    
     # In a modern Linux, we would use "dmsetup remove --retry".
     # But SQUEEZE does not have the --retry option.
     command = ["dmsetup", "remove", self.getName()]
@@ -1297,9 +1300,11 @@ class VDOService(Service):
       # Messages from pvcreate aren't localized, so we can look at
       # the message generated and pick it apart. This will need
       # fixing if the message format changes or it gets localized.
-      lines = e.getStandardError().splitlines()
-      if ((len(lines) > 1)
-          and (re.match(r"\s*TEST MODE", lines[0]) is not None)):
+      lines = [line.strip() for line in e.getStandardError().splitlines()]
+      if len(lines) == 1:
+        e.setMessage(lines[0])
+      elif ((len(lines) > 1)
+            and (re.match(r"^TEST MODE", lines[0]) is not None)):
         for line in lines[1:]:
           detectionMatch = re.match(r"WARNING: (.* detected .*)\.\s+Wipe it\?",
                                     line)
@@ -1307,8 +1312,9 @@ class VDOService(Service):
             raise VDOServiceError('{0}; use --force to override'
                                   .format(detectionMatch.group(1)),
                                   exitStatus = StateExitStatus)
-        # Skip the TEST MODE message and use the next one.
-        e.setMessage(lines[1])
+        # Use the last line from the test output.
+        # This will be the human-useful description of the problem.
+        e.setMessage(lines[-1])
       # No TEST MODE message, just keep going.
       raise e
 
@@ -1715,6 +1721,7 @@ class VDOService(Service):
       self.log.error(_("Can't resume VDO volume {0}; {1!s}").format(
           self.getName(), ex))
       raise
+    self._startFullnessMonitoring()
     self.log.info(_("Resumed VDO volume {0}").format(self.getName()))
 
   ######################################################################
@@ -1740,15 +1747,33 @@ class VDOService(Service):
     self._toggleCompression(True)
 
   ######################################################################
+  def _startFullnessMonitoring(self):
+    try:
+      runCommand(["vdodmeventd", "-r", self.getName()])
+    except Exception:
+      self.log.info(_("Could not register {0}"
+                      " with dmeventd").format(self.getName()))
+      pass
+
+  ######################################################################
   def _stopCompression(self):
     """Stops compression on a VDO volume if it is running.
     """
     self._toggleCompression(False)
 
   ######################################################################
+  def _stopFullnessMonitoring(self, execute, removeSteps):
+    command = ["vdodmeventd", "-u", self.getName()]
+    if removeSteps is not None:
+      removeSteps.append(" ".join(command))
+    if execute:
+      runCommand(command, noThrow=True)
+
+  ######################################################################
   def _suspend(self):
     """Suspends a running VDO."""
     self.log.info(_("Suspending VDO volume {0}").format(self.getName()))
+    self._stopFullnessMonitoring(True, None)
     try:
       runCommand(["dmsetup", "suspend", self.getName()])
     except Exception as ex:

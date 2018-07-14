@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#8 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOOperation.py#9 $
 """
 from . import ArgumentError
 from . import CommandLock
@@ -560,10 +560,11 @@ class StatusOperation(VDOOperation):
 
       # YAML adds a newline at the end.  To maintain consistency with the
       # previous output we need to eliminate that.
-      print(yaml.dump(vdoStatus, default_flow_style = False)[:-1])
-      print(yaml.dump(kernelStatus, default_flow_style = False)[:-1])
-      print(yaml.dump(confStatus, default_flow_style = False)[:-1])
-      print(yaml.dump(perVdoStatus, default_flow_style = False)[:-1])
+      print(yaml.safe_dump(vdoStatus, default_flow_style = False)[:-1])
+      print(yaml.safe_dump(kernelStatus, default_flow_style = False)[:-1])
+      print(yaml.safe_dump(confStatus, default_flow_style = False)[:-1])
+      print(yaml.safe_dump(perVdoStatus, default_flow_style = False, 
+                           width=float("inf"))[:-1])
 
       sys.stdout.flush()
       sys.stderr.flush()

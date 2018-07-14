@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoDumpConfig.c#3 $
+ * $Id: //eng/vdo-releases/magnesium/src/c++/vdo/user/vdoDumpConfig.c#4 $
  */
 
 #include <err.h>
@@ -122,6 +122,14 @@ static void readVDOConfig(const char *vdoBacking,
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
+  static char errBuf[ERRBUF_SIZE];
+
+  int result = registerStatusCodes();
+  if (result != UDS_SUCCESS) {
+    errx(1, "Could not register status codes: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
   const char *vdoBacking = processArgs(argc, argv);
 
   openLogger();

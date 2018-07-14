@@ -20,7 +20,7 @@
 """
   Constants - manage VDO constants.
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Constants.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Constants.py#2 $
 
 """
 import gettext
@@ -77,9 +77,11 @@ class Constants(object):
   class dmsetupStatusFields():
     sectorCount = 1
     storageDevice = 3
-    deduplicationStatus = 5
-    threadCounts = 6
-
+    modeState = 4
+    inRecovery = 5
+    deduplicationStatus = 6
+    compressionStatus = 7
+ 
   @classmethod
   def enableString(cls, value):
     return cls.enabled if value else cls.disabled

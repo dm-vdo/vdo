@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#14 $
+.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#15 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -182,10 +182,14 @@ Applicable options include:
 .TP
 .B create
 Creates a VDO volume and its associated index and makes it available. If
-\fB\-\-activate=disabled\fP is specified the VDO volume is created but not
-made available. Will not overwrite an existing file system or formatted VDO
-volume unless \fB\-\-force\fP is given. This command must be run with root
-privileges. Applicable options include:
+\fB\-\-activate=disabled\fP is specified the VDO volume is created but not made
+available. If the specified device is already in use by a VDO volume (as
+determined from the configuration file) the create will be rejected.  If the
+device is not so in use but is formatted as a VDO volume or contains an
+existing file system the create will be rejected unless \fB\-\-force\fP is
+given. This command must be run with root privileges.
+
+Applicable options include:
 .startOptionList
 \-\-name=\fIvolume\fP\fR (required)\fP
 \-\-device=\fIdevice\fP\fR (required)\fP
@@ -659,7 +663,7 @@ Specifies the write policy:
 .RS
 .TP
 .B sync
-Writes are acknowledged only after data is stably written. \fBThis 
+Writes are acknowledged only after data is stably written. \fBThis
 policy is not supported if the underlying storage is not also synchronous.\fP
 .TP
 .B async
@@ -668,7 +672,7 @@ stable storage. Data which has not been flushed is not guaranteed to persist
 in this mode.
 .TP
 .B auto
-VDO will check the storage device and determine whether it supports 
+VDO will check the storage device and determine whether it supports
 flushes. If it does, VDO will run in async mode, otherwise it will run
 in sync mode. This is the default.
 .RE
