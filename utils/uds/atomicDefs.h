@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/gloria/userLinux/uds/atomicDefs.h#4 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/atomicDefs.h#5 $
  */
 
 #ifndef LINUX_USER_ATOMIC_DEFS_H
@@ -45,11 +45,6 @@ typedef struct {
 /**
  * Stop GCC from moving memory operations across a point in the instruction
  * stream.  This is how the kernel uses this method.
- *
- * We also need this method in association with the __sync builtins, because
- * (at least, as of GCC versions 4.6 and earlier on x86_64) the __sync
- * operations don't actually act as the barriers the compiler documentation
- * says they should.
  **/
 static INLINE void barrier(void)
 {
@@ -69,6 +64,20 @@ static INLINE void barrier(void)
  * Generate a full memory fence for the compiler and CPU. Load and store
  * operations issued before the fence will not be re-ordered with operations
  * issued after the fence.
+ *
+ * We also use this method in association with the __sync builtins. In earlier
+ * versions of GCC (at least through 4.6), the __sync operations didn't
+ * actually act as the memory barriers the compiler documentation says they
+ * should. Even as of GCC 8, it looks like the Linux kernel developers
+ * disagree with the compiler developers as to what constitutes a barrier at
+ * least on s390x, where the kernel uses explicit barriers after certain
+ * atomic operations and GCC does not.
+ *
+ * Rather than investigate the current status of barriers in GCC (which is an
+ * architecture-specific issue), and since in user mode the performance of
+ * these operations is not critical, we can afford to be cautious and insert
+ * extra barriers, until such time as we have more time to investigate and
+ * gain confidence in the current state of GCC barriers.
  **/
 static INLINE void smp_mb(void)
 {
@@ -194,6 +203,16 @@ static INLINE void smp_read_barrier_depends(void)
  * Beginning of the 32 bit atomic support.
  *****************************************************************************/
 
+/*
+ * XXX As noted above, there are a lot of explicit barriers here, in places
+ * where we need barriers. Ideally, GCC should just Get It Right on all the
+ * platforms. But there have been bugs in the past, and it looks like there
+ * might be one still (in GCC 8) at least on s390 (no bug report filed yet),
+ * and researching it may take more time than we have available before we have
+ * to ship. It also requires manual inspection for each platform, as there's
+ * no good general way to test whether the compiler gets the barriers correct.
+ */
+
 /**
  * Add a signed int to a 32-bit atomic variable.  The addition is atomic, but
  * there are no memory barriers implied by this method.
@@ -223,9 +242,9 @@ static INLINE void atomic_add(int delta, atomic_t *atom)
  **/
 static INLINE int atomic_add_return(int delta, atomic_t *atom)
 {
-  barrier();
+  smp_mb();
   int result = __sync_add_and_fetch(&atom->value, delta);
-  barrier();
+  smp_mb();
   return result;
 }
 
@@ -241,7 +260,10 @@ static INLINE int atomic_add_return(int delta, atomic_t *atom)
  **/
 static INLINE int atomic_cmpxchg(atomic_t *atom, int old, int new)
 {
-  return __sync_val_compare_and_swap(&atom->value, old, new);
+  smp_mb();
+  int result = __sync_val_compare_and_swap(&atom->value, old, new);
+  smp_mb();
+  return result;
 }
 
 /**
@@ -338,9 +360,9 @@ static INLINE void atomic64_add(long delta, atomic64_t *atom)
  **/
 static INLINE long atomic64_add_return(long delta, atomic64_t *atom)
 {
-  barrier();
+  smp_mb();
   long result = __sync_add_and_fetch(&atom->value, delta);
-  barrier();
+  smp_mb();
   return result;
 }
 
@@ -356,7 +378,10 @@ static INLINE long atomic64_add_return(long delta, atomic64_t *atom)
  **/
 static INLINE long atomic64_cmpxchg(atomic64_t *atom, long old, long new)
 {
-  return __sync_val_compare_and_swap(&atom->value, old, new);
+  smp_mb();
+  long result = __sync_val_compare_and_swap(&atom->value, old, new);
+  smp_mb();
+  return result;
 }
 
 /**
@@ -453,9 +478,11 @@ static INLINE void atomic64_set_release(atomic64_t *atom, long value)
 #define xchg(PTR,NEWVAL)                                                \
   __extension__ ({                                                      \
     __typeof__(*(PTR)) __xchg_result;                                   \
-    barrier(); /* paranoia, for old gcc bugs */                         \
-    __xchg_result = __atomic_exchange_n((PTR), (NEWVAL), __ATOMIC_SEQ_CST); \
-    barrier(); /* more paranoia */                                      \
+    __typeof__(*(PTR)) __xchg_new_value = (NEWVAL);                     \
+    smp_mb();  /* paranoia, for old gcc bugs */                         \
+    __xchg_result = __atomic_exchange_n((PTR), __xchg_new_value,        \
+                                        __ATOMIC_SEQ_CST);              \
+    smp_mb();  /* more paranoia */                                      \
     __xchg_result;                                                      \
   })
 

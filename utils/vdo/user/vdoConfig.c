@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.c#3 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.c#4 $
  */
 
 #include <uuid/uuid.h>
@@ -104,7 +104,7 @@ static int configureVDO(VDO *vdo)
   BlockCount depotSize = getFixedLayoutPartitionSize(depotPartition);
   PhysicalBlockNumber origin = getFixedLayoutPartitionOffset(depotPartition);
   result = makeSlabDepot(depotSize, origin, slabConfig, getThreadConfig(vdo),
-                         vdo->nonce, 1, 1, vdo->layer, NULL,
+                         vdo->nonce, 1, vdo->layer, NULL,
                          &vdo->readOnlyContext, vdo->recoveryJournal,
                          &vdo->depot);
   if (result != VDO_SUCCESS) {

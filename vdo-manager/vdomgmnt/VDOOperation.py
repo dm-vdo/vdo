@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#4 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -35,7 +35,7 @@ from . import MgmntUtils
 from . import Service
 from . import VDOKernelModuleService
 from . import VDOService, VDOServiceError, VDOServicePreviousOperationError
-from . import ExitStatus, SystemExitStatus, UserExitStatus
+from . import ExitStatus, StateExitStatus, SystemExitStatus, UserExitStatus
 from vdo.utils import Command, CommandError, runCommand
 from vdo.utils import Transaction, transactional
 from functools import partial
@@ -512,6 +512,9 @@ class StartOperation(VDOOperation):
   ######################################################################
   @transactional
   def _startVDO(self, args, vdo):
+    if not vdo.activated:
+      msg = _("VDO volume {name} not activated").format(name=vdo.getName())
+      raise OperationError(msg, exitStatus = StateExitStatus)
     vdo.start(args.forceRebuild)
     vdo.announceReady(False)
 

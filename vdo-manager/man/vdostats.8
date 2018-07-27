@@ -1,4 +1,4 @@
-.TH VDOSTATS 8 "2017-09-12" "Red Hat" \" -*- nroff -*-
+.TH VDOSTATS 8 "2018-07-18" "Red Hat" \" -*- nroff -*-
 .\" As of groff 1.22.2, friendly display macros (.DS/.DE) haven't been
 .\" written. Try to fake it.
 .de DS
@@ -307,15 +307,6 @@ The total number of flushes issued by the block map.
 .B invalid advice PBN count
 The number of times the index returned invalid advice
 .TP
-.B invalid rollover PBN count
-The number of times the index returned invalid advice for a
-retried query after a block has reached the maximum reference
-count.
-.TP
-.B dedupe deadlock avoidance count
-The number of times deduplication was aborted in order to avoid
-a potential deadlock with other requests.
-.TP
 .B no space error count
 The number of write requests which failed due to the VDO volume
 being out of space.
@@ -351,6 +342,12 @@ The number of times deduplication advice was incorrect.
 .TP
 .B dedupe advice timeouts
 The number of times deduplication queries timed out.
+.TP
+.B concurrent data matches
+The number of writes with the same data as another in-flight write.
+.TP
+.B concurrent hash collisions
+The number of writes whose hash collided with an in-flight write.
 .TP
 .B flush out
 The number of flush requests submitted by VDO to the

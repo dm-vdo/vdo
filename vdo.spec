@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.0.132
+Version: 6.2.0.187
 Release: %{spec_release}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -23,6 +23,7 @@ ExcludeArch: ppc64le
 ExcludeArch: aarch64
 ExcludeArch: i686
 BuildRequires: gcc
+BuildRequires: libdevmapper-event-devel
 BuildRequires: libuuid-devel
 BuildRequires: python3
 BuildRequires: python3-devel
@@ -198,5 +199,5 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Wed Jun 27 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.132-1
-HASH(0x2a55770)
+* Fri Jul 27 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.187-1
+HASH(0x229f768)
