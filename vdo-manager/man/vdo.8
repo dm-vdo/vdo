@@ -1,4 +1,4 @@
-.TH VDO 8 "2017-09-12" "Red Hat" \" -*- nroff -*-
+.TH VDO 8 "2018-07-19" "Red Hat" \" -*- nroff -*-
 .\"
 .\" Copyright (c) 2018 Red Hat, Inc.
 .\"
@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#15 $
+.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#17 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -183,11 +183,15 @@ Applicable options include:
 .B create
 Creates a VDO volume and its associated index and makes it available. If
 \fB\-\-activate=disabled\fP is specified the VDO volume is created but not made
-available. If the specified device is already in use by a VDO volume (as
-determined from the configuration file) the create will be rejected.  If the
-device is not so in use but is formatted as a VDO volume or contains an
-existing file system the create will be rejected unless \fB\-\-force\fP is
-given. This command must be run with root privileges.
+available.
+
+If the specified device is already in use by a VDO volume (as determined from
+the configuration file) the create will always be rejected, even if
+\fB\-\-force\fP is specified.  If the device is not so in use but is formatted
+as a VDO volume or contains an existing file system the create will be rejected
+unless \fB\-\-force\fP is given.
+
+This command must be run with root privileges.
 
 Applicable options include:
 .startOptionList
@@ -735,7 +739,29 @@ Of course, as with any thinly-provisioned device, it may not hold 10
 terabytes of user data even after deduplication and compression unless
 the underlying storage has sufficient space available for the
 resulting compressed, unique data blocks plus metadata overhead.
+.
+.SH EXIT STATUS
+The following are exit statuses that may be encountered during normal
+operation.  Any other exit status is an abnormal occurrence.
+.IP 0
+Success.
+.IP 1
+Non-specific failure.
+.IP 2
+Pre-processing argument parsing failure.
+.IP 3
+Non-specific processing failure.
+.IP 5
+Incorrect state for requested action; e.g., attempting to perform a
+growPhysical on a stopped vdo.
+.IP 6
+A requested operation from the system failed; e.g., error from dmsetup(8).
+.IP 7
+User error; e.g., attempting to create a vdo with the same name as one already
+existing.
+.
 .\" .SH NOTES
+.
 .SH SEE ALSO
 .BR udev (7),
 .BR vdostats (8).

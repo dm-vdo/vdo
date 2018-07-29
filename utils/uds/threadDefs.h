@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadDefs.h#3 $
+ * $Id: //eng/uds-releases/flanders/userLinux/uds/threadDefs.h#4 $
  *
  * LINUX USER-SPACE VERSION
  */
@@ -42,6 +42,17 @@ typedef pthread_mutex_t    Mutex;
 typedef sem_t              Semaphore;
 typedef pthread_t          Thread;
 typedef pid_t              ThreadId;
+
+/**
+ * Synchronizer for synchronous callbacks.  Really just a SynchronizedBoolean.
+ * If you are tempted to just use a semaphore, google for "sem_post sem_wait
+ * race" to read about the bug in pthreads.
+ **/
+typedef struct synchronousCallback {
+  Mutex   mutex;
+  CondVar condition;
+  bool    complete;
+} SynchronousCallback;
 
 /**
  * Initialize a condition variable attributes object.

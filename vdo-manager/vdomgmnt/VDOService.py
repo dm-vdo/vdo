@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#28 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#30 $
 
 """
 
@@ -742,6 +742,7 @@ class VDOService(Service):
     if removeSteps is not None:
       removeSteps.append(" ".join(command))
 
+    inUse = True
     if execute:
       for unused_i in range(10):
         try:
@@ -749,6 +750,7 @@ class VDOService(Service):
           return
         except Exception as ex:
           if "Device or resource busy" not in str(ex):
+            inUse = False
             break
         time.sleep(1)
 
@@ -758,7 +760,11 @@ class VDOService(Service):
       self._generatePreviousOperationFailureResponse()
 
     if self.running():
-      msg = _("cannot stop VDO service {0}").format(self.getName())
+      if inUse:
+        msg = _("cannot stop VDO service {0}: device in use").format(
+          self.getName())
+      else:
+        msg = _("cannot stop VDO service {0}").format(self.getName())
       raise ServiceError(msg, exitStatus = SystemExitStatus)
 
   ######################################################################
@@ -959,18 +965,57 @@ class VDOService(Service):
   ######################################################################
   def _yamlSetAttributes(self, attributes):
     super(VDOService, self)._yamlSetAttributes(attributes)
-    self.activated = attributes["activated"] != Constants.disabled
-    self.blockMapCacheSize = SizeString(attributes["blockMapCacheSize"])
-    self.enableCompression = attributes["compression"] != Constants.disabled
-    self.enableDeduplication = (attributes["deduplication"]
-                                != Constants.disabled)
-    self.indexSparse = attributes["indexSparse"] != Constants.disabled
-    self.logicalSize = SizeString(attributes["logicalSize"])
-    self.physicalSize = SizeString(attributes["physicalSize"])
-    self.enableReadCache = attributes["readCache"] != Constants.disabled
-    self.readCacheSize = SizeString(attributes["readCacheSize"])
-    self.slabSize = SizeString(attributes["slabSize"])
-    self.writePolicy = attributes["writePolicy"]
+    # If an expected attribute does not exist in the specified dictionary the
+    # current value is used.  This requires that the attribute be given an
+    # appropriate default when the object is instantiated.
+    self.activated = (
+      self._defaultIfNone(attributes, "activated",
+                          Constants.enableString(self.activated))
+        != Constants.disabled)
+
+    self.blockMapCacheSize = SizeString(
+      self._defaultIfNone(attributes, "blockMapCacheSize",
+                          self.blockMapCacheSize.toBytes))
+
+    self.enableCompression = (
+      self._defaultIfNone(attributes, "compression",
+                          Constants.enableString(self.enableCompression))
+        != Constants.disabled)
+
+    self.enableDeduplication = (
+      self._defaultIfNone(attributes, "deduplication",
+                          Constants.enableString(self.enableDeduplication))
+        != Constants.disabled)
+
+    self.indexSparse = (
+      self._defaultIfNone(attributes, "indexSparse",
+                          Constants.enableString(self.indexSparse))
+        != Constants.disabled)
+
+    self.logicalSize = SizeString(
+      self._defaultIfNone(attributes, "logicalSize", self.logicalSize.toBytes))
+
+    self.physicalSize = SizeString(
+      self._defaultIfNone(attributes, "physicalSize",
+                          self.physicalSize.toBytes))
+
+    self.enableReadCache = (
+      self._defaultIfNone(attributes, "readCache",
+                          Constants.enableString(self.enableReadCache))
+        != Constants.disabled)
+
+    self.readCacheSize = SizeString(
+      self._defaultIfNone(attributes, "readCacheSize",
+                          self.readCacheSize.toBytes))
+
+    self.slabSize = SizeString(
+      self._defaultIfNone(attributes, "slabSize", self.slabSize.toBytes))
+
+    # writePolicy is handled differently as it is a computed property which
+    # depends on the config being set which is not the case when the instance
+    # is instantiated from YAML.
+    if "writePolicy" in attributes:
+      self.writePolicy = attributes["writePolicy"]
 
   ######################################################################
   @property
