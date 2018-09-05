@@ -17,7 +17,7 @@
 #
 # $Id: //eng/vdo-releases/magnesium-rhel7.5/src/packaging/src-dist/user/utils/vdo/base/Makefile#1 $
 
-VDO_VERSION = 6.1.0.171
+VDO_VERSION = 6.1.0.185
 
 UDS_DIR      = ../../uds
 

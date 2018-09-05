@@ -21,7 +21,7 @@
 
   YAMLObject - Provides mapping to/from YAML.
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.5/src/python/vdo/utils/YAMLObject.py#1 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.5/src/python/vdo/utils/YAMLObject.py#2 $
 
 """
 
@@ -57,15 +57,11 @@ class YAMLObject(yaml.YAMLObject):
   yaml_loader = yaml.SafeLoader
 
   ######################################################################
+  # Overridden methods
+  ######################################################################
   @classmethod
   def from_yaml(cls, loader, node):
     """Constructs and returns an instance from its YAML representation.
-
-    If there are extraneous or missing attributes in the YAML representation
-    KeyError is raised.
-
-    Raises:
-      KeyError  - extraneous or missing attributes in YAML representation
 
     Returns:
       instance constructed from YAML representation.
@@ -73,9 +69,6 @@ class YAMLObject(yaml.YAMLObject):
     instance = cls._yamlMakeInstance()
     yield instance
     mapping = loader.construct_mapping(node)
-    # Check for extraneous or missing keys.
-    if set(mapping.keys()) != set(instance._yamlAttributeKeys):
-      raise KeyError(_("extraneous or missing YAML attributes"))
     instance._yamlSetAttributes(mapping)
 
   ######################################################################
@@ -83,21 +76,19 @@ class YAMLObject(yaml.YAMLObject):
   def to_yaml(cls, dumper, data):
     """Returns a YAML representation of the instance.
 
-    If there are missing attributes for the YAML representation KeyError is
-    raised.
-
-    Raises:
-      KeyError  - missing attributes for YAML representation
-
     Returns:
       YAML representation of instance
     """
     yamlData = data._yamlData
-    # Check for extraneous or missing data.
-    if set(yamlData.keys()) != set(data._yamlAttributeKeys):
-      raise KeyError(_("extraneous or missing YAML attributes"))
     return dumper.represent_mapping(data.yaml_tag, yamlData)
 
+  ######################################################################
+  def __init__(self):
+    super(YAMLObject, self).__init__()
+    self._preservedExtraAttributes = {}
+
+  ######################################################################
+  # Protected methods
   ######################################################################
   @classmethod
   def _yamlMakeInstance(cls):
@@ -116,16 +107,22 @@ class YAMLObject(yaml.YAMLObject):
     the instance's YAML representation.
 
     The base implementation uses the contents of the instance's __dict__
-    filtered through the list of keys returned from _yamlAttributeKeys.
+    filtered through the list of keys returned from _yamlAttributeKeys
+    excluding any that require special handling (subclasses must override this
+    method to add those) and adds any entries from the preserved extra
+    attributes.
 
     Returns:
       dictionary of data to use in generating the instance's YAML
       representation
     """
-    return dict([(key, value)
+    data = dict([(key, value)
                   for key, value in self.__dict__.iteritems()
                   if ((key in self._yamlAttributeKeys)
                     and (key not in self._yamlSpeciallyHandledAttributes))])
+    data.update(self._preservedExtraAttributes)
+    return data
+
 
   ######################################################################
   @property
@@ -148,13 +145,27 @@ class YAMLObject(yaml.YAMLObject):
     By default, the attributes are set via invoking setattr() targeted
     to the instance.  If a subclass uses different internal names or
     computes the attributes in some way it must override this method
-    to handle the attributes appropriately.
+    to handle the attributes appropriately.  The subclass must also account
+    for the possibility that the attributes it receives may not contain the
+    entirety of such specially handled attributes; in other words, it must
+    check for each attribute's existence in the attributes dictionary it
+    receives.  Any unspecified attributes must be given a default value in
+    whatever manner the subclass chooses.
+
+    Any entries in the specified attributes which are unknown to the entity
+    being constructed are preserved for later use in generating YAML output.
 
     Arguments:
       attributes (dictionary) - the attributes from the YAML representation
     """
+    extra = dict([(key, value)
+                    for key, value in attributes.items()
+                      if key not in self._yamlAttributeKeys])
+    self._preservedExtraAttributes.update(extra)
+
     keys = [key for key in attributes.keys()
-                if key not in self._yamlSpeciallyHandledAttributes]
+                if (key in self._yamlAttributeKeys)
+                  and (key not in self._yamlSpeciallyHandledAttributes)]
     for key in keys:
       setattr(self, key, attributes[key])
 
@@ -169,3 +180,26 @@ class YAMLObject(yaml.YAMLObject):
     these attributes.
     """
     return []
+
+  ######################################################################
+  def _yamlUpdateFromInstance(self, instance):
+    """Updates the current object (self) from the specified instance.
+    This is for classes that perform indirect construction using the results
+    of the YAML load.  Instances of such classes are required to invoke this
+    method themselves.
+
+    The specified instance must be the same class (or a subclass) of the
+    current object to guarantee that any attributes the current object attempts
+    to update will be available from the instance.
+
+    Arguments:
+      instance (YAMLObject) - object source for update
+
+    Raises:
+      TypeError - specified instance is not the same class (or a subclass)
+                  of the current object
+    """
+    if (not isinstance(instance, type(self))):
+      raise TypeError(_("attempt to update from incompatible type"))
+
+    self._preservedExtraAttributes.update(instance._preservedExtraAttributes)

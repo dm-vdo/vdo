@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.5/src/python/vdo/vdomgmnt/Configuration.py#1 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.5/src/python/vdo/vdomgmnt/Configuration.py#2 $
 
 """
 from . import ArgumentError, MgmntLogger
@@ -270,6 +270,15 @@ class Configuration(YAMLObject):
     return specials
 
   ######################################################################
+  def _yamlUpdateFromInstance(self, instance):
+    super(Configuration, self)._yamlUpdateFromInstance(instance)
+
+    self._schemaVersion = instance.version
+    self._vdos = instance.vdos
+    for vdo in self._vdos:
+      self._vdos[vdo].setConfig(self)
+
+  ######################################################################
   def __init__(self, filename, readonly=True, mustExist=False):
     """Construct a Configuration.
 
@@ -283,6 +292,7 @@ class Configuration(YAMLObject):
     Raises:
       ArgumentError
     """
+    super(Configuration, self).__init__()
     self._vdos = {}
     self._filename = filename
     self._readonly = readonly
@@ -339,14 +349,20 @@ class Configuration(YAMLObject):
       conf = yaml.safe_load(fh)
     except yaml.scanner.ScannerError:
       raise BadConfigurationFileError(_("Bad configuration file"))
+
+    # Because we do indirection instantiation from the YAML load we need to
+    # call _yamlUpdateFromInstance().
     try:
-      self._schemaVersion = conf["config"].version
-    except (KeyError, TypeError):
+      config = conf["config"]
+    except KeyError:
       raise BadConfigurationFileError(_("Bad configuration file"
-                                        " (missing 'config' section?)"))
-    self._vdos = conf["config"].vdos
-    for vdo in self._vdos:
-      self._vdos[vdo].setConfig(self)
+                                        " (missing 'config' section)"))
+    except Exception as ex:
+      raise BadConfigurationFileError(
+              _("Bad configuration file: {0}").format(ex))
+    else:
+      self._yamlUpdateFromInstance(config)
+
     self._dirty = False
     return 0
 
