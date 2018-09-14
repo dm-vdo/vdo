@@ -22,7 +22,7 @@
 """
   vdo - VDO management utility
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdo#17 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdo#1 $
 
 """
 #pylint: disable=C0302

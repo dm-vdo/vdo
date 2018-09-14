@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Defaults.py#16 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/Defaults.py#1 $
 
 """
 from . import Constants, MgmntLogger, MgmntUtils, SizeString, UserExitStatus

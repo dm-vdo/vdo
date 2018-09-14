@@ -16,11 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/nagios/Makefile#3 $
+# $Id: //eng/vdo-releases/magnesium-rhel7.6/src/packaging/src-dist/user/examples/monitor/Makefile#1 $
 
-INSTALLFILES=nagios_check_vdostats_logicalSpace.pl	\
-	nagios_check_vdostats_physicalSpace.pl	\
-	nagios_check_vdostats_savingPercent.pl
+INSTALLFILES=monitor_check_vdostats_logicalSpace.pl	\
+	monitor_check_vdostats_physicalSpace.pl	\
+	monitor_check_vdostats_savingPercent.pl
 
 
 INSTALL = install
@@ -28,7 +28,7 @@ INSTALLOWNER ?= -o root -g root
 defaultdocdir ?= /usr/share/doc
 name ?= vdo
 
-INSTALLDIR=$(DESTDIR)/$(defaultdocdir)/$(name)/examples/nagios
+INSTALLDIR=$(DESTDIR)/$(defaultdocdir)/$(name)/examples/monitor
 
 .PHONY: all clean install
 all:;

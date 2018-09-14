@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#5 $
+# $Id: //eng/vdo-releases/magnesium-rhel7.6/src/packaging/src-dist/user/utils/vdo/user/Makefile#1 $
 
-VDO_VERSION = 6.1.1.120
+VDO_VERSION = 6.1.1.125
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base

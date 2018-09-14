@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Configuration.py#6 $
+  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/Configuration.py#1 $
 
 """
 from . import ArgumentError, MgmntLogger
@@ -363,20 +363,24 @@ class Configuration(YAMLObject):
     try:
       conf = yaml.safe_load(fh)
     except yaml.scanner.ScannerError:
-      raise BadConfigurationFileError(_("Bad configuration file"))
+      raise BadConfigurationFileError(_("Not a valid configuration file"))
 
     # Because we do indirection instantiation from the YAML load we need to
     # call _yamlUpdateFromInstance().
     try:
       config = conf["config"]
     except KeyError:
-      raise BadConfigurationFileError(_("Bad configuration file"
+      raise BadConfigurationFileError(_("Not a valid configuration file"
                                         " (missing 'config' section)"))
     except Exception as ex:
-      raise BadConfigurationFileError(
-              _("Bad configuration file: {0}").format(ex))
-    else:
+      self.log.debug("Not a valid configuration file: {0}".format(ex))
+      raise BadConfigurationFileError(_("Not a valid configuration file"))
+
+    try:
       self._yamlUpdateFromInstance(config)
+    except Exception as ex:
+      self.log.debug("Not a valid configuration file: {0}".format(ex))
+      raise BadConfigurationFileError(_("Not a valid configuration file"))
 
     self._dirty = False
     return 0
