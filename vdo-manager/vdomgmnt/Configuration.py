@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#5 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#6 $
 
 """
 from __future__ import absolute_import
@@ -358,20 +358,24 @@ class Configuration(YAMLObject):
       fh.seek(0, 0)
       conf = yaml.safe_load(fh)
     except yaml.scanner.ScannerError:
-      raise BadConfigurationFileError(_("Bad configuration file"))
+      raise BadConfigurationFileError(_("Not a valid configuration file"))
 
     # Because we do indirection instantiation from the YAML load we need to
     # call _yamlUpdateFromInstance().
     try:
       config = conf["config"]
     except KeyError:
-      raise BadConfigurationFileError(_("Bad configuration file"
+      raise BadConfigurationFileError(_("Not a valid configuration file"
                                         " (missing 'config' section)"))
     except Exception as ex:
-      raise BadConfigurationFileError(
-              _("Bad configuration file: {0}").format(ex))
-    else:
+      self.log.debug("Not a valid configuration file: {0}".format(ex))
+      raise BadConfigurationFileError(_("Not a valid configuration file"))
+
+    try:
       self._yamlUpdateFromInstance(config)
+    except Exception as ex:
+      self.log.debug("Not a valid configuration file: {0}".format(ex))
+      raise BadConfigurationFileError(_("Not a valid configuration file"))
 
     self._dirty = False
     return 0

@@ -15,9 +15,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/base/Makefile#1 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/base/Makefile#2 $
 
-VDO_VERSION = 6.2.0.197
+VDO_VERSION = 6.2.0.219
 
 UDS_DIR      = ../../uds
 
@@ -49,13 +49,14 @@ C_WARNS          =				\
 
 OPT_FLAGS	 = -O3 -fno-omit-frame-pointer
 DEBUG_FLAGS      =
-GLOBAL_FLAGS     = -D_GNU_SOURCE -g $(OPT_FLAGS) $(WARNS)		\
-		   $(shell getconf LFS_CFLAGS) -fpic $(DEBUG_FLAGS)
+RPM_OPT_FLAGS   ?= -fpic
+GLOBAL_FLAGS     = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS) $(WARNS) \
+		   $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)
 GLOBAL_CFLAGS	 = $(GLOBAL_FLAGS) -std=c99 $(C_WARNS) -pedantic	\
 		   $(EXTRA_CFLAGS)
 EXTRA_FLAGS      =
 EXTRA_CFLAGS	 = $(EXTRA_FLAGS)
-GLOBAL_LDFLAGS   = $(EXTRA_LDFLAGS)
+GLOBAL_LDFLAGS   = $(RPM_LD_FLAGS) $(EXTRA_LDFLAGS)
 EXTRA_LDFLAGS    =
 
 DEPDIR           = .deps

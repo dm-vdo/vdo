@@ -18,13 +18,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# nagios_check_vdostats_physicalSpace.pl [--warning <warn_pct>|-w <warn_pct>]
-#                                        [--critical <crit_pct>|-c <crit_pct>]
-#                                        <deviceName>
+# monitor_check_vdostats_physicalSpace.pl [--warning <warn_pct>|-w <warn_pct>]
+#                                         [--critical <crit_pct>|-c <crit_pct>]
+#                                         <deviceName>
 #
 # This script parses the output of "vdostats --verbose" for a given VDO
-# volume, processes the "used percent" value, and returns a Nagios-compliant
-# status code, and a single-line output with status information.
+# volume, processes the "used percent" value, and returns a status code,
+# and a single-line output with status information.
 #
 # Options:
 #
@@ -36,7 +36,7 @@
 #
 # The "vdostats" program must be in the path used by "sudo".
 #
-# $Id: //eng/vdo-releases/aluminum/src/tools/nagios/nagios_check_vdostats_physicalSpace.pl#1 $
+# $Id: //eng/vdo-releases/aluminum/src/tools/monitor/monitor_check_vdostats_physicalSpace.pl#1 $
 #
 ##
 
@@ -44,12 +44,12 @@ use strict;
 use warnings FATAL => qw(all);
 use Getopt::Long;
 
-# Constants for the Nagios service status return values.
+# Constants for the service status return values.
 use constant {
-  NAGIOS_SERVICE_OK       => 0,
-  NAGIOS_SERVICE_WARNING  => 1,
-  NAGIOS_SERVICE_CRITICAL => 2,
-  NAGIOS_SERVICE_UNKNOWN  => 3,
+  MONITOR_SERVICE_OK       => 0,
+  MONITOR_SERVICE_WARNING  => 1,
+  MONITOR_SERVICE_CRITICAL => 2,
+  MONITOR_SERVICE_UNKNOWN  => 3,
 };
 
 my $inputWarnThreshold = -1;
@@ -108,7 +108,7 @@ sub getStats {
 }
 
 #############################################################################
-# Print the vital statistics to stdout, to be read by Nagios.
+# Print the vital statistics to stdout.
 ##
 sub printVitalStats {
   printf("operating mode: %s,"
@@ -123,11 +123,11 @@ sub printVitalStats {
 # main
 ##
 if (scalar(@ARGV) != 1) {
-  print("Usage: nagios_check_vdostats_physicalSpace.pl\n");
-  print("               [--warning |-w VALUE]\n");
-  print("               [--critical|-c VALUE]\n");
-  print("               <deviceName>\n");
-  exit(NAGIOS_SERVICE_UNKNOWN);
+  print("Usage: monitor_check_vdostats_physicalSpace.pl\n");
+  print("                [--warning |-w VALUE]\n");
+  print("                [--critical|-c VALUE]\n");
+  print("                <deviceName>\n");
+  exit(MONITOR_SERVICE_UNKNOWN);
 }
 
 getStats();
@@ -136,7 +136,7 @@ getStats();
 # Otherwise, print the stats.
 if (!%stats) {
   printf("Unable to load vdostats verbose output.\n");
-  exit(NAGIOS_SERVICE_UNKNOWN);
+  exit(MONITOR_SERVICE_UNKNOWN);
 } else {
   printVitalStats(\%stats);
 }
@@ -144,15 +144,15 @@ if (!%stats) {
 # If the VDO is in read-only mode or recovering, exit now with a critical
 # status.
 if ($stats{"operating mode"} =~ "read-only") {
-  exit(NAGIOS_SERVICE_CRITICAL);
+  exit(MONITOR_SERVICE_CRITICAL);
 }
 
 if ($stats{"operating mode"} =~ "recovering") {
-  exit(NAGIOS_SERVICE_WARNING);
+  exit(MONITOR_SERVICE_WARNING);
 }
 
 if ($stats{"used percent"} =~ "N/A") {
-  exit(NAGIOS_SERVICE_UNKNOWN)
+  exit(MONITOR_SERVICE_UNKNOWN)
 }
 
 # Process the critical and warning thresholds.
@@ -160,16 +160,16 @@ if ($stats{"used percent"} =~ "N/A") {
 # return codes will be "OK" or "CRITICAL".
 if ($stats{"used percent"} >= $warnThreshold
     && $stats{"used percent"} < $critThreshold) {
-  exit(NAGIOS_SERVICE_WARNING);
+  exit(MONITOR_SERVICE_WARNING);
 }
 
 if ($stats{"used percent"} >= $critThreshold) {
-  exit(NAGIOS_SERVICE_CRITICAL);
+  exit(MONITOR_SERVICE_CRITICAL);
 }
 
 if ($stats{"used percent"} >= 0 && $stats{"used percent"} < $warnThreshold) {
-  exit(NAGIOS_SERVICE_OK);
+  exit(MONITOR_SERVICE_OK);
 }
 
 # Default exit condition.
-exit(NAGIOS_SERVICE_UNKNOWN);
+exit(MONITOR_SERVICE_UNKNOWN);

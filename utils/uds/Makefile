@@ -16,13 +16,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/uds/Makefile#2 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/uds/Makefile#3 $
 
 # UDS_INTERNAL_VERSION is the short version name, which is used to version the
 # UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
 # version name used in distribution builds.  We extract these values from the
 # traditional location.
-UDS_VERSION      = 6.2.0.63
+UDS_VERSION      = 6.2.0.72
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -60,14 +60,15 @@ C_WARNS =	-Wbad-function-cast		\
 		-Wold-style-definition		\
 		-Wswitch-default
 
-OPT_FLAGS     = -O3 -fno-omit-frame-pointer
-DEBUG_FLAGS   =
-GLOBAL_FLAGS  = -D_GNU_SOURCE -g $(OPT_FLAGS) $(WARNS)		\
-		$(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)	\
-		-DUDS_VERSION='"$(BUILD_VERSION)"'		\
+OPT_FLAGS      = -O3 -fno-omit-frame-pointer
+DEBUG_FLAGS    =
+RPM_OPT_FLAGS ?= -fpic
+GLOBAL_FLAGS   = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS)		\
+		 $(WARNS) $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)	\
+		 -DUDS_VERSION='"$(BUILD_VERSION)"'			\
 
-CFLAGS  = $(GLOBAL_FLAGS) -I. -std=c99 $(C_WARNS) -fpic -pedantic $(MY_CFLAGS)
-LDFLAGS = $(MY_LDFLAGS)
+CFLAGS  = $(GLOBAL_FLAGS) -I. -std=c99 $(C_WARNS) -pedantic $(MY_CFLAGS)
+LDFLAGS = $(RPM_LD_FLAGS) $(MY_LDFLAGS)
 
 MY_FLAGS    =
 MY_CFLAGS   = $(MY_FLAGS)

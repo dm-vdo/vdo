@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/gloria/userLinux/uds/threadDefs.h#3 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/threadDefs.h#4 $
  *
  * LINUX USER-SPACE VERSION
  */
@@ -112,7 +112,7 @@ int initializeMutex(Mutex *mutex, bool assertOnError);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int initMutex(Mutex *mutex);
+int initMutex(Mutex *mutex) __attribute__((warn_unused_result));
 
 /**
  * Destroy a mutex (with error checking during development).

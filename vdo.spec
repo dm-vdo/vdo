@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.0.197
+Version: 6.2.0.219
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -33,7 +33,7 @@ BuildRequires: valgrind-devel
 BuildRequires: zlib-devel
 %{?systemd_requires}
 
-# Disable an automatic dependency due to a file in examples/nagios.
+# Disable an automatic dependency due to a file in examples/monitor.
 %define __requires_exclude perl
 
 %description
@@ -123,10 +123,10 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate_alloptions.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdoremove.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.py
-%dir %{_defaultdocdir}/%{name}/examples/nagios
-%doc %{_defaultdocdir}/%{name}/examples/nagios/nagios_check_vdostats_logicalSpace.pl
-%doc %{_defaultdocdir}/%{name}/examples/nagios/nagios_check_vdostats_physicalSpace.pl
-%doc %{_defaultdocdir}/%{name}/examples/nagios/nagios_check_vdostats_savingPercent.pl
+%dir %{_defaultdocdir}/%{name}/examples/monitor
+%doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_logicalSpace.pl
+%doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_physicalSpace.pl
+%doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_savingPercent.pl
 %dir %{_defaultdocdir}/%{name}/examples/systemd
 %doc %{_defaultdocdir}/%{name}/examples/systemd/VDO.mount.example
 %{_mandir}/man8/vdo.8.gz
@@ -139,5 +139,5 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Mon Aug 06 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.197-1
-HASH(0x26d07a0)
+* Fri Sep 14 2018 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.219-1
+HASH(0x1b30ad8)

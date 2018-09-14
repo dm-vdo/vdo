@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/examples/Makefile#1 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/examples/Makefile#2 $
 
-SUBDIRS = ansible nagios systemd
+SUBDIRS = ansible monitor systemd
 
 .PHONY: all clean install
 all clean install:
