@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#10 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#12 $
 
 """
 from __future__ import absolute_import
@@ -423,34 +423,30 @@ class VDOService(Service):
     # Do the grow.
     self._setOperationState(self.OperationState.beginGrowLogical)
 
-    self.log.info(_("Preparing to increase logical size of VDO {0}").format(
-      self.getName()))
-    transaction = Transaction.transaction()
-    transaction.setMessage(self.log.error,
-                        _("Cannot prepare to grow logical on VDO {0}").format(
-                          self.getName()))
-    runCommand(["dmsetup", "message", self.getName(), "0",
-                "prepareToGrowLogical", str(newLogicalSize.toBlocks())])
-    transaction.setMessage(None)
-
-    self._suspend()
-    transaction.addUndoStage(self._resume)
-
     self.log.info(_("Increasing logical size of VDO volume {0}").format(
       self.getName()))
+
+    numSectors = newLogicalSize.toSectors()
+    vdoConf = self._generateModifiedDmTable(numSectors = str(numSectors))
+
+    transaction = Transaction.transaction()
     transaction.setMessage(self.log.error,
                            _("Device {0} could not be changed").format(
                               self.getName()))
-    numSectors = newLogicalSize.toSectors()
-    vdoConf = self._generateModifiedDmTable(numSectors = str(numSectors))
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
-    self.log.info(_("Increased logical size of VDO volume {0}").format(
-      self.getName()))
-    self.logicalSize = newLogicalSize
-
+        
     self._resume()
 
+    # Get the new logical size
+    vdoConfig = self._getConfigFromVDO()
+    logicalSize = (vdoConfig["logicalBlocks"]
+                   * (vdoConfig["blockSize"] // Constants.SECTOR_SIZE))
+    self.logicalSize = SizeString("{0}s".format(logicalSize))
+   
+    self.log.info(_("Increased logical size of VDO volume {0}").format(
+      self.getName()))
+   
     # The grow is done.
     self._setOperationState(self.OperationState.finished)
 
@@ -470,37 +466,44 @@ class VDOService(Service):
       msg = _("VDO volume {0} must be running").format(self.getName())
       raise ServiceError(msg, exitStatus = StateExitStatus)
 
+    newPhysicalSize = self._getDeviceSize(self.device)
+    newPhysicalSize.roundToBlock()
+    
+    if newPhysicalSize < self.physicalSize:
+      msg = _("Can't shrink a VDO volume (old size {0})").format(
+              self.physicalSize)
+      raise ServiceError(msg, exitStatus = UserExitStatus)
+    elif newPhysicalSize == self.physicalSize:
+      msg = _("Can't grow a VDO volume by less than {0} bytes").format(
+              Constants.VDO_BLOCK_SIZE)
+      raise ServiceError(msg, exitStatus = UserExitStatus)
+    
     # Do the grow.
     self._setOperationState(self.OperationState.beginGrowPhysical)
 
-    self.log.info(_("Preparing to increase physical size of VDO {0}").format(
+    self.log.info(_("Increasing physical size of VDO volume {0}").format(
       self.getName()))
+    
+    vdoConf = self._generateModifiedDmTable(storageSize
+                                            = str(newPhysicalSize.toBlocks()))
 
-    transaction = Transaction.transaction()
+    transaction = Transaction.transaction()   
     transaction.setMessage(self.log.error,
-                        _("Cannot prepare to grow physical on VDO {0}").format(
-                            self.getName()))
-    runCommand(["dmsetup", "message", self.getName(), "0",
-                "prepareToGrowPhysical"])
+                           _("Device {0} could not be changed").format(
+                              self.getName()))
+    runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
-
-    self._suspend()
-    transaction.addUndoStage(self._resume)
-
-    transaction.setMessage(self.log.error,
-                           _("Cannot grow physical on VDO {0}").format(
-                               self.getName()))
-    runCommand(['dmsetup', 'message', self.getName(), '0',
-                'growPhysical'])
-    transaction.setMessage(None)
+    
+    self._resume()
 
     # Get the new physical size
     vdoConfig = self._getConfigFromVDO()
     sectorsPerBlock = vdoConfig["blockSize"] // Constants.SECTOR_SIZE
     physicalSize = vdoConfig["physicalBlocks"] * sectorsPerBlock
     self.physicalSize = SizeString("{0}s".format(physicalSize))
-
-    self._resume()
+   
+    self.log.info(_("Increased physical size of VDO volume {0}").format(
+      self.getName()))
 
     # The grow is done.
     self._setOperationState(self.OperationState.finished)
@@ -1440,7 +1443,8 @@ class VDOService(Service):
                                   "logical=" + str(self.logicalThreads),
                                   "physical=" + str(self.physicalThreads)])
     vdoConf = " ".join(["0", str(numSectors), Defaults.vdoTargetName,
-                        self.device,
+                        "V1", self.device,
+                        str(self._getConfigFromVDO()['physicalBlocks']),
                         str(self.logicalBlockSize),
                         Constants.enableString(self.enableReadCache),
                         str(self.readCacheSize.toBlocks()),
@@ -1465,10 +1469,10 @@ class VDOService(Service):
     self.log.info(table)
 
     # Parse the existing table.
-    tableOrder = ("logicalStart numSectors targetName storagePath blockSize"
-                  + " readCache readCacheBlocks cacheBlocks blockMapPeriod"
-                  + " mdRaid5Mode writePolicy poolName"
-                  + " threadCountConfig")
+    tableOrder = ("logicalStart numSectors targetName version storagePath"
+                  + " storageSize blockSize readCache readCacheBlocks"
+                  + " cacheBlocks blockMapPeriod mdRaid5Mode writePolicy"
+                  + " poolName threadCountConfig")
 
     dmTable = dict(zip(tableOrder.split(" "), table.split(" ")))
 
@@ -1602,6 +1606,21 @@ class VDOService(Service):
     return status
 
   ######################################################################
+  def _getDeviceSize(self, devicePath):
+    """Get the size of the device passed in.
+
+    Arguments:
+      devicePath (path): path to a device.
+
+    Returns:
+      Size of device as a SizeString object
+    """
+    basePath = self._getBaseDevice(devicePath);
+    baseName = os.path.basename(basePath)
+    output = runCommand(["cat", "/sys/block/" + baseName + "/size"]);
+    return SizeString("{0}s".format(output));
+  
+  ######################################################################
   def _hasHolders(self):
     """Tests whether other devices are holding the VDO device open. This
     handles the case where there are LVM entities stacked on top of us.
@@ -1665,9 +1684,6 @@ class VDOService(Service):
     """Peforms the changing of the write policy on a running vdo instance.
     """
     transaction = Transaction.transaction()
-    self._suspend()
-    transaction.addUndoStage(self._resume)
-
     transaction.setMessage(self.log.error,
                            _("Device {0} could not be read").format(
                                                           self.getName()))
@@ -1678,6 +1694,7 @@ class VDOService(Service):
                                                           self.getName()))
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
+    
     self._resume()
 
   ######################################################################
