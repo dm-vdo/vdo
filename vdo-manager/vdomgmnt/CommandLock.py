@@ -20,7 +20,7 @@
 """
   CommandLock - simple process locking
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/CommandLock.py#2 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/CommandLock.py#1 $
 
 """
 from __future__ import absolute_import

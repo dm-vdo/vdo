@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoDumpConfig.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#1 $
  */
 
 #include <err.h>
@@ -24,11 +24,13 @@
 #include <uuid/uuid.h>
 #include <stdio.h>
 
+#include "errors.h"
 #include "logger.h"
 #include "memoryAlloc.h"
 
 #include "constants.h"
 #include "types.h"
+#include "statusCodes.h"
 #include "vdoInternal.h"
 #include "volumeGeometry.h"
 
@@ -125,7 +127,7 @@ int main(int argc, char *argv[])
   static char errBuf[ERRBUF_SIZE];
 
   int result = registerStatusCodes();
-  if (result != UDS_SUCCESS) {
+  if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          stringError(result, errBuf, ERRBUF_SIZE));
   }

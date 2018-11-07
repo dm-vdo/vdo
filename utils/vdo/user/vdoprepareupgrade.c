@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareUpgrade.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoPrepareUpgrade.c#1 $
  */
 
 #include <err.h>
@@ -27,12 +27,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "errors.h"
 #include "fileUtils.h"
 #include "logger.h"
 #include "syscalls.h"
 
 #include "constants.h"
 #include "physicalLayer.h"
+#include "statusCodes.h"
 #include "upgrade.h"
 
 #include "fileLayer.h"
@@ -50,16 +52,16 @@
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  char *filename;
-  filename = argv[argc - 1];
-
   static char errBuf[ERRBUF_SIZE];
 
   int result = registerStatusCodes();
-  if (result != UDS_SUCCESS) {
+  if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          stringError(result, errBuf, ERRBUF_SIZE));
   }
+
+  char *filename;
+  filename = argv[argc - 1];
 
   openLogger();
 

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoForceRebuild.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoForceRebuild.c#1 $
  */
 
 #include <err.h>
@@ -24,9 +24,11 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "errors.h"
 #include "logger.h"
 
 #include "constants.h"
+#include "statusCodes.h"
 #include "types.h"
 #include "vdoConfig.h"
 
@@ -60,6 +62,14 @@ static void usage(const char *progname, const char *usageOptionsString)
 
 int main(int argc, char *argv[])
 {
+  static char errBuf[ERRBUF_SIZE];
+
+  int result = registerStatusCodes();
+  if (result != VDO_SUCCESS) {
+    errx(1, "Could not register status codes: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
   int c;
   while ((c = getopt_long(argc, argv, optionString, options, NULL)) != -1) {
     switch (c) {
@@ -83,7 +93,7 @@ int main(int argc, char *argv[])
   char *filename = argv[optind];
   PhysicalLayer *layer;
   // Passing 0 physical blocks will make a filelayer to fit the file.
-  int result = makeFileLayer(filename, 0, &layer);
+  result = makeFileLayer(filename, 0, &layer);
   if (result != VDO_SUCCESS) {
     errx(result, "makeFileLayer failed on '%s'", filename);
   }

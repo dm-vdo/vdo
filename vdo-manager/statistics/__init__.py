@@ -20,7 +20,7 @@
 """
   __init__ file for statistics package
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/__init__.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/statistics/__init__.py#1 $
 """
 import gettext
 gettext.install('statistics')

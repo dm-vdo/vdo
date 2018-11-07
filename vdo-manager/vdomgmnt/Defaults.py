@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#3 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#1 $
 
 """
 from __future__ import absolute_import
@@ -59,7 +59,6 @@ class Defaults(object):
   bioRotationIntervalMax = 1024
   bioRotationIntervalMin = 1
   bioThreadOverheadMB = 18  # MB
-  bioThreadReadCacheOverheadMB = 1.12 # per read cache MB overhead in MB
   bioThreads = 4
   bioThreadsMax = 100
   bioThreadsMin = 1
@@ -87,17 +86,16 @@ class Defaults(object):
   logicalSizeMax = SizeString("4096T")
   logicalThreads = 1
   logicalThreadsBlockMapCacheSizeThreshold = 9
-  logicalThreadsMax = 100
+  logicalThreadsMax = 60
   logicalThreadsMin = 0
+  maxDiscardSize = SizeString("4K")
+  maxDiscardSizeMaxPlusOne = SizeString("4G");
+  maxDiscardSizeMin = SizeString("4K");
   mdRaid5Mode = 'on'
   physicalThreadOverheadMB = 10  # MB
   physicalThreads = 1
   physicalThreadsMax = 16
   physicalThreadsMin = 0
-  readCache = Constants.disabled
-  readCacheSize = SizeString("0")
-  readCacheSizeMaxPlusOne = SizeString("16T")
-  readCacheSizeMin = SizeString("0")
   slabSize = SizeString("2G")
   slabSizeMax = SizeString("32G")
   slabSizeMin = SizeString("128M")
@@ -250,6 +248,29 @@ class Defaults(object):
 
   ######################################################################
   @staticmethod
+  def checkMaxDiscardSize(value):
+    """Checks that an option is an acceptable value for max discard size.
+    Max discard sizes will be rounded to a multiple of 4k, and must be at
+    least 4k and less than 4GB.
+
+    Arguments:
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The value converted to a SizeString.
+    Raises:
+      ArgumentError
+    """
+    ss = Defaults.checkSiSize(value)
+    if (not (Defaults.maxDiscardSizeMin
+             <= ss < Defaults.maxDiscardSizeMaxPlusOne)):
+      raise ArgumentError(
+        _("must be at least {0} and less than {1}")
+          .format(Defaults.maxDiscardSizeMin,
+                  Defaults.maxDiscardSizeMaxPlusOne))
+    return ss
+  
+  ######################################################################
+  @staticmethod
   def checkPageCachesz(value):
     """Checks that an option is an acceptable value for the page cache size.
     Page cache sizes will be rounded up to a multiple of the page size, and
@@ -269,29 +290,6 @@ class Defaults(object):
         _("must be at least {0} and less than {1}")
           .format(Defaults.blockMapCacheSizeMin,
                   Defaults.blockMapCacheSizeMaxPlusOne))
-    return ss
-
-  ######################################################################
-  @staticmethod
-  def checkReadCachesz(value):
-    """Checks that an option is an acceptable value for the read cache size.
-    Read cache sizes will be rounded to a multiple of 4k, and must be less
-    than 16T.
-
-    Arguments:
-      value (str): Value provided as an argument to the option.
-    Returns:
-      The value converted to a SizeString.
-    Raises:
-      ArgumentError
-    """
-    ss = Defaults.checkSiSize(value)
-    if (not (Defaults.readCacheSizeMin
-             <= ss < Defaults.readCacheSizeMaxPlusOne)):
-      raise ArgumentError(
-        _("must be at least {0} and less than {1}")
-          .format(Defaults.readCacheSizeMin,
-                  Defaults.readCacheSizeMaxPlusOne))
     return ss
 
   ######################################################################

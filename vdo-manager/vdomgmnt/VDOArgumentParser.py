@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#2 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#1 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -185,8 +185,7 @@ suffix is optional""").format(options
                   self._emulate512OptionParser(),
                   self._forceOptionParser(),
                   self._indexMemOptionParser(),
-                  self._readCacheOptionParser(),
-                  self._readCacheSizeOptionParser(),
+                  self._maxDiscardSizeOptionParser(),
                   self._sparseIndexOptionParser(),
                   self._vdoAckThreadsOptionParser(),
                   self._vdoBioRotationIntervalOptionParser(),
@@ -339,8 +338,7 @@ suffix is optional""").format(options
                     """).format(highLevelHelp)
     self._changeableModifyOptions = ["blockMapCacheSize",
                                      "blockMapPeriod",
-                                     "readCache",
-                                     "readCacheSize",
+                                     "maxDiscardSize",
                                      "vdoAckThreads",
                                      "vdoBioRotationInterval",
                                      "vdoBioThreads",
@@ -353,8 +351,7 @@ suffix is optional""").format(options
       parents = [self.__namingOptions,
                  self._blockMapCacheSizeOptionParser(noDefault = True),
                  self._blockMapPeriodOptionParser(noDefault = True),
-                 self._readCacheOptionParser(noDefault = True),
-                 self._readCacheSizeOptionParser(noDefault = True),
+                 self._maxDiscardSizeOptionParser(noDefault = True),
                  self._vdoAckThreadsOptionParser(noDefault = True),
                  self._vdoBioRotationIntervalOptionParser(noDefault = True),
                  self._vdoBioThreadsOptionParser(noDefault = True),
@@ -653,8 +650,13 @@ suffix is optional""").format(options
       Specifies the amount of index memory in gigabytes; the default is
       currently {indexMem} GB. The special decimal values 0.25, 0.5,
       0.75 can be used, as can any integer value at least {min} and less
-      than or equal to {max}. (The special deciml values are matched as
+      than or equal to {max}. (The special decimal values are matched as
       exact strings; "0.5" works but "0.50" is not accepted.)
+
+      Larger values will require more disk space. For a dense index,
+      each gigabyte of index memory will use approximately 11 GB of
+      storage. For a sparse index, each gigabyte of index memory will
+      use approximately 100 GB of storage.
                                  """)
                         .format(indexMem = Defaults.indexMem,
                                 min = Defaults.indexMemIntMin,
@@ -678,6 +680,37 @@ suffix is optional""").format(options
     return parser
 
   ####################################################################
+  def _maxDiscardSizeOptionParser(self, noDefault = False):
+    """
+    Arguments:
+      noDefault (boolean) - if True, no default is provided nor mentioned in
+                            the help text
+    """
+    defaultHelp = ("" if noDefault else
+                   _("The default is {0}.").format(Defaults.maxDiscardSize))
+
+    parser = argparse.ArgumentParser(add_help = False)
+    parser.add_argument("--maxDiscardSize",
+                        type = self.__optionCheck(Defaults.checkMaxDiscardSize),
+                        metavar = "<megabytes>",
+                        help = _("""
+      Specifies the maximum discard size VDO can receive. This is used for
+      performance tuning and support of devices above us. The value must be
+      a multiple of {blockSize}. {suffixOptions}. If no suffix is supplied,
+      the value will be interpreted as {defaultUnits}. The value must be at
+      least {minDiscard} and less than {maxDiscardPlusOne}.
+      {defaultHelp}
+                                 """)
+      .format(blockSize = Defaults.vdoPhysicalBlockSize,
+              suffixOptions = self.lvmOptionalSiSuffix,
+              defaultUnits = Constants.lvmDefaultUnitsText,
+              minDiscard = Defaults.maxDiscardSizeMin,
+              maxDiscardPlusOne = Defaults.maxDiscardSizeMaxPlusOne,
+              defaultHelp = defaultHelp))
+
+    return parser
+
+  ####################################################################
   def _nameOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     self.__parserAddNameOption(parser, required = True)
@@ -695,57 +728,6 @@ suffix is optional""").format(options
                                                         required = required)
     self.__parserAddAllOption(parser)
     self.__parserAddNameOption(parser)
-
-    return parser
-
-  ####################################################################
-  def _readCacheOptionParser(self, noDefault = False):
-    """
-    Arguments:
-      noDefault (boolean) - if True, no default is mentioned in the help text
-    """
-    defaultHelp = ("" if noDefault else
-                   _("The default is {0}.").format(Defaults.readCache))
-
-    parser = argparse.ArgumentParser(add_help = False)
-    parser.add_argument("--readCache",
-                        choices =  Constants.enableChoices,
-                        help = _("""
-      Enables or disables the read cache within the VDO device. The cache
-      should be enabled if write workloads are expected to have high levels
-      of deduplication, or for read intensive workloads of highly
-      compressible data. {defaultHelp}
-                                 """)
-      .format(defaultHelp = defaultHelp))
-
-    return parser
-
-  ####################################################################
-  def _readCacheSizeOptionParser(self, noDefault = False):
-    """
-    Arguments:
-      noDefault (boolean) - if True, no default is mentioned in the help text
-    """
-    defaultHelp = ("" if noDefault else
-                   _("The default is {0}.").format(Defaults.readCacheSize))
-
-    parser = argparse.ArgumentParser(add_help = False)
-    parser.add_argument("--readCacheSize",
-                        type = self.__optionCheck(Defaults.checkReadCachesz),
-                        metavar = "<megabytes>",
-                        help = _("""
-      Specifies the extra VDO device read cache size in {defaultUnits}. This
-      space is in addition to a system-defined minimum. {suffixOptions}. The
-      value must be at least {minCacheSize} and less than {maxCachePlusOne}.
-      {threadMem} MB of memory will be used per MB of read cache specified,
-      per bio thread. {defaultHelp}
-                                 """)
-      .format(defaultUnits = Constants.lvmDefaultUnitsText,
-              suffixOptions = self.lvmOptionalSiSuffix,
-              minCacheSize = Defaults.readCacheSizeMin,
-              maxCachePlusOne = Defaults.readCacheSizeMaxPlusOne,
-              threadMem = Defaults.bioThreadReadCacheOverheadMB,
-              defaultHelp = defaultHelp))
 
     return parser
 
@@ -829,13 +811,11 @@ suffix is optional""").format(options
       Specifies the number of threads to use for submitting I/O operations to
       the storage device. The value must be at least {min} and less than or
       equal to {max}. Each additional thread after the first will use an
-      additional {threadOverhead} MB of RAM, plus {readCacheOverhead} MB of
-      RAM per megabyte of configured read cache size. {defaultHelp}
+      additional {threadOverhead} MB of RAM {defaultHelp}
                                  """)
       .format(min = Defaults.bioThreadsMin,
               max = Defaults.bioThreadsMax,
               threadOverhead = Defaults.bioThreadOverheadMB,
-              readCacheOverhead = Defaults.bioThreadReadCacheOverheadMB,
               defaultHelp = defaultHelp))
 
     return parser
@@ -1001,11 +981,18 @@ suffix is optional""").format(options
                         default = Defaults.slabSize,
                         metavar = "<megabytes>",
                         help = _("""
-      Specifies the size of the increment by which a VDO is grown. Using a
-      smaller size constrains the total maximum physical size that can be
-      accommodated. Must be a power of two between {minSize} and {maxSize};
-      the default is {defaultSlabSize}. {suffixOptions}. If no suffix is
-      used, the value will be interpreted as {defaultUnits}.
+      Set the free space allocator's slab size. Must be a power of two between
+      {minSize} and {maxSize}; the default is {defaultSlabSize}.
+      {suffixOptions}. If no suffix is used, the value will be interpreted as
+      {defaultUnits}. This allocator manages the space VDO uses to store user
+      data.
+      
+      The maximum number of slabs in the system is 8192, so this value
+      determines the maximum physical size of a VDO volume. One slab is the
+      minimum amount by which a VDO volume can be grown. Smaller slabs also
+      increase the potential for parallelism if the device has multiple
+      physical threads. Therefore, this value should be set as small as
+      possible, given the eventual maximal size of the volume.
                                  """)
       .format(minSize = Defaults.slabSizeMin,
               maxSize = Defaults.slabSizeMax,

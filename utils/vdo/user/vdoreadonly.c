@@ -16,26 +16,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoReadOnly.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoReadOnly.c#1 $
  */
 
 #include <err.h>
 #include <linux/fs.h>
 #include <sys/ioctl.h>
 
+#include "errors.h"
 #include "fileUtils.h"
 #include "logger.h"
 
 #include "constants.h"
 #include "physicalLayer.h"
-#include "vdoConfig.h"
+#include "statusCodes.h"
 
 #include "fileLayer.h"
+#include "vdoConfig.h"
 #include "vdoVolumeUtils.h"
 
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
+  static char errBuf[ERRBUF_SIZE];
+
+  int result = registerStatusCodes();
+  if (result != VDO_SUCCESS) {
+    errx(1, "Could not register status codes: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
   if ((argc != 2) || (argv[1][0] == '-')) {
     fprintf(stderr, "Usage:  vdoReadOnly device\n");
     exit(1);
@@ -46,7 +56,7 @@ int main(int argc, char *argv[])
   openLogger();
 
   PhysicalLayer *layer;
-  int result = makeFileLayer(filename, 0, &layer);
+  result = makeFileLayer(filename, 0, &layer);
   if (result != VDO_SUCCESS) {
     errx(result, "makeFileLayer failed on '%s'", filename);
   }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/base/blockMap.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/blockMap.c#1 $
  */
 
 #include "blockMap.h"
@@ -129,17 +129,6 @@ static bool handlePageWrite(void *rawPage,
 PageCount computeBlockMapPageCount(BlockCount entries)
 {
   return computeBucketCount(entries, BLOCK_MAP_ENTRIES_PER_PAGE);
-}
-
-/**********************************************************************/
-BlockCount computeBlockMapSize(BlockCount totalEntries,
-                               BlockCount slabSize,
-                               BlockCount dataBlocksPerSlab)
-{
-  uint64_t pageCount = computeBlockMapPageCount(totalEntries);
-  // Round up to the next full slab.
-  uint64_t slabCount = computeBucketCount(pageCount, dataBlocksPerSlab);
-  return (slabCount * slabSize);
 }
 
 /**********************************************************************/

@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#4 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#1 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -399,12 +399,9 @@ class ListOperation(VDOOperation):
 
   ######################################################################
   def execute(self, args):
-    vdos = set()
-    for line in runCommand(['dmsetup', 'status'], noThrow=True).splitlines():
-      m = re.match(r"(.+?): \d \d+ " + Defaults.vdoTargetName, line)
-      if m:
-        vdos.add(m.group(1))
-
+    cmd = ['dmsetup', 'status', '--target', Defaults.vdoTargetName]
+    vdos = set([line.split(':')[0]
+                for line in runCommand(cmd, noThrow=True).splitlines()])
     if args.all:
       conf = Configuration(self.confFile)
       vdos |= set(conf.getAllVdos().keys())
@@ -569,7 +566,7 @@ class StatusOperation(VDOOperation):
       print(yaml.safe_dump(vdoStatus, default_flow_style = False)[:-1])
       print(yaml.safe_dump(kernelStatus, default_flow_style = False)[:-1])
       print(yaml.safe_dump(confStatus, default_flow_style = False)[:-1])
-      print(yaml.safe_dump(perVdoStatus, default_flow_style = False, 
+      print(yaml.safe_dump(perVdoStatus, default_flow_style = False,
                            width=float("inf"))[:-1])
 
       sys.stdout.flush()

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoFormat.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#1 $
  */
 
 #include <err.h>
@@ -30,6 +30,7 @@
 
 #include "uds.h"
 
+#include "errors.h"
 #include "fileUtils.h"
 #include "logger.h"
 #include "stringUtils.h"
@@ -37,6 +38,7 @@
 #include "timeUtils.h"
 
 #include "constants.h"
+#include "statusCodes.h"
 #include "types.h"
 #include "vdo.h"
 #include "vdoConfig.h"
@@ -82,8 +84,19 @@ static const char helpString[] =
   "       default unit is megabytes.\n"
   "\n"
   "    --slab-bits=<bits>\n"
-  "       Specify the slab size in bits. The maximum size is 23, and the\n"
-  "       default is 19.\n"
+  "      Set the free space allocator's slab size to 2^<bits> 4 KB blocks.\n"
+  "      <bits> must be a value between 4 and 23 (inclusive), corresponding\n"
+  "      to a slab size between 128 KB and 32 GB. The default value is 19\n"
+  "      which results in a slab size of 2 GB. This allocator manages the\n"
+  "      space VDO uses to store user data.\n"
+  "\n"
+  "      The maximum number of slabs in the system is 8192, so this value\n"
+  "      determines the maximum physical size of a VDO volume. One slab is\n"
+  "      the minimum amount by which a VDO volume can be grown. Smaller\n"
+  "      slabs also increase the potential for parallelism if the device\n"
+  "      has multiple physical threads. Therefore, this value should be set\n"
+  "      as small as possible, given the eventual maximal size of the\n"
+  "      volume.\n"
   "\n"
   "    --uds-checkpoint-frequency=<frequency>\n"
   "       Specify the frequency of checkpoints. The default is never.\n"
@@ -126,6 +139,14 @@ static void usage(const char *progname, const char *usageOptionsString)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
+  static char errBuf[ERRBUF_SIZE];
+
+  int result = registerStatusCodes();
+  if (result != VDO_SUCCESS) {
+    errx(1, "Could not register status codes: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
   uint64_t     logicalSize  = 0; // defaults to physicalSize
   unsigned int slabBits     = DEFAULT_SLAB_BITS;
 
@@ -134,7 +155,6 @@ int main(int argc, char *argv[])
 
   int c;
   uint64_t sizeArg;
-  int result;
   static bool verbose = false;
   static bool force   = false;
 

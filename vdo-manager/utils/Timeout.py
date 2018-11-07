@@ -21,7 +21,7 @@
 
   Timeout - context manager that implements a timeout.
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/Timeout.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/utils/Timeout.py#1 $
 
 """
 from __future__ import absolute_import

@@ -20,7 +20,7 @@
 """
   KernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/KernelModuleService.py#2 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/KernelModuleService.py#1 $
 
 """
 from __future__ import absolute_import

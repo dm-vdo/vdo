@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoDMEventd.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#1 $
  */
 
 #include <dlfcn.h>
@@ -32,7 +32,9 @@
 #include <libdevmapper.h>
 #include <libdevmapper-event.h>
 
+#include "errors.h"
 #include "logger.h"
+#include "statusCodes.h"
 #include "types.h"
 
 static const char usageString[] =
@@ -78,13 +80,13 @@ static void usage(const char *progname, const char *usageOptionsString)
 
 /**
  * Creates an event handler to be used for various dmeventd calls.
- * 
+ *
  * @param devName Name of VDO device
  * @param dso     Name of VDO plugin
  *
  * @returns pointer to event handler on success, otherwise NULL
  */
-static struct dm_event_handler *createEventHandler(const char *devName, 
+static struct dm_event_handler *createEventHandler(const char *devName,
 						   const char *dso)
 {
   int result = 0;
@@ -101,16 +103,16 @@ static struct dm_event_handler *createEventHandler(const char *devName,
     dm_event_handler_destroy(dmevh);
     return NULL;
   }
-                    
+
   result = dm_event_handler_set_dev_name(dmevh, devName);
   if (result != 0) {
     logError("Failure to set VDO device name for %s", devName);
     dm_event_handler_destroy(dmevh);
     return NULL;
   }
-            
+
   // Note: no error return code
-  dm_event_handler_set_event_mask(dmevh, 
+  dm_event_handler_set_event_mask(dmevh,
 				  DM_EVENT_ALL_ERRORS | DM_EVENT_TIMEOUT);
   return dmevh;
 }
@@ -120,9 +122,9 @@ static struct dm_event_handler *createEventHandler(const char *devName,
  *
  * @param devName  Name of vdo device
  * @param dso      Name of vdo plugin to use, null will ignore setting
- * 
+ *
  * @returns -1 if error, 0 if device not registered, non zero event
- *          mask of registered events if device registered    
+ *          mask of registered events if device registered
  **/
 static int getRegistrationState(char *devName, char *dso, int *pending)
 {
@@ -174,7 +176,7 @@ static int processEvents(enum registerType type, char *devName, char *dso)
   }
 
   // Note: 1 is valid. 0 is error here.
-  result = (type == EVENTS_REGISTER) ? dm_event_register_handler(dmevh) 
+  result = (type == EVENTS_REGISTER) ? dm_event_register_handler(dmevh)
                                      : dm_event_unregister_handler(dmevh);
   if (result == 0) {
     logError("Failure to process events for %s", devName);
@@ -189,23 +191,23 @@ static int processEvents(enum registerType type, char *devName, char *dso)
  * Registers a vdo device with dmeventd monitoring
  *
  * @param devName Name of vdo device to register
- * 
+ *
  * @returns 0 is success, otherwise error
  */
 static int registerVDO(char * devName) {
   int result = 0;
-  int pending = 0; 
+  int pending = 0;
 
   result = getRegistrationState(devName, PLUGIN_NAME, &pending);
   if (result < 0) {
-    logError("Failed to get registration info for VDO device %s", 
+    logError("Failed to get registration info for VDO device %s",
 	     devName);
     return 1;
   }
 
   if (result > 0) {
     logError("VDO device %s %s", devName,
-	     pending ? "has a registration event pending" 
+	     pending ? "has a registration event pending"
 	             : "is already being monitored");
     return 1;
   }
@@ -214,7 +216,7 @@ static int registerVDO(char * devName) {
   if (result != 0) {
     logError("Unable to register events for VDO device %s", devName);
     return result;
-  } 
+  }
 
   logInfo("VDO device %s is now registered with dmeventd "
 	  "for monitoring", devName);
@@ -226,7 +228,7 @@ static int registerVDO(char * devName) {
  * Unregisters a vdo device with dmeventd monitoring
  *
  * @param devName Name of vdo device to unregister
- * 
+ *
  * @returns 0 is success, otherwise error
  */
 static int unregisterVDO(char * devName) {
@@ -235,14 +237,14 @@ static int unregisterVDO(char * devName) {
 
   result = getRegistrationState(devName, NULL, &pending);
   if (result < 0) {
-    logError("Failed to get registration info for VDO device %s", 
+    logError("Failed to get registration info for VDO device %s",
 	     devName);
     return 1;
   }
 
   if ((result == 0) || (pending == 1)) {
     logError("VDO device %s %s", devName,
-	     pending ? "cannot be unregistered until completed" 
+	     pending ? "cannot be unregistered until completed"
 	             : "is not currently being monitored");
     return 1;
   }
@@ -254,10 +256,10 @@ static int unregisterVDO(char * devName) {
     return result;
   }
 
-  logInfo("VDO device %s is now unregistered from dmeventd", 
+  logInfo("VDO device %s is now unregistered from dmeventd",
 	  devName);
 
-  return 0;  
+  return 0;
 }
 
 /**
@@ -273,7 +275,7 @@ static int validatePlugin(void)
 	     "be loaded: %s", PLUGIN_NAME, dlerror());
     return 1; /* Failure. */
   }
-        
+
   dlclose(dl);
   return 0; /* Valid. */
 }
@@ -281,6 +283,14 @@ static int validatePlugin(void)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
+  static char errBuf[ERRBUF_SIZE];
+
+  int result = registerStatusCodes();
+  if (result != VDO_SUCCESS) {
+    errx(1, "Could not register status codes: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
   int c;
   bool doRegister = false;
   bool doUnregister = false;
@@ -326,7 +336,7 @@ int main(int argc, char *argv[])
   if (!doRegister && !doUnregister) {
     errx(1, "Neither -r nor -u was specified");
   }
-  
+
   if (validatePlugin()) {
     logError("Failed to load the dmeventd plugin");
     return 1;
@@ -335,6 +345,6 @@ int main(int argc, char *argv[])
   if (doRegister) {
     return registerVDO(devName);
   }
- 
+
   return unregisterVDO(devName);
 }

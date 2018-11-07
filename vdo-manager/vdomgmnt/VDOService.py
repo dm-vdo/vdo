@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#12 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#1 $
 
 """
 from __future__ import absolute_import
@@ -59,6 +59,7 @@ class VDOServiceError(ServiceError):
   # Overriden methods
   ######################################################################
   def __init__(self, msg = _("VDO volume error"), *args, **kwargs):
+
     super(VDOServiceError, self).__init__(msg, *args, **kwargs)
 
 ########################################################################
@@ -126,7 +127,6 @@ class VDOService(Service):
       enabled on this volume the next time the `start` method is run.
     enableDeduplication (bool): If True, deduplication should be
       enabled on this volume the next time the `start` method is run.
-    enableReadCache (bool): If True, enables the VDO device's read cache.
     hashZoneThreads (int): Number of threads across which to subdivide parts
       of VDO processing based on the hash value computed from the block data
     indexCfreq (int): The Index checkpoint frequency.
@@ -136,11 +136,10 @@ class VDOService(Service):
     logicalSize (SizeString): The logical size of this VDO volume.
     logicalThreads (int): Number of threads across which to subdivide parts
       of the VDO processing based on logical block addresses.
+    maxDiscardSize (SizeString): the max discard size for this VDO volume.
     physicalSize (SizeString): The physical size of this VDO volume.
     physicalThreads (int): Number of threads across which to subdivide parts
       of the VDO processing based on physical block addresses.
-    readCacheSize (SizeString): The size of the read cache, in addition
-      to a minimum set by the VDO software.
     slabSize (SizeString): The size increment by which a VDO is grown. Using
       a smaller size constrains the maximum physical size that can be
       accomodated. Must be a power of two between 128M and 32G.
@@ -156,8 +155,6 @@ class VDOService(Service):
   vdosKey = "VDOs"
 
   # Access the per-VDO info.
-  readCacheKey               = _("Read cache")
-  readCacheSizeKey           = _("Read cache size")
   vdoAckThreadsKey           = _("Acknowledgement threads")
   vdoBioSubmitThreadsKey     = _("Bio submission threads")
   vdoBlockMapCacheSizeKey    = _("Block map cache size")
@@ -169,6 +166,7 @@ class VDOService(Service):
   vdoHashZoneThreadsKey      = _("Hash zone threads")
   vdoLogicalSizeKey          = _("Logical size")
   vdoLogicalThreadsKey       = _("Logical threads")
+  vdoMaxDiscardSizeKey       = _("Max discard size")
   vdoMdRaid5ModeKey          = _("MD RAID5 mode")
   vdoPhysicalSizeKey         = _("Physical size")
   vdoPhysicalThreadsKey      = _("Physical threads")
@@ -186,8 +184,7 @@ class VDOService(Service):
   modifiableOptions = {
     'blockMapCacheSize'     : 'blockMapCacheSize',
     'blockMapPeriod'        : 'blockMapPeriod',
-    'readCache'             : 'readCache',
-    'readCacheSize'         : 'readCacheSize',
+    'maxDiscardSize'        : 'maxDiscardSize',
     'vdoAckThreads'         : 'ackThreads',
     'vdoBioRotationInterval': 'bioRotationInterval',
     'vdoBioThreads'         : 'bioThreads',
@@ -649,13 +646,12 @@ class VDOService(Service):
     status[_("Emulate 512 byte")] = Constants.enableString(
                                       self.logicalBlockSize == 512)
     status[_("Activate")] = Constants.enableString(self.activated)
-    status[self.readCacheKey] = Constants.enableString(self.enableReadCache)
-    status[self.readCacheSizeKey] = str(self.readCacheSize)
     status[self.vdoCompressionEnabledKey] = Constants.enableString(
                                               self.enableCompression)
     status[self.vdoDeduplicationEnabledKey] = Constants.enableString(
                                                 self.enableDeduplication)
     status[self.vdoLogicalSizeKey] = str(self.logicalSize)
+    status[self.vdoMaxDiscardSizeKey] = str(self.maxDiscardSize)
     status[self.vdoPhysicalSizeKey] = str(self.physicalSize)
     status[self.vdoAckThreadsKey] = self.ackThreads
     status[self.vdoBioSubmitThreadsKey] = self.bioThreads
@@ -744,7 +740,7 @@ class VDOService(Service):
       runCommand(command, noThrow=True)
 
     self._stopFullnessMonitoring(execute, removeSteps)
-    
+
     # In a modern Linux, we would use "dmsetup remove --retry".
     # But SQUEEZE does not have the --retry option.
     command = ["dmsetup", "remove", self.getName()]
@@ -952,11 +948,10 @@ class VDOService(Service):
             "logicalBlockSize",
             "logicalSize",
             "logicalThreads",
+            "maxDiscardSize",
             "_operationState",
             "physicalSize",
             "physicalThreads",
-            "readCache",
-            "readCacheSize",
             "slabSize",
             "writePolicy"]
 
@@ -975,9 +970,8 @@ class VDOService(Service):
     data["deduplication"] = Constants.enableString(self.enableDeduplication)
     data["indexSparse"] = Constants.enableString(self.indexSparse)
     data["logicalSize"] = str(self.logicalSize)
+    data["maxDiscardSize"] = str(self.maxDiscardSize)
     data["physicalSize"] = str(self.physicalSize)
-    data["readCache"] = Constants.enableString(self.enableReadCache)
-    data["readCacheSize"] = str(self.readCacheSize)
     data["slabSize"] = str(self.slabSize)
     data["writePolicy"] = self.writePolicy
     return data
@@ -1015,18 +1009,13 @@ class VDOService(Service):
     self.logicalSize = SizeString(
       self._defaultIfNone(attributes, "logicalSize", self.logicalSize.toBytes))
 
+    self.maxDiscardSize = SizeString(
+      self._defaultIfNone(attributes, "maxDiscardSize", 
+                          self.maxDiscardSize.toBytes))
+
     self.physicalSize = SizeString(
       self._defaultIfNone(attributes, "physicalSize",
                           self.physicalSize.toBytes))
-
-    self.enableReadCache = (
-      self._defaultIfNone(attributes, "readCache",
-                          Constants.enableString(self.enableReadCache))
-        != Constants.disabled)
-
-    self.readCacheSize = SizeString(
-      self._defaultIfNone(attributes, "readCacheSize",
-                          self.readCacheSize.toBytes))
 
     self.slabSize = SizeString(
       self._defaultIfNone(attributes, "slabSize", self.slabSize.toBytes))
@@ -1047,9 +1036,8 @@ class VDOService(Service):
                      "deduplication",
                      "indexSparse",
                      "logicalSize",
+                     "maxDiscardSize",
                      "physicalSize",
-                     "readCache",
-                     "readCacheSize",
                      "slabSize",
                      "writePolicy"])
     return specials
@@ -1126,14 +1114,12 @@ class VDOService(Service):
     self.logicalSize = kw.get('vdoLogicalSize', SizeString("0"))
     self.logicalThreads = self._defaultIfNone(kw, 'vdoLogicalThreads',
                                               Defaults.logicalThreads)
+    self.maxDiscardSize = self._defaultIfNone(kw, 'maxDiscardSize',
+                                              Defaults.maxDiscardSize)
     self.mdRaid5Mode = Defaults.mdRaid5Mode
     self.physicalSize = SizeString("0")
     self.physicalThreads = self._defaultIfNone(kw, 'vdoPhysicalThreads',
                                                Defaults.physicalThreads)
-    readCache = self._defaultIfNone(kw, 'readCache', Defaults.readCache)
-    self.enableReadCache = (readCache != Constants.disabled)
-    self.readCacheSize = self._defaultIfNone(kw, 'readCacheSize',
-                                             Defaults.readCacheSize)
     self.slabSize = self._defaultIfNone(kw, 'vdoSlabSize', Defaults.slabSize)
     self._writePolicy = self._defaultIfNone(kw, 'writePolicy',
                                             Defaults.writePolicy)
@@ -1153,9 +1139,7 @@ class VDOService(Service):
 
   ######################################################################
   def __setattr__(self, name, value):
-    if name == "readCache":
-      self.enableReadCache = value != Constants.disabled
-    elif name == 'indexMemory':
+    if name == 'indexMemory':
       self._setMemoryAttr(value)
     elif name == "writePolicy":
       self._writePolicy = value
@@ -1168,8 +1152,8 @@ class VDOService(Service):
     else:
       super(VDOService, self).__setattr__(name, value)
 
-    # We need to round all logical sizes and physical sizes.
-    if name in ['logicalSize', 'physicalSize']:
+    # We need to round all logical and physical sizes.
+    if name in ['maxDiscardSize', 'logicalSize', 'physicalSize']:
       getattr(self, name).roundToBlock()
 
   ######################################################################
@@ -1383,6 +1367,18 @@ class VDOService(Service):
       # No TEST MODE message, just keep going.
       raise e
 
+    # If this is a physical volume that's not in use by any logical
+    # volumes the above check won't trigger an error. So do a second
+    # check that catches that.
+    try:
+      runCommand(['blkid', '-p', self.device])
+    except CommandError as e:
+      if e.getExitCode() == 2:
+        return
+    raise VDOServiceError('device is a physical volume;'
+                          + ' use --force to override',
+                          exitStatus = StateExitStatus)
+
   ######################################################################
   def _determineInstanceNumber(self):
     """Determine the instance number of a running VDO using sysfs."""
@@ -1434,23 +1430,23 @@ class VDOService(Service):
     """
     numSectors = self.logicalSize.toSectors()
     cachePages = self.blockMapCacheSize.toBlocks()
-    threadCountConfig = ",".join(["ack=" + str(self.ackThreads),
-                                  "bio=" + str(self.bioThreads),
-                                  ("bioRotationInterval="
-                                   + str(self.bioRotationInterval)),
-                                  "cpu=" + str(self.cpuThreads),
-                                  "hash=" + str(self.hashZoneThreads),
-                                  "logical=" + str(self.logicalThreads),
-                                  "physical=" + str(self.physicalThreads)])
+    maxDiscardBlocks = self.maxDiscardSize.toBlocks()
+    threadCountConfig = " ".join(["ack", str(self.ackThreads),
+                                  "bio", str(self.bioThreads),
+                                  "bioRotationInterval",
+                                   str(self.bioRotationInterval),
+                                  "cpu", str(self.cpuThreads),
+                                  "hash", str(self.hashZoneThreads),
+                                  "logical", str(self.logicalThreads),
+                                  "physical", str(self.physicalThreads)])
     vdoConf = " ".join(["0", str(numSectors), Defaults.vdoTargetName,
-                        "V1", self.device,
+                        "V2", self.device,
                         str(self._getConfigFromVDO()['physicalBlocks']),
                         str(self.logicalBlockSize),
-                        Constants.enableString(self.enableReadCache),
-                        str(self.readCacheSize.toBlocks()),
                         str(cachePages), str(self.blockMapPeriod),
                         self.mdRaid5Mode, self.writePolicy,
                         self._name,
+                        "maxDiscard", str(maxDiscardBlocks),
                         threadCountConfig])
     return vdoConf
 
@@ -1470,18 +1466,22 @@ class VDOService(Service):
 
     # Parse the existing table.
     tableOrder = ("logicalStart numSectors targetName version storagePath"
-                  + " storageSize blockSize readCache readCacheBlocks"
-                  + " cacheBlocks blockMapPeriod mdRaid5Mode writePolicy"
-                  + " poolName threadCountConfig")
+                  + " storageSize blockSize cacheBlocks blockMapPeriod"
+                  + " mdRaid5Mode writePolicy poolName")
 
-    dmTable = dict(zip(tableOrder.split(" "), table.split(" ")))
+    tableOrderItems = tableOrder.split(" ")
+    tableItems = table.split(" ")
+
+    # This will set up only required parameters due to length of tableOrder
+    dmTable = dict(zip(tableOrderItems, tableItems))
 
     # Apply new values
     for (key, val) in list(kwargs.items()):
       dmTable[key] = val
 
     # Create and return the new table
-    return " ".join([dmTable[key] for key in tableOrder.split(" ")])
+    return " ".join([dmTable[key] for key in tableOrderItems]
+                    + tableItems[len(dmTable):])
 
   ######################################################################
   def _generatePreviousOperationFailureResponse(self, operation = "create"):

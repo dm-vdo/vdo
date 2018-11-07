@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/examples/ansible/Makefile#1 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/examples/ansible/Makefile#1 $
 
 INSTALLFILES=README.txt			\
 	test_vdocreate.yml		\

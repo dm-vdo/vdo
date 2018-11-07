@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#5 $
+.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#1 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -53,7 +53,7 @@
 .ds logicalThreadsBlockMapCacheSizeThreshold 9
 .ds logicalThreadsDefault 1
 .ds logicalThreadsMin 0
-.ds logicalThreadsMax 100
+.ds logicalThreadsMax 60
 .ds logLevelChoices \fBcritical\fP, \fBerror\fP, \
 \fBwarning\fP, \fBnotice\fP, \fBinfo\fP, or \fBdebug\fP
 .ds logLevelDefault \fBinfo\fP
@@ -65,16 +65,14 @@
 \fBG\fP (gigabytes), \fBT\fP (terabytes), \fBP\fP (petabytes) or \
 \fBE\fP (exabytes) suffix is optional
 .ds lvmUnitsDefault megabytes
+.ds maxDiscardSize 4K
+.ds maxDiscardSizeMin 4K
+.ds maxDiscardSizeMaxPlusOne 4G
 .ds pageSizeDefault 4096
 .ds physicalThreadOverheadMB 10
 .ds physicalThreadsDefault 1
 .ds physicalThreadsMin 0
 .ds physicalThreadsMax 16
-.ds readCacheBioThreadOverheadMB 1.12
-.ds readCacheDefault disabled
-.ds readCacheSizeDefault 0
-.ds readCacheSizeMin 0
-.ds readCacheSizeMaxPlusOne 16T
 .ds slabSizeDefault 2G
 .ds slabSizeMin 128M
 .ds slabSizeMax 32G
@@ -204,8 +202,7 @@ Applicable options include:
 \-\-deduplication=\*[bool]
 \-\-emulate512=\*[bool]
 \-\-indexMem=\fIsize\fP
-\-\-readCache=\*[bool]
-\-\-readCacheSize=\fIsize\fP
+\-\-maxDiscardSize=\fIsize\fP
 \-\-sparseIndex=\*[bool]
 \-\-vdoAckThreads=\fIthread count\fP
 \-\-vdoBioRotationInterval=\fII/O count\fP
@@ -328,8 +325,7 @@ not affected. Applicable options include:
 \*[targetSpecRequired]
 \-\-blockMapCacheSize=\fIsize\fP
 \-\-blockMapPeriod=\fIperiod\fP
-\-\-readCache=\*[bool]
-\-\-readCacheSize=\fIsize\fP
+\-\-maxDiscardSize=\fIsize\fP
 \-\-vdoAckThreads=\fIthread count\fP
 \-\-vdoBioThreads=\fIthread count\fP
 \-\-vdoCpuThreads=\fIthread count\fP
@@ -549,6 +545,11 @@ currently \*[indexMemDefault] GB. The special decimal values 0.25, 0.5,
 0.75 can be used, as can any integer value at least \*[indexMemIntMin] and less
 than or equal to \*[indexMemIntMax]. (The special decimal values are matched as
 exact strings; "0.5" works but "0.50" is not accepted.)
+.IP
+Larger values will require more disk space. For a dense index, each
+gigabyte of index memory will use approximately 11 GB of storage. For
+a sparse index, each gigabyte of index memory will use approximately
+100 GB of storage.
 .PP
 .B \-\-help
 .br
@@ -573,19 +574,13 @@ Operates on the specified VDO volume. May not be used with
 \fB\-\-all\fP.
 .RE
 .TP
-.B \-\-readCache=\*[bool]
-Enables or disables the read cache within the VDO device. The cache should be
-enabled if write workloads are expected to have high levels of deduplication,
-or for read intensive workloads of highly compressible data. The default is
-\*[readCacheDefault].
-.TP
-.B \-\-readCacheSize=\fImegabytes\fR
-Specifies the extra VDO device read cache size in \*[lvmUnitsDefault]. This
-space is in addition to a system-defined minimum. \*[lvmOptionalSiSuffix].
-The value must be at least \*[readCacheSizeMin] and less than
-\*[readCacheSizeMaxPlusOne]. \*[readCacheBioThreadOverheadMB] MB of memory
-will be used per MB of read cache specified, per bio thread. The default is
-\*[readCacheSizeDefault].
+.B \-\-maxDiscardSize=\fImegabytes\fR
+Specifies the maximum discard size VDO can receive. This is used for
+performance tuning and support of devices above us. The value must be
+a multiple of \*[maxDiscardSize]. \*[lvmOptionalSiSuffixOptions]. If no
+suffix is supplied, the value will be interpreted as \*[lvmUnitsDefault].
+The value must be at least \*[minDiscardMin] and less than
+\*[maxDiscardMaxPlusOne]. The default is \*[maxDiscardSize].
 .TP
 .B \-\-sparseIndex=\*[bool]
 Enables sparse indexing. The default is \*[sparseIndexDefault].
@@ -606,9 +601,8 @@ is \*[bioRotationDefault].
 Specifies the number of threads to use for submitting I/O operations to the
 storage device. The value must be at least \*[bioThreadsMin] and less than or
 equal to \*[bioThreadsMax]. Each additional thread after the first will use
-an additional \*[bioThreadOverheadMB] MB of RAM, plus
-\*[readCacheBioThreadOverheadMB] MB of RAM per megabyte of configured read
-cache size. The default is \*[bioThreadsDefault].
+an additional \*[bioThreadOverheadMB] MB of RAM, The default is
+\*[bioThreadsDefault].
 .TP
 .B \-\-vdoCpuThreads=\fIthread count\fR
 Specifies the number of threads to use for CPU-intensive work such as hashing
@@ -653,11 +647,19 @@ vdoHashZonesThreads and vdoLogicalThreads must be either all zero or all
 non-zero. The default is \*[physicalThreadsDefault].
 .TP
 .B \-\-vdoSlabSize=\fImegabytes\fR
-Specifies the size of the increment by which a VDO is grown. Using a smaller
-size constrains the total maximum physical size that can be accommodated.
-Must be a power of two between \*[slabSizeMin] and \*[slabSizeMax].
-\*[lvmOptionalSuffix]. If no suffix is used, the value will be interpreted as
-\*[lvmUnitsDefault]. The default is \*[slabSizeDefault].
+Set the free space allocator's slab size. Must be a power of two between
+\*[slabSizeMin] and \*[slabSizeMax] (inclusive). \*[lvmOptionalSuffix].
+If no suffix is used, the value will be interpreted as \*[lvmUnitsDefault].
+The default is \*[slabSizeDefault]. This allocator manages the space VDO
+uses to store user data.
+
+The maximum number of slabs in the system is 8192, so this value determines
+the maximum physical size of a VDO volume. One slab is the minimum amount
+by which a VDO volume can be grown. Smaller slabs also increase the potential
+for parallelism if the device has multiple physical threads. Therefore, this
+value should be set as small as possible, given the eventual maximal size
+of the volume.
+
 .TP
 .B \-\-verbose
 Prints commands before executing them.

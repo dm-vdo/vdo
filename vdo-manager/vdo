@@ -22,7 +22,7 @@
 """
   vdo - VDO management utility
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdo#4 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdo#1 $
 
 """
 #pylint: disable=C0302

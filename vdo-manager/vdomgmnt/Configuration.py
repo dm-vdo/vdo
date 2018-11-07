@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Configuration.py#6 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Configuration.py#1 $
 
 """
 from __future__ import absolute_import

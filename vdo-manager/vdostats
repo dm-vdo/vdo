@@ -22,7 +22,7 @@
 """
   vdoStats - Report statistics from an Albireo VDO.
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdoStats#3 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdoStats#1 $
 """
 from __future__ import absolute_import
 from __future__ import division

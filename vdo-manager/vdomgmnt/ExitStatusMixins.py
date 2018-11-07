@@ -42,7 +42,7 @@
   at instantiation by passing any of the ExitStatus hierarchy classes as the
   'exitStatus' instantiation parameter.
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/ExitStatusMixins.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/ExitStatusMixins.py#1 $
 
 """
 from __future__ import absolute_import

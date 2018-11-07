@@ -20,7 +20,7 @@
 """
   DisplaySpec
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/StatFormatter.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/statistics/StatFormatter.py#1 $
 """
 from __future__ import absolute_import
 from __future__ import division

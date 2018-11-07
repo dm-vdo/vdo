@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/examples/Makefile#2 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/examples/Makefile#1 $
 
 SUBDIRS = ansible monitor systemd
 
