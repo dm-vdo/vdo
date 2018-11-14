@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#2 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#3 $
 
 """
 from __future__ import absolute_import
@@ -1619,7 +1619,7 @@ class VDOService(Service):
     """
     basePath = self._getBaseDevice(devicePath);
     baseName = os.path.basename(basePath)
-    output = runCommand(["cat", "/sys/block/" + baseName + "/size"]);
+    output = runCommand(["cat", "/sys/class/block/" + baseName + "/size"]);
     return SizeString("{0}s".format(output));
   
   ######################################################################
