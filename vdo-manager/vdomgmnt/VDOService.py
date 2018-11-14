@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#2 $
 
 """
 from __future__ import absolute_import
@@ -989,7 +989,7 @@ class VDOService(Service):
 
     self.blockMapCacheSize = SizeString(
       self._defaultIfNone(attributes, "blockMapCacheSize",
-                          self.blockMapCacheSize.toBytes))
+                          str(self.blockMapCacheSize)))
 
     self.enableCompression = (
       self._defaultIfNone(attributes, "compression",
@@ -1007,18 +1007,20 @@ class VDOService(Service):
         != Constants.disabled)
 
     self.logicalSize = SizeString(
-      self._defaultIfNone(attributes, "logicalSize", self.logicalSize.toBytes))
+      self._defaultIfNone(attributes, "logicalSize",
+                          str(self.logicalSize)))
 
     self.maxDiscardSize = SizeString(
-      self._defaultIfNone(attributes, "maxDiscardSize", 
-                          self.maxDiscardSize.toBytes))
+      self._defaultIfNone(attributes, "maxDiscardSize",
+                          str(self.maxDiscardSize)))
 
     self.physicalSize = SizeString(
       self._defaultIfNone(attributes, "physicalSize",
-                          self.physicalSize.toBytes))
+                          str(self.physicalSize)))
 
     self.slabSize = SizeString(
-      self._defaultIfNone(attributes, "slabSize", self.slabSize.toBytes))
+      self._defaultIfNone(attributes, "slabSize",
+                          str(self.slabSize)))
 
     # writePolicy is handled differently as it is a computed property which
     # depends on the config being set which is not the case when the instance
