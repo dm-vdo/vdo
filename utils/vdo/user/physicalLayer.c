@@ -16,24 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/physicalLayer.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#1 $
  */
 
 #include "physicalLayer.h"
 
-static PhysicalLayerGetter *physicalLayerGetter;
+// Stubs implementing the physical layer functions. They are uunused by user
+// tools, but still necessary to link against physical layer functions.
 
-/**********************************************************************/
-void registerPhysicalLayerGetter(PhysicalLayerGetter *getter)
+ThreadID getCallbackThreadID(void)
 {
-  physicalLayerGetter = getter;
-}
-
-/**********************************************************************/
-PhysicalLayer *getPhysicalLayer(void)
-{
-  if (physicalLayerGetter != NULL) {
-    return (*physicalLayerGetter)();
-  }
-  return NULL;
+  return -1;
 }
