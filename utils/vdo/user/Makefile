@@ -17,7 +17,7 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/Makefile#1 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/Makefile#2 $
 
 VDO_VERSION = 8.0.0.0
 
@@ -75,6 +75,7 @@ LDPRFLAGS = -ldl -pthread -lz -lrt -lm -luuid
 DEPLIBS  = $(VDO_BASE_DIR)/libvdo.a $(UDS_DIR)/libuds.a
 LIBFLAGS = -pthread -lrt
 
+LAYER_OBJS  = physicalLayer.o
 USER_OBJS   = blockMapUtils.o  \
               fileLayer.o      \
               parseUtils.o     \
@@ -140,7 +141,7 @@ $(DEPDIR)/%.d: %.c
 	$(CC) $(CFLAGS) -MM -MF $@ -MP -MT $*.o $<
 
 .SECONDEXPANSION:
-$(PROGS): $$@.o libuser.a $(DEPLIBS)
+$(PROGS): $$@.o libuser.a $(DEPLIBS) $(LAYER_OBJS)
 	echo "Building $@ from $^"
 	$(CC) $(LDFLAGS) $^ $(LDPRFLAGS) -o $@
 
