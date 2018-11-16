@@ -40,18 +40,6 @@ class BioStats(StatStruct):
       Uint64Field("fua"),
     ], procRoot="vdo", **kwargs)
 
-# The statistics for the read cache.
-class ReadCacheStats(StatStruct):
-  def __init__(self, name="ReadCacheStats", **kwargs):
-    super(ReadCacheStats, self).__init__(name, [
-      # Number of times the read cache was asked for a specific pbn.
-      Uint64Field("accesses"),
-      # Number of times the read cache found the requested pbn.
-      Uint64Field("hits"),
-      # Number of times the found requested pbn had valid data.
-      Uint64Field("dataHits"),
-    ], labelPrefix="read cache", procRoot="vdo", **kwargs)
-
 class MemoryUsage(StatStruct):
   def __init__(self, name="MemoryUsage", **kwargs):
     super(MemoryUsage, self).__init__(name, [
@@ -125,15 +113,13 @@ class KernelStatistics(StatStruct):
       BioStats("biosAcknowledgedPartial", labelPrefix = "bios acknowledged partial"),
       # Current number of bios in progress
       BioStats("biosInProgress", labelPrefix = "bios in progress"),
-      # The read cache stats.
-      ReadCacheStats("readCache"),
       # Memory usage stats.
       MemoryUsage("memoryUsage", labelPrefix = "KVDO module"),
       # The statistics for the UDS index
       IndexStatistics("index"),
     ], procFile="kernel_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 29
+  statisticsVersion = 30
 
   def sample(self, device):
     sample = super(KernelStatistics, self).sample(device)

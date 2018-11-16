@@ -242,7 +242,7 @@ class VDOStatistics(StatStruct):
       ErrorStatistics("errors"),
     ], procFile="dedupe_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 29
+  statisticsVersion = 30
 
   def sample(self, device):
     sample = super(VDOStatistics, self).sample(device)
