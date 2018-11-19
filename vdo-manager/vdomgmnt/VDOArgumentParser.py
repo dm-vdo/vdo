@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#2 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -884,7 +884,7 @@ suffix is optional""").format(options
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoLogicalThreads",
                         type = self.__optionCheck(
-                                  Defaults.checkThreadCount0_100),
+                                  Defaults.checkLogicalThreadCount),
                         metavar = "<threadCount>",
                         help = _("""
       Specifies the number of threads across which to subdivide parts of the
