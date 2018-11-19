@@ -16,15 +16,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#2 $
  */
 
 #include "physicalLayer.h"
 
-// Stubs implementing the physical layer functions. They are uunused by user
+#include "permassert.h"
+
+// Stubs implementing the physical layer functions. They are unused by user
 // tools, but still necessary to link against physical layer functions.
 
+/**********************************************************************/
 ThreadID getCallbackThreadID(void)
 {
+  ASSERT_LOG_ONLY(false, "Stubs are never called");
   return -1;
+}
+
+/**********************************************************************/
+void freeVIO(VIO **vioPtr __attribute__((unused)))
+{
+  ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
