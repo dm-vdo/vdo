@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#1 $
+.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#2 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -577,10 +577,10 @@ Operates on the specified VDO volume. May not be used with
 .B \-\-maxDiscardSize=\fImegabytes\fR
 Specifies the maximum discard size VDO can receive. This is used for
 performance tuning and support of devices above us. The value must be
-a multiple of \*[maxDiscardSize]. \*[lvmOptionalSiSuffixOptions]. If no
-suffix is supplied, the value will be interpreted as \*[lvmUnitsDefault].
-The value must be at least \*[minDiscardMin] and less than
-\*[maxDiscardMaxPlusOne]. The default is \*[maxDiscardSize].
+a multiple of \*[maxDiscardSize]. \*[lvmOptionalSuffix]. If no suffix
+is supplied, the value will be interpreted as \*[lvmUnitsDefault].
+The value must be at least \*[maxDiscardSizeMin] and less than
+\*[maxDiscardSizeMaxPlusOne]. The default is \*[maxDiscardSize].
 .TP
 .B \-\-sparseIndex=\*[bool]
 Enables sparse indexing. The default is \*[sparseIndexDefault].
