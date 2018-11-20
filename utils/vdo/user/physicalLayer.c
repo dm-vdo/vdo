@@ -16,12 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#5 $
  */
 
 #include "physicalLayer.h"
 
 #include <zlib.h>
+
+#include "permassert.h"
 
 // Genuine implementations of certain physical layer functions, necessary
 // for user tools.
@@ -37,7 +39,15 @@ CRC32Checksum updateCRC32(CRC32Checksum  crc,
 // Stubs implementing the physical layer functions. They are unused by user
 // tools, but still necessary to link against physical layer functions.
 
+/**********************************************************************/
 ThreadID getCallbackThreadID(void)
 {
+  ASSERT_LOG_ONLY(false, "Stubs are never called");
   return -1;
+}
+
+/**********************************************************************/
+void destroyVIO(VIO **vioPtr __attribute__((unused)))
+{
+  ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
