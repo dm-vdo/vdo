@@ -16,12 +16,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#4 $
  */
 
 #include "physicalLayer.h"
 
-// Stubs implementing the physical layer functions. They are uunused by user
+#include <zlib.h>
+
+// Genuine implementations of certain physical layer functions, necessary
+// for user tools.
+
+/**********************************************************************/
+CRC32Checksum updateCRC32(CRC32Checksum  crc,
+                          const byte    *buffer,
+                          size_t         length)
+{
+  return crc32(crc, buffer, length);
+}
+
+// Stubs implementing the physical layer functions. They are unused by user
 // tools, but still necessary to link against physical layer functions.
 
 ThreadID getCallbackThreadID(void)

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#2 $
  */
 
 #include "fileLayer.h"
@@ -24,7 +24,7 @@
 #include <linux/fs.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <zlib.h>
+#include <unistd.h>
 
 #include "fileUtils.h"
 #include "logger.h"
@@ -47,14 +47,6 @@ static inline FileLayer *asFileLayer(PhysicalLayer *layer)
 {
   STATIC_ASSERT(offsetof(FileLayer, common) == 0);
   return (FileLayer *) layer;
-}
-
-/**********************************************************************/
-static CRC32Checksum updateCRC32(CRC32Checksum  crc,
-                                 const byte    *buffer,
-                                 size_t         length)
-{
-  return crc32(crc, buffer, length);
 }
 
 /**********************************************************************/
@@ -301,7 +293,6 @@ static int setupFileLayer(const char     *name,
   }
 
   layer->common.destroy             = freeLayer;
-  layer->common.updateCRC32         = updateCRC32;
   layer->common.getBlockCount       = getBlockCount;
   layer->common.allocateIOBuffer    = bufferAllocator;
   layer->common.reader              = fileReader;
