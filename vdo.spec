@@ -133,10 +133,9 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdostats.8.gz
 %{_mandir}/man8/vdodmeventd.8.gz
 %{_mandir}/man8/vdodumpconfig.8.gz
-%{_mandir}/man8/vdodumpmetadata.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
 
 
 %changelog
-* Tue Nov 20 2018 - corwin@bf30-1 - 8.0.0.0-1
+* Wed Dec 05 2018 - corwin@bf30-1 - 8.0.0.0-1
