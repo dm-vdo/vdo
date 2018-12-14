@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#6 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#7 $
 
 """
 from __future__ import absolute_import
@@ -307,6 +307,23 @@ class Defaults(object):
     """
     return Defaults._rangeCheck(Defaults.physicalThreadsMin,
                                 Defaults.physicalThreadsMax,
+                                value)
+
+  ######################################################################
+  @staticmethod
+  def checkLogicalThreadCount(value):
+    """Checks that an option is a valid "logical" thread count.
+
+    Arguments:
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The value converted to an integer.
+    Raises:
+      ArgumentError
+
+    """
+    return Defaults._rangeCheck(Defaults.logicalThreadsMin,
+                                Defaults.logicalThreadsMax,
                                 value)
 
   ######################################################################
