@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#2 $
+.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#3 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -619,11 +619,11 @@ vdoPhysicalThreads must be either all zero or all non-zero. The default is
 .TP
 .B \-\-vdoLogicalThreads=\fIthread count\fR
 Specifies the number of threads across which to subdivide parts of the VDO
-processing based on the hash value computed from the block data. The value
-must be at least \*[logicalThreadsMin] and less than or equal to
-\*[logicalThreadsMax]. A logical thread count of
-\*[logicalThreadsBlockMapCacheSizeThreshold] or more will require explicitly
-specifying a sufficiently large block map cache size, as well.
+processing based on the logical address. The value must be at least
+\*[logicalThreadsMin] and less than or equal to \*[logicalThreadsMax].
+A logical thread count of \*[logicalThreadsBlockMapCacheSizeThreshold] or
+more will require explicitly specifying a sufficiently large block map cache
+size.
 vdoHashZonesThreads, vdoLogicalThreads and vdoPhysicalThreads must be either
 all zero or all non-zero. The default is \*[logicalThreadsDefault].
 .TP
