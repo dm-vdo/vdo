@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#3 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#4 $
 
 """
 from __future__ import absolute_import
@@ -287,6 +287,12 @@ class VDOService(Service):
               self.device)
       raise VDODeviceAlreadyConfiguredError(msg)
 
+    # Check that there isn't an already extant dm target with the VDO's name.
+    if self._mapperDeviceExists():
+      msg = _("Name conflict with extant device mapper target {0}").format(
+              self.getName())
+      raise VDOServiceError(msg, exitStatus = StateExitStatus)
+
     # Check that we have enough kernel memory to at least create the index.
     self._validateAvailableMemory(self.indexMemory);
 
@@ -432,7 +438,7 @@ class VDOService(Service):
                               self.getName()))
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
-        
+
     self._resume()
 
     # Get the new logical size
@@ -440,10 +446,10 @@ class VDOService(Service):
     logicalSize = (vdoConfig["logicalBlocks"]
                    * (vdoConfig["blockSize"] // Constants.SECTOR_SIZE))
     self.logicalSize = SizeString("{0}s".format(logicalSize))
-   
+
     self.log.info(_("Increased logical size of VDO volume {0}").format(
       self.getName()))
-   
+
     # The grow is done.
     self._setOperationState(self.OperationState.finished)
 
@@ -465,7 +471,7 @@ class VDOService(Service):
 
     newPhysicalSize = self._getDeviceSize(self.device)
     newPhysicalSize.roundToBlock()
-    
+
     if newPhysicalSize < self.physicalSize:
       msg = _("Can't shrink a VDO volume (old size {0})").format(
               self.physicalSize)
@@ -474,23 +480,23 @@ class VDOService(Service):
       msg = _("Can't grow a VDO volume by less than {0} bytes").format(
               Constants.VDO_BLOCK_SIZE)
       raise ServiceError(msg, exitStatus = UserExitStatus)
-    
+
     # Do the grow.
     self._setOperationState(self.OperationState.beginGrowPhysical)
 
     self.log.info(_("Increasing physical size of VDO volume {0}").format(
       self.getName()))
-    
+
     vdoConf = self._generateModifiedDmTable(storageSize
                                             = str(newPhysicalSize.toBlocks()))
 
-    transaction = Transaction.transaction()   
+    transaction = Transaction.transaction()
     transaction.setMessage(self.log.error,
                            _("Device {0} could not be changed").format(
                               self.getName()))
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
-    
+
     self._resume()
 
     # Get the new physical size
@@ -498,7 +504,7 @@ class VDOService(Service):
     sectorsPerBlock = vdoConfig["blockSize"] // Constants.SECTOR_SIZE
     physicalSize = vdoConfig["physicalBlocks"] * sectorsPerBlock
     self.physicalSize = SizeString("{0}s".format(physicalSize))
-   
+
     self.log.info(_("Increased physical size of VDO volume {0}").format(
       self.getName()))
 
@@ -561,15 +567,28 @@ class VDOService(Service):
     # file because if we do it before and the removal from the config
     # fails, we will end up with a valid looking entry in the config
     # that has no valid metadata.
-    self._clearMetadata()
-
+    #
+    # Having gotten this far we know that either no one is holding on to the
+    # underlying device or we skipped that check because we weren't running.
+    # We could be in one of a number of clean up conditions and only if the
+    # underlying device isn't in use can we clear the metadata.
+    #
+    # This really isn't sufficient but we cannot completely determine that no
+    # one has data of any import on the device.  For example, if the device was
+    # being used raw we have no way of determining that.  We do what we can.
+    if not self._hasHolders():
+      self._clearMetadata()
 
   ######################################################################
   def running(self):
     """Returns True if the VDO service is available."""
     try:
-      runCommand(["dmsetup", "status", self.getName()])
-      return True
+      result = runCommand(["dmsetup", "status", "--target",
+                           Defaults.vdoTargetName, self.getName()])
+      # dmsetup does not error as long as the device exists even if it's not
+      # of the specified target type.  However, if it's not of the specified
+      # target type there is no returned info.
+      return result.strip() != ""
     except Exception:
       return False
 
@@ -713,11 +732,12 @@ class VDOService(Service):
             self.getName()))
         return
 
-    if self._hasHolders():
+    running = self.running()
+    if running and self._hasHolders():
       msg = _("cannot stop VDO volume {0}: in use").format(self.getName())
       raise ServiceError(msg, exitStatus = StateExitStatus)
 
-    if self._hasMounts() or (not execute):
+    if (running and self._hasMounts()) or (not execute):
       command = ["umount", "-f", self.getPath()]
       if removeSteps is not None:
         removeSteps.append(" ".join(command))
@@ -736,10 +756,11 @@ class VDOService(Service):
     command = ["udevadm", "settle"]
     if removeSteps is not None:
       removeSteps.append(" ".join(command))
-    if execute:
+    if running and execute:
       runCommand(command, noThrow=True)
 
-    self._stopFullnessMonitoring(execute, removeSteps)
+    if running:
+      self._stopFullnessMonitoring(execute, removeSteps)
 
     # In a modern Linux, we would use "dmsetup remove --retry".
     # But SQUEEZE does not have the --retry option.
@@ -748,7 +769,7 @@ class VDOService(Service):
       removeSteps.append(" ".join(command))
 
     inUse = True
-    if execute:
+    if running and execute:
       for unused_i in range(10):
         try:
           runCommand(command)
@@ -764,6 +785,8 @@ class VDOService(Service):
     if not execute:
       self._generatePreviousOperationFailureResponse()
 
+    # Because we may removed the instance above we have to check again to see
+    # if it's running rather than using the value we got above.
     if self.running():
       if inUse:
         msg = _("cannot stop VDO service {0}: device in use").format(
@@ -1621,7 +1644,7 @@ class VDOService(Service):
     baseName = os.path.basename(basePath)
     output = runCommand(["cat", "/sys/class/block/" + baseName + "/size"]);
     return SizeString("{0}s".format(output));
-  
+
   ######################################################################
   def _hasHolders(self):
     """Tests whether other devices are holding the VDO device open. This
@@ -1681,6 +1704,16 @@ class VDOService(Service):
       kms.setLogLevel(logLevel)
 
   ######################################################################
+  def _mapperDeviceExists(self):
+    """Returns True if there already exists a dm target with the name of
+    this VDO."""
+    try:
+      os.stat(self.getPath())
+      return True
+    except OSError:
+      return False
+
+  ######################################################################
   @transactional
   def _performRunningSetWritePolicy(self):
     """Peforms the changing of the write policy on a running vdo instance.
@@ -1696,7 +1729,7 @@ class VDOService(Service):
                                                           self.getName()))
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
-    
+
     self._resume()
 
   ######################################################################
