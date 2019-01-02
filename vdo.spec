@@ -138,4 +138,4 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Fri Dec 21 2018 - corwin@bf30-1 - 8.0.0.0-1
+* Wed Jan 02 2019 - corwin@bf30-1 - 8.0.0.0-1
