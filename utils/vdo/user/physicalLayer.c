@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#10 $
  */
 
 #include "physicalLayer.h"
@@ -129,4 +129,12 @@ void readDataVIO(DataVIO *dataVIO __attribute__((unused)))
 void writeCompressedBlock(AllocatingVIO *allocatingVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
+}
+
+/**********************************************************************/
+bool compareDataVIOs(DataVIO *first  __attribute__((unused)),
+		     DataVIO *second __attribute__((unused)))
+{
+  ASSERT_LOG_ONLY(false, "Stubs are never called");
+  return false;
 }
