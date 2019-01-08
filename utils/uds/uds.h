@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/src/public/uds.h#1 $
+ * $Id: //eng/uds-releases/homer/src/public/uds.h#2 $
  */
 
 /**
@@ -464,14 +464,30 @@ int udsAddGridServer(UdsGridConfig gridConfig,
 
 
 /**
- * Closes an index session (either local or grid).
+ * Saves an index, without closing the index session.
+ *
+ * The underlying local index is flushed and changes to the index are saved so
+ * that #udsLoadLocalIndex can re-open it.
+ *
+ * During the call to #udsSaveIndex, there should be no other call to
+ * #udsSaveIndex and there should be no calls to #udsStartChunkOperation.
+ *
+ * @param [in] session  The session that has the open index 
+ *
+ * @return Either #UDS_SUCCESS or an error code
+ **/
+UDS_ATTR_WARN_UNUSED_RESULT
+int udsSaveIndex(UdsIndexSession session);
+
+/**
+ * Closes an index session.
  *
  * Flushes and saves changes to the index.  Use #udsCloseIndexSession
  * for index sessions created by #udsCreateLocalIndex, #udsLoadLocalIndex,
- * #udsRebuildLocalIndex, or #udsAttachGridIndex.
+ * or #udsRebuildLocalIndex.
  *
- * In the case of local index sessions, the underlying local index is flushed
- * and properly checkpointed so that #udsLoadLocalIndex can re-open it.
+ * The underlying local index is flushed and properly checkpointed so that
+ * #udsLoadLocalIndex can re-open it.
  *
  * Any contexts opened for this session will no longer be valid, and
  * #UDS_DISABLED will be returned if any subsequent operations are
