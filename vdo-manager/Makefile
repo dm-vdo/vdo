@@ -16,12 +16,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/vdo-manager/Makefile#1 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/vdo-manager/Makefile#2 $
 
 SUBDIRS=man statistics utils vdomgmnt
 
 PROGS=vdo vdostats
 PYTHON_MODULES=__init__.py
+COMPLETIONS=vdostats
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
@@ -31,6 +32,7 @@ INSTALLDIR=$(DESTDIR)$(bindir)
 python3_sitelib ?= \
 	 $(shell python3 -c "import site; print(site.getsitepackages()[0])")
 PYTHONINSTALLDIR=$(DESTDIR)$(python3_sitelib)/vdo
+COMPLETIONINSTALLDIR=$(DESTDIR)$(sysconfdir)/bash_completion.d
 
 .PHONY: all clean install
 all clean:
@@ -48,6 +50,11 @@ install:
 	$(INSTALL) $(INSTALLOWNER) -d $(PYTHONINSTALLDIR)
 	for i in $(PYTHON_MODULES); do					\
 	  $(INSTALL) $(INSTALLOWNER) -m 644 $$i $(PYTHONINSTALLDIR);	\
+	done
+	$(INSTALL) $(INSTALLOWNER) -d $(COMPLETIONINSTALLDIR)
+	for c in $(COMPLETIONS); do					\
+	  $(INSTALL) $(INSTALLOWNER) -m 644 $$c.bash			\
+		 $(COMPLETIONINSTALLDIR)/$$c;				\
 	done
 	set -e;								\
 	for d in $(SUBDIRS); do						\

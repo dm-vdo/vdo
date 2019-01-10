@@ -52,7 +52,7 @@ make
 make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
   defaultdocdir=%{_defaultdocdir} name=%{name} \
   python3_sitelib=/%{python3_sitelib} mandir=%{_mandir} \
-  unitdir=%{_unitdir} presetdir=%{_presetdir}
+  unitdir=%{_unitdir} presetdir=%{_presetdir} sysconfdir=%{_sysconfdir}
 
 %post
 %systemd_post vdo.service
@@ -135,7 +135,8 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
-
+%dir %{_sysconfdir}/bash_completion.d
+%{_sysconfdir}/bash_completion.d/vdostats
 
 %changelog
-* Tue Jan 08 2019 - corwin@bf30-1 - 8.0.0.0-1
+* Thu Jan 10 2019 - corwin@bf30-1 - 8.0.0.0-1
