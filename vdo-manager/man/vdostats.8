@@ -479,19 +479,6 @@ The current count of bytes allocated by the kernel VDO module.
 .B KVDO module peak bytes used
 The peak count of bytes allocated by the kernel VDO module, since the
 module was loaded.
-.TP
-.B read cache accesses
-The number of times VDO searched the read cache.
-.TP
-.B read cache hits
-The number of times VDO found an entry in the read cache for the
-desired data block, whether or not the block's contents had yet been
-read into memory.
-.TP
-.B read cache data hits
-The number of times VDO found an entry in the read cache for the
-desired data block, where the block's contents had been
-read into memory.
 .
 .
 .SH OPTIONS
