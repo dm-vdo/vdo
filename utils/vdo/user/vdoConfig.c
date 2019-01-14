@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#2 $
  */
 
 #include <uuid/uuid.h>
@@ -86,7 +86,7 @@ static int configureVDO(VDO *vdo)
                                vdo->completeRecoveries,
                                vdo->config.recoveryJournalSize,
                                RECOVERY_JOURNAL_TAIL_BUFFER_SIZE,
-                               &vdo->readOnlyContext, getThreadConfig(vdo),
+                               vdo->readOnlyNotifier, getThreadConfig(vdo),
                                &vdo->recoveryJournal);
   if (result != VDO_SUCCESS) {
     return result;
@@ -105,7 +105,7 @@ static int configureVDO(VDO *vdo)
   PhysicalBlockNumber origin = getFixedLayoutPartitionOffset(depotPartition);
   result = makeSlabDepot(depotSize, origin, slabConfig, getThreadConfig(vdo),
                          vdo->nonce, 1, vdo->layer, NULL,
-                         &vdo->readOnlyContext, vdo->recoveryJournal,
+                         vdo->readOnlyNotifier, vdo->recoveryJournal,
                          &vdo->depot);
   if (result != VDO_SUCCESS) {
     return result;
