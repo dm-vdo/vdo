@@ -84,7 +84,7 @@ class KernelStatistics(StatStruct):
       Uint32Field("releaseVersion", display = False),
       # The VDO instance
       Uint32Field("instance"),
-      StringField("fiveTwelveByteEmulation", label = "512 byte emulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'"),
+      StringField("fiveTwelveByteEmulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'", label = "512 byte emulation"),
       # Current number of active VIOs
       Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
       # Maximum number of active VIOs

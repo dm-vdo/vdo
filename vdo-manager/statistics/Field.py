@@ -20,7 +20,7 @@
 """
   Field - base class for a field of a collection of statistics
 
-  $Id: //eng/linux-vdo/src/python/vdo/statistics/Field.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/statistics/Field.py#2 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -143,7 +143,8 @@ class IntegerField(Field):
     """
     :inherit:
     """
-    return int(super(IntegerField, self).extractSample(stats, parent))
+    sample = super(IntegerField, self).extractSample(stats, parent)
+    return sample if isinstance(sample, int) else int(sample)
 
 # basic integer types
 class BoolField(IntegerField):
