@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#5 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#6 $
 
 """
 from __future__ import absolute_import
@@ -1371,23 +1371,25 @@ class VDOService(Service):
     # for an already-formatted VDO volume, but vdoformat does that), so we do
     # it by...actually making LVM do it for us!
     try:
-      runCommand(['pvcreate', '-qq', '--test', self.device])
+      runCommand(['pvcreate', '--config', 'devices/scan_lvs=1',
+                  '-qq', '--test', self.device])
     except CommandError as e:
       # Messages from pvcreate aren't localized, so we can look at
       # the message generated and pick it apart. This will need
       # fixing if the message format changes or it gets localized.
       lines = [line.strip() for line in e.getStandardError().splitlines()]
-      if len(lines) == 1:
-        e.setMessage(lines[0])
-      elif ((len(lines) > 1)
-            and (re.match(r"^TEST MODE", lines[0]) is not None)):
-        for line in lines[1:]:
-          detectionMatch = re.match(r"WARNING: (.* detected .*)\.\s+Wipe it\?",
-                                    line)
-          if detectionMatch is not None:
-            raise VDOServiceError('{0}; use --force to override'
-                                  .format(detectionMatch.group(1)),
-                                  exitStatus = StateExitStatus)
+      lineCount = len(lines)
+      if lineCount > 0:
+        for i in range(lineCount):       
+          if (re.match(r"^TEST MODE", lines[i]) is not None):
+            for line in lines[i+1:]:
+              detectionMatch = re.match(r"WARNING: (.* detected .*)"
+                                        "\.\s+Wipe it\?", line)
+              if detectionMatch is not None:
+                raise VDOServiceError('{0}; use --force to override'
+                                      .format(detectionMatch.group(1)),
+                                      exitStatus = StateExitStatus)
+            break
         # Use the last line from the test output.
         # This will be the human-useful description of the problem.
         e.setMessage(lines[-1])
