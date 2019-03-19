@@ -20,7 +20,7 @@
 """
   __init__ file for statistics package
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/statistics/__init__.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/__init__.py#1 $
 """
 import gettext
 gettext.install('statistics')

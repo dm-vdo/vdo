@@ -16,17 +16,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/numericDefs.h#2 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/numericDefs.h#2 $
  */
 
 #ifndef LINUX_USER_NUMERIC_DEFS_H
 #define LINUX_USER_NUMERIC_DEFS_H 1
 
 #include <byteswap.h> // defines bswap_16
-#include <endian.h>   // defines __BYTE_ORDER, __BIG_ENDIAN, __LITTLE_ENDIAN
-
-#define BYTE_ORDER    __BYTE_ORDER
-#define BIG_ENDIAN    __BIG_ENDIAN
-#define LITTLE_ENDIAN __LITTLE_ENDIAN
 
 #endif /* LINUX_USER_NUMERIC_DEFS_H */

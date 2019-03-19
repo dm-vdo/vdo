@@ -20,7 +20,7 @@
 """
   Command - runs commands and manages their results
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/utils/Command.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Command.py#3 $
 
 """
 from .Logger import Logger

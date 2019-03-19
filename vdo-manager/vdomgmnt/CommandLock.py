@@ -20,7 +20,7 @@
 """
   CommandLock - simple process locking
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/CommandLock.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/CommandLock.py#1 $
 
 """
 from utils import Command, FileLock, Logger

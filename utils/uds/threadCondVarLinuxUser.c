@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadCondVarLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/threadCondVarLinuxUser.c#2 $
  */
 
 #include "threadCondVar.h"
@@ -27,8 +27,8 @@
 int initCondAttr(pthread_condattr_t *cond_attr)
 {
   int result = pthread_condattr_init(cond_attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "cond_attr: 0x%p",
-                                (void *) cond_attr);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_condattr_init error");
 }
 
 /**********************************************************************/
@@ -36,16 +36,16 @@ int setClockCondAttr(pthread_condattr_t *cond_attr, clockid_t clockID)
 {
   int result = pthread_condattr_setclock(cond_attr, clockID);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "cond_attr: 0x%p, clockID: %d",
-                                (void *) cond_attr, clockID);
+                                "pthread_condattr_setclock error, clockID: %d",
+                                clockID);
 }
 
 /**********************************************************************/
 int destroyCondAttr(pthread_condattr_t *cond_attr)
 {
   int result = pthread_condattr_destroy(cond_attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "cond_attr: 0x%p",
-                                (void *) cond_attr);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_condattr_destroy error");
 }
 
 /**********************************************************************/
@@ -53,40 +53,37 @@ int initCondWithAttr(CondVar *cond, pthread_condattr_t *cond_attr)
 {
   int result = pthread_cond_init(cond, cond_attr);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "cond: 0x%p, cond_attr: 0x%p",
-                                (void *) cond, (void *) cond_attr);
+                                "pthread_cond_init error");
 }
 
 /**********************************************************************/
 int initCond(CondVar *cond)
 {
-  int result = pthread_cond_init(cond, NULL);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "cond: 0x%p", (void *) cond);
+  return initCondWithAttr(cond, NULL);
 }
 
 /**********************************************************************/
 int signalCond(CondVar *cond)
 {
   int result = pthread_cond_signal(cond);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "cond: 0x%p",
-                                (void *) cond);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_cond_signal error");
 }
 
 /**********************************************************************/
 int broadcastCond(CondVar *cond)
 {
   int result = pthread_cond_broadcast(cond);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "cond: 0x%p",
-                                (void *) cond);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_cond_broadcast error");
 }
 
 /**********************************************************************/
 int waitCond(CondVar *cond, Mutex *mutex)
 {
   int result = pthread_cond_wait(cond, mutex);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "cond: 0x%p",
-                                (void *) cond);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_cond_wait error");
 }
 
 /**********************************************************************/
@@ -99,6 +96,6 @@ int timedWaitCond(CondVar *cond, Mutex *mutex, const AbsTime *deadline)
 int destroyCond(CondVar *cond)
 {
   int result = pthread_cond_destroy(cond);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "cond: 0x%p",
-                                (void *) cond);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_cond_destroy error");
 }

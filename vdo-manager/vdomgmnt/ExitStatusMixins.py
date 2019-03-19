@@ -42,7 +42,7 @@
   at instantiation by passing any of the ExitStatus hierarchy classes as the
   'exitStatus' instantiation parameter.
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/ExitStatusMixins.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/ExitStatusMixins.py#1 $
 
 """
 

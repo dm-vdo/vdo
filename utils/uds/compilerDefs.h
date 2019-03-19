@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/compilerDefs.h#2 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/compilerDefs.h#1 $
  */
 
 #ifndef LINUX_USER_COMPILER_DEFS_H

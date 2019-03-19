@@ -20,7 +20,7 @@
 """
   Constants - manage VDO constants.
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/Constants.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Constants.py#2 $
 
 """
 import gettext

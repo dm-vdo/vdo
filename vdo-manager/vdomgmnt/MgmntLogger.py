@@ -20,7 +20,7 @@
 """
   MgmntLogger - VDO manager logging
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/MgmntLogger.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/MgmntLogger.py#2 $
 
 """
 from utils import Logger

@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/VDOService.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOService.py#34 $
 
 """
 
@@ -284,6 +284,12 @@ class VDOService(Service):
               self.device)
       raise VDODeviceAlreadyConfiguredError(msg)
 
+    # Check that there isn't an already extant dm target with the VDO's name.
+    if self._mapperDeviceExists():
+      msg = _("Name conflict with extant device mapper target {0}").format(
+              self.getName())
+      raise VDOServiceError(msg, exitStatus = StateExitStatus)
+
     # Check that we have enough kernel memory to at least create the index.
     self._validateAvailableMemory(self.indexMemory);
 
@@ -470,6 +476,7 @@ class VDOService(Service):
     self.log.info(_("Preparing to increase physical size of VDO {0}").format(
       self.getName()))
 
+
     transaction = Transaction.transaction()
     transaction.setMessage(self.log.error,
                         _("Cannot prepare to grow physical on VDO {0}").format(
@@ -480,7 +487,6 @@ class VDOService(Service):
 
     self._suspend()
     transaction.addUndoStage(self._resume)
-
     transaction.setMessage(self.log.error,
                            _("Cannot grow physical on VDO {0}").format(
                                self.getName()))
@@ -523,6 +529,17 @@ class VDOService(Service):
     """
     self.log.announce(_("Removing VDO {0}").format(self.getName()))
 
+    # Fail if the device does not exist and --force is not specified. If
+    # this remove is being run to undo a failed create, the device will
+    # exist.
+    try:
+      os.stat(self.device)
+    except OSError:
+      if not force:
+        msg = _("Device {0} not found. Remove VDO with --force.").format(
+          self.device)
+        raise VDOMissingDeviceError(msg)
+
     localRemoveSteps = []
     try:
       self.stop(force, localRemoveSteps)
@@ -538,32 +555,34 @@ class VDOService(Service):
         removeSteps.extend(["    {0}".format(s) for s in localRemoveSteps])
       raise
 
-    # Fail if the device does not exist and --force is not specified. If
-    # this remove is being run to undo a failed create, the device will
-    # exist.
-    try:
-      os.stat(self.device)
-    except OSError:
-      if not force:
-        msg = _("Device {0} not found. Remove VDO with --force.").format(
-          self.device)
-        raise VDOMissingDeviceError(msg)
-
     self.config.removeVdo(self.getName())
 
     # We delete the metadata after we remove the entry from the config
     # file because if we do it before and the removal from the config
     # fails, we will end up with a valid looking entry in the config
     # that has no valid metadata.
-    self._clearMetadata()
-
+    #
+    # Having gotten this far we know that either no one is holding on to the
+    # underlying device or we skipped that check because we weren't running.
+    # We could be in one of a number of clean up conditions and only if the
+    # underlying device isn't in use can we clear the metadata.
+    #
+    # This really isn't sufficient but we cannot completely determine that no
+    # one has data of any import on the device.  For example, if the device was
+    # being used raw we have no way of determining that.  We do what we can.
+    if not self._hasHolders():
+      self._clearMetadata()
 
   ######################################################################
   def running(self):
     """Returns True if the VDO service is available."""
     try:
-      runCommand(["dmsetup", "status", self.getName()])
-      return True
+      result = runCommand(["dmsetup", "status", "--target",
+                           Defaults.vdoTargetName, self.getName()])
+      # dmsetup does not error as long as the device exists even if it's not
+      # of the specified target type.  However, if it's not of the specified
+      # target type there is no returned info.
+      return result.strip() != ""
     except Exception:
       return False
 
@@ -708,11 +727,12 @@ class VDOService(Service):
             self.getName()))
         return
 
-    if self._hasHolders():
+    running = self.running()
+    if running and self._hasHolders():
       msg = _("cannot stop VDO volume {0}: in use").format(self.getName())
       raise ServiceError(msg, exitStatus = StateExitStatus)
 
-    if self._hasMounts() or (not execute):
+    if (running and self._hasMounts()) or (not execute):
       command = ["umount", "-f", self.getPath()]
       if removeSteps is not None:
         removeSteps.append(" ".join(command))
@@ -731,11 +751,12 @@ class VDOService(Service):
     command = ["udevadm", "settle"]
     if removeSteps is not None:
       removeSteps.append(" ".join(command))
-    if execute:
+    if running and execute:
       runCommand(command, noThrow=True)
 
-    self._stopFullnessMonitoring(execute, removeSteps)
-    
+    if running:
+      self._stopFullnessMonitoring(execute, removeSteps)
+
     # In a modern Linux, we would use "dmsetup remove --retry".
     # But SQUEEZE does not have the --retry option.
     command = ["dmsetup", "remove", self.getName()]
@@ -743,7 +764,7 @@ class VDOService(Service):
       removeSteps.append(" ".join(command))
 
     inUse = True
-    if execute:
+    if running and execute:
       for unused_i in range(10):
         try:
           runCommand(command)
@@ -759,6 +780,8 @@ class VDOService(Service):
     if not execute:
       self._generatePreviousOperationFailureResponse()
 
+    # Because we may removed the instance above we have to check again to see
+    # if it's running rather than using the value we got above.
     if self.running():
       if inUse:
         msg = _("cannot stop VDO service {0}: device in use").format(
@@ -1340,28 +1363,42 @@ class VDOService(Service):
     # for an already-formatted VDO volume, but vdoformat does that), so we do
     # it by...actually making LVM do it for us!
     try:
-      runCommand(['pvcreate', '-qq', '--test', self.device])
+      runCommand(['pvcreate', '--config', 'devices/scan_lvs=1',
+                  '-qq', '--test', self.device])
     except CommandError as e:
       # Messages from pvcreate aren't localized, so we can look at
       # the message generated and pick it apart. This will need
       # fixing if the message format changes or it gets localized.
       lines = [line.strip() for line in e.getStandardError().splitlines()]
-      if len(lines) == 1:
-        e.setMessage(lines[0])
-      elif ((len(lines) > 1)
-            and (re.match(r"^TEST MODE", lines[0]) is not None)):
-        for line in lines[1:]:
-          detectionMatch = re.match(r"WARNING: (.* detected .*)\.\s+Wipe it\?",
-                                    line)
-          if detectionMatch is not None:
-            raise VDOServiceError('{0}; use --force to override'
-                                  .format(detectionMatch.group(1)),
-                                  exitStatus = StateExitStatus)
+      lineCount = len(lines)
+      if lineCount > 0:
+        for i in range(lineCount):       
+          if (re.match(r"^TEST MODE", lines[i]) is not None):
+            for line in lines[i+1:]:
+              detectionMatch = re.match(r"WARNING: (.* detected .*)"
+                                        "\.\s+Wipe it\?", line)
+              if detectionMatch is not None:
+                raise VDOServiceError('{0}; use --force to override'
+                                      .format(detectionMatch.group(1)),
+                                      exitStatus = StateExitStatus)
+            break
         # Use the last line from the test output.
         # This will be the human-useful description of the problem.
         e.setMessage(lines[-1])
       # No TEST MODE message, just keep going.
       raise e
+
+    # If this is a physical volume that's not in use by any logical
+    # volumes the above check won't trigger an error. So do a second
+    # check that catches that.
+    try:
+      runCommand(['blkid', '-p', self.device])
+    except CommandError as e:
+      if e.getExitCode() == 2:
+        return
+    raise VDOServiceError('device is a physical volume;'
+                          + ' use --force to override',
+                          exitStatus = StateExitStatus)
 
   ######################################################################
   def _determineInstanceNumber(self):
@@ -1641,6 +1678,16 @@ class VDOService(Service):
       raise
     if logLevel is not None:
       kms.setLogLevel(logLevel)
+
+  ######################################################################
+  def _mapperDeviceExists(self):
+    """Returns True if there already exists a dm target with the name of
+    this VDO."""
+    try:
+      os.stat(self.getPath())
+      return True
+    except OSError:
+      return False
 
   ######################################################################
   @transactional

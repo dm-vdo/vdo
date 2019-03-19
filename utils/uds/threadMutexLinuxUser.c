@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadMutexLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/threadMutexLinuxUser.c#2 $
  */
 
 #include <errno.h>
@@ -33,22 +33,6 @@ static enum MutexKind {
 } hiddenMutexKind = ErrorChecking;
 
 const bool DO_ASSERTIONS = true;
-
-/**********************************************************************/
-static int initMutexAttr(pthread_mutexattr_t *mutexattr)
-{
-  int result = pthread_mutexattr_init(mutexattr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "mutexattr: 0x%p", (void *) mutexattr);
-}
-
-/**********************************************************************/
-static int destroyMutexAttr(pthread_mutexattr_t *mutexattr)
-{
-  int result = pthread_mutexattr_destroy(mutexattr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "mutexattr: 0x%p", (void *) mutexattr);
-}
 
 /**********************************************************************/
 static void initializeMutexKind(void)
@@ -89,22 +73,26 @@ static enum MutexKind getMutexKind(void)
 int initializeMutex(Mutex *mutex, bool assertOnError)
 {
   pthread_mutexattr_t attr;
-  initMutexAttr(&attr);
-
+  int result = pthread_mutexattr_init(&attr);
+  if (result != 0) {
+    return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                  "pthread_mutexattr_init error");
+  }
   if (getMutexKind() == ErrorChecking) {
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   }
-  int result = pthread_mutex_init(mutex, &attr);
+  result = pthread_mutex_init(mutex, &attr);
   if ((result != 0) && assertOnError) {
-    result = ASSERT_WITH_ERROR_CODE((result == 0), result, "mutex: 0x%p",
-                                    (void *) mutex);
+    result = ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                    "pthread_mutex_init error");
   }
-
-  int result2 = destroyMutexAttr(&attr);
-  if (result == UDS_SUCCESS) {
-    result = result2;
+  int result2 = pthread_mutexattr_destroy(&attr);
+  if (result2 != 0) {
+    ASSERT_LOG_ONLY((result2 == 0), "pthread_mutexattr_destroy error");
+    if (result == UDS_SUCCESS) {
+      result = result2;
+    }
   }
-
   return result;
 }
 
@@ -118,8 +106,8 @@ int initMutex(Mutex *mutex)
 int destroyMutex(Mutex *mutex)
 {
   int result = pthread_mutex_destroy(mutex);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "mutex: 0x%p",
-                                (void *) mutex);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_mutex_destroy error");
 }
 
 /**********************************************************************
@@ -133,8 +121,7 @@ void lockMutex(Mutex *mutex)
 {
   int result __attribute__((unused)) = pthread_mutex_lock(mutex);
 #ifndef NDEBUG
-  ASSERT_LOG_ONLY((result == 0), "mutex: 0x%p, result: %d",
-                  (void *) mutex, result);
+  ASSERT_LOG_ONLY((result == 0), "pthread_mutex_lock error %d", result);
 #endif
 }
 
@@ -143,7 +130,6 @@ void unlockMutex(Mutex *mutex)
 {
   int result  __attribute__((unused)) = pthread_mutex_unlock(mutex);
 #ifndef NDEBUG
-  ASSERT_LOG_ONLY((result == 0), "mutex: 0x%p, result: %d",
-                  (void *) mutex, result);
+  ASSERT_LOG_ONLY((result == 0), "pthread_mutex_unlock error %d", result);
 #endif
 }

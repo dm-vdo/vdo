@@ -21,7 +21,7 @@
 
   YAMLObject - Provides mapping to/from YAML.
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/utils/YAMLObject.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/YAMLObject.py#2 $
 
 """
 

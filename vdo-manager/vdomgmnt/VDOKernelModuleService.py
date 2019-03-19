@@ -20,7 +20,7 @@
 """
   VDOKernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
 
 """
 from . import Defaults

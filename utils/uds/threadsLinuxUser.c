@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadsLinuxUser.c#5 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/threadsLinuxUser.c#4 $
  */
 
 #include "threads.h"
@@ -41,24 +41,16 @@
 static UdsThreadStartHook *threadStartHook = NULL;
 
 /**********************************************************************/
-int schedGetAffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask)
-{
-  return ASSERT_WITH_ERROR_CODE(sched_getaffinity(pid, cpusetsize, mask) == 0,
-                                errno, "pid: %d, cpusetsize: %zu, mask: 0x%p",
-                                pid, cpusetsize, (void *) mask);
-}
-
-/**********************************************************************/
 unsigned int getNumCores(void)
 {
   cpu_set_t cpuSet;
-  int result = schedGetAffinity(0, sizeof(cpuSet), &cpuSet);
-  if (result != UDS_SUCCESS) {
-    logWarningWithStringError(result,
+  if (sched_getaffinity(0, sizeof(cpuSet), &cpuSet) != 0) {
+    logWarningWithStringError(errno,
                               "schedGetAffinity() failed, using 1 "
                               "as number of cores.");
     return 1;
   }
+
   unsigned int nCpus = 0;
   for (unsigned int i = 0; i < CPU_SETSIZE; ++i) {
     nCpus += CPU_ISSET(i, &cpuSet);
@@ -163,20 +155,12 @@ int createThread(void      (*threadFunc)(void *),
   tsi->threadData = threadData;
   tsi->name       = name;
 
-  pthread_attr_t attr;
-  result = initThreadAttr(&attr);
-  if (result != UDS_SUCCESS) {
-    FREE(tsi);
-    return UDS_ENOTHREADS;
-  }
-  result = pthread_create(newThread, &attr, threadStarter, tsi);
+  result = pthread_create(newThread, NULL, threadStarter, tsi);
   if (result != 0) {
     logErrorWithStringError(errno, "could not create %s thread", name);
-    destroyThreadAttr(&attr);
     FREE(tsi);
     return UDS_ENOTHREADS;
   }
-  destroyThreadAttr(&attr);  // ignore failure
   return UDS_SUCCESS;
 }
 
@@ -188,37 +172,12 @@ int joinThreads(pthread_t th)
 }
 
 /**********************************************************************/
-int destroyThreadAttr(pthread_attr_t *attr)
-{
-  int result = pthread_attr_destroy(attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "attr: 0x%p",
-                                (void *) attr);
-}
-
-/**********************************************************************/
-int initThreadAttr(pthread_attr_t *attr)
-{
-  int result = pthread_attr_init(attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "attr: 0x%p",
-                                (void *) attr);
-}
-
-/**********************************************************************/
-int setThreadStackSize(pthread_attr_t *attr, size_t stacksize)
-{
-  int result = pthread_attr_setstacksize(attr, stacksize);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "attr: 0x%p, stacksize: %zu",
-                                (void *) attr, stacksize);
-}
-
-/**********************************************************************/
 int createThreadKey(pthread_key_t *key,
-                     void (*destr_function) (void *) )
+                    void (*destr_function) (void *) )
 {
   int result = pthread_key_create(key, destr_function);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "key: 0x%p",
-                                (void *) key);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_key_create error");
 }
 
 /**********************************************************************/
@@ -226,7 +185,7 @@ int deleteThreadKey(pthread_key_t key)
 {
   int result = pthread_key_delete(key);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "key: %u", (unsigned int) key);
+                                "pthread_key_delete error");
 }
 
 /**********************************************************************/
@@ -234,8 +193,7 @@ int setThreadSpecific(pthread_key_t key, const void *pointer)
 {
   int result = pthread_setspecific(key, pointer);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "key: %u, pointer: 0x%p",
-                                (unsigned int) key, (const void *) pointer);
+                                "pthread_setspecific error");
 }
 
 /**********************************************************************/
@@ -249,8 +207,7 @@ int initializeBarrier(Barrier *barrier, unsigned int threadCount)
 {
   int result = pthread_barrier_init(barrier, NULL, threadCount);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_barrier_init(0x%p, NULL, %u)",
-                                (void *) barrier, threadCount);
+                                "pthread_barrier_init error");
 }
 
 /**********************************************************************/
@@ -258,8 +215,7 @@ int destroyBarrier(Barrier *barrier)
 {
   int result = pthread_barrier_destroy(barrier);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_barrier_destroy(0x%p)",
-                                (void *) barrier);
+                                "pthread_barrier_destroy error");
 }
 
 /**********************************************************************/
@@ -280,8 +236,7 @@ int enterBarrier(Barrier *barrier, bool *winner)
     *winner = false;
   }
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_barrier_wait(0x%p)",
-                                (void *) barrier);
+                                "pthread_barrier_wait error");
 }
 
 /**********************************************************************/

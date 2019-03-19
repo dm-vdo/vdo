@@ -20,7 +20,7 @@
 """
   SizeString - LVM-style size strings
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/SizeString.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/SizeString.py#1 $
 
 """
 import locale

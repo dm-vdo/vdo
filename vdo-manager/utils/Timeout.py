@@ -21,7 +21,7 @@
 
   Timeout - context manager that implements a timeout.
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/utils/Timeout.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Timeout.py#1 $
 
 """
 import signal

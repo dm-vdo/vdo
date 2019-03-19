@@ -20,7 +20,7 @@
 """
   Service - Abstract superclass for services
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/Service.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Service.py#2 $
 
 """
 from . import ExitStatus

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadDefs.h#4 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/threadDefs.h#4 $
  *
  * LINUX USER-SPACE VERSION
  */
@@ -112,7 +112,7 @@ int initializeMutex(Mutex *mutex, bool assertOnError);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int initMutex(Mutex *mutex);
+int initMutex(Mutex *mutex) __attribute__((warn_unused_result));
 
 /**
  * Destroy a mutex (with error checking during development).
@@ -136,19 +136,6 @@ void lockMutex(Mutex *mutex);
  * @param mutex mutex to unlock
  **/
 void unlockMutex(Mutex *mutex);
-
-/**
- * Retrieve the affinity mask.
- * (see also sched_getaffinity)
- *
- * @param pid         pid of process for which to get the affinity mask or 0
- *                    for the current process
- * @param cpusetsize  length in bytes of the mask
- * @param mask        pointer to a CPU set
- *
- * @return            UDS_SUCCESS or error code
- **/
-int schedGetAffinity(pid_t pid, size_t cpusetsize, cpu_set_t *mask);
 
 /**
  * Get a value identifying the CPU on which this thread is running (see
@@ -178,35 +165,6 @@ unsigned int countAllCores(void);
  * @param name   a buffer of size at least 16 to write the name to
  **/
 void getThreadName(char *name);
-
-/**
- * Destroy a thread attribute object.
- *
- * @param attr  a pointer to the attribute object to destroy
- *
- * @return      UDS_SUCCESS or error code
- **/
-int destroyThreadAttr(pthread_attr_t *attr);
-
-/**
- * init a thread attribute object.
- *
- * @param attr  a pointer to the attribute object
- *
- * @return      UDS_SUCCESS or error code
- **/
-int initThreadAttr(pthread_attr_t *attr);
-
-/**
- * Add information about the thread's minimum stack size to the thread
- * attribute object.
- *
- * @param attr       attribute object in which to set the stack size.
- * @param stacksize  the desired minimum stack size
- *
- * @return           UDS_SUCCESS or error code
- **/
-int setThreadStackSize(pthread_attr_t *attr, size_t stacksize);
 
 /**
  * Allocate a thread specific key for thread specific data.

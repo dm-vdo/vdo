@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/featureDefs.h#5 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/featureDefs.h#1 $
  */
 
 #ifndef LINUX_USER_FEATURE_DEFS_H
@@ -25,6 +25,5 @@
 #define DESTRUCTOR     1 // Has program destructors
 #define ENVIRONMENT    1 // Has environment variables
 #define GRID           0 // No grid
-#define HISTOGRAMS     1 // Include histograms
 
 #endif /* LINUX_USER_FEATURE_DEFS_H */

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileIORegion.c#3 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/fileIORegion.c#2 $
  */
 
 #include "fileIORegion.h"
@@ -34,7 +34,6 @@ typedef struct fileIORegion {
   bool     writing;
   size_t   blockSize;
   size_t   bestSize;
-  size_t   minimumSize;
 } FileIORegion;
 
 /*****************************************************************************/
@@ -95,29 +94,6 @@ void setFileRegionCloseBehavior(IORegion *region, bool closeFile)
 }
 
 /*****************************************************************************/
-int setFileRegionGranularity(IORegion *region, size_t size)
-{
-  FileIORegion *fior = asFileIORegion(region);
-
-  bool        validate = false;
-  const char *reason   = "";
-  if (size > fior->blockSize) {
-    validate = (size % fior->blockSize == 0);
-    reason = "not divisible by";
-  } else {
-    validate = (fior->blockSize % size == 0);
-    reason = "not a multiple of";
-  }
-  if (!validate) {
-    return logErrorWithStringError(UDS_INCORRECT_ALIGNMENT,
-                                   "minimum size %zd %s block size %zd",
-                                   size, reason, fior->blockSize);
-  }
-  fior->minimumSize = size;
-  return UDS_SUCCESS;
-}
-
-/*****************************************************************************/
 static int validateIO(FileIORegion *fior,
                       off_t         offset,
                       size_t        size,
@@ -130,13 +106,13 @@ static int validateIO(FileIORegion *fior,
                                    willWrite ? "writing" : "reading");
   }
 
-  if (offset % fior->minimumSize != 0) {
+  if (offset % fior->blockSize != 0) {
     return logErrorWithStringError(UDS_INCORRECT_ALIGNMENT,
                                    "alignment %zd not multiple of %zd", offset,
                                    fior->blockSize);
   }
 
-  if (size % fior->minimumSize != 0) {
+  if (size % fior->blockSize != 0) {
     return logErrorWithStringError(UDS_BUFFER_ERROR,
                                    "buffer size %zd not a multiple of %zd",
                                    size, fior->blockSize);
@@ -281,7 +257,7 @@ int makeFileRegion(int fd, FileAccess access, IORegion **regionPtr)
   size_t blockSize = 1024;
   size_t bestSize  = 4096;
 
-  int result = getBufferSizeInfo(fd, bestSize, &blockSize, &bestSize);
+  int result = getBufferSizeInfo(bestSize, &blockSize, &bestSize);
   if (result != UDS_SUCCESS) {
     return result;
   }
@@ -306,7 +282,6 @@ int makeFileRegion(int fd, FileAccess access, IORegion **regionPtr)
   fior->writing     = (access >= FU_READ_WRITE);
   fior->blockSize   = blockSize;
   fior->bestSize    = bestSize;
-  fior->minimumSize = blockSize;
   *regionPtr = &fior->common;
   return UDS_SUCCESS;
 }

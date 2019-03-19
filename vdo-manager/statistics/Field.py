@@ -20,7 +20,7 @@
 """
   Field - base class for a field of a collection of statistics
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/statistics/Field.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/Field.py#1 $
 """
 from ctypes import *
 from LabeledValue import LabeledValue

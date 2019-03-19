@@ -20,7 +20,7 @@
 """
   Transaction - provides transactional support
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/utils/Transaction.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Transaction.py#1 $
 
 """
 

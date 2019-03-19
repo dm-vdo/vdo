@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileUtils.c#5 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/fileUtils.c#1 $
  */
 
 #include "fileUtils.h"
@@ -35,53 +35,14 @@
 #include "stringUtils.h"
 #include "syscalls.h"
 
-/***********************************************************************/
-static int getFileBlockSize(int fd, size_t *blockSize)
-{
-  struct stat statbuf;
-  int result = loggingFstat(fd, &statbuf, __func__);
-  if (result == UDS_SUCCESS) {
-    *blockSize = statbuf.st_blksize;
-  }
-  return result;
-}
+enum { MINIMUM_BLOCK_SIZE = 4096 };
 
 /**********************************************************************/
-static int getPageSize(size_t *pageSize)
+int getBufferSizeInfo(size_t  defaultBestSize,
+                      size_t *blockSizePtr,
+                      size_t *bestSizePtr)
 {
-  int oldErrno = errno;
-  errno = 0;
-  long size = sysconf(_SC_PAGESIZE);
-  int result = (((size == -1) && (errno == EINVAL)) ? errno : UDS_SUCCESS);
-  errno = oldErrno;
-  if (result == UDS_SUCCESS) {
-    *pageSize = size;
-  }
-  return result;
-}
-
-/**********************************************************************/
-int getBufferSizeInfo(int          fd,
-                      size_t       defaultBestSize,
-                      size_t      *blockSizePtr,
-                      size_t      *bestSizePtr)
-{
-  size_t fileBlockSize;
-  int result = getFileBlockSize(fd, &fileBlockSize);
-  if (result != UDS_SUCCESS) {
-    return logErrorWithStringError(result, "getBufferSizeInfo: "
-                                   "cannot determine block size for fd: %d",
-                                   fd);
-  }
-
-  size_t blockSize = fileBlockSize;
-
-  // Use the larger of the page size or the device's block size.
-  size_t pageSize;
-  result = getPageSize(&pageSize);
-  if (result == UDS_SUCCESS) {
-    blockSize = leastCommonMultiple(fileBlockSize, pageSize);
-  }
+  size_t blockSize = MINIMUM_BLOCK_SIZE;
 
   if (blockSizePtr != NULL) {
     *blockSizePtr = blockSize;

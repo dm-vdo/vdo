@@ -21,7 +21,7 @@
 
   FileUtils - Provides dmmgmnt file-related capabilities.
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/utils/FileUtils.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/FileUtils.py#1 $
 
 """
 from __future__ import print_function

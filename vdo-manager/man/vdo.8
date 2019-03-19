@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/man/vdo.8#1 $
+.\" $Id: //eng/vdo-releases/magnesium/src/python/vdo/man/vdo.8#18 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -549,6 +549,11 @@ currently \*[indexMemDefault] GB. The special decimal values 0.25, 0.5,
 0.75 can be used, as can any integer value at least \*[indexMemIntMin] and less
 than or equal to \*[indexMemIntMax]. (The special decimal values are matched as
 exact strings; "0.5" works but "0.50" is not accepted.)
+.IP
+Larger values will require more disk space. For a dense index, each
+gigabyte of index memory will use approximately 11 GB of storage. For
+a sparse index, each gigabyte of index memory will use approximately
+100 GB of storage.
 .PP
 .B \-\-help
 .br

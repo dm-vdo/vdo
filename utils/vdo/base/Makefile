@@ -15,9 +15,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium-rhel7.6/src/packaging/src-dist/user/utils/vdo/base/Makefile#1 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/base/Makefile#1 $
 
-VDO_VERSION = 6.1.1.125
+VDO_VERSION = 6.1.2.38
 
 UDS_DIR      = ../../uds
 

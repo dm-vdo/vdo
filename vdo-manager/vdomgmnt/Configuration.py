@@ -20,7 +20,7 @@
 """
   Configuration - VDO manager configuration file handling
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/Configuration.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Configuration.py#7 $
 
 """
 from . import ArgumentError, MgmntLogger

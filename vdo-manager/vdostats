@@ -22,7 +22,7 @@
 """
   vdoStats - Report statistics from an Albireo VDO.
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdoStats#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdoStats#3 $
 """
 
 from __future__ import print_function

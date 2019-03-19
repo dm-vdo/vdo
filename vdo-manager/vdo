@@ -22,7 +22,7 @@
 """
   vdo - VDO management utility
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdo#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdo#18 $
 
 """
 #pylint: disable=C0302
@@ -664,6 +664,11 @@ suffix is optional""").format(options
       0.75 can be used, as can any integer value at least {min} and less
       than or equal to {max}. (The special deciml values are matched as
       exact strings; "0.5" works but "0.50" is not accepted.)
+
+      Larger values will require more disk space. For a dense index,
+      each gigabyte of index memory will use approximately 11 GB of
+      storage. For a sparse index, each gigabyte of index memory will
+      use approximately 100 GB of storage.
                                  """)
                         .format(indexMem = Defaults.indexMem,
                                 min = Defaults.indexMemIntMin,

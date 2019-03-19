@@ -20,7 +20,7 @@
 """
   Utils - miscellaneous utilities for the VDO manager
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/vdomgmnt/Utils.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Utils.py#1 $
 
 """
 from utils import CommandError, runCommand

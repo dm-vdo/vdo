@@ -21,7 +21,7 @@
   LabeledValue - A sampled statistic with a label. Used for formatting stats
   output.
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/statistics/LabeledValue.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/LabeledValue.py#1 $
 """
 
 class LabeledValue(object):

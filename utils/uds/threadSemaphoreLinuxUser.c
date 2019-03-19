@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/threadSemaphoreLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/threadSemaphoreLinuxUser.c#2 $
  */
 
 #include "threadSemaphore.h"
@@ -33,19 +33,16 @@ int initializeSemaphore(Semaphore    *semaphore,
                         const char   *context)
 {
   int result = sem_init(semaphore, false, value);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "%s: sem_init(0x%p, %u)",
-                                context, (void *) semaphore, value);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result, "%s: sem_init error",
+                                context);
 }
 
 /**********************************************************************/
-int destroySemaphore(Semaphore    *semaphore,
-                     const char   *context)
+int destroySemaphore(Semaphore *semaphore, const char *context)
 {
   int result = sem_destroy(semaphore);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "%s: sem_destroy(0x%p)",
-                                context, (void *) semaphore);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result, "%s: sem_destroy error",
+                                context);
 }
 
 /**********************************************************************/
@@ -58,8 +55,7 @@ void acquireSemaphore(Semaphore  *semaphore,
   } while ((result == -1) && (errno == EINTR));
 
 #ifndef NDEBUG
-  ASSERT_LOG_ONLY((result == 0), "%s: sem_wait(0x%p) -> errno %d",
-                  context, (void *) semaphore, errno);
+  ASSERT_LOG_ONLY((result == 0), "%s: sem_wait error %d", context, errno);
 #endif
 }
 
@@ -76,9 +72,8 @@ bool attemptSemaphore(Semaphore *semaphore,
       }
     } while (errno == EINTR);
 #ifndef NDEBUG
-    ASSERT_LOG_ONLY((errno == ETIMEDOUT),
-                    "%s: sem_timedwait(0x%p, %ld) -> errno %d",
-                    context, (void *) semaphore, (long) timeout, errno);
+    ASSERT_LOG_ONLY((errno == ETIMEDOUT), "%s: sem_timedwait error %d",
+                    context, errno);
 #endif
   } else {
     do {
@@ -87,8 +82,8 @@ bool attemptSemaphore(Semaphore *semaphore,
       }
     } while (errno == EINTR);
 #ifndef NDEBUG
-    ASSERT_LOG_ONLY((errno == EAGAIN), "%s: sem_trywait(0x%p) -> errno %d",
-                    context, (void *) semaphore, errno);
+    ASSERT_LOG_ONLY((errno == EAGAIN), "%s: sem_trywait error %d",
+                    context, errno);
 #endif
   }
   return false;
@@ -100,7 +95,6 @@ void releaseSemaphore(Semaphore  *semaphore,
 {
   int result __attribute__((unused)) = sem_post(semaphore);
 #ifndef NDEBUG
-  ASSERT_LOG_ONLY((result == 0), "%s: sem_post(0x%p) -> errno %d",
-                  context, (void *) semaphore, errno);
+  ASSERT_LOG_ONLY((result == 0), "%s: sem_post error %d", context, errno);
 #endif
 }

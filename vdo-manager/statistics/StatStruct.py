@@ -20,7 +20,7 @@
 """
   StatStruct -- classes for sampling statistics from a VDO via ioctls
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/statistics/StatStruct.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/StatStruct.py#2 $
 """
 
 from ctypes import *

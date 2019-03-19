@@ -20,7 +20,7 @@
 """
   Command -- a command which is implemented as an ioctl
 
-  $Id: //eng/vdo-releases/magnesium-rhel7.6/src/python/vdo/statistics/Command.py#1 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/statistics/Command.py#1 $
 """
 
 import fcntl

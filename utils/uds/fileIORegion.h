@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/flanders/userLinux/uds/fileIORegion.h#2 $
+ * $Id: //eng/uds-releases/gloria/userLinux/uds/fileIORegion.h#2 $
  */
 
 #ifndef FILE_IO_REGION_H
@@ -70,21 +70,5 @@ int setFileRegionLimit(IORegion *region, off_t limit)
  * @param closeFile             If true, close the underlying file descriptor.
  **/
 void setFileRegionCloseBehavior(IORegion *region, bool closeFile);
-
-/**
- * Set the minimum granularity for offset and buffer length calculations.
- * All offsets and sizes for IO must be a multiple of this size.
- * The default granularity is the underlying file system block size, and
- * should only be changed in tests.
- *
- * @param region                An IORegion created by makeFileRegion() or
- *                                openFileRegion().
- * @param size                  The minimum IO size in bytes. Must evenly
- *                              divide the existing block size.
- *
- * @return UDS_SUCCESS or an error code.
- **/
-int setFileRegionGranularity(IORegion *region, size_t size)
-  __attribute__((warn_unused_result));
 
 #endif // FILE_IO_REGION_H
