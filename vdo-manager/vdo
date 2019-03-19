@@ -22,7 +22,7 @@
 """
   vdo - VDO management utility
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdo#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdo#2 $
 
 """
 #pylint: disable=C0302
@@ -65,18 +65,27 @@ def configureLogger(name, logfile = None, debug = False):
   logger.addHandler(handler)
 
   if logfile is not None:
-    if os.path.exists(logfile) and not os.path.isfile(logfile):
-      # Support /dev/stderr and the like.
-      handler = logging.FileHandler(logfile)
-    else:
-      handler = RotatingFileHandler(logfile,
-                                    maxBytes=10*1024*1024,
-                                    backupCount=5)
-    formatter = logging.Formatter('%(asctime)s %(name)s' + formatBase)
-    handler.setFormatter(formatter)
-    handler.setLevel(logging.DEBUG if debugging else logging.INFO)
-    logger.addHandler(handler)
+    try:
+      if os.path.isfile(logfile) or not os.path.exists(logfile):
+        # Nonexistent or file, treat it as a file
+        handler = RotatingFileHandler(logfile,
+                                      maxBytes=10*1024*1024,
+                                      backupCount=5)
+      else:
+        # Exists but not a file, treat it as a stream
+        logstream = open(logfile, "w")
+        handler = logging.StreamHandler(stream=logstream)
 
+      formatter = logging.Formatter('%(asctime)s %(name)s' + formatBase)
+      handler.setFormatter(formatter)
+      handler.setLevel(logging.DEBUG if debugging else logging.INFO)
+      logger.addHandler(handler)
+    except Exception as ex:
+      logger.error("Unable to configure logging to '{logfile}' {ex}"
+                   .format(logfile=logfile, ex=ex))
+      sys.exit(1)
+
+  # syslog logger
   try:
     handler = logging.handlers.SysLogHandler(address='/dev/log')
     handler.setFormatter(logging.Formatter(myname + formatBase))
@@ -84,7 +93,6 @@ def configureLogger(name, logfile = None, debug = False):
     logger.addHandler(handler)
   except Exception as ex:
     logger.warn('Unable to configure logging for rsyslog: {0}'.format(ex))
-
 
 ########################################################################
 def main():
