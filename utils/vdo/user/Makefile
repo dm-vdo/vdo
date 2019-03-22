@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#4 $
+# $Id: //eng/vdo-releases/aluminum-rhel8.0/src/packaging/src-dist/user/utils/vdo/user/Makefile#1 $
 
-VDO_VERSION = 6.2.0.293
+VDO_VERSION = 6.2.0.298
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
