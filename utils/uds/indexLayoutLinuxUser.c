@@ -16,16 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/indexLayoutLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/indexLayoutLinuxUser.c#1 $
  */
 
 #include "errors.h"
-#include "fileIORegion.h"
 #include "indexLayout.h"
 #include "indexLayoutParser.h"
+#include "ioFactory.h"
 #include "logger.h"
 #include "memoryAlloc.h"
-#include "singleFileLayout.h"
 #include "uds.h"
 
 /*****************************************************************************/
@@ -72,27 +71,29 @@ int makeIndexLayout(const char              *name,
     }
   }
 
-  IORegion *region = NULL;
-  if (newLayout) {
-    result = openFileRegion(file, FU_CREATE_READ_WRITE, &region);
-    if (result == UDS_SUCCESS) {
-      result = setFileRegionLimit(region, offset + size);
-    }
-  } else {
-    result = openFileRegion(file, FU_READ_WRITE, &region);
-  }
-
+  IOFactory *factory = NULL;
+  result = makeIOFactory(file,
+                         newLayout ? FU_CREATE_READ_WRITE : FU_READ_WRITE,
+                         &factory);
   FREE(params);
   if (result != UDS_SUCCESS) {
-    closeIORegion(&region);
     return result;
   }
-
-
+  IORegion *region = NULL;
+  result = makeIORegion(factory, offset, newLayout ? size : 0, &region);
+  int freeResult = putIOFactory(factory);
+  if (result != UDS_SUCCESS) {
+    return result;
+  }
+  if (freeResult != UDS_SUCCESS) {
+    closeIORegion(&region);
+    return freeResult;
+  }
+  
   if (newLayout) {
-    result = createSingleFileLayout(region, offset, size, config, layoutPtr);
+    result = makeIndexLayoutForCreate(region, offset, size, config, layoutPtr);
   } else {
-    result = loadSingleFileLayout(region, offset, layoutPtr);
+    result = makeIndexLayoutForLoad(region, offset, layoutPtr);
   }
 
   if (result != UDS_SUCCESS) {

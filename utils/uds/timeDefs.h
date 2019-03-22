@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/timeDefs.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/timeDefs.h#1 $
  */
 
 #ifndef LINUX_USER_TIME_DEFS_H

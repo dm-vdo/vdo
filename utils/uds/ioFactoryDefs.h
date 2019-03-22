@@ -16,22 +16,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/src/uds/indexRouterStats.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/ioFactoryDefs.h#1 $
  */
 
-#ifndef INDEX_ROUTER_STATS_H
-#define INDEX_ROUTER_STATS_H
+#ifndef LINUX_USER_IO_FACTORY_DEFS_H
+#define LINUX_USER_IO_FACTORY_DEFS_H 1
 
-#include "cacheCounters.h"
+#include "fileUtils.h"
 
-struct indexRouterStatCounters {
-  uint64_t      entriesIndexed;
-  uint64_t      memoryUsed;
-  uint64_t      diskUsed;
-  uint64_t      collisions;
-  uint64_t      entriesDiscarded;
-  uint64_t      checkpoints;
-  CacheCounters volumeCache;
-};
+struct ioFactory;
 
-#endif /* INDEX_ROUTER_STATS_H */
+/**
+ * Create an IOFactory.  The IOFactory is returned with a reference count of 1.
+ *
+ * @param path        The path to the block device or file that contains the
+ *                    block stream
+ * @param access      The requested access kind.
+ * @param factoryPtr  The IOFactory is returned here
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+__attribute__((warn_unused_result))
+int makeIOFactory(const char        *path,
+                  FileAccess         access,
+                  struct ioFactory **factoryPtr);
+
+#endif /* LINUX_USER_IO_FACTORY_DEFS_H */

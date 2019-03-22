@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/featureDefs.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/featureDefs.h#1 $
  */
 
 #ifndef LINUX_USER_FEATURE_DEFS_H
@@ -24,6 +24,5 @@
 
 #define DESTRUCTOR     1 // Has program destructors
 #define ENVIRONMENT    1 // Has environment variables
-#define GRID           0 // No grid
 
 #endif /* LINUX_USER_FEATURE_DEFS_H */

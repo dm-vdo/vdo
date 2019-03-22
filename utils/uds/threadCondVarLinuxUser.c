@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/threadCondVarLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadCondVarLinuxUser.c#1 $
  */
 
 #include "threadCondVar.h"
@@ -24,42 +24,11 @@
 #include "permassert.h"
 
 /**********************************************************************/
-int initCondAttr(pthread_condattr_t *cond_attr)
-{
-  int result = pthread_condattr_init(cond_attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_condattr_init error");
-}
-
-/**********************************************************************/
-int setClockCondAttr(pthread_condattr_t *cond_attr, clockid_t clockID)
-{
-  int result = pthread_condattr_setclock(cond_attr, clockID);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_condattr_setclock error, clockID: %d",
-                                clockID);
-}
-
-/**********************************************************************/
-int destroyCondAttr(pthread_condattr_t *cond_attr)
-{
-  int result = pthread_condattr_destroy(cond_attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_condattr_destroy error");
-}
-
-/**********************************************************************/
-int initCondWithAttr(CondVar *cond, pthread_condattr_t *cond_attr)
-{
-  int result = pthread_cond_init(cond, cond_attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_cond_init error");
-}
-
-/**********************************************************************/
 int initCond(CondVar *cond)
 {
-  return initCondWithAttr(cond, NULL);
+  int result = pthread_cond_init(cond, NULL);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_cond_init error");
 }
 
 /**********************************************************************/

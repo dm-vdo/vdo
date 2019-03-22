@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/fileUtils.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#1 $
  */
 
 #ifndef FILE_UTILS_H
@@ -129,7 +129,7 @@ int syncAndCloseFile(int fd, const char *errorMessage)
 /**
  * Attempt to sync and then close a file, ignoring errors.
  *
- * @param fd  The file descriptor to sync and close
+ * @param fd           The file descriptor to close
  **/
 void trySyncAndCloseFile(int fd);
 
@@ -179,18 +179,6 @@ int readDataAtOffset(int           fd,
                      unsigned int *length)
   __attribute__((warn_unused_result));
 
-/**
- * Read a given number of bytes from a file descriptor and check whether
- * they match expectations.
- *
- * @param fd            The file descriptor from which to read
- * @param requiredValue The expectation
- * @param length        The number of bytes to read and compare
- *
- * @return UDS_SUCCESS or an error code
- **/
-int readAndVerify(int fd, const byte *requiredValue, unsigned int length)
-  __attribute__((warn_unused_result));
 
 /**
  * Write a buffer to a file.
@@ -359,24 +347,6 @@ int loggingFsync(int fd, const char *context)
   __attribute__((warn_unused_result));
 
 /**
- * Wrap the lseek(2) system call.
- *
- * @param fd        The descriptor to seek
- * @param offset    The offset to which to see
- * @param whence    The offset directive (see the lseek(2) man page)
- * @param context   The calling context (for logging)
- * @param offsetPtr A pointer to hold the new file offset (may be NULL)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingLseek(int         fd,
-                 off_t       offset,
-                 int         whence,
-                 const char *context,
-                 off_t      *offsetPtr)
-  __attribute__((warn_unused_result));
-
-/**
  * Wrap the mkdir(2) system call.
  *
  * @param path          The path of the directory to make
@@ -389,36 +359,6 @@ int loggingLseek(int         fd,
 int makeDirectory(const char *path,
                   mode_t      mode,
                   const char *directoryType,
-                  const char *context)
-  __attribute__((warn_unused_result));
-
-/**
- * Wrap the pathconf(2) system call.
- *
- * @param path    The path of the file
- * @param name    The name of the configuration to get for the file
- * @param context The calling context (for logging)
- * @param value   A pointer to hold the option value
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingPathconf(const char *path,
-                    int         name,
-                    const char *context,
-                    long       *value)
-  __attribute__((warn_unused_result));
-
-/**
- * Wrap the rename(2) system call.
- *
- * @param oldPath The path to rename
- * @param newPath The new name
- * @param context The calling context (for logging)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingRename(const char *oldPath,
-                  const char *newPath,
                   const char *context)
   __attribute__((warn_unused_result));
 

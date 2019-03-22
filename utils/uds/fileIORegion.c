@@ -16,49 +16,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/fileIORegion.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#1 $
  */
 
 #include "fileIORegion.h"
 
 #include "compiler.h"
+#include "ioFactory.h"
 #include "logger.h"
 #include "memoryAlloc.h"
 #include "permassert.h"
 
 typedef struct fileIORegion {
-  IORegion common;
-  int      fd;
-  bool     close;
-  bool     reading;
-  bool     writing;
-  size_t   blockSize;
-  size_t   bestSize;
+  IORegion   common;
+  IOFactory *factory;
+  int        fd;
+  bool       reading;
+  bool       writing;
+  size_t     blockSize;
+  size_t     bestSize;
 } FileIORegion;
 
 /*****************************************************************************/
 static INLINE FileIORegion *asFileIORegion(IORegion *region)
 {
   return container_of(region, FileIORegion, common);
-}
-
-/*****************************************************************************/
-int openFileRegion(const char *path, FileAccess access, IORegion **regionPtr)
-{
-  int fd = -1;
-  int result = openFile(path, access, &fd);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  result = makeFileRegion(fd, access, regionPtr);
-  if (result != UDS_SUCCESS) {
-    tryCloseFile(fd);
-    return result;
-  }
-
-  setFileRegionCloseBehavior(*regionPtr, true);
-  return UDS_SUCCESS;
 }
 
 /*****************************************************************************/
@@ -84,13 +66,6 @@ int setFileRegionLimit(IORegion *region, off_t limit)
     }
   }
   return UDS_SUCCESS;
-}
-
-/*****************************************************************************/
-void setFileRegionCloseBehavior(IORegion *region, bool closeFile)
-{
-  FileIORegion *fior = asFileIORegion(region);
-  fior->close = closeFile;
 }
 
 /*****************************************************************************/
@@ -131,12 +106,7 @@ static int validateIO(FileIORegion *fior,
 static int fior_close(IORegion *region)
 {
   FileIORegion *fior = asFileIORegion(region);
-
-  int result = UDS_SUCCESS;
-
-  if (fior->close) {
-    result = closeFile(fior->fd, NULL);
-  }
+  int result = putIOFactory(fior->factory);
   FREE(fior);
   return result;
 }
@@ -252,7 +222,10 @@ static int fior_syncContents(IORegion *region)
 }
 
 /*****************************************************************************/
-int makeFileRegion(int fd, FileAccess access, IORegion **regionPtr)
+int makeFileRegion(IOFactory   *factory,
+                   int          fd,
+                   FileAccess   access,
+                   IORegion   **regionPtr)
 {
   size_t blockSize = 1024;
   size_t bestSize  = 4096;
@@ -267,6 +240,9 @@ int makeFileRegion(int fd, FileAccess access, IORegion **regionPtr)
   if (result != UDS_SUCCESS) {
     return result;
   }
+
+  getIOFactory(factory);
+
   fior->common.clear        = fior_clear;
   fior->common.close        = fior_close;
   fior->common.getBestSize  = fior_getBestSize;
@@ -276,12 +252,12 @@ int makeFileRegion(int fd, FileAccess access, IORegion **regionPtr)
   fior->common.read         = fior_read;
   fior->common.syncContents = fior_syncContents;
   fior->common.write        = fior_write;
-  fior->fd          = fd;
-  fior->close       = false;
-  fior->reading     = (access <= FU_CREATE_READ_WRITE);
-  fior->writing     = (access >= FU_READ_WRITE);
-  fior->blockSize   = blockSize;
-  fior->bestSize    = bestSize;
+  fior->factory   = factory;
+  fior->fd        = fd;
+  fior->reading   = (access <= FU_CREATE_READ_WRITE);
+  fior->writing   = (access >= FU_READ_WRITE);
+  fior->blockSize = blockSize;
+  fior->bestSize  = bestSize;
   *regionPtr = &fior->common;
   return UDS_SUCCESS;
 }

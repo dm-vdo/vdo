@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/threadDefs.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadDefs.h#1 $
  *
  * LINUX USER-SPACE VERSION
  */
@@ -36,61 +36,12 @@
 
 extern const bool DO_ASSERTIONS;
 
-typedef pthread_barrier_t  Barrier;
-typedef pthread_cond_t     CondVar;
-typedef pthread_mutex_t    Mutex;
-typedef sem_t              Semaphore;
-typedef pthread_t          Thread;
-typedef pid_t              ThreadId;
-
-/**
- * Synchronizer for synchronous callbacks.  Really just a SynchronizedBoolean.
- * If you are tempted to just use a semaphore, google for "sem_post sem_wait
- * race" to read about the bug in pthreads.
- **/
-typedef struct synchronousCallback {
-  Mutex   mutex;
-  CondVar condition;
-  bool    complete;
-} SynchronousCallback;
-
-/**
- * Initialize a condition variable attributes object.
- *
- * @param cond_attr condition variable attributes object to init
- *
- * @return          UDS_SUCCESS or error code
- **/
-int initCondAttr(pthread_condattr_t *cond_attr);
-
-/**
- * Set the "clock" condition variable attribute.
- *
- * @param cond_attr condition variable attributes object
- * @param clockID   the clock to use
- *
- * @return          UDS_SUCCESS or error code
- **/
-int setClockCondAttr(pthread_condattr_t *cond_attr, clockid_t clockID);
-
-/**
- * Destroy a condition variable attributes object.
- *
- * @param cond_attr condition variable attributes object to destroy
- *
- * @return          UDS_SUCCESS or error code
- **/
-int destroyCondAttr(pthread_condattr_t *cond_attr);
-
-/**
- * Initialize a condition variable.
- *
- * @param cond       condition variable to init
- * @param cond_attr  condition variable attributes
- *
- * @return           UDS_SUCCESS or error code
- **/
-int initCondWithAttr(CondVar *cond, pthread_condattr_t *cond_attr);
+typedef pthread_barrier_t Barrier;
+typedef pthread_cond_t    CondVar;
+typedef pthread_mutex_t   Mutex;
+typedef sem_t             Semaphore;
+typedef pthread_t         Thread;
+typedef pid_t             ThreadId;
 
 /**
  * Initialize a mutex, optionally asserting if the mutex initialization fails.

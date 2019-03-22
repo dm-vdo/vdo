@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/threadsLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadsLinuxUser.c#1 $
  */
 
 #include "threads.h"
@@ -248,41 +248,4 @@ int yieldScheduler(void)
   }
 
   return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-int initializeSynchronousRequest(SynchronousCallback *callback)
-{
-  int result = initCond(&callback->condition);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-  result = initMutex(&callback->mutex);
-  if (result != UDS_SUCCESS) {
-    destroyCond(&callback->condition);
-    return result;
-  }
-  callback->complete = false;
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-void awaitSynchronousRequest(SynchronousCallback *callback)
-{
-  lockMutex(&callback->mutex);
-  while (!callback->complete) {
-    waitCond(&callback->condition, &callback->mutex);
-  }
-  unlockMutex(&callback->mutex);
-  destroyCond(&callback->condition);
-  destroyMutex(&callback->mutex);
-}
-
-/**********************************************************************/
-void awakenSynchronousRequest(SynchronousCallback *callback)
-{
-  lockMutex(&callback->mutex);
-  callback->complete = true;
-  broadcastCond(&callback->condition);
-  unlockMutex(&callback->mutex);
 }
