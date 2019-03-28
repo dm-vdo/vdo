@@ -19,7 +19,7 @@
 
 # $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#5 $
 
-VDO_VERSION = 6.1.2.38
+VDO_VERSION = 6.1.2.41
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base

@@ -20,7 +20,7 @@
 """
   Logger - VDO manager logging
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Logger.py#2 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/utils/Logger.py#3 $
 
 """
 import logging
@@ -70,18 +70,22 @@ class Logger(object):
     logger.addHandler(handler)
 
     if cls.logfile is not None:
-      if os.path.exists(cls.logfile) and not os.path.isfile(cls.logfile):
-        # Support /dev/stderr and the like.
-        handler = logging.FileHandler(cls.logfile)
-      else:
-        handler = logging.handlers.RotatingFileHandler(cls.logfile,
-                                                       maxBytes=10*1024*1024,
-                                                       backupCount=5)
-      formatter = logging.Formatter('%(asctime)s %(name)s' + formatBase)
-      handler.setFormatter(formatter)
-      handler.setLevel(logging.DEBUG if debugging else logging.INFO)
-      logger.addHandler(handler)
-
+      try:
+        if os.path.exists(cls.logfile) and not os.path.isfile(cls.logfile):
+          # Support /dev/stderr and the like.
+          logstream = open(cls.logfile, "w")
+          handler = logging.StreamHandler(stream=logstream)
+        else:
+          handler = logging.handlers.RotatingFileHandler(cls.logfile,
+                                                         maxBytes=10*1024*1024,
+                                                         backupCount=5)
+        formatter = logging.Formatter('%(asctime)s %(name)s' + formatBase)
+        handler.setFormatter(formatter)
+        handler.setLevel(logging.DEBUG if debugging else logging.INFO)
+        logger.addHandler(handler)
+      except Exception as ex:
+        logger.warn('Unable to configure logging to {logfile}: {ex}'
+                    .format(logfile=cls.logfile, ex=ex))
     try:
       handler = logging.handlers.SysLogHandler(address='/dev/log')
       handler.setFormatter(logging.Formatter(cls.myname + formatBase))

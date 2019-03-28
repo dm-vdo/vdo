@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.2.38
+Version: 6.1.2.41
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -180,12 +180,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate_alloptions.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdoremove.yml
-%doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.py
-# Fedora doesn't byte-compile the examples.
-%if 0%{?rhel}
-%doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.pyc
-%doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.pyo
-%endif
 %dir %{_defaultdocdir}/%{name}/examples/monitor
 %doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_logicalSpace.pl
 %doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_physicalSpace.pl
@@ -201,5 +195,5 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 
 
 %changelog
-* Tue Mar 19 2019 - J. corwin Coburn <corwin@redhat.com> - 6.1.2.38-1
-HASH(0x17d6a10)
+* Wed Mar 27 2019 - J. corwin Coburn <corwin@redhat.com> - 6.1.2.41-1
+HASH(0x8c4a10)

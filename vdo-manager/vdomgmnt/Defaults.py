@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Defaults.py#16 $
+  $Id: //eng/vdo-releases/magnesium/src/python/vdo/vdomgmnt/Defaults.py#17 $
 
 """
 from . import Constants, MgmntLogger, MgmntUtils, SizeString, UserExitStatus
@@ -162,8 +162,8 @@ class Defaults(object):
   def checkConfFile(value):
     """Checks that an option specifies a possible config file path name.
 
-    Currently the only restriction is that the path name may not refer
-    to an existing block device node in the file system.
+    Currently the only restriction is that the if the path already
+    exists, it must be a regular file.
 
     Arguments:
       value (str): Value provided as an argument to the option.
@@ -173,7 +173,11 @@ class Defaults(object):
       ArgumentError
 
     """
-    return Defaults._checkNotBlockFile(value)
+    if value is not None and not os.path.isfile(value):
+      # Get a nicer error message if value refers to a directory or
+      # block device, anything else will be handled later.
+      return Defaults._checkNotBlockFileOrDirectory(value)
+    return value
 
   ######################################################################
   @staticmethod
@@ -215,7 +219,7 @@ class Defaults(object):
     """Checks that an option specifies a possible log file path name.
 
     Currently the only restriction is that the path name may not refer
-    to an existing block device node in the file system.
+    to an existing block device node or directory in the file system.
 
     Arguments:
       value (str): Value provided as an argument to the option.
@@ -225,7 +229,7 @@ class Defaults(object):
       ArgumentError
 
     """
-    return Defaults._checkNotBlockFile(value)
+    return Defaults._checkNotBlockFileOrDirectory(value)
 
   ######################################################################
   @staticmethod
@@ -466,8 +470,9 @@ class Defaults(object):
 
   ######################################################################
   @staticmethod
-  def _checkNotBlockFile(value):
-    """Checks that an option does not specify an existing block device.
+  def _checkNotBlockFileOrDirectory(value):
+    """Checks that an option does not specify an existing block device
+    or directory.
 
     Arguments:
       value (str): Value provided as an argument to the option.
@@ -477,10 +482,12 @@ class Defaults(object):
       ArgumentError
 
     """
-    if (value is not None
-        and os.path.exists(value)
-        and stat.S_ISBLK(os.stat(value).st_mode)):
-      raise ArgumentError(_("{0} is a block device").format(value))
+    if value is not None and os.path.exists(value):
+      pathstat = os.stat(value)
+      if stat.S_ISBLK(pathstat.st_mode):
+        raise ArgumentError(_("{0} is a block device").format(value))
+      if stat.S_ISDIR(pathstat.st_mode):
+        raise ArgumentError(_("{0} is a directory").format(value))
     return value
 
   ######################################################################

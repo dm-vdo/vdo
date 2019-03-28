@@ -1,25 +1,9 @@
-This directory contains an Ansible module that can create and remove VDO
-volumes, modify configuration options, and start and stop VDO volumes.
+This directory contains example playbooks for the "vdo" module in Ansible,
+which can be used to create and remove VDO volumes, modify configuration
+options, and start and stop VDO volumes.
 
+The Ansible "vdo" module can be found in Ansible, version 2.5 or greater.
 General information on Ansible can be found at http://docs.ansible.com/
-
-To install this module:
-
-1. Install Ansible (via a package manager).
-
-2. Install the "vdo.py" module file by copying it into the site-packages
-   subdirectory for Ansible.
-
-   Example for RHEL 7.3:
-   /usr/lib/python2.7/site-packages/ansible/modules/extras/system/vdo.py
-
-   Example for RHEL 7.4:
-   /usr/lib/python2.7/site-packages/ansible/modules/system/vdo.py
-
-   Install the Ansible module on a "control system" to send commands, and
-   each "managed node" system to receive commands (these systems will have
-   VDO installed).
-
 
 To run a playbook:
 

@@ -16,13 +16,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/ansible/Makefile#2 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/ansible/Makefile#3 $
 
 INSTALLFILES=README.txt			\
 	test_vdocreate.yml		\
 	test_vdocreate_alloptions.yml	\
-	test_vdoremove.yml		\
-	vdo.py
+	test_vdoremove.yml
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
