@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/loggerDefs.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/loggerDefs.h#2 $
  *
  */
 
@@ -25,15 +25,15 @@
 
 #include "minisyslog.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // For compatibility with hooks we need when compiling in kernel mode.
 #define PRIptr "p"
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
+/*
+ * Apply a rate limiter to a log method call.
+ *
+ * @param logFunc  A method that does logging, which is always invoked because
+ *                 we do not do ratelimiting in user mode.
+ */
+#define logRatelimit(logFunc, ...) logFunc(__VA_ARGS__)
 
 #endif // LINUX_USER_LOGGER_DEFS_H
