@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum-rhel8.0/src/c++/vdo/user/vdoFormat.c#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoFormat.c#2 $
  */
 
 #include <err.h>
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
   }
 
   if (logicalSize == 0) {
-    printf("Logical blocks defaulted to %" PRIu64 " blocks", logicalBlocks);
+    printf("Logical blocks defaulted to %" PRIu64 " blocks.\n", logicalBlocks);
   }
 
   // Close and sync the underlying file.

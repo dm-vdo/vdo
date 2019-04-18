@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.0.298
+Version: 6.2.1.48
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -52,7 +52,7 @@ make
 make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
   defaultdocdir=%{_defaultdocdir} name=%{name} \
   python3_sitelib=/%{python3_sitelib} mandir=%{_mandir} \
-  unitdir=%{_unitdir} presetdir=%{_presetdir}
+  unitdir=%{_unitdir} presetdir=%{_presetdir} sysconfdir=%{_sysconfdir}
 
 %post
 %systemd_post vdo.service
@@ -122,7 +122,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate_alloptions.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdoremove.yml
-%doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.py
 %dir %{_defaultdocdir}/%{name}/examples/monitor
 %doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_logicalSpace.pl
 %doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_physicalSpace.pl
@@ -135,8 +134,9 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
-
+%dir %{_sysconfdir}/bash_completion.d
+%{_sysconfdir}/bash_completion.d/vdostats
 
 %changelog
-* Fri Mar 22 2019 - J. corwin Coburn <corwin@redhat.com> - 6.2.0.298-1
-HASH(0x23c8b08)
+* Thu Apr 18 2019 - J. corwin Coburn <corwin@redhat.com> - 6.2.1.48-1
+HASH(0x15daa10)

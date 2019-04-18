@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/gloria/userLinux/uds/indexLayoutLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/homer/userLinux/uds/indexLayoutLinuxUser.c#1 $
  */
 
 #include "errors.h"
@@ -39,13 +39,10 @@ int makeIndexLayout(const char              *name,
   uint64_t  size   = 0;
 
   LayoutParameter parameterTable[] = {
-    { "file",      LP_STRING|LP_DEFAULT,   { .str = &file   } },
-    { "size",      LP_UINT64,              { .num = &size   } },
-    { "offset",    LP_UINT64,              { .num = &offset } },
+    { "file",   LP_STRING | LP_DEFAULT, { .str = &file   }, false },
+    { "size",   LP_UINT64,              { .num = &size   }, false },
+    { "offset", LP_UINT64,              { .num = &offset }, false },
   };
-
-  unsigned int numParameters
-    = sizeof(parameterTable) / sizeof(*parameterTable);
 
   char *params = NULL;
   int result = duplicateString(name, "makeIndexLayout parameters", &params);
@@ -55,7 +52,7 @@ int makeIndexLayout(const char              *name,
 
   // note file will be set to memory owned by params
   //
-  result = parseLayoutString(params, parameterTable, numParameters);
+  result = parseLayoutString(params, parameterTable, COUNT_OF(parameterTable));
   if (result != UDS_SUCCESS) {
     FREE(params);
     return result;

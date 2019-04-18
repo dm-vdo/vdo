@@ -15,9 +15,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum-rhel8.0/src/packaging/src-dist/user/utils/vdo/base/Makefile#1 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/base/Makefile#2 $
 
-VDO_VERSION = 6.2.0.298
+VDO_VERSION = 6.2.1.48
 
 UDS_DIR      = ../../uds
 

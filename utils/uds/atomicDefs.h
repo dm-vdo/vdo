@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/gloria/userLinux/uds/atomicDefs.h#5 $
+ * $Id: //eng/uds-releases/homer/userLinux/uds/atomicDefs.h#1 $
  */
 
 #ifndef LINUX_USER_ATOMIC_DEFS_H

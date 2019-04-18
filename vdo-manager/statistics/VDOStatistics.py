@@ -191,7 +191,7 @@ class VDOStatistics(StatStruct):
       Uint32Field("version"),
       Uint32Field("releaseVersion"),
       # Number of blocks used for data
-      Uint64Field("dataBlocksUsed", available = "((not $inRecoveryMode) and ($mode != 'read-only'))"),
+      Uint64Field("dataBlocksUsed", available = "((not $inRecoveryMode) and ($mode != b'read-only'))"),
       # Number of blocks used for VDO metadata
       Uint64Field("overheadBlocksUsed", available = "not $inRecoveryMode"),
       # Number of logical blocks that are currently mapped to physical blocks
@@ -203,9 +203,9 @@ class VDOStatistics(StatStruct):
       Uint64Field("oneKBlocks", label = "1K-blocks", derived = "$physicalBlocks * $blockSize // 1024"),
       Uint64Field("oneKBlocksUsed", label = "1K-blocks used", available = "not $inRecoveryMode", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024"),
       Uint64Field("oneKBlocksAvailable", label = "1K-blocks available", available = "not $inRecoveryMode", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024"),
-      Uint8Field("usedPercent", available = "((not $inRecoveryMode) and ($mode != 'read-only'))", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)"),
+      Uint8Field("usedPercent", available = "((not $inRecoveryMode) and ($mode != b'read-only'))", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)"),
       Uint8Field("savings", display = False, available = "not $inRecoveryMode", derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1"),
-      Uint8Field("savingPercent", available = "((not $inRecoveryMode) and ($mode != 'read-only'))", derived = "$savings if ($savings >= 0) else NotAvailable()"),
+      Uint8Field("savingPercent", available = "((not $inRecoveryMode) and ($mode != b'read-only'))", derived = "$savings if ($savings >= 0) else NotAvailable()"),
       # Size of the block map page cache, in bytes
       Uint64Field("blockMapCacheSize"),
       # String describing the active write policy of the VDO

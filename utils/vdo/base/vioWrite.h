@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum-rhel8.0/src/c++/vdo/base/vioWrite.h#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/base/vioWrite.h#1 $
  */
 
 #ifndef VIO_WRITE_H
