@@ -20,7 +20,7 @@
 """
   DisplaySpec
 
-  $Id: //eng/linux-vdo/src/python/vdo/statistics/StatFormatter.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/statistics/StatFormatter.py#2 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -44,8 +44,8 @@ except NameError:
 class StatFormatter(object):
   """
   An object which formats labeled values. Formatters are able to
-  represent all of the verbose formatting for vdoStats and vdoMonitor
-  (the df-style formatting in vdoStats is done by hand).
+  represent all of the verbose formatting for vdoStats (the df-style formatting
+  is done by hand).
 
   A formatter is specified by supplying a description of the format for each
   level of the hierarchy of labeled values. If the values have more levels than
