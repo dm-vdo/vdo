@@ -22,6 +22,7 @@
 _vdostats()
 {
     local opts cur
+    _init_completion || return
     COMPREPLY=()
     opts="--help --all --human-readable --si --verbose --version"
     cur="${COMP_WORDS[COMP_CWORD]}"

@@ -136,7 +136,8 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
 %dir %{_sysconfdir}/bash_completion.d
+%{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats
 
 %changelog
-* Wed Apr 24 2019 - corwin@bf30-1 - 8.0.0.0-1
+* Fri Apr 26 2019 - corwin@bf30-1 - 8.0.0.0-1
