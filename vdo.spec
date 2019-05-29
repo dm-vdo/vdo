@@ -2,7 +2,6 @@
 #
 #
 #
-
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
 Version: 6.2.1.48
@@ -10,7 +9,6 @@ Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: https://github.com/dm-vdo/vdo/archive/%{version}.tar.gz
 URL: http://github.com/dm-vdo/vdo
-
 ExclusiveArch: x86_64
 ExcludeArch: s390
 ExcludeArch: s390x
@@ -23,7 +21,6 @@ ExcludeArch: i686
 Requires: libuuid >= 2.23
 Requires: lvm2
 Requires: kmod-kvdo >= 6.2
-
 %if 0%{?centos} > 7 || 0%{?fedora}
 # in centos EPEL will be needed
 Requires: python3-PyYAML >= 3.10
@@ -35,7 +32,6 @@ Requires: python36-PyYAML >= 3.10
 BuildRequires: python36
 BuildRequires: python36-devel
 %endif
-
 BuildRequires: device-mapper-event-devel
 BuildRequires: gcc
 BuildRequires: libuuid-devel
@@ -85,19 +81,15 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_bindir}/vdoformat
 %{_bindir}/vdoprepareupgrade
 %{_bindir}/vdoreadonly
-
+%dir %{python3_sitelib}/%{name}
 %if 0%{?fedora}
 %{python3_sitelib}/%{name}/__pycache__/*
 %{python3_sitelib}/%{name}/vdomgmnt/__pycache__/*
 %{python3_sitelib}/%{name}/statistics/__pycache__/*
 %{python3_sitelib}/%{name}/utils/__pycache__/*
 %endif
-
-%dir %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}/__init__.py
-
 %dir %{python3_sitelib}/%{name}/vdomgmnt/
-
 %{python3_sitelib}/%{name}/vdomgmnt/CommandLock.py
 %{python3_sitelib}/%{name}/vdomgmnt/Configuration.py
 %{python3_sitelib}/%{name}/vdomgmnt/Constants.py
@@ -123,7 +115,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python3_sitelib}/%{name}/statistics/VDOReleaseVersions.py
 %{python3_sitelib}/%{name}/statistics/VDOStatistics.py
 %{python3_sitelib}/%{name}/statistics/__init__.py
-
 %dir %{python3_sitelib}/%{name}/utils/
 %{python3_sitelib}/%{name}/utils/Command.py
 %{python3_sitelib}/%{name}/utils/FileUtils.py
@@ -131,7 +122,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python3_sitelib}/%{name}/utils/Transaction.py
 %{python3_sitelib}/%{name}/utils/YAMLObject.py
 %{python3_sitelib}/%{name}/utils/__init__.py
-
 %{_unitdir}/vdo.service
 %{_presetdir}/97-vdo.preset
 %dir %{_defaultdocdir}/%{name}
@@ -158,5 +148,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_sysconfdir}/bash_completion.d/vdostats
 
 %changelog
+* Wed May 29 2019 - Andrea Perotti <aperotti@redhat.com> - 6.2.1.48-2
+- Updates for building in EPEL7 and Fedora
 * Thu Apr 18 2019 - J. corwin Coburn <corwin@redhat.com> - 6.2.1.48-1
 HASH(0x15daa10)
