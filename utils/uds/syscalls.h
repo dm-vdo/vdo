@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.h#2 $
  */
 
 #ifndef SYSCALLS_H
@@ -29,24 +29,6 @@
 #include "logger.h"
 #include "typeDefs.h"
 #include "uds-error.h"
-
-/**
- * Wrap the read(2) system call.
- *
- * @param fd           The descriptor from which to read
- * @param buf          The buffer to read into
- * @param count        The maximum number of bytes to read
- * @param context      The calling context (for logging)
- * @param bytesReadPtr A pointer to hold the number of bytes read
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingReadInterruptible(int         fd,
-                             void       *buf,
-                             size_t      count,
-                             const char *context,
-                             ssize_t    *bytesReadPtr)
-  __attribute__((warn_unused_result));
 
 /**
  * Wrap the read(2) system call, looping as long as errno is EINTR.
@@ -84,25 +66,6 @@ int loggingPread(int         fd,
                  off_t       offset,
                  const char *context,
                  ssize_t    *bytesReadPtr)
-  __attribute__((warn_unused_result));
-
-/**
- * Wrap the write(2) system call.
- *
- * @param fd              The descriptor from which to write
- * @param buf             The buffer to write from
- * @param count           The maximum number of bytes to write
- * @param context         The calling context (for logging)
- * @param bytesWrittenPtr A pointer to hold the number of bytes written;
- *                        on error, -1 is returned
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingWriteInterruptible(int         fd,
-                              const void *buf,
-                              size_t      count,
-                              const char *context,
-                              ssize_t    *bytesWrittenPtr)
   __attribute__((warn_unused_result));
 
 /**

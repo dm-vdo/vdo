@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#2 $
  */
 
 #include "fileIORegion.h"
@@ -41,31 +41,6 @@ typedef struct fileIORegion {
 static INLINE FileIORegion *asFileIORegion(IORegion *region)
 {
   return container_of(region, FileIORegion, common);
-}
-
-/*****************************************************************************/
-int setFileRegionLimit(IORegion *region, off_t limit)
-{
-  FileIORegion *fior = asFileIORegion(region);
-
-  if (!fior->writing) {
-    return logErrorWithStringError(UDS_BAD_IO_DIRECTION,
-                                   "cannot set limit on read-only file");
-  }
-
-  off_t current = 0;
-  int result = getOpenFileSize(fior->fd, &current);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  if (limit > current) {
-    result = setOpenFileSize(fior->fd, limit);
-    if (result != UDS_SUCCESS) {
-      return result;
-    }
-  }
-  return UDS_SUCCESS;
 }
 
 /*****************************************************************************/
@@ -174,24 +149,27 @@ static int fior_read(IORegion *region,
     return result;
   }
 
-  if (length == NULL) {
-    return readBufferAtOffset(fior->fd, offset, buffer, size);
-  }
-
-  unsigned int dataLength = 0;
+  size_t dataLength = 0;
   result = readDataAtOffset(fior->fd, offset, buffer, size, &dataLength);
   if (result != UDS_SUCCESS) {
+    return result;
+  }
+  if (length == NULL) {
+    if (dataLength < size) {
+      byte *buf = buffer;
+      memset(&buf[dataLength], 0, size - dataLength);
+    }
     return result;
   }
 
   if (dataLength < *length) {
     if (dataLength == 0) {
       return logErrorWithStringError(UDS_END_OF_FILE,
-                                     "expected at least %zd bytes, got EOF",
+                                     "expected at least %zu bytes, got EOF",
                                      len);
     } else {
       return logErrorWithStringError(UDS_SHORT_READ,
-                                     "expected at least %zd bytes, got %u",
+                                     "expected at least %zu bytes, got %zu",
                                      len, dataLength);
     }
   }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#2 $
  */
 
 #ifndef FILE_UTILS_H
@@ -146,22 +146,7 @@ int readBuffer(int fd, void *buffer, unsigned int length)
   __attribute__((warn_unused_result));
 
 /**
- * Read into a buffer from a file at a given offset into the file
- *
- * @param fd     The file descriptor from which to read
- * @param offset The file offset at which to start reading
- * @param buffer The buffer into which to read
- * @param length The number of bytes to read
- *
- * @return UDS_SUCCESS or an error code
- **/
-int readBufferAtOffset(int fd, off_t offset, void *buffer, unsigned int length)
-  __attribute__((warn_unused_result));
-
-/**
  * Read into a buffer from a file at a given offset into the file.
- * Unlike readBufferAtOffset{,NonCritical} this variant allows
- * short reads as long some data is read.
  *
  * @param [in]  fd      The file descriptor from which to read
  * @param [in]  offset  The file offset at which to start reading
@@ -169,14 +154,13 @@ int readBufferAtOffset(int fd, off_t offset, void *buffer, unsigned int length)
  * @param [in]  size    The size of the buffer
  * @param [out] length  The amount actually read.
  *
- * @return UDS_SUCCESS or an error code, UDS_END_OF_FILE if amount
- *      read is zero
+ * @return UDS_SUCCESS or an error code
  **/
-int readDataAtOffset(int           fd,
-                     off_t         offset,
-                     void         *buffer,
-                     unsigned int  size,
-                     unsigned int *length)
+int readDataAtOffset(int     fd,
+                     off_t   offset,
+                     void   *buffer,
+                     size_t  size,
+                     size_t *length)
   __attribute__((warn_unused_result));
 
 

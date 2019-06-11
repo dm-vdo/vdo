@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.h#2 $
  */
 
 #ifndef FILE_IO_REGION_H
@@ -40,18 +40,6 @@ int makeFileRegion(IOFactory   *factory,
                    int          fd,
                    FileAccess   access,
                    IORegion   **regionPtr)
-  __attribute__((warn_unused_result));
-
-/**
- * Expand the underlying file to the size specified by limit if it is not
- * already big enough.
- *
- * @param region  A region created by makeFileRegion().
- * @param limit   The required minimum size of the file.
- *
- * @return UDS_SUCCESS or an error code.
- **/
-int setFileRegionLimit(IORegion *region, off_t limit)
   __attribute__((warn_unused_result));
 
 #endif // FILE_IO_REGION_H

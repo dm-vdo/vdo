@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/stringLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/stringLinuxUser.c#2 $
  */
 
 #include <limits.h>
@@ -56,26 +56,6 @@ int stringToUnsignedLong(const char *nptr, unsigned long *num)
     return UDS_INVALID_ARGUMENT;
   }
   return errno;
-}
-
-/**********************************************************************/
-int scanString(const char *what, int numItems, const char *str,
-               const char *fmt, ...)
-{
-  va_list args;
-  va_start(args, fmt);
-  int result = vsscanf(str, fmt, args);
-  va_end(args);
-  if (result != numItems) {
-    return logErrorWithStringError(UDS_INVALID_ARGUMENT,
-                                   "%s could not convert %d items from "
-                                   "string: %s%s%s", __func__, numItems,
-                                   str,
-                                   ((what != NULL) && (*what != '\0'))
-                                   ? ": " : "",
-                                   (what != NULL) ? what : "");
-  }
-  return UDS_SUCCESS;
 }
 
 /*****************************************************************************/

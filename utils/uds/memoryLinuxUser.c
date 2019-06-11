@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/memoryLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/memoryLinuxUser.c#2 $
  */
 
 #include <errno.h>
@@ -68,15 +68,6 @@ int allocateMemory(size_t size, size_t align, const char *what, void *ptr)
 void freeMemory(void *ptr)
 {
   free(ptr);
-}
-
-/**********************************************************************/
-int doPlatformVasprintf(const char  *what __attribute__((unused)),
-                        char       **strp,
-                        const char  *fmt,
-                        va_list      ap)
-{
-  return vasprintf(strp, fmt, ap) == -1 ? ENOMEM : UDS_SUCCESS;
 }
 
 /**********************************************************************/

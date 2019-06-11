@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.c#2 $
  */
 
 #include "syscalls.h"
@@ -32,16 +32,6 @@
 #include "permassert.h"
 
 /**********************************************************************/
-int loggingReadInterruptible(int         fd,
-                             void       *buf,
-                             size_t      count,
-                             const char *context,
-                             ssize_t    *bytesReadPtr)
-{
-  return checkIOErrors(read(fd, buf, count), __func__, context, bytesReadPtr);
-}
-
-/**********************************************************************/
 int loggingRead(int         fd,
                 void       *buf,
                 size_t      count,
@@ -50,9 +40,9 @@ int loggingRead(int         fd,
 {
   int result;
   do {
-    result =  loggingReadInterruptible(fd, buf, count, context, bytesReadPtr);
+    result = checkIOErrors(read(fd, buf, count), __func__, context,
+                           bytesReadPtr);
   } while (result == EINTR);
-
   return result;
 }
 
@@ -86,17 +76,6 @@ int loggingPread(int         fd,
 }
 
 /**********************************************************************/
-int loggingWriteInterruptible(int         fd,
-                              const void *buf,
-                              size_t      count,
-                              const char *context,
-                              ssize_t    *bytesWrittenPtr)
-{
-  return checkIOErrors(write(fd, buf, count), __func__, context,
-                       bytesWrittenPtr);
-}
-
-/**********************************************************************/
 int loggingWrite(int         fd,
                  const void *buf,
                  size_t      count,
@@ -105,8 +84,8 @@ int loggingWrite(int         fd,
 {
   int result;
   do {
-    result = loggingWriteInterruptible(fd, buf, count, context,
-                                       bytesWrittenPtr);
+    result = checkIOErrors(write(fd, buf, count), __func__, context,
+                           bytesWrittenPtr);
   } while (result == EINTR);
 
   return result;

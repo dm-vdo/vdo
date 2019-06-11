@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#3 $
  */
 
 #include "fileUtils.h"
@@ -157,7 +157,7 @@ int syncAndCloseFile(int fd, const char *errorMessage)
 /**********************************************************************/
 void trySyncAndCloseFile(int fd)
 {
-  int result = syncAndCloseFile(fd, NULL);
+  int result = syncAndCloseFile(fd, __func__);
   if (result != UDS_SUCCESS) {
     logDebugWithStringError(result, "error syncing and closing file");
   }
@@ -188,17 +188,15 @@ int readBuffer(int fd, void *buffer, unsigned int length)
   return UDS_SUCCESS;
 }
 
-static unsigned int REQUIRE_FULL_READ = -1;     // value unimportant
-
 /**********************************************************************/
-static int readBufferAtOffsetCommon(int           fd,
-                                    off_t         offset,
-                                    void         *buffer,
-                                    unsigned int  length,
-                                    unsigned int *howMany)
+int readDataAtOffset(int     fd,
+                     off_t   offset,
+                     void   *buffer,
+                     size_t  size,
+                     size_t *length)
 {
   byte *ptr = buffer;
-  size_t bytesToRead = length;
+  size_t bytesToRead = size;
   off_t currentOffset = offset;
 
   while (bytesToRead > 0) {
@@ -210,46 +208,15 @@ static int readBufferAtOffsetCommon(int           fd,
     }
 
     if (bytesRead == 0) {
-      if (howMany == &REQUIRE_FULL_READ) {
-        return logWarningWithStringError(UDS_CORRUPT_FILE,
-                                         "unexpected end of file while reading"
-                                         " at 0x%" PRIx64,
-                                         (uint64_t) currentOffset);
-      } else if (howMany == NULL) {
-        return UDS_END_OF_FILE;
-      } else {
-        break;
-      }
+      break;
     }
     ptr += bytesRead;
     bytesToRead -= bytesRead;
     currentOffset += bytesRead;
   }
-  if ((howMany != NULL) && (howMany != &REQUIRE_FULL_READ)) {
-    *howMany = ptr - (byte *) buffer;
-  }
 
+  *length = ptr - (byte *) buffer;
   return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-int readBufferAtOffset(int           fd,
-                       off_t         offset,
-                       void         *buffer,
-                       unsigned int  length)
-{
-  return readBufferAtOffsetCommon(fd, offset, buffer, length,
-                                  &REQUIRE_FULL_READ);
-}
-
-/**********************************************************************/
-int readDataAtOffset(int           fd,
-                     off_t         offset,
-                     void         *buffer,
-                     unsigned int  size,
-                     unsigned int *length)
-{
-  return readBufferAtOffsetCommon(fd, offset, buffer, size, length);
 }
 
 
