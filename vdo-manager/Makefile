@@ -16,13 +16,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/vdo-manager/Makefile#4 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/vdo-manager/Makefile#5 $
 
 SUBDIRS=man statistics utils vdomgmnt
 
 PROGS=vdo vdostats
 PYTHON_MODULES=__init__.py
-COMPLETIONS=vdostats
+COMPLETIONS=vdo vdostats
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root

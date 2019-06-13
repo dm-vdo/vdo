@@ -22,7 +22,7 @@
 """
   vdoStats - Report statistics from an Albireo VDO.
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdoStats#3 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdoStats#5 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -82,8 +82,9 @@ def enumerateDevices():
   """
   names = []
   try:
-    names = [name for name in runCommand(["vdo", "list"]).splitlines()
-              if len(name) > 0]
+    names = [name.split(":")[0] for name in
+             runCommand(["dmsetup", "status", "--target", "vdo"]).splitlines()
+             if len(name) > 0]
     paths = [os.path.sep.join(["", "dev", "mapper", name]) for name in names]
     names = list(filter(os.path.exists, paths))
   except CommandError as e:

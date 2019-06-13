@@ -19,7 +19,7 @@
 
 # $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#4 $
 
-VDO_VERSION = 6.2.1.48
+VDO_VERSION = 6.2.1.102
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base

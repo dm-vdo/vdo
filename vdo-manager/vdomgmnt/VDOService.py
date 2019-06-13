@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#21 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#23 $
 
 """
 from __future__ import absolute_import
@@ -146,7 +146,7 @@ class VDOService(Service):
   """
   log = logging.getLogger('vdo.vdomgmnt.Service.VDOService')
   yaml_tag = "!VDOService"
-
+  
   # Key values to use accessing a dictionary created via yaml-loading the
   # output of vdo status.
 
@@ -378,7 +378,12 @@ class VDOService(Service):
     self._handlePreviousOperationFailure()
 
     try:
-      runCommand(["dmsetup", "message", self.getName(), "0", "index-disable"])
+      version = VDOKernelModuleService().targetVersion()
+      # comparison on each element
+      if version > (6,2,0):
+        runCommand(["dmsetup", "message", self.getName(), "0", "index-close"])
+      else:
+        runCommand(["dmsetup", "message", self.getName(), "0", "index-disable"])        
     except Exception:
       self.log.error(_("Cannot stop deduplication on VDO {0}").format(
         self.getName()))
@@ -629,6 +634,7 @@ class VDOService(Service):
 
       runCommand(["dmsetup", "create", self._name, "--uuid", self._getUUID(),
                   "--table", self._generateDeviceMapperTable()])
+
       if not self.enableDeduplication:
         try:
           self.disconnect()
