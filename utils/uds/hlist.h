@@ -16,19 +16,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/queueDefs.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/hlist.h#1 $
  */
 
-#ifndef LINUX_USER_QUEUE_DEFS_H
-#define LINUX_USER_QUEUE_DEFS_H
+#ifndef HLIST_H
+#define HLIST_H
 
 #include "atomicDefs.h"
 #include "compiler.h"
 
 /*
  * An "hlist" is a doubly linked list with the listhead being a single pointer
- * to the head of the list.  The names used below match the facility provided
- * in the Linux kernel code.
+ * to the head of the list.
+ *
+ * The Linux kernel provides an hlist implementation in <linux/list.h>.  This
+ * file defines the hlist interfaces used by UDS for the user mode build.
  *
  * The equivalent used in the user <sys/queue.h> implementation is a LIST.
  */
@@ -79,4 +81,4 @@ static INLINE int hlist_empty(const struct hlist_head *h)
   return !READ_ONCE(h->first);
 }
 
-#endif /* LINUX_USER_QUEUE_DEFS_H */
+#endif /* HLIST_H */
