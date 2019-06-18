@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#3 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -402,6 +402,13 @@ class ListOperation(VDOOperation):
     cmd = ['dmsetup', 'status', '--target', Defaults.vdoTargetName]
     vdos = set([line.split(':')[0]
                 for line in runCommand(cmd, noThrow=True).splitlines()])
+    
+    cmd = ['lvs', '--config', 'devices/scan_lvs=1', '--select',
+           'segtype=vdo-pool', '--noheadings', '--option', 'lv_dm_path']
+    lvmVdos = set([os.path.basename(line)
+                   for line in runCommand(cmd, noThrow=True).splitlines()])
+    vdos = vdos - lvmVdos
+
     if args.all:
       conf = Configuration(self.confFile)
       vdos |= set(conf.getAllVdos().keys())
