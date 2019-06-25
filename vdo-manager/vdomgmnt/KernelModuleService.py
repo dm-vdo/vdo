@@ -20,7 +20,7 @@
 """
   KernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/KernelModuleService.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/KernelModuleService.py#2 $
 
 """
 from __future__ import absolute_import
@@ -29,6 +29,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from . import Defaults, Service
 from vdo.utils import Command, CommandError, runCommand
+import re
 import yaml
 
 
@@ -76,6 +77,17 @@ class KernelModuleService(Service):
         s += line
     return s
 
+  ######################################################################
+  def targetVersion(self):
+    """Returns the dmsetup targets version as a number"""
+    for line in runCommand(["dmsetup", "targets"], noThrow=True).splitlines():
+      versionMatch = re.escape(Defaults.vdoTargetName) + r"\s+v(\d+\.\d+\.\d+)"
+      version = re.match(versionMatch, line)
+      if version is not None:
+        return tuple(map(int, version.group(1).split(".")))
+
+    return (0, 0, 0)
+    
   ######################################################################
   # Overridden methods
   ######################################################################
