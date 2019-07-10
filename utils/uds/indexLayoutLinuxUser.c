@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/indexLayoutLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/indexLayoutLinuxUser.c#2 $
  */
 
 #include "errors.h"
@@ -50,7 +50,6 @@ int makeIndexLayout(const char              *name,
   }
 
   // note file will be set to memory owned by params
-  //
   result = parseLayoutString(params, parameterTable, COUNT_OF(parameterTable));
   if (result != UDS_SUCCESS) {
     FREE(params);
@@ -63,14 +62,6 @@ int makeIndexLayout(const char              *name,
                                    "no index specified");
   }
 
-  if (newLayout && size == 0) {
-    result = udsComputeIndexSize(config, 0, &size);
-    if (result != UDS_SUCCESS) {
-      FREE(params);
-      return result;
-    }
-  }
-
   IOFactory *factory = NULL;
   result = makeIOFactory(file,
                          newLayout ? FU_CREATE_READ_WRITE : FU_READ_WRITE,
@@ -79,25 +70,17 @@ int makeIndexLayout(const char              *name,
   if (result != UDS_SUCCESS) {
     return result;
   }
-  IORegion *region = NULL;
-  result = makeIORegion(factory, offset, newLayout ? size : 0, &region);
+  IndexLayout *layout;
+  result = makeIndexLayoutFromFactory(factory, offset, size, newLayout, config,
+                                      &layout);
   int freeResult = putIOFactory(factory);
   if (result != UDS_SUCCESS) {
     return result;
   }
   if (freeResult != UDS_SUCCESS) {
-    closeIORegion(&region);
+    freeIndexLayout(&layout);
     return freeResult;
   }
-  
-  if (newLayout) {
-    result = makeIndexLayoutForCreate(region, offset, size, config, layoutPtr);
-  } else {
-    result = makeIndexLayoutForLoad(region, offset, layoutPtr);
-  }
-
-  if (result != UDS_SUCCESS) {
-    closeIORegion(&region);
-  }
-  return result;
+  *layoutPtr = layout;
+  return UDS_SUCCESS;
 }
