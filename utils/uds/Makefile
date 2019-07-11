@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 Red Hat, Inc.
+# Copyright (c) 2019 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 # UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
 # version name used in distribution builds.  We extract these values from the
 # traditional location.
-UDS_VERSION      = 8.0.0.22
+UDS_VERSION      = 8.0.0.23
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
