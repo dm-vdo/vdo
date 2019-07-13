@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/public/uds.h#3 $
+ * $Id: //eng/uds-releases/jasper/src/public/uds.h#4 $
  */
 
 /**
@@ -502,40 +502,6 @@ int udsGetIndexSessionStats(struct uds_index_session *session,
  **/
 UDS_ATTR_WARN_UNUSED_RESULT
 const char *udsStringError(int errnum, char *buf, size_t buflen);
-
-/**
- * A function to be called at thread creation.
- **/
-typedef void UdsThreadStartHook(void);
-
-/**
- * Set the UDS thread creation hook.  This hook will be called when a thread is
- * created for the UDS index.  # #udsSetThreadStartHook should be called before
- * (not during) a call to create a new index session.  # #udsSetThreadStartHook
- * may be called with NULL to request that nothing be run.
- *
- * @param threadStartHook  The function to call at thread creation.
- *
- * @return                 The previous value
- **/
-UdsThreadStartHook *udsSetThreadStartHook(UdsThreadStartHook *threadStartHook);
-
-/**
- * A function to be called at shutdown.
- **/
-typedef void UdsShutdownHook(void);
-
-/**
- * Set the UDS library shutdown hook. This will be called when a
- * process that uses the library exits and is normally set to
- * #udsShutdown. May be called with NULL to request that nothing be
- * run.
- *
- * @param shutdownHook    The function to call at shutdown
- *
- * @return                The previous value
- **/
-UdsShutdownHook *udsSetShutdownHook(UdsShutdownHook *shutdownHook);
 
 /**
  * Shutdown the UDS library. This is normally called implicitly

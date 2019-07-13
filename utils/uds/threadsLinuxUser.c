@@ -16,29 +16,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/threadsLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadsLinuxUser.c#2 $
  */
 
 #include "threads.h"
 
 #include <errno.h>
-#include <sched.h>
-#include <stdlib.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <utmpx.h>
 
-#include "compiler.h"
-#include "cpu.h"
 #include "logger.h"
 #include "memoryAlloc.h"
 #include "murmur/MurmurHash3.h"
 #include "permassert.h"
 #include "syscalls.h"
-#include "uds.h"
-
-static UdsThreadStartHook *threadStartHook = NULL;
 
 /**********************************************************************/
 unsigned int getNumCores(void)
@@ -107,14 +99,6 @@ ThreadId getThreadId(void)
 }
 
 /**********************************************************************/
-UdsThreadStartHook *udsSetThreadStartHook(UdsThreadStartHook *hook)
-{
-  UdsThreadStartHook *oldUdsThreadStartHook = threadStartHook;
-  threadStartHook = hook;
-  return oldUdsThreadStartHook;
-}
-
-/**********************************************************************/
 typedef struct {
   void (*threadFunc)(void *);
   void *threadData;
@@ -133,9 +117,6 @@ static void *threadStarter(void *arg)
    */
   processControl(PR_SET_NAME, (unsigned long) tsi->name, 0, 0, 0);
   FREE(tsi);
-  if (threadStartHook != NULL) {
-    (*threadStartHook)();
-  }
   threadFunc(threadData);
   return NULL;
 }
