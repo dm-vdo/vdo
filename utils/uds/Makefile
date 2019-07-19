@@ -16,13 +16,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#4 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#5 $
 
 # UDS_INTERNAL_VERSION is the short version name, which is used to version the
 # UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
 # version name used in distribution builds.  We extract these values from the
 # traditional location.
-UDS_VERSION      = 8.0.0.30
+UDS_VERSION      = 8.0.0.31
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -152,7 +152,6 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		timeUtils.o			\
 		timeUtilsLinuxUser.o		\
 		udsMain.o			\
-		udsState.o			\
 		volume.o			\
 		volumeInternals.o		\
 		zone.o

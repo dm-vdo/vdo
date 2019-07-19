@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/volume.c#8 $
+ * $Id: //eng/uds-releases/jasper/src/uds/volume.c#9 $
  */
 
 #include "volume.h"
@@ -25,7 +25,6 @@
 #include "chapterIndex.h"
 #include "compiler.h"
 #include "errors.h"
-#include "featureDefs.h"
 #include "geometry.h"
 #include "hashUtils.h"
 #include "indexConfig.h"
@@ -54,7 +53,7 @@ static const NumericValidationData validRange = {
 static UdsParameterValue getDefaultReadThreads(void)
 {
   UdsParameterValue value;
-#if ENVIRONMENT
+#ifndef __KERNEL__
   char *env = getenv(UDS_VOLUME_READ_THREADS);
   if (env != NULL) {
     UdsParameterValue tmp = {
@@ -65,7 +64,7 @@ static UdsParameterValue getDefaultReadThreads(void)
       return value;
     }
   }
-#endif // ENVIRONMENT
+#endif
   value.type = UDS_PARAM_TYPE_UNSIGNED_INT;
   value.value.u_uint = VOLUME_READ_THREADS;
   return value;
