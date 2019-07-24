@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#2 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#3 $
  */
 
 #include "fileIORegion.h"
@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "memoryAlloc.h"
 #include "permassert.h"
+
 
 typedef struct fileIORegion {
   IORegion   common;
@@ -125,6 +126,7 @@ static int fior_write(IORegion   *region,
 {
   FileIORegion *fior = asFileIORegion(region);
 
+
   int result = validateIO(fior, offset, size, length, true);
   if (result != UDS_SUCCESS) {
     return result;
@@ -195,7 +197,6 @@ static int fior_getBestSize(IORegion *region, size_t *bufferSize)
 static int fior_syncContents(IORegion *region)
 {
   FileIORegion *fior = asFileIORegion(region);
-
   return loggingFsync(fior->fd, "cannot sync contents of file IORegion");
 }
 

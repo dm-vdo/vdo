@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/ioFactoryLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/ioFactoryLinuxUser.c#3 $
  */
 
 #include "atomicDefs.h"
@@ -75,13 +75,5 @@ int makeIORegion(IOFactory  *factory,
                  size_t      size __attribute__((unused)),
                  IORegion  **regionPtr)
 {
-  IORegion *region;
-  int result = makeFileRegion(factory, factory->fd, FU_READ_WRITE, &region);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-
-  *regionPtr = region;
-  return result;
+  return makeFileRegion(factory, factory->fd, FU_READ_WRITE, regionPtr);
 }
