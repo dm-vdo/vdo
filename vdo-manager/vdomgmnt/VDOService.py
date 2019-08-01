@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#23 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#24 $
 
 """
 from __future__ import absolute_import
@@ -315,9 +315,17 @@ class VDOService(Service):
                  for absname in (os.path.join(idDir, name)
                                  for name in os.listdir(idDir))
                  if os.path.realpath(absname) == realpath]
+      if realpath is not None:
+        deviceUUID = self._getDeviceUUID(realpath)
+        if deviceUUID is not None:
+          self.log.debug("pruning {uuid} from aliases".format(
+            uuid=deviceUUID))
+          aliases = [a for a in aliases if not deviceUUID in a]
+      
     if len(aliases) > 0:
       self.log.debug("found aliases for {original}: {aliases}"
                      .format(original = realpath, aliases = aliases))
+
       # A device can have multiple names; dm-name-*, dm-uuid-*, ata-*,
       # wwn-*, etc.  Do we have a way to prioritize them?
       #
@@ -1653,6 +1661,27 @@ class VDOService(Service):
     baseName = os.path.basename(basePath)
     output = runCommand(["cat", "/sys/class/block/" + baseName + "/size"]);
     return SizeString("{0}s".format(output));
+
+  ######################################################################
+  def _getDeviceUUID(self, devicePath):
+    """Get the UUID of the device passed in,
+
+    Arguments:
+      devicePath (path): path to a device.
+
+    Returns:
+      UUID as a string, or None if none found
+    """
+    try:
+      output = runCommand(["blkid", "-s", "UUID", "-o", "value",
+                           devicePath]).strip()
+    except CommandError as ex:
+      self.log.info("blkid failed: " + str(ex))
+      return None
+    if output == "":
+      return None
+    else:
+      return output
 
   ######################################################################
   def _hasHolders(self):
