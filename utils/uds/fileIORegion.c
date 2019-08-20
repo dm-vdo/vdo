@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#3 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#4 $
  */
 
 #include "fileIORegion.h"
@@ -82,9 +82,9 @@ static int validateIO(FileIORegion *fior,
 static int fior_close(IORegion *region)
 {
   FileIORegion *fior = asFileIORegion(region);
-  int result = putIOFactory(fior->factory);
+  putIOFactory(fior->factory);
   FREE(fior);
-  return result;
+  return UDS_SUCCESS;
 }
 
 /*****************************************************************************/

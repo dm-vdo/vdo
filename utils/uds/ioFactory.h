@@ -16,14 +16,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/ioFactory.h#2 $
+ * $Id: //eng/uds-releases/jasper/src/uds/ioFactory.h#4 $
  */
 
 #ifndef IO_FACTORY_H
 #define IO_FACTORY_H
 
 #include "ioRegion.h"
-#ifndef __KERNEL__
+#ifdef __KERNEL__
+#include <linux/dm-bufio.h>
+#else
 #include "fileUtils.h"
 #endif
 
@@ -59,8 +61,8 @@ enum { UDS_BLOCK_SIZE = 4096 };
  *
  * @return UDS_SUCCESS or an error code
  **/
-__attribute__((warn_unused_result))
-int makeIOFactory(const char *path, struct ioFactory **factoryPtr);
+int makeIOFactory(const char *path, IOFactory **factoryPtr)
+  __attribute__((warn_unused_result));
 #else
 /**
  * Create an IOFactory.  The IOFactory is returned with a reference count of 1.
@@ -72,10 +74,10 @@ int makeIOFactory(const char *path, struct ioFactory **factoryPtr);
  *
  * @return UDS_SUCCESS or an error code
  **/
-__attribute__((warn_unused_result))
-int makeIOFactory(const char        *path,
-                  FileAccess         access,
-                  struct ioFactory **factoryPtr);
+int makeIOFactory(const char  *path,
+                  FileAccess   access,
+                  IOFactory  **factoryPtr)
+  __attribute__((warn_unused_result));
 #endif
 
 /**
@@ -91,7 +93,27 @@ void getIOFactory(IOFactory *factory);
  *
  * @param factory  The IOFactory
  **/
-int putIOFactory(IOFactory *factory) __attribute__((warn_unused_result));
+void putIOFactory(IOFactory *factory);
+
+#ifdef __KERNEL__
+/**
+ * Create a struct dm_bufio_client for a region of the index.
+ *
+ * @param factory          The IOFactory
+ * @param offset           The byte offset to the region within the index
+ * @param size             The size of a block, in bytes
+ * @param reservedBuffers  The number of buffers that can be reserved
+ * @param clientPtr        The struct dm_bufio_client is returned here
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int makeBufio(IOFactory               *factory,
+              off_t                    offset,
+              size_t                   blockSize,
+              unsigned int             reservedBuffers,
+              struct dm_bufio_client **clientPtr)
+  __attribute__((warn_unused_result));
+#endif
 
 /**
  * Create an IORegion for a region of the index.
@@ -103,10 +125,10 @@ int putIOFactory(IOFactory *factory) __attribute__((warn_unused_result));
  *
  * @return UDS_SUCCESS or an error code
  **/
-__attribute__((warn_unused_result))
 int makeIORegion(IOFactory  *factory,
                  off_t       offset,
                  size_t      size,
-                 IORegion  **regionPtr);
+                 IORegion  **regionPtr)
+  __attribute__((warn_unused_result));
 
 #endif // IO_FACTORY_H

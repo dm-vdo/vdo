@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#2 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#3 $
  */
 
 #ifndef FILE_UTILS_H
@@ -101,8 +101,7 @@ int openFile(const char *path, FileAccess access, int *fd)
  *         UDS_EIO              if there was an I/O error closing the file
  *         UDS_ASSERTION_FAILED if there was any other error
  **/
-int closeFile(int fd, const char *errorMessage)
-  __attribute__((warn_unused_result));
+int closeFile(int fd, const char *errorMessage);
 
 /**
  * Attempt to close a file, ignoring errors.

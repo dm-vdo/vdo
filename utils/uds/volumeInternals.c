@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/volumeInternals.c#4 $
+ * $Id: //eng/uds-releases/jasper/src/uds/volumeInternals.c#5 $
  */
 
 #include "volumeInternals.h"
@@ -39,21 +39,13 @@ int allocateVolume(const Configuration  *config,
                    unsigned int          zoneCount,
                    Volume              **newVolume)
 {
-  IORegion *region;
-  int result = openVolumeRegion(layout, IO_READ_WRITE, &region);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
   Volume *volume;
-  result = ALLOCATE(1, Volume, "volume", &volume);
+  int result = ALLOCATE(1, Volume, "volume", &volume);
   if (result != UDS_SUCCESS) {
-    closeIORegion(&region);
     return result;
   }
-  // Fill these fields in now so that freeVolume will close the volume region
-  volume->region = region;
   volume->nonce = getVolumeNonce(layout);
+  // It is safe to call freeVolume now to clean up and close the volume
 
   result = copyGeometry(config->geometry, &volume->geometry);
   if (result != UDS_SUCCESS) {
@@ -62,18 +54,34 @@ int allocateVolume(const Configuration  *config,
                                      "failed to allocate geometry: error");
   }
 
+#ifdef __KERNEL__
+  result = openVolumeBufio(layout, config->geometry->bytesPerPage, 1,
+                           &volume->bufioClient);
+  if (result != UDS_SUCCESS) {
+    freeVolume(volume);
+    return result;
+  }
+#else
+  result = openVolumeRegion(layout, IO_READ_WRITE, &volume->region);
+  if (result != UDS_SUCCESS) {
+    freeVolume(volume);
+    return result;
+  }
   result = ALLOCATE_IO_ALIGNED(config->geometry->bytesPerPage, byte,
                                "scratch page", &volume->scratchPage);
   if (result != UDS_SUCCESS) {
     freeVolume(volume);
     return result;
   }
+#endif
+
   result = makeRadixSorter(config->geometry->recordsPerPage,
                            &volume->radixSorter);
   if (result != UDS_SUCCESS) {
     freeVolume(volume);
     return result;
   }
+
   result = ALLOCATE(config->geometry->recordsPerPage, const UdsChunkRecord *,
                     "record pointers", &volume->recordPointers);
   if (result != UDS_SUCCESS) {
@@ -116,17 +124,29 @@ int mapToPhysicalPage(Geometry *geometry, int chapter, int page)
 /**********************************************************************/
 int readPageToBuffer(const Volume *volume,
                      unsigned int  physicalPage,
-                     byte         *buffer)
+                     byte         *data)
 {
+#ifdef __KERNEL__
+  struct dm_buffer *buffer = NULL;
+  byte *cacheData = dm_bufio_read(volume->bufioClient, physicalPage, &buffer);
+  if (IS_ERR(cacheData)) {
+    return logWarningWithStringError(-PTR_ERR(cacheData),
+                                     "error reading physical page %u",
+                                     physicalPage);
+  }
+  memcpy(data, cacheData, volume->geometry->bytesPerPage);
+  dm_bufio_release(buffer);
+#else
   off_t pageOffset
     = ((off_t) physicalPage) * ((off_t) volume->geometry->bytesPerPage);
-  int result = readFromRegion(volume->region, pageOffset, buffer,
+  int result = readFromRegion(volume->region, pageOffset, data,
                               volume->geometry->bytesPerPage, NULL);
   if (result != UDS_SUCCESS) {
     return logWarningWithStringError(result,
                                      "error reading physical page %u",
                                      physicalPage);
   }
+#endif
   return UDS_SUCCESS;
 }
 
@@ -136,10 +156,25 @@ int readChapterIndexToBuffer(const Volume *volume,
                              byte         *buffer)
 {
   Geometry *geometry = volume->geometry;
+  int result = UDS_SUCCESS;
+#ifdef __KERNEL__
+  int physicalPage = mapToPhysicalPage(geometry, chapterNumber, 0);
+  dm_bufio_prefetch(volume->bufioClient, physicalPage,
+                    geometry->indexPagesPerChapter);
+  unsigned int i;
+  for (i = 0; i < geometry->indexPagesPerChapter; i++) {
+    result = readPageToBuffer(volume, physicalPage + i, buffer);
+    buffer += geometry->bytesPerPage;
+    if (result != UDS_SUCCESS) {
+      break;
+    }
+  }
+#else
   off_t chapterIndexOffset = offsetForChapter(geometry, chapterNumber);
-  int result = readFromRegion(volume->region, chapterIndexOffset, buffer,
-                              geometry->bytesPerPage *
-                                geometry->indexPagesPerChapter, NULL);
+  size_t indexSize = geometry->bytesPerPage * geometry->indexPagesPerChapter;
+  result = readFromRegion(volume->region, chapterIndexOffset, buffer,
+                          indexSize, NULL);
+#endif
   if (result != UDS_SUCCESS) {
     return logWarningWithStringError(result,
                                      "error reading physical chapter index %u",

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#3 $
  */
 
 #include <uuid/uuid.h>
@@ -106,7 +106,7 @@ static int configureVDO(VDO *vdo)
   result = makeSlabDepot(depotSize, origin, slabConfig, getThreadConfig(vdo),
                          vdo->nonce, 1, vdo->layer, NULL,
                          vdo->readOnlyNotifier, vdo->recoveryJournal,
-                         &vdo->depot);
+                         &vdo->state, &vdo->depot);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -134,7 +134,7 @@ static int configureVDO(VDO *vdo)
     return result;
   }
 
-  vdo->state = VDO_NEW;
+  setVDOState(vdo, VDO_NEW);
   return VDO_SUCCESS;
 }
 
@@ -352,7 +352,7 @@ static int updateVDOSuperBlockState(PhysicalLayer *layer,
                                    "Can't force rebuild on a normal VDO");
   }
 
-  vdo->state = newState;
+  setVDOState(vdo, newState);
 
   result = saveReconfiguredVDO(vdo);
   freeVDO(&vdo);

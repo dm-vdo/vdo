@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/ioFactoryLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/ioFactoryLinuxUser.c#4 $
  */
 
 #include "atomicDefs.h"
@@ -59,14 +59,12 @@ int makeIOFactory(const char *path, FileAccess access, IOFactory **factoryPtr)
 }
 
 /*****************************************************************************/
-int putIOFactory(IOFactory *factory)
+void putIOFactory(IOFactory *factory)
 {
-  if (atomic_add_return(-1, &factory->refCount) > 0) {
-    return UDS_SUCCESS;
+  if (atomic_add_return(-1, &factory->refCount) <= 0) {
+    closeFile(factory->fd, NULL);
+    FREE(factory);
   }
-  int result = closeFile(factory->fd, NULL);
-  FREE(factory);
-  return result;
 }
 
 /*****************************************************************************/
