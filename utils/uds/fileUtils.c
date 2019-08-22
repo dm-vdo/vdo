@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#3 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#4 $
  */
 
 #include "fileUtils.h"
@@ -288,16 +288,6 @@ int getOpenFileSize(int fd, off_t *sizePtr)
   }
   *sizePtr = statbuf.st_size;
   return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-int setOpenFileSize(int fd, off_t size)
-{
-  int r = ftruncate(fd, size);
-  if (r == 0) {
-    return UDS_SUCCESS;
-  }
-  return logWarningWithStringError(errno, "cannot truncate open file");
 }
 
 /**********************************************************************/

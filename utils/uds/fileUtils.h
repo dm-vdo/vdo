@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#3 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#4 $
  */
 
 #ifndef FILE_UTILS_H
@@ -201,16 +201,6 @@ int writeBufferAtOffset(int           fd,
  **/
 int getOpenFileSize(int fd, off_t *sizePtr)
   __attribute__((warn_unused_result));
-
-/**
- * Truncate and/or extend an open file to be the specified size.
- *
- * @param fd        the file descriptor
- * @param size      the requested size
- *
- * @return UDS_SUCCESS or an error code
- **/
-int setOpenFileSize(int fd, off_t size);
 
 /**
  * Remove a file, logging an error if any.

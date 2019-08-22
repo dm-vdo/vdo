@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#4 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#9 $
  */
 
 #include "fileIORegion.h"
@@ -34,8 +34,9 @@ typedef struct fileIORegion {
   int        fd;
   bool       reading;
   bool       writing;
-  size_t     blockSize;
   size_t     bestSize;
+  off_t      offset;
+  size_t     size;
 } FileIORegion;
 
 /*****************************************************************************/
@@ -57,41 +58,35 @@ static int validateIO(FileIORegion *fior,
                                    willWrite ? "writing" : "reading");
   }
 
-  if (offset % fior->blockSize != 0) {
-    return logErrorWithStringError(UDS_INCORRECT_ALIGNMENT,
-                                   "alignment %zd not multiple of %zd", offset,
-                                   fior->blockSize);
-  }
-
-  if (size % fior->blockSize != 0) {
-    return logErrorWithStringError(UDS_BUFFER_ERROR,
-                                   "buffer size %zd not a multiple of %zd",
-                                   size, fior->blockSize);
-  }
-
   if (length > size) {
     return logErrorWithStringError(UDS_BUFFER_ERROR,
                                    "length %zd exceeds buffer size %zd",
                                    length, size);
   }
 
+  if (offset + length > fior->size) {
+    return logErrorWithStringError(UDS_OUT_OF_RANGE,
+                                   "range %zd-%zd not in range 0 to %zu",
+                                   offset, offset + length, fior->size);
+  }
+
   return UDS_SUCCESS;
 }
 
 /*****************************************************************************/
-static int fior_close(IORegion *region)
+static void fior_free(IORegion *region)
 {
   FileIORegion *fior = asFileIORegion(region);
   putIOFactory(fior->factory);
   FREE(fior);
-  return UDS_SUCCESS;
 }
 
 /*****************************************************************************/
 static int fior_getLimit(IORegion *region __attribute__((unused)),
                          off_t    *limit)
 {
-  *limit = INT64_MAX;
+  FileIORegion *fior = asFileIORegion(region);
+  *limit = fior->size;
   return UDS_SUCCESS;
 }
 
@@ -102,19 +97,6 @@ static int fior_getDataSize(IORegion *region,
   FileIORegion *fior = asFileIORegion(region);
 
   return getOpenFileSize(fior->fd, extent);
-}
-
-/*****************************************************************************/
-static int fior_clear(IORegion *region)
-{
-  FileIORegion *fior = asFileIORegion(region);
-
-  int result = validateIO(fior, 0, 0, 0, true);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  return setOpenFileSize(fior->fd, 0);
 }
 
 /*****************************************************************************/
@@ -132,7 +114,7 @@ static int fior_write(IORegion   *region,
     return result;
   }
 
-  return writeBufferAtOffset(fior->fd, offset, data, length);
+  return writeBufferAtOffset(fior->fd, fior->offset + offset, data, length);
 }
 
 /*****************************************************************************/
@@ -152,7 +134,8 @@ static int fior_read(IORegion *region,
   }
 
   size_t dataLength = 0;
-  result = readDataAtOffset(fior->fd, offset, buffer, size, &dataLength);
+  result = readDataAtOffset(fior->fd, fior->offset + offset, buffer, size,
+                            &dataLength);
   if (result != UDS_SUCCESS) {
     return result;
   }
@@ -180,13 +163,6 @@ static int fior_read(IORegion *region,
 }
 
 /*****************************************************************************/
-static int fior_getBlockSize(IORegion *region, size_t *blockSize)
-{
-  *blockSize = asFileIORegion(region)->blockSize;
-  return UDS_SUCCESS;
-}
-
-/*****************************************************************************/
 static int fior_getBestSize(IORegion *region, size_t *bufferSize)
 {
   *bufferSize = asFileIORegion(region)->bestSize;
@@ -204,6 +180,8 @@ static int fior_syncContents(IORegion *region)
 int makeFileRegion(IOFactory   *factory,
                    int          fd,
                    FileAccess   access,
+                   off_t        offset,
+                   size_t       size,
                    IORegion   **regionPtr)
 {
   size_t blockSize = 1024;
@@ -222,21 +200,23 @@ int makeFileRegion(IOFactory   *factory,
 
   getIOFactory(factory);
 
-  fior->common.clear        = fior_clear;
-  fior->common.close        = fior_close;
+  fior->common.free         = fior_free;
   fior->common.getBestSize  = fior_getBestSize;
-  fior->common.getBlockSize = fior_getBlockSize;
   fior->common.getDataSize  = fior_getDataSize;
   fior->common.getLimit     = fior_getLimit;
   fior->common.read         = fior_read;
   fior->common.syncContents = fior_syncContents;
   fior->common.write        = fior_write;
-  fior->factory   = factory;
-  fior->fd        = fd;
-  fior->reading   = (access <= FU_CREATE_READ_WRITE);
-  fior->writing   = (access >= FU_READ_WRITE);
-  fior->blockSize = blockSize;
-  fior->bestSize  = bestSize;
+
+  fior->factory  = factory;
+  fior->fd       = fd;
+  fior->reading  = (access <= FU_CREATE_READ_WRITE);
+  fior->writing  = (access >= FU_READ_WRITE);
+  fior->offset   = offset;
+  fior->size     = size;
+  fior->bestSize = bestSize;
+
+  atomic_set_release(&fior->common.refCount, 1);
   *regionPtr = &fior->common;
   return UDS_SUCCESS;
 }

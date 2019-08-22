@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/volume.c#12 $
+ * $Id: //eng/uds-releases/jasper/src/uds/volume.c#13 $
  */
 
 #include "volume.h"
@@ -1365,11 +1365,7 @@ void freeVolume(Volume *volume)
   }
 #else
   if (volume->region != NULL) {
-    int result = syncAndCloseRegion(&volume->region, "index volume");
-    if (result != UDS_SUCCESS) {
-      logErrorWithStringError(result,
-                              "error closing volume, releasing anyway");
-    }
+    putIORegion(volume->region);
   }
 #endif
 

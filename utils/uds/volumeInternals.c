@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/volumeInternals.c#5 $
+ * $Id: //eng/uds-releases/jasper/src/uds/volumeInternals.c#6 $
  */
 
 #include "volumeInternals.h"
@@ -62,7 +62,7 @@ int allocateVolume(const Configuration  *config,
     return result;
   }
 #else
-  result = openVolumeRegion(layout, IO_READ_WRITE, &volume->region);
+  result = openVolumeRegion(layout, &volume->region);
   if (result != UDS_SUCCESS) {
     freeVolume(volume);
     return result;

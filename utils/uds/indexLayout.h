@@ -16,13 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/indexLayout.h#5 $
+ * $Id: //eng/uds-releases/jasper/src/uds/indexLayout.h#8 $
  */
 
 #ifndef INDEX_LAYOUT_H
 #define INDEX_LAYOUT_H
 
 #include "accessMode.h"
+#include "buffer.h"
 #include "indexState.h"
 #include "ioFactory.h"
 #include "ioRegion.h"
@@ -121,23 +122,39 @@ int findLatestIndexSaveSlot(IndexLayout  *layout,
 void getIndexLayout(IndexLayout *layout, IndexLayout **layoutPtr);
 
 /**
- * Open an IORegion for a specified state, mode, kind, and zone.
+ * Open a BufferedReader for a specified state, kind, and zone.
  *
  * @param layout     The index layout
  * @param slot       The save slot
- * @param mode       One of IO_READ or IO_WRITE.
  * @param kind       The kind if index save region to open.
  * @param zone       The zone number for the region.
- * @param regionPtr  Where to store the region.
+ * @param readerPtr  Where to store the BufferedReader.
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int getIndexRegion(IndexLayout   *layout,
-                   unsigned int   slot,
-                   IOAccessMode   mode,
-                   RegionKind     kind,
-                   unsigned int   zone,
-                   IORegion     **regionPtr)
+int openIndexBufferedReader(IndexLayout     *layout,
+                            unsigned int     slot,
+                            RegionKind       kind,
+                            unsigned int     zone,
+                            BufferedReader **readerPtr)
+  __attribute__((warn_unused_result));
+
+/**
+ * Open a BufferedWriter for a specified state, kind, and zone.
+ *
+ * @param layout     The index layout
+ * @param slot       The save slot
+ * @param kind       The kind if index save region to open.
+ * @param zone       The zone number for the region.
+ * @param writerPtr  Where to store the BufferedWriter.
+ *
+ * @return UDS_SUCCESS or an error code.
+ **/
+int openIndexBufferedWriter(IndexLayout     *layout,
+                            unsigned int     slot,
+                            RegionKind       kind,
+                            unsigned int     zone,
+                            BufferedWriter **writerPtr)
   __attribute__((warn_unused_result));
 
 /**
@@ -172,14 +189,11 @@ int openVolumeBufio(IndexLayout             *layout,
  * Obtain an IORegion for the specified index volume.
  *
  * @param [in]  layout     The index layout.
- * @param [in]  access     The type of access requested.
  * @param [out] regionPtr  Where to put the new region.
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int openVolumeRegion(IndexLayout   *layout,
-                     IOAccessMode   access,
-                     IORegion     **regionPtr)
+int openVolumeRegion(IndexLayout *layout, IORegion **regionPtr)
   __attribute__((warn_unused_result));
 #endif
 
@@ -222,6 +236,17 @@ int setupIndexSaveSlot(IndexLayout   *layout,
  * @return UDS_SUCCESS or an error code
  **/
 int writeIndexConfig(IndexLayout *layout, UdsConfiguration config)
+  __attribute__((warn_unused_result));
+
+/**
+ * Get the index state buffer
+ *
+ * @param layout  the index layout
+ * @param slot    the save slot
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+Buffer *getIndexStateBuffer(IndexLayout *layout, unsigned int slot)
   __attribute__((warn_unused_result));
 
 #endif // INDEX_LAYOUT_H
