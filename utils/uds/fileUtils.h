@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#4 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#5 $
  */
 
 #ifndef FILE_UTILS_H
@@ -52,19 +52,6 @@ static INLINE FileAccess fileAccessMode(IOAccessMode access)
     (access & IO_CREATE)        ? FU_CREATE_READ_WRITE :
     FU_READ_ONLY;
 }
-
-/**
- * Determine the best size for IO buffers.
- *
- * @param defaultSize The default size to use if a better size can't be
- *                    determined
- * @param blockSize   A pointer to hold basic block size of the system
- * @param bestSize    A pointer to hold the best buffer size.
- *
- * @return UDS_SUCCESS or an error code
- **/
-int getBufferSizeInfo(size_t defaultSize, size_t *blockSize, size_t *bestSize)
-  __attribute__((warn_unused_result));
 
 /**
  * Check whether a file exists.

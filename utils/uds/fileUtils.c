@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#4 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#5 $
  */
 
 #include "fileUtils.h"
@@ -34,24 +34,6 @@
 #include "permassert.h"
 #include "stringUtils.h"
 #include "syscalls.h"
-
-enum { MINIMUM_BLOCK_SIZE = 4096 };
-
-/**********************************************************************/
-int getBufferSizeInfo(size_t  defaultBestSize,
-                      size_t *blockSizePtr,
-                      size_t *bestSizePtr)
-{
-  size_t blockSize = MINIMUM_BLOCK_SIZE;
-
-  if (blockSizePtr != NULL) {
-    *blockSizePtr = blockSize;
-  }
-  if (bestSizePtr != NULL) {
-    *bestSizePtr = leastCommonMultiple(blockSize, defaultBestSize);
-  }
-  return UDS_SUCCESS;
-}
 
 /**********************************************************************/
 int fileExists(const char *path, bool *exists)

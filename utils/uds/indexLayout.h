@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/indexLayout.h#8 $
+ * $Id: //eng/uds-releases/jasper/src/uds/indexLayout.h#9 $
  */
 
 #ifndef INDEX_LAYOUT_H
@@ -26,7 +26,6 @@
 #include "buffer.h"
 #include "indexState.h"
 #include "ioFactory.h"
-#include "ioRegion.h"
 #include "uds.h"
 
 typedef struct indexLayout IndexLayout;
@@ -193,7 +192,7 @@ int openVolumeBufio(IndexLayout             *layout,
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int openVolumeRegion(IndexLayout *layout, IORegion **regionPtr)
+int openVolumeRegion(IndexLayout *layout, struct ioRegion **regionPtr)
   __attribute__((warn_unused_result));
 #endif
 

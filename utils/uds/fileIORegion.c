@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#9 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileIORegion.c#10 $
  */
 
 #include "fileIORegion.h"
@@ -34,7 +34,6 @@ typedef struct fileIORegion {
   int        fd;
   bool       reading;
   bool       writing;
-  size_t     bestSize;
   off_t      offset;
   size_t     size;
 } FileIORegion;
@@ -163,13 +162,6 @@ static int fior_read(IORegion *region,
 }
 
 /*****************************************************************************/
-static int fior_getBestSize(IORegion *region, size_t *bufferSize)
-{
-  *bufferSize = asFileIORegion(region)->bestSize;
-  return UDS_SUCCESS;
-}
-
-/*****************************************************************************/
 static int fior_syncContents(IORegion *region)
 {
   FileIORegion *fior = asFileIORegion(region);
@@ -184,16 +176,8 @@ int makeFileRegion(IOFactory   *factory,
                    size_t       size,
                    IORegion   **regionPtr)
 {
-  size_t blockSize = 1024;
-  size_t bestSize  = 4096;
-
-  int result = getBufferSizeInfo(bestSize, &blockSize, &bestSize);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
   FileIORegion *fior;
-  result = ALLOCATE(1, FileIORegion, "open file region", &fior);
+  int result = ALLOCATE(1, FileIORegion, __func__, &fior);
   if (result != UDS_SUCCESS) {
     return result;
   }
@@ -201,7 +185,6 @@ int makeFileRegion(IOFactory   *factory,
   getIOFactory(factory);
 
   fior->common.free         = fior_free;
-  fior->common.getBestSize  = fior_getBestSize;
   fior->common.getDataSize  = fior_getDataSize;
   fior->common.getLimit     = fior_getLimit;
   fior->common.read         = fior_read;
@@ -214,7 +197,6 @@ int makeFileRegion(IOFactory   *factory,
   fior->writing  = (access >= FU_READ_WRITE);
   fior->offset   = offset;
   fior->size     = size;
-  fior->bestSize = bestSize;
 
   atomic_set_release(&fior->common.refCount, 1);
   *regionPtr = &fior->common;

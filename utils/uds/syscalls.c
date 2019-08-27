@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.c#2 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.c#3 $
  */
 
 #include "syscalls.h"
@@ -215,47 +215,4 @@ int setThreadSignalMask(sigset_t   *mask,
 {
   return checkSystemCall(pthread_sigmask(how, mask, oldMask),
                          __func__, context);
-}
-
-/**********************************************************************/
-int daemonize(const char *runDir, const char *pidFile, const char *context)
-{
-  bool nochdir = false;
-  int result = makeDirectory(runDir, 0755, "server run dir", __func__);
-  if ((result == UDS_SUCCESS) || (result == EEXIST)) {
-    result = checkSystemCall(chdir(runDir), __func__, context);
-    nochdir = (result == UDS_SUCCESS);
-  }
-  if (!nochdir) {
-    logWarning("failed to change runDir to %s; using '/'.", runDir);
-  }
-
-  int fd;
-  result = openFile(pidFile, FU_CREATE_READ_WRITE, &fd);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  result = checkSystemCall(daemon(nochdir, false), __func__, context);
-  if (result != UDS_SUCCESS) {
-    ASSERT_LOG_ONLY((loggingClose(fd, context) == UDS_SUCCESS),
-                    "closing pidFile");
-    return result;
-  }
-
-  char *strBuf;
-  result = allocSprintf(__func__, &strBuf, "%d\n", getpid());
-  if (result != UDS_SUCCESS) {
-    ASSERT_LOG_ONLY((loggingClose(fd, context) == UDS_SUCCESS),
-                    "closing pidFile");
-    return logErrorWithStringError(result, "couldn't get pid");
-  }
-  result = writeBuffer(fd, strBuf, strlen(strBuf));
-  FREE(strBuf);
-  if (result != UDS_SUCCESS) {
-    ASSERT_LOG_ONLY((loggingClose(fd, context) == UDS_SUCCESS),
-                    "closing pidFile");
-    return result;
-  }
-  return loggingClose(fd, context);
 }

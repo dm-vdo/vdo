@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/ioRegion.h#4 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/ioRegion.h#1 $
  */
 
 #ifndef IO_REGION_H
@@ -36,7 +36,6 @@
  **/
 typedef struct ioRegion {
   void (*free)        (struct ioRegion *);
-  int  (*getBestSize) (struct ioRegion *, size_t *);
   int  (*getDataSize) (struct ioRegion *, off_t *);
   int  (*getLimit)    (struct ioRegion *, off_t *);
   int  (*read)        (struct ioRegion *, off_t, void *, size_t, size_t *);
@@ -53,21 +52,6 @@ typedef struct ioRegion {
 static INLINE void getIORegion(IORegion *region)
 {
   atomic_inc(&region->refCount);
-}
-
-/**
- * Obtain the most efficient buffer size for IO.
- *
- * @param [in]  region      The IORegion.
- * @param [out] bufferSize  The best size for IO buffers. Will be a multiple
- *                          (possibly 1) of the region's block size.
- *
- * @return UDS_SUCCESS or an error code
- **/
-__attribute__((warn_unused_result))
-static INLINE int getRegionBestBufferSize(IORegion *region, size_t *bufferSize)
-{
-  return region->getBestSize(region, bufferSize);
 }
 
 /**

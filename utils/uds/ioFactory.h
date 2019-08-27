@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/ioFactory.h#5 $
+ * $Id: //eng/uds-releases/jasper/src/uds/ioFactory.h#6 $
  */
 
 #ifndef IO_FACTORY_H
@@ -24,11 +24,11 @@
 
 #include "bufferedReader.h"
 #include "bufferedWriter.h"
-#include "ioRegion.h"
 #ifdef __KERNEL__
 #include <linux/dm-bufio.h>
 #else
 #include "fileUtils.h"
+#include "ioRegion.h"
 #endif
 
 /*
@@ -115,8 +115,7 @@ int makeBufio(IOFactory               *factory,
               unsigned int             reservedBuffers,
               struct dm_bufio_client **clientPtr)
   __attribute__((warn_unused_result));
-#endif
-
+#else
 /**
  * Create an IORegion for a region of the index.
  *
@@ -132,6 +131,7 @@ int makeIORegion(IOFactory  *factory,
                  size_t      size,
                  IORegion  **regionPtr)
   __attribute__((warn_unused_result));
+#endif
 
 /**
  * Create a BufferedReader for a region of the index.

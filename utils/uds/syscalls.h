@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.h#2 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.h#3 $
  */
 
 #ifndef SYSCALLS_H
@@ -211,30 +211,6 @@ int setThreadSignalMask(sigset_t   *mask,
                         int         how,
                         const char *context,
                         sigset_t   *oldMask)
-  __attribute__((warn_unused_result));
-
-/**
- * Daemonizes the current process, and store the resulting PID in a file.
- *
- * If <tt>runDir</tt> could not be created, or switching to it via
- * <tt>chdir</tt> failed, the daemonized process's <tt>runDir</tt> will be the
- * root directory ("/").
- *
- * If <tt>pidFile</tt> already exists and represents a running process, this
- * function will return an error code.
- *
- * @param runDir  The directory to run the daemonized process in
- * @param pidFile The path to the file to store the PID in
- * @param context The calling context (for logging)
- *
- * @return UDS_SUCCESS or error code
- *
- * @note Callers should take care to convert any paths that are relative to
- * absolute paths <b>before</b> calling this function.
- *
- * @see #makeAbsPath
- **/
-int daemonize(const char *runDir, const char *pidFile, const char *context)
   __attribute__((warn_unused_result));
 
 /**********************************************************************/

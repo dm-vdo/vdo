@@ -16,27 +16,51 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/bufferedWriter.h#3 $
+ * $Id: //eng/uds-releases/jasper/src/uds/bufferedWriter.h#5 $
  */
 
 #ifndef BUFFERED_WRITER_H
 #define BUFFERED_WRITER_H 1
 
 #include "common.h"
-#include "ioRegion.h"
+
+#ifdef __KERNEL__
+struct dm_bufio_client;
+struct ioFactory;
+#else
+struct ioRegion;
+#endif
 
 typedef struct bufferedWriter BufferedWriter;
 
+#ifdef __KERNEL__
 /**
  * Make a new buffered writer.
  *
- * @param region        The region to write to.
+ * @param factory       The IOFactory creating the buffered writer
+ * @param client        The dm_bufio_client to write to.
+ * @param blockLimit    The number of blocks that may be written to.
  * @param writerPtr     The new buffered writer goes here.
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int makeBufferedWriter(IORegion *region, BufferedWriter **writerPtr)
+int makeBufferedWriter(struct ioFactory        *factory,
+                       struct dm_bufio_client  *client,
+                       sector_t                 blockLimit,
+                       BufferedWriter         **writerPtr)
   __attribute__((warn_unused_result));
+#else
+/**
+ * Make a new buffered writer.
+ *
+ * @param region        The IOregion to write to.
+ * @param writerPtr     The new buffered writer goes here.
+ *
+ * @return UDS_SUCCESS or an error code.
+ **/
+int makeBufferedWriter(struct ioRegion *region, BufferedWriter **writerPtr)
+  __attribute__((warn_unused_result));
+#endif
 
 /**
  * Free a buffered writer, without flushing.
