@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#2 $
  */
 
 #include "blockMapUtils.h"
@@ -62,7 +62,7 @@ static int readAndExaminePage(VDO                 *vdo,
                               Height               height,
                               MappingExaminer     *examiner)
 {
-  BlockMapPage *page;
+  struct block_map_page *page;
   int result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
                                             "block map page", (char **) &page);
   if (result != VDO_SUCCESS) {
@@ -166,7 +166,7 @@ static int readSlotFromPage(VDO                 *vdo,
                             PhysicalBlockNumber *mappedPBNPtr,
                             BlockMappingState   *mappedStatePtr)
 {
-  BlockMapPage *page;
+  struct block_map_page *page;
   int result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
                                             "page buffer", (char **) &page);
   if (result != VDO_SUCCESS) {
@@ -260,10 +260,10 @@ int findLBNMapping(VDO                 *vdo,
 }
 
 /**********************************************************************/
-int readBlockMapPage(PhysicalLayer        *layer,
-                     PhysicalBlockNumber   pbn,
-                     Nonce                 nonce,
-                     BlockMapPage         *page)
+int readBlockMapPage(PhysicalLayer            *layer,
+                     PhysicalBlockNumber       pbn,
+                     Nonce                     nonce,
+                     struct block_map_page    *page)
 {
   int result = layer->reader(layer, pbn, 1, (char *) page, NULL);
   if (result != VDO_SUCCESS) {
