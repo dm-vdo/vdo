@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#3 $
  */
 
 #include <err.h>
@@ -99,9 +99,9 @@ static const char *processArgs(int argc, char *argv[])
 }
 
 /**********************************************************************/
-static void readVDOConfig(const char     *vdoBacking,
-                          VDOConfig      *configPtr,
-                          VolumeGeometry *geometryPtr)
+static void readVDOConfig(const char             *vdoBacking,
+                          VDOConfig              *configPtr,
+                          struct volume_geometry *geometryPtr)
 {
   VDO *vdo;
   int result = makeVDOFromFile(vdoBacking, true, &vdo);
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
   openLogger();
 
   VDOConfig config;
-  VolumeGeometry geometry;
+  struct volume_geometry geometry;
   readVDOConfig(vdoBacking, &config, &geometry);
 
   char uuid[37];

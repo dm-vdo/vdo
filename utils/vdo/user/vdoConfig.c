@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#4 $
  */
 
 #include <uuid/uuid.h>
@@ -205,10 +205,10 @@ static int clearPartition(PhysicalLayer *layer,
  * @param [out] logicalBlocksPtr  If not NULL, will be set to the number of
  *                                logical blocks the VDO was formatted to have
  **/
-static int makeAndWriteVDO(const VDOConfig      *config,
-                           PhysicalLayer        *layer,
-                           VolumeGeometry       *geometry,
-                           BlockCount           *logicalBlocksPtr)
+static int makeAndWriteVDO(const VDOConfig        *config,
+                           PhysicalLayer          *layer,
+                           struct volume_geometry *geometry,
+                           BlockCount             *logicalBlocksPtr)
 {
   VDO *vdo;
   int result = makeVDO(layer, &vdo);
@@ -271,7 +271,7 @@ int formatVDOWithNonce(const VDOConfig *config,
     return result;
   }
 
-  VolumeGeometry geometry;
+  struct volume_geometry geometry;
   result = initializeVolumeGeometry(nonce, uuid, indexConfig, &geometry);
   if (result != VDO_SUCCESS) {
     return result;
@@ -301,7 +301,7 @@ int formatVDOWithNonce(const VDOConfig *config,
 __attribute__((warn_unused_result))
 static int prepareSuperBlock(VDO *vdo)
 {
-  VolumeGeometry geometry;
+  struct volume_geometry geometry;
   int result = loadVolumeGeometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     return result;
