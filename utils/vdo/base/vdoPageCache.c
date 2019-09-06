@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/vdoPageCache.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/vdoPageCache.c#7 $
  */
 
 #include "vdoPageCacheInternals.h"
@@ -477,7 +477,8 @@ static PageInfo *selectLRUPage(VDOPageCache *cache)
 }
 
 /**********************************************************************/
-AtomicPageCacheStatistics *getVDOPageCacheStatistics(VDOPageCache *cache)
+struct atomic_page_cache_statistics *
+getVDOPageCacheStatistics(VDOPageCache *cache)
 {
   return &cache->stats;
 }
@@ -490,7 +491,8 @@ AtomicPageCacheStatistics *getVDOPageCacheStatistics(VDOPageCache *cache)
  * @param info          the page info representing the result page
  * @param vdoPageComp   the VDO page completion to complete
  **/
-static void completeWithPage(PageInfo *info, VDOPageCompletion *vdoPageComp)
+static void completeWithPage(PageInfo                   *info,
+                             struct vdo_page_completion *vdoPageComp)
 {
   bool available = vdoPageComp->writable ? isPresent(info) : isValid(info);
   if (!available) {
@@ -516,8 +518,8 @@ static void completeWithPage(PageInfo *info, VDOPageCompletion *vdoPageComp)
  **/
 static void completeWaiterWithError(Waiter *waiter, void *resultPtr)
 {
-  int               *result     = resultPtr;
-  VDOPageCompletion *completion = pageCompletionFromWaiter(waiter);
+  int                        *result     = resultPtr;
+  struct vdo_page_completion *completion = pageCompletionFromWaiter(waiter);
   finishCompletion(&completion->completion, *result);
 }
 
@@ -542,8 +544,8 @@ static void distributeErrorOverQueue(int result, WaitQueue *queue)
  **/
 static void completeWaiterWithPage(Waiter *waiter, void *pageInfo)
 {
-  PageInfo *info = pageInfo;
-  VDOPageCompletion *completion = pageCompletionFromWaiter(waiter);
+  PageInfo                   *info       = pageInfo;
+  struct vdo_page_completion *completion = pageCompletionFromWaiter(waiter);
   completeWithPage(info, completion);
 }
 
@@ -609,18 +611,18 @@ static void setPersistentError(VDOPageCache *cache,
 }
 
 /**********************************************************************/
-void initVDOPageCompletion(VDOPageCompletion   *pageCompletion,
-                           VDOPageCache        *cache,
-                           PhysicalBlockNumber  pbn,
-                           bool                 writable,
-                           void                *parent,
-                           VDOAction           *callback,
-                           VDOAction           *errorHandler)
+void initVDOPageCompletion(struct vdo_page_completion *pageCompletion,
+                           VDOPageCache               *cache,
+                           PhysicalBlockNumber         pbn,
+                           bool                        writable,
+                           void                       *parent,
+                           VDOAction                  *callback,
+                           VDOAction                  *errorHandler)
 {
   ASSERT_LOG_ONLY((pageCompletion->waiter.nextWaiter == NULL),
                   "New page completion was not already on a wait queue");
 
-  *pageCompletion = (VDOPageCompletion) {
+  *pageCompletion = (struct vdo_page_completion) {
     .pbn      = pbn,
     .writable = writable,
     .cache    = cache,
@@ -642,10 +644,11 @@ void initVDOPageCompletion(VDOPageCompletion   *pageCompletion,
  * @return the embedding completion if valid, NULL if not
  **/
 __attribute__((warn_unused_result))
-static VDOPageCompletion *validateCompletedPage(VDOCompletion *completion,
-                                                bool           writable)
+static struct vdo_page_completion *
+validateCompletedPage(VDOCompletion *completion,
+                      bool           writable)
 {
-  VDOPageCompletion *vpc = asVDOPageCompletion(completion);
+  struct vdo_page_completion *vpc = asVDOPageCompletion(completion);
 
   int result = ASSERT(vpc->ready, "VDO Page completion not ready");
   if (result != UDS_SUCCESS) {
@@ -902,7 +905,7 @@ static void launchPageSave(PageInfo *info)
 }
 
 /**
- * Determine whether a given VDOPageCompletion (as a waiter) is requesting a
+ * Determine whether a given vdo_page_completion (as a waiter) is requesting a
  * given page number. Implements WaiterMatch.
  *
  * @param waiter        The page completion in question
@@ -994,7 +997,7 @@ static void discardAPage(VDOPageCache *cache)
  *
  * @param vdoPageComp   the VDO Page completion
  **/
-static void discardPageForCompletion(VDOPageCompletion *vdoPageComp)
+static void discardPageForCompletion(struct vdo_page_completion *vdoPageComp)
 {
   VDOPageCache *cache = vdoPageComp->cache;
 
@@ -1172,7 +1175,7 @@ void releaseVDOPageCompletion(VDOCompletion *completion)
   }
 
   PageInfo *discardInfo = NULL;
-  VDOPageCompletion *pageCompletion;
+  struct vdo_page_completion *pageCompletion;
   if (completion->result == VDO_SUCCESS) {
     pageCompletion = validateCompletedPage(completion, false);
     if (--pageCompletion->info->busy == 0) {
@@ -1187,7 +1190,7 @@ void releaseVDOPageCompletion(VDOCompletion *completion)
 
   VDOPageCache *cache = pageCompletion->cache;
   assertOnCacheThread(cache, __func__);
-  memset(pageCompletion, 0, sizeof(VDOPageCompletion));
+  memset(pageCompletion, 0, sizeof(struct vdo_page_completion));
 
   if (discardInfo != NULL) {
     if (discardInfo->writeStatus == WRITE_STATUS_DEFERRED) {
@@ -1206,8 +1209,8 @@ void releaseVDOPageCompletion(VDOCompletion *completion)
  * @param info          the page info representing where to load the page
  * @param vdoPageComp   the VDO Page Completion describing the page
  **/
-static void loadPageForCompletion(PageInfo          *info,
-                                  VDOPageCompletion *vdoPageComp)
+static void loadPageForCompletion(PageInfo                   *info,
+                                  struct vdo_page_completion *vdoPageComp)
 {
   int result = enqueueWaiter(&info->waiting, &vdoPageComp->waiter);
   if (result != VDO_SUCCESS) {
@@ -1224,8 +1227,8 @@ static void loadPageForCompletion(PageInfo          *info,
 /**********************************************************************/
 void getVDOPageAsync(VDOCompletion *completion)
 {
-  VDOPageCompletion *vdoPageComp = asVDOPageCompletion(completion);
-  VDOPageCache      *cache       = vdoPageComp->cache;
+  struct vdo_page_completion *vdoPageComp = asVDOPageCompletion(completion);
+  VDOPageCache               *cache       = vdoPageComp->cache;
   assertOnCacheThread(cache, __func__);
 
   if (vdoPageComp->writable && isReadOnly(cache->zone->readOnlyNotifier)) {
@@ -1287,7 +1290,8 @@ void markCompletedVDOPageDirty(VDOCompletion  *completion,
                                SequenceNumber  oldDirtyPeriod,
                                SequenceNumber  newDirtyPeriod)
 {
-  VDOPageCompletion *vdoPageComp = validateCompletedPage(completion, true);
+  struct vdo_page_completion *vdoPageComp = validateCompletedPage(completion,
+                                                                  true);
   if (vdoPageComp == NULL) {
     return;
   }
@@ -1301,7 +1305,8 @@ void markCompletedVDOPageDirty(VDOCompletion  *completion,
 /**********************************************************************/
 void requestVDOPageWrite(VDOCompletion *completion)
 {
-  VDOPageCompletion *vdoPageComp = validateCompletedPage(completion, true);
+  struct vdo_page_completion *vdoPageComp = validateCompletedPage(completion,
+                                                                  true);
   if (vdoPageComp == NULL) {
     return;
   }
@@ -1312,7 +1317,7 @@ void requestVDOPageWrite(VDOCompletion *completion)
 }
 
 /**********************************************************************/
-static void *dereferencePageCompletion(VDOPageCompletion  *completion)
+static void *dereferencePageCompletion(struct vdo_page_completion  *completion)
 {
   return ((completion != NULL) ? getPageBuffer(completion->info) : NULL);
 }
@@ -1332,7 +1337,7 @@ void *dereferenceWritableVDOPage(VDOCompletion *completion)
 /**********************************************************************/
 void *getVDOPageCompletionContext(VDOCompletion *completion)
 {
-  VDOPageCompletion *pageCompletion = asVDOPageCompletion(completion);
+  struct vdo_page_completion *pageCompletion = asVDOPageCompletion(completion);
   PageInfo *info = ((pageCompletion != NULL) ? pageCompletion->info : NULL);
   return (((info != NULL) && isValid(info)) ? info->context : NULL);
 }
