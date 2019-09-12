@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#7 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#8 $
 
 """
 from __future__ import absolute_import
@@ -615,7 +615,8 @@ class VDOService(Service):
       self.log.info(_("VDO service {0} not activated").format(self.getName()))
       return
     if self.running() and not Command.noRunMode():
-      self.log.info(_("VDO service {0} already started").format(
+      self.log.warning(
+        _("VDO service {0} already started; no changes made").format(
           self.getName()))
       return
 
@@ -736,7 +737,7 @@ class VDOService(Service):
     if execute:
       if ((not self.running()) and (not Command.noRunMode())
           and (not self.previousOperationFailure)):
-        self.log.info(_("VDO service {0} already stopped").format(
+        self.log.warning(_("VDO service {0} already stopped").format(
             self.getName()))
         return
 

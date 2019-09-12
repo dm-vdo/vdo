@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#5 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#6 $
  */
 
 #include "fileUtils.h"
@@ -50,6 +50,7 @@ int fileExists(const char *path, bool *exists)
 
   return result;
 }
+
 /**********************************************************************/
 int openFile(const char *path, FileAccess access, int *fd)
 {
@@ -346,60 +347,7 @@ int loggingFstat(int fd, struct stat *buf, const char *context)
 }
 
 /**********************************************************************/
-int loggingFcntl(int fd, int cmd, const char *context, long *value)
-{
-  int result = fcntl(fd, cmd);
-  if (result == -1) {
-    return logErrorWithStringError(errno,
-                                   "%s failed in %s on fd %d, command %d",
-                                   __func__, context, fd, cmd);
-  }
-
-  if (value != NULL) {
-    *value = result;
-  }
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-int loggingFcntlWithArg(int         fd,
-                        int         cmd,
-                        long        arg,
-                        const char *context,
-                        long       *value)
-{
-  int result = fcntl(fd, cmd, arg);
-  if (result != -1) {
-    if (value != NULL) {
-      *value = result;
-    }
-    return UDS_SUCCESS;
-  }
-
-  return
-    logErrorWithStringError(errno,
-                            "%s failed in %s on fd %d, command %d, arg: %ld",
-                            __func__, context, fd, cmd, arg);
-}
-
-/**********************************************************************/
 int loggingFsync(int fd, const char *context)
 {
   return checkSystemCall(fsync(fd), __func__, context);
-}
-
-/**********************************************************************/
-int makeDirectory(const char *path,
-                  mode_t      mode,
-                  const char *directoryType,
-                  const char *context)
-{
-  int result = mkdir(path, mode);
-  if (result == 0) {
-    return UDS_SUCCESS;
-  }
-
-  return logWithStringError(((errno == EEXIST) ? LOG_WARNING : LOG_ERR),
-                            errno, "%s failed in %s making %s directory %s",
-                            __func__, context, directoryType, path);
 }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#5 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#6 $
  */
 
 #ifndef FILE_UTILS_H
@@ -264,38 +264,6 @@ int loggingFstat(int fd, struct stat *buf, const char *context)
   __attribute__((warn_unused_result));
 
 /**
- * Wrap the fcntl(2) system call.
- *
- * @param fd      The descritor on which to operate
- * @param cmd     The command to apply (see the fcntl(2) man page)
- * @param context The calling context (for logging)
- * @param value   A pointer to hold the fcntl() return data
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingFcntl(int fd, int cmd, const char *context, long *value)
-  __attribute__((warn_unused_result));
-
-/**
- * Wrap the fcntl(2) system call.
- *
- * @param fd      The descritor on which to operate
- * @param cmd     The command to apply (see the fcntl(2) man page)
- * @param arg     The fcntl command argument (see the fcntl(2) man
- *                page)
- * @param context The calling context (for logging)
- * @param value   A pointer to hold the fcntl() return data
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingFcntlWithArg(int         fd,
-                        int         cmd,
-                        long        arg,
-                        const char *context,
-                        long       *value)
-  __attribute__((warn_unused_result));
-
-/**
  * Wrap the fsync(2) system call.
  *
  * @param fd      The descriptor to sync
@@ -304,22 +272,6 @@ int loggingFcntlWithArg(int         fd,
  * @return UDS_SUCCESS or an error code
  **/
 int loggingFsync(int fd, const char *context)
-  __attribute__((warn_unused_result));
-
-/**
- * Wrap the mkdir(2) system call.
- *
- * @param path          The path of the directory to make
- * @param mode          The file mode of the new directory
- * @param directoryType The type of directory (for error reporting)
- * @param context       The calling context (for logging)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int makeDirectory(const char *path,
-                  mode_t      mode,
-                  const char *directoryType,
-                  const char *context)
   __attribute__((warn_unused_result));
 
 #endif /* FILE_UTILS_H */
