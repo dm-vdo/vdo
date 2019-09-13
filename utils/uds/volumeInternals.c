@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/volumeInternals.c#6 $
+ * $Id: //eng/uds-releases/jasper/src/uds/volumeInternals.c#7 $
  */
 
 #include "volumeInternals.h"
@@ -54,19 +54,14 @@ int allocateVolume(const Configuration  *config,
                                      "failed to allocate geometry: error");
   }
 
-#ifdef __KERNEL__
-  result = openVolumeBufio(layout, config->geometry->bytesPerPage, 1,
-                           &volume->bufioClient);
+  unsigned int reservedBuffers = 1;
+  result = openVolumeStore(&volume->volumeStore, layout, reservedBuffers,
+                           config->geometry->bytesPerPage);
   if (result != UDS_SUCCESS) {
     freeVolume(volume);
     return result;
   }
-#else
-  result = openVolumeRegion(layout, &volume->region);
-  if (result != UDS_SUCCESS) {
-    freeVolume(volume);
-    return result;
-  }
+#ifndef __KERNEL__
   result = ALLOCATE_IO_ALIGNED(config->geometry->bytesPerPage, byte,
                                "scratch page", &volume->scratchPage);
   if (result != UDS_SUCCESS) {
@@ -128,7 +123,8 @@ int readPageToBuffer(const Volume *volume,
 {
 #ifdef __KERNEL__
   struct dm_buffer *buffer = NULL;
-  byte *cacheData = dm_bufio_read(volume->bufioClient, physicalPage, &buffer);
+  byte *cacheData = dm_bufio_read(volume->volumeStore.vs_client, physicalPage,
+                                  &buffer);
   if (IS_ERR(cacheData)) {
     return logWarningWithStringError(-PTR_ERR(cacheData),
                                      "error reading physical page %u",
@@ -139,7 +135,7 @@ int readPageToBuffer(const Volume *volume,
 #else
   off_t pageOffset
     = ((off_t) physicalPage) * ((off_t) volume->geometry->bytesPerPage);
-  int result = readFromRegion(volume->region, pageOffset, data,
+  int result = readFromRegion(volume->volumeStore.vs_region, pageOffset, data,
                               volume->geometry->bytesPerPage, NULL);
   if (result != UDS_SUCCESS) {
     return logWarningWithStringError(result,
@@ -159,7 +155,7 @@ int readChapterIndexToBuffer(const Volume *volume,
   int result = UDS_SUCCESS;
 #ifdef __KERNEL__
   int physicalPage = mapToPhysicalPage(geometry, chapterNumber, 0);
-  dm_bufio_prefetch(volume->bufioClient, physicalPage,
+  dm_bufio_prefetch(volume->volumeStore.vs_client, physicalPage,
                     geometry->indexPagesPerChapter);
   unsigned int i;
   for (i = 0; i < geometry->indexPagesPerChapter; i++) {
@@ -172,8 +168,8 @@ int readChapterIndexToBuffer(const Volume *volume,
 #else
   off_t chapterIndexOffset = offsetForChapter(geometry, chapterNumber);
   size_t indexSize = geometry->bytesPerPage * geometry->indexPagesPerChapter;
-  result = readFromRegion(volume->region, chapterIndexOffset, buffer,
-                          indexSize, NULL);
+  result = readFromRegion(volume->volumeStore.vs_region, chapterIndexOffset,
+                          buffer, indexSize, NULL);
 #endif
   if (result != UDS_SUCCESS) {
     return logWarningWithStringError(result,

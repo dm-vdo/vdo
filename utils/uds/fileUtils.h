@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#6 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.h#7 $
  */
 
 #ifndef FILE_UTILS_H
@@ -24,7 +24,6 @@
 
 #include <sys/stat.h>
 
-#include "accessMode.h"
 #include "common.h"
 #include "compiler.h"
 #include "typeDefs.h"
@@ -42,16 +41,6 @@ typedef enum {
                                    // 0666 mode bits if the file doesn't exist
   FU_CREATE_WRITE_ONLY_DIRECT = 7, // like above, but open for writing only
 } FileAccess;
-
-/*****************************************************************************/
-static INLINE FileAccess fileAccessMode(IOAccessMode access)
-{
-  return
-    (access == IO_CREATE_WRITE) ? FU_CREATE_WRITE_ONLY :
-    (access == IO_READ_WRITE)   ? FU_READ_WRITE :
-    (access & IO_CREATE)        ? FU_CREATE_READ_WRITE :
-    FU_READ_ONLY;
-}
 
 /**
  * Check whether a file exists.

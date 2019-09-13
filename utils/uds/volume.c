@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/volume.c#14 $
+ * $Id: //eng/uds-releases/jasper/src/uds/volume.c#15 $
  */
 
 #include "volume.h"
@@ -746,7 +746,8 @@ int forgetChapter(Volume             *volume,
 static int writeScratchPage(Volume *volume, int physicalPage)
 {
   off_t offset = (off_t) physicalPage * (off_t) volume->geometry->bytesPerPage;
-  int result = writeToRegion(volume->region, offset, volume->scratchPage,
+  int result = writeToRegion(volume->volumeStore.vs_region, offset,
+                             volume->scratchPage,
                              volume->geometry->bytesPerPage,
                              volume->geometry->bytesPerPage);
   return result;
@@ -816,7 +817,7 @@ int writeIndexPages(Volume            *volume,
        indexPageNumber++) {
 #ifdef __KERNEL__
     struct dm_buffer *buffer = NULL;
-    byte *data = dm_bufio_new(volume->bufioClient,
+    byte *data = dm_bufio_new(volume->volumeStore.vs_client,
                               physicalPage + indexPageNumber, &buffer);
     if (IS_ERR(data)) {
       return logErrorWithStringError(-PTR_ERR(data),
@@ -912,7 +913,7 @@ int writeRecordPages(Volume                *volume,
        recordPageNumber++) {
 #ifdef __KERNEL__
     struct dm_buffer *buffer = NULL;
-    byte *data = dm_bufio_new(volume->bufioClient,
+    byte *data = dm_bufio_new(volume->volumeStore.vs_client,
                               physicalPage + recordPageNumber, &buffer);
     if (IS_ERR(data)) {
       return logErrorWithStringError(-PTR_ERR(data),
@@ -965,24 +966,6 @@ int writeRecordPages(Volume                *volume,
 }
 
 /**********************************************************************/
-int syncVolume(Volume *volume)
-{
-  int result;
-#ifdef __KERNEL__
-  result = dm_bufio_write_dirty_buffers(volume->bufioClient);
-  if (result != 0) {
-    return logErrorWithStringError(-result, "cannot write chapter to volume");
-  }
-#else
-  result = syncRegionContents(volume->region);
-  if (result != UDS_SUCCESS) {
-    return logErrorWithStringError(result, "cannot sync chapter to volume");
-  }
-#endif
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
 int writeChapter(Volume                 *volume,
                  OpenChapterIndex       *chapterIndex,
                  const UdsChunkRecord    records[])
@@ -1004,7 +987,7 @@ int writeChapter(Volume                 *volume,
     return result;
   }
   // Flush the data to permanent storage.
-  return syncVolume(volume);
+  return syncVolumeStore(&volume->volumeStore);
 }
 
 /**********************************************************************/
@@ -1359,27 +1342,20 @@ void freeVolume(Volume *volume)
     volume->readerThreads = NULL;
   }
 
-#ifdef __KERNEL__
-  if (volume->bufioClient != NULL) {
-    dm_bufio_client_destroy(volume->bufioClient);
-  }
-#else
-  if (volume->region != NULL) {
-    putIORegion(volume->region);
-  }
+// Must free the volume store AFTER freeing the scratch page and the caches
+#ifndef __KERNEL__
+  FREE(volume->scratchPage);
 #endif
+  freePageCache(volume->pageCache);
+  freeSparseCache(volume->sparseCache);
+  closeVolumeStore(&volume->volumeStore);
 
   destroyCond(&volume->readThreadsCond);
   destroyCond(&volume->readThreadsReadDoneCond);
   destroyMutex(&volume->readThreadsMutex);
   freeIndexPageMap(volume->indexPageMap);
-  freePageCache(volume->pageCache);
   freeRadixSorter(volume->radixSorter);
-  freeSparseCache(volume->sparseCache);
   FREE(volume->geometry);
   FREE(volume->recordPointers);
-#ifndef __KERNEL__
-  FREE(volume->scratchPage);
-#endif
   FREE(volume);
 }
