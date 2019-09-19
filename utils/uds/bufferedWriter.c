@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/bufferedWriter.c#5 $
+ * $Id: //eng/uds-releases/jasper/src/uds/bufferedWriter.c#6 $
  */
 
 #include "bufferedWriter.h"
@@ -169,13 +169,17 @@ void freeBufferedWriter(BufferedWriter *bw)
   }
 #ifdef __KERNEL__
   flushPreviousBuffer(bw);
+  int result = -dm_bufio_write_dirty_buffers(bw->bw_client);
+#else
+  int result = syncRegionContents(bw->bw_region);
+#endif
+  if (result != UDS_SUCCESS) {
+    logWarningWithStringError(result, "%s cannot sync storage", __func__);
+  }
+#ifdef __KERNEL__
   dm_bufio_client_destroy(bw->bw_client);
   putIOFactory(bw->bw_factory);
 #else
-  int result = syncRegionContents(bw->bw_region);
-  if (result != UDS_SUCCESS) {
-    logWarningWithStringError(result, "%s cannot sync region", __func__);
-  }
   putIORegion(bw->bw_region);
   FREE(bw->bw_start);
 #endif

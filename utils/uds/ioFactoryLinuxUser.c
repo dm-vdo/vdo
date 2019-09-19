@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/ioFactoryLinuxUser.c#7 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/ioFactoryLinuxUser.c#8 $
  */
 
 #include "atomicDefs.h"
@@ -65,6 +65,18 @@ void putIOFactory(IOFactory *factory)
     closeFile(factory->fd, NULL);
     FREE(factory);
   }
+}
+
+/*****************************************************************************/
+size_t getWritableSize(IOFactory *factory __attribute__((unused)))
+{
+  /*
+   * The actual maximum is dependent upon the type of filesystem, and the man
+   * pages tell us no way to determine what that maximum is.  Fortunately, any
+   * attempt to write to a location that is too large will return an EFBIG
+   * error.
+   */ 
+  return SIZE_MAX;
 }
 
 /*****************************************************************************/
