@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#3 $
  */
 
 #include "parseUtils.h"
@@ -151,7 +151,7 @@ int parseIndexConfig(UdsConfigStrings *configStrings,
       return result;
     }
     if (number != (unsigned int) number) {
-      return UDS_OUT_OF_RANGE;
+      return ERANGE;
     }
     config.checkpointFrequency = number;
   }
