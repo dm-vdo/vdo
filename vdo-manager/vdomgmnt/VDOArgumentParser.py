@@ -442,6 +442,21 @@ suffix is optional""").format(options
                  self.__commonOptions],
       help = highLevelHelp,
       description = description)
+   
+    # version command.
+    commandText = _("""
+                    """)
+    highLevelHelp = _("""
+      Show the version of vdo.
+                      """)
+    description = _("""
+      {0} This command is invoked 'vdoformat --version'.
+                    """).format(highLevelHelp)
+    self._versionCommandParser = subparserAdder.add_parser(
+      "version",
+      parents = [self.__commonOptions],
+      help = highLevelHelp,
+      description = description)
 
   ####################################################################
   # Protected methods

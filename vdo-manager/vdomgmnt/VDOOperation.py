@@ -46,6 +46,7 @@ import os
 import re
 import sys
 import yaml
+import subprocess
 
 vdoOperations = dict()
 
@@ -614,9 +615,13 @@ class VersionOperation(VDOOperation):
 
   ######################################################################
   def execute(self, unused_args):
-    kms = VDOKernelModuleService()
-    kms.start()
-    print(kms.version())
+    format_version = subprocess.check_output(["vdoformat", "--version"]).decode('utf-8')
+    version = re.findall('\d+.', format_version)
+    print ("vdo version is: "+''.join(version))
+
+    #kms = VDOKernelModuleService()
+    #kms.start()
+    #print(kms.version())
 
 ########################################################################
 class OptionToggle(VDOOperation):

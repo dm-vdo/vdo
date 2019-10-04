@@ -185,13 +185,13 @@ _vdo()
     activate changeWritePolicy create deactivate disableCompression
     disableDeduplication enableCompression enableDeduplication growLogical
     growPhysical list modify printConfigFile remove start status
-	stop' -- "$cur" ) )
+	stop version' -- "$cur" ) )
   else
     case "${words[1]}" in
       activate|changeWritePolicy|create|deactivate|disableCompression|\
       disableDeduplication|enableCompression|enableDeduplication|\
       growLogical|growPhysical|list|modify|printConfigFile|remove|\
-      start|status|stop)
+      start|status|stop|version)
 	   _generic_function ${words[1]}
       ;;
     esac
