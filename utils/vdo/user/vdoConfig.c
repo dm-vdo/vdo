@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#5 $
  */
 
 #include <uuid/uuid.h>
@@ -99,8 +99,8 @@ static int configureVDO(VDO *vdo)
     return result;
   }
 
-  Partition *depotPartition = getVDOPartition(vdo->layout,
-                                              BLOCK_ALLOCATOR_PARTITION);
+  struct partition *depotPartition
+    = getVDOPartition(vdo->layout, BLOCK_ALLOCATOR_PARTITION);
   BlockCount depotSize = getFixedLayoutPartitionSize(depotPartition);
   PhysicalBlockNumber origin = getFixedLayoutPartitionOffset(depotPartition);
   result = makeSlabDepot(depotSize, origin, slabConfig, getThreadConfig(vdo),
@@ -119,8 +119,8 @@ static int configureVDO(VDO *vdo)
                                        DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
   }
 
-  Partition *blockMapPartition = getVDOPartition(vdo->layout,
-                                                 BLOCK_MAP_PARTITION);
+  struct partition *blockMapPartition
+    = getVDOPartition(vdo->layout, BLOCK_MAP_PARTITION);
   result = makeBlockMap(vdo->config.logicalBlocks, getThreadConfig(vdo), 0,
                         getFixedLayoutPartitionOffset(blockMapPartition),
                         getFixedLayoutPartitionSize(blockMapPartition),
@@ -168,7 +168,7 @@ static int clearPartition(PhysicalLayer *layer,
                           VDOLayout     *layout,
                           PartitionID    id)
 {
-  Partition           *partition = getVDOPartition(layout, id);
+  struct partition    *partition = getVDOPartition(layout, id);
   BlockCount           size      = getFixedLayoutPartitionSize(partition);
   PhysicalBlockNumber  start     = getFixedLayoutPartitionOffset(partition);
 
