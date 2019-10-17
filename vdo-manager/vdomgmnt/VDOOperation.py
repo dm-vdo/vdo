@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#6 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#7 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -387,6 +387,46 @@ class GrowPhysicalOperation(VDOOperation):
     vdo.growPhysical()
     conf.persist()
 
+########################################################################
+class ImportOperation(VDOOperation):
+  """Implements the import command."""
+
+  ######################################################################
+  # Overridden methods
+  ######################################################################
+  def __init__(self):
+    super(ImportOperation, self).__init__(checkBinaries=True)
+
+  ######################################################################
+  def preflight(self, args):
+    super(ImportOperation, self).preflight(args)
+
+    if not args.name:
+      raise ArgumentError(_("Missing required argument '--name'"))
+
+    if not args.device:
+      raise ArgumentError(_("Missing required argument '--device'"))
+
+  ######################################################################
+  @exclusivelock
+  @transactional
+  def execute(self, args):
+    # Get configuration
+    conf = Configuration.modifiableSingleton(self.confFile)
+
+    argsDict = vars(args).copy()
+    name = argsDict['name']
+    del argsDict['name']
+
+    vdo = VDOService(args.name, conf, **argsDict)
+
+    transaction = Transaction.transaction()
+    vdo.importDevice()
+    transaction.addUndoStage(vdo.remove)
+
+    conf.persist()
+    vdo.announceReady()
+    
 ########################################################################
 class ListOperation(VDOOperation):
   """Implements the list command."""

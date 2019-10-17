@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoDumpConfig.c#2 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoDumpConfig.c#3 $
  */
 
 #include <err.h>
@@ -97,9 +97,9 @@ static const char *processArgs(int argc, char *argv[])
 }
 
 /**********************************************************************/
-static void readVDOConfig(const char *vdoBacking,
-                          VDOConfig  *configPtr,
-                          UUID       *uuidPtr)
+static void readVDOConfig(const char     *vdoBacking,
+                          VDOConfig      *configPtr,
+                          VolumeGeometry *geometryPtr)
 {
   VDO *vdo;
   int result = makeVDOFromFile(vdoBacking, true, &vdo);
@@ -109,12 +109,10 @@ static void readVDOConfig(const char *vdoBacking,
 
   *configPtr = vdo->config;
 
-  VolumeGeometry geometry;
-  result = loadVolumeGeometry(vdo->layer, &geometry);
+  result = loadVolumeGeometry(vdo->layer, geometryPtr);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not read VDO geometry from '%s'", vdoBacking);
   }
-  memcpy(*uuidPtr, geometry.uuid, sizeof(UUID));
 
   freeVDOFromFile(&vdo);
 }
@@ -135,12 +133,13 @@ int main(int argc, char *argv[])
   openLogger();
 
   VDOConfig config;
-  UUID      rawUuid;
-  readVDOConfig(vdoBacking, &config, &rawUuid);
+  VolumeGeometry geometry;
+  readVDOConfig(vdoBacking, &config, &geometry);
 
-  char prettyUuid[37];
-  uuid_unparse(rawUuid, prettyUuid);
+  char uuid[37];
+  uuid_unparse(geometry.uuid, uuid);
 
+  // This output must be valid YAML.
   printf("VDOConfig:\n");
   printf("  blockSize: %d\n", VDO_BLOCK_SIZE);
   printf("  logicalBlocks: %" PRIu64 "\n", config.logicalBlocks);
@@ -148,6 +147,17 @@ int main(int argc, char *argv[])
   printf("  slabSize: %" PRIu64 "\n", config.slabSize);
   printf("  recoveryJournalSize: %" PRIu64 "\n", config.recoveryJournalSize);
   printf("  slabJournalBlocks: %" PRIu64 "\n", config.slabJournalBlocks);
-  printf("UUID: %s\n", prettyUuid);
+  printf("UUID: %s\n", uuid);
+  printf("ReleaseVersion: %u\n", geometry.releaseVersion);
+  printf("Nonce: %" PRIu64 "\n", geometry.nonce);
+  printf("IndexRegion: %" PRIu64 "\n",
+         geometry.regions[INDEX_REGION].startBlock);
+  printf("DataRegion: %" PRIu64 "\n",
+         geometry.regions[DATA_REGION].startBlock);
+  printf("IndexConfig:\n");
+  printf("  memory: %u\n", geometry.indexConfig.mem);
+  printf("  checkpointFrequency: %u\n",
+         geometry.indexConfig.checkpointFrequency);
+  printf("  sparse: %s\n", geometry.indexConfig.sparse ? "true" : "false");
   exit(0);
 }

@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#8 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#9 $
 
 """
 from __future__ import absolute_import
@@ -31,6 +31,7 @@ from . import Constants, MgmntUtils, SizeString, UserExitStatus
 import os
 import re
 import stat
+import uuid
 
 class ArgumentError(UserExitStatus, Exception):
   """Exception raised to indicate an error with an argument."""
@@ -101,6 +102,7 @@ class Defaults(object):
   slabSizeMin = SizeString("128M")
   sparseIndex = Constants.disabled
   udsParallelFactor = 0
+  uuid = ""
   vdoPhysicalBlockSize = 4096
   vdoLogLevel = 'info'
   vdoLogLevelChoices = ['critical', 'error', 'warning', 'notice', 'info',
@@ -444,6 +446,29 @@ class Defaults(object):
 
     """
     return Defaults._rangeCheck(1, 100, value)
+
+  ######################################################################
+  @staticmethod
+  def checkUUIDValue(value):
+    """Checks that an option is a valid UUID.
+
+    Arguments:
+      value (str): Value provided as an argument to the option.
+    Returns:
+      The uuid as a string.
+    Raises:
+      ArgumentError
+
+    """
+    if value is None or value == "": 
+      return ""
+    
+    try:
+      val = uuid.UUID(value)
+      return str(val)
+    except ValueError:
+      pass
+    raise ArgumentError(_("must be a valid UUID or empty string"))
 
   ######################################################################
   @staticmethod

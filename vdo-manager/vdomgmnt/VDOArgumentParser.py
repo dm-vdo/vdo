@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#6 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#9 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -162,16 +162,17 @@ suffix is optional""").format(options
                  self.__commonOptions],
       help = highLevelHelp,
       description = description)
-
     # create command.
     highLevelHelp = _("""
       Creates a VDO volume and its associated index and makes it available.
                       """)
     description = _("""
       {0} If --activate={1} is specified the VDO volume is created but not made
-      available. Will not overwrite an existing file system or formatted VDO
-      volume unless --force is given. This command must be run with root
-      privileges.
+      available. If the specified device is already in use by a VDO volume (as
+      determined from the configuration file) the create will always be 
+      rejected, even if --force is specified. If the device is not so in use
+      but is formatted as a VDO volume or contains an existing file system
+      the create will be rejected unless --force is given.
                     """).format(highLevelHelp, Constants.disabled)
     self._createCommandParser = subparserAdder.add_parser(
       "create",
@@ -187,6 +188,7 @@ suffix is optional""").format(options
                   self._indexMemOptionParser(),
                   self._maxDiscardSizeOptionParser(),
                   self._sparseIndexOptionParser(),
+                  self._uuidOptionParser(),
                   self._vdoAckThreadsOptionParser(),
                   self._vdoBioRotationIntervalOptionParser(),
                   self._vdoBioThreadsOptionParser(),
@@ -313,6 +315,41 @@ suffix is optional""").format(options
       help = highLevelHelp,
       description = description)
 
+    # import command.
+    highLevelHelp = _("""
+      Creates a VDO volume from an existing VDO formatted storage device by
+      importing it into VDO manager for use.
+                      """)
+    description = _("""
+      {0} If --activate={1} is specified the VDO volume is created but not made
+      available. This command must be run with root privileges.
+                    """).format(highLevelHelp, Constants.disabled)
+
+    self._importCommandParser = subparserAdder.add_parser(
+      "import",
+       parents = [self._nameOptionParser(),
+                  self._deviceOptionParser(),
+                  self._activateOptionParser(),
+                  self._blockMapCacheSizeOptionParser(),
+                  self._blockMapPeriodOptionParser(),
+                  self._compressionOptionParser(),
+                  self._deduplicationOptionParser(),
+                  self._emulate512OptionParser(),
+                  self._maxDiscardSizeOptionParser(),
+                  self._uuidOptionParser(),
+                  self._vdoAckThreadsOptionParser(),
+                  self._vdoBioRotationIntervalOptionParser(),
+                  self._vdoBioThreadsOptionParser(),
+                  self._vdoCpuThreadsOptionParser(),
+                  self._vdoHashZoneThreadsOptionParser(),
+                  self._vdoLogicalThreadsOptionParser(),
+                  self._vdoLogLevelOptionParser(),
+                  self._vdoPhysicalThreadsOptionParser(),
+                  self._writePolicyOptionParser(),
+                  self.__commonOptions],
+      help = highLevelHelp,
+      description = description)
+
     # list command.
     highLevelHelp = _("""
       Displays a list of started VDO volumes. If --all is specified it
@@ -339,6 +376,7 @@ suffix is optional""").format(options
     self._changeableModifyOptions = ["blockMapCacheSize",
                                      "blockMapPeriod",
                                      "maxDiscardSize",
+                                     "uuid",
                                      "vdoAckThreads",
                                      "vdoBioRotationInterval",
                                      "vdoBioThreads",
@@ -352,6 +390,7 @@ suffix is optional""").format(options
                  self._blockMapCacheSizeOptionParser(noDefault = True),
                  self._blockMapPeriodOptionParser(noDefault = True),
                  self._maxDiscardSizeOptionParser(noDefault = True),
+                 self._uuidOptionParser(noDefault = True),
                  self._vdoAckThreadsOptionParser(noDefault = True),
                  self._vdoBioRotationIntervalOptionParser(noDefault = True),
                  self._vdoBioThreadsOptionParser(noDefault = True),
@@ -741,6 +780,29 @@ suffix is optional""").format(options
                                  """)
       .format(sparseIndex = Defaults.sparseIndex))
 
+    return parser
+
+  ####################################################################
+  def _uuidOptionParser(self, noDefault = False):
+    """
+    Arguments:
+      noDefault (boolean) - if True, no default is mentioned in the help text
+    """
+    defaultHelp = ("" if noDefault else
+                   "The default is {0}.".format(Defaults.uuid))
+
+    parser = argparse.ArgumentParser(add_help = False)
+    parser.add_argument("--uuid",
+                        type = self.__optionCheck(Defaults.checkUUIDValue),
+                        metavar = "<uuid>",
+                        help = _("""
+      Sets the UUID of the VDO volume. The value needs to be either a
+      valid uuid or an empty string. If an empty string is specified, a
+      new random uuid is generated for the VDO volume.
+      {defaultHelp}
+                                 """)
+      .format(defaultHelp = defaultHelp))
+    
     return parser
 
   ####################################################################
