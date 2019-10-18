@@ -16,38 +16,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/threadSemaphoreLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadSemaphoreLinuxUser.c#2 $
  */
-
-#include "threadSemaphore.h"
 
 #include <errno.h>
 
 #include "logger.h"
 #include "permassert.h"
+#include "threads.h"
 #include "timeUtils.h"
 
 /**********************************************************************/
-int initializeSemaphore(Semaphore    *semaphore,
-                        unsigned int  value,
-                        const char   *context)
+int initializeSemaphore(Semaphore *semaphore, unsigned int value)
 {
   int result = sem_init(semaphore, false, value);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "%s: sem_init error",
-                                context);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result, "sem_init error");
 }
 
 /**********************************************************************/
-int destroySemaphore(Semaphore *semaphore, const char *context)
+int destroySemaphore(Semaphore *semaphore)
 {
   int result = sem_destroy(semaphore);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "%s: sem_destroy error",
-                                context);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result, "sem_destroy error");
 }
 
 /**********************************************************************/
-void acquireSemaphore(Semaphore  *semaphore,
-                      const char *context __attribute__((unused)))
+void acquireSemaphore(Semaphore  *semaphore)
 {
   int result;
   do {
@@ -55,14 +49,12 @@ void acquireSemaphore(Semaphore  *semaphore,
   } while ((result == -1) && (errno == EINTR));
 
 #ifndef NDEBUG
-  ASSERT_LOG_ONLY((result == 0), "%s: sem_wait error %d", context, errno);
+  ASSERT_LOG_ONLY((result == 0), "sem_wait error %d", errno);
 #endif
 }
 
 /**********************************************************************/
-bool attemptSemaphore(Semaphore *semaphore,
-                      RelTime    timeout,
-                      const char *context __attribute__((unused)))
+bool attemptSemaphore(Semaphore *semaphore, RelTime timeout)
 {
   if (timeout > 0) {
     struct timespec ts = asTimeSpec(futureTime(CT_REALTIME, timeout));
@@ -72,8 +64,7 @@ bool attemptSemaphore(Semaphore *semaphore,
       }
     } while (errno == EINTR);
 #ifndef NDEBUG
-    ASSERT_LOG_ONLY((errno == ETIMEDOUT), "%s: sem_timedwait error %d",
-                    context, errno);
+    ASSERT_LOG_ONLY((errno == ETIMEDOUT), "sem_timedwait error %d", errno);
 #endif
   } else {
     do {
@@ -82,19 +73,17 @@ bool attemptSemaphore(Semaphore *semaphore,
       }
     } while (errno == EINTR);
 #ifndef NDEBUG
-    ASSERT_LOG_ONLY((errno == EAGAIN), "%s: sem_trywait error %d",
-                    context, errno);
+    ASSERT_LOG_ONLY((errno == EAGAIN), "sem_trywait error %d", errno);
 #endif
   }
   return false;
 }
 
 /**********************************************************************/
-void releaseSemaphore(Semaphore  *semaphore,
-                      const char *context __attribute__((unused)))
+void releaseSemaphore(Semaphore  *semaphore)
 {
   int result __attribute__((unused)) = sem_post(semaphore);
 #ifndef NDEBUG
-  ASSERT_LOG_ONLY((result == 0), "%s: sem_post error %d", context, errno);
+  ASSERT_LOG_ONLY((result == 0), "sem_post error %d", errno);
 #endif
 }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/threadDefs.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadDefs.h#2 $
  *
  * LINUX USER-SPACE VERSION
  */
@@ -27,6 +27,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
+
+#include "timeUtils.h"
 
 #ifndef NDEBUG
 #define MUTEX_INITIALIZER PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
@@ -87,6 +89,57 @@ void lockMutex(Mutex *mutex);
  * @param mutex mutex to unlock
  **/
 void unlockMutex(Mutex *mutex);
+
+/**
+ * Initialize a semaphore used among threads in the same process.
+ *
+ * @param semaphore the semaphore to initialize
+ * @param value     the initial value of the semaphore
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int initializeSemaphore(Semaphore *semaphore, unsigned int value)
+  __attribute__((warn_unused_result));
+
+/**
+ * Destroy a semaphore used among threads in the same process.
+ *
+ * @param semaphore the semaphore to destroy
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int destroySemaphore(Semaphore *semaphore);
+
+/**
+ * Acquire a permit from a semaphore, waiting if none are currently available.
+ *
+ * @param semaphore the semaphore to acquire
+ **/
+void acquireSemaphore(Semaphore *semaphore);
+
+/**
+ * Attempt to acquire a permit from a semaphore.
+ *
+ * If a permit is available, it is claimed and the function immediately
+ * returns true. If a timeout is zero or negative, the function immediately
+ * returns false. Otherwise, this will wait either a permit to become
+ * available (returning true) or the relative timeout to expire (returning
+ * false).
+ *
+ * @param semaphore the semaphore to decrement
+ * @param timeout   the relative time until the timeout expires
+ *
+ * @return true if a permit was acquired, otherwise false
+ **/
+bool attemptSemaphore(Semaphore *semaphore, RelTime timeout)
+  __attribute__((warn_unused_result));
+
+/**
+ * Release a semaphore, incrementing the number of available permits.
+ *
+ * @param semaphore the semaphore to increment
+ **/
+void releaseSemaphore(Semaphore *semaphore);
 
 /**
  * Get a value identifying the CPU on which this thread is running (see
