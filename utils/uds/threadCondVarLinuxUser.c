@@ -16,12 +16,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/threadCondVarLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadCondVarLinuxUser.c#3 $
  */
 
-#include "threadCondVar.h"
-
 #include "permassert.h"
+#include "threads.h"
 
 /**********************************************************************/
 int initCond(CondVar *cond)
@@ -56,9 +55,10 @@ int waitCond(CondVar *cond, Mutex *mutex)
 }
 
 /**********************************************************************/
-int timedWaitCond(CondVar *cond, Mutex *mutex, const AbsTime *deadline)
+int timedWaitCond(CondVar *cond, Mutex *mutex, RelTime timeout)
 {
-  return pthread_cond_timedwait(cond, mutex, deadline);
+  struct timespec ts = asTimeSpec(futureTime(CT_REALTIME, timeout));
+  return pthread_cond_timedwait(cond, mutex, &ts);
 }
 
 /**********************************************************************/

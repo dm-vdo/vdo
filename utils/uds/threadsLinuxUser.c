@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/threadsLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadsLinuxUser.c#3 $
  */
 
 #include "threads.h"
@@ -28,7 +28,6 @@
 
 #include "logger.h"
 #include "memoryAlloc.h"
-#include "murmur/MurmurHash3.h"
 #include "permassert.h"
 #include "syscalls.h"
 
@@ -48,42 +47,6 @@ unsigned int getNumCores(void)
     nCpus += CPU_ISSET(i, &cpuSet);
   }
   return nCpus;
-}
-
-/**********************************************************************/
-unsigned int getScheduledCPU(void)
-{
-  int cpu = sched_getcpu();
-  if (likely(cpu >= 0)) {
-    return cpu;
-  }
-  // The only error sched_getcpu can return is ENOSYS, meaning that the
-  // kernel does not implement getcpu(), in which case return a usable
-  // hint.
-  int result __attribute__((unused))
-    = ASSERT_WITH_ERROR_CODE(cpu >= 0, errno, "sched_getcpu failed");
-
-  // Hash the POSIX thread identifier. (We could use a random number instead.)
-  pthread_t threadID = pthread_self();
-  uint32_t hashCode;
-  MurmurHash3_x86_32(&threadID, sizeof(threadID), 0, &hashCode);
-  // Should probably get the total number of CPUs into a static instead, but
-  // we shouldn't really be on this code path.
-  return (hashCode % countAllCores());
-}
-
-/**********************************************************************/
-unsigned int countAllCores(void)
-{
-  int result = sysconf(_SC_NPROCESSORS_CONF);
-  // Treat zero as an erroneous result; how can we have no cores?
-  if (result <= 0) {
-    logWarningWithStringError(result,
-                              "sysconf(_SC_NPROCESSORS_CONF) failed,"
-                              " returning 2 as total number of cores");
-    return 2;
-  }
-  return result;
 }
 
 /**********************************************************************/
