@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.c#2 $
+ * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.c#3 $
  */
 
 #include "stringUtils.h"
@@ -40,7 +40,7 @@ static const long BILLION = 1000 * 1000 * 1000;
 
 
 /*****************************************************************************/
-AbsTime currentTime(ClockType clock)
+AbsTime currentTime(clockid_t clock)
 {
 #ifdef __KERNEL__
   struct timespec now;
@@ -99,7 +99,7 @@ static AbsTime deltaTime(AbsTime time, RelTime reltime)
 
 #ifndef __KERNEL__
 /*****************************************************************************/
-AbsTime futureTime(ClockType clock, RelTime reltime)
+AbsTime futureTime(clockid_t clock, RelTime reltime)
 {
   return deltaTime(currentTime(clock), reltime);
 }
@@ -124,7 +124,7 @@ uint64_t nowUsec(void)
 #else
   static const AbsTime epoch = { 0, 0 };
 #endif
-  return relTimeToMicroseconds(timeDifference(currentTime(CT_REALTIME),
+  return relTimeToMicroseconds(timeDifference(currentTime(CLOCK_REALTIME),
                                               epoch));
 }
 

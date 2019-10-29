@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/loggerLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/loggerLinuxUser.c#3 $
  */
 
 #include "logger.h"
@@ -143,7 +143,7 @@ static void formatCurrentTime(char *buffer, size_t bufferSize)
 {
   *buffer = 0;
 
-  AbsTime now = currentTime(CT_REALTIME);
+  AbsTime now = currentTime(CLOCK_REALTIME);
   if (!isValidTime(now)) {
     return;
   }

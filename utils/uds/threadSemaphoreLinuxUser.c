@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/threadSemaphoreLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadSemaphoreLinuxUser.c#3 $
  */
 
 #include <errno.h>
@@ -57,7 +57,7 @@ void acquireSemaphore(Semaphore  *semaphore)
 bool attemptSemaphore(Semaphore *semaphore, RelTime timeout)
 {
   if (timeout > 0) {
-    struct timespec ts = asTimeSpec(futureTime(CT_REALTIME, timeout));
+    struct timespec ts = asTimeSpec(futureTime(CLOCK_REALTIME, timeout));
     do {
       if (sem_timedwait(semaphore, &ts) == 0) {
         return true;

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.h#3 $
+ * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.h#4 $
  */
 
 #ifndef TIME_UTILS_H
@@ -43,12 +43,6 @@ typedef struct timespec AbsTime;
 // two times.  A signed 64-bit number of nanoseconds.
 typedef int64_t RelTime;
 
-// XXX it would be better to not do this renaming at all
-typedef enum clockType {
-  CT_REALTIME  = CLOCK_REALTIME,
-  CT_MONOTONIC = CLOCK_MONOTONIC
-} ClockType;
-
 #ifndef __KERNEL__
 /**
  * Return true if the time is valid.
@@ -66,24 +60,24 @@ bool isValidTime(AbsTime time);
 /**
  * Return the current time according to the specified clock type.
  *
- * @param clock         Either CT_REALTIME or CT_MONOTONIC
+ * @param clock         Either CLOCK_REALTIME or CLOCK_MONOTONIC
  * @return the current time according to the clock in question
  *
  * @note the precision of the clock is system specific
  **/
-AbsTime currentTime(ClockType clock);
+AbsTime currentTime(clockid_t clock);
 
 #ifndef __KERNEL__
 /**
  * Return the timestamp a certain number of nanoseconds in the future.
  *
- * @param clock    Either CT_REALTIME or CT_MONOTONIC
+ * @param clock    Either CLOCK_REALTIME or CLOCK_MONOTONIC
  * @param reltime  The relative time to the clock value
  *
  * @return the timestamp for that time (potentially rounded to the next
  *         representable instant for the system in question)
  **/
-AbsTime futureTime(ClockType clock, RelTime reltime);
+AbsTime futureTime(clockid_t clock, RelTime reltime);
 #endif
 
 /**
