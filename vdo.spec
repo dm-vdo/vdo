@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.2.18
+Version: 6.2.2.24
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -73,6 +73,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_bindir}/vdoformat
 %{_bindir}/vdoprepareupgrade
 %{_bindir}/vdoreadonly
+%{_bindir}/vdosetuuid
 %dir %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}/__pycache__/*
 %{python3_sitelib}/%{name}/__init__.py
@@ -134,10 +135,11 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
+%{_mandir}/man8/vdosetuuid.8.gz
 %dir %{_sysconfdir}/bash_completion.d
 %{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats
 
 %changelog
-* Wed Oct 16 2019 - J. corwin Coburn <corwin@redhat.com> - 6.2.2.18-1
-HASH(0x3260c98)
+* Wed Oct 30 2019 - J. corwin Coburn <corwin@redhat.com> - 6.2.2.24-1
+HASH(0x1f90578)

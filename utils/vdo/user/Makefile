@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#4 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#5 $
 
-VDO_VERSION = 6.2.2.18
+VDO_VERSION = 6.2.2.24
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -89,7 +89,8 @@ PROGS = vdodmeventd        \
         vdoforcerebuild    \
         vdoformat          \
         vdoprepareupgrade  \
-        vdoreadonly
+        vdoreadonly        \
+        vdosetuuid
 
 DMEVENT_LIB = libdevmapper-event-lvm2vdo.so
 
