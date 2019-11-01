@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.h#4 $
+ * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.h#5 $
  */
 
 #ifndef TIME_UTILS_H
@@ -26,6 +26,7 @@
 #include "typeDefs.h"
 
 #ifdef __KERNEL__
+#include <linux/ktime.h>
 #include <linux/time.h>
 #else
 #include <sys/time.h>
@@ -61,11 +62,20 @@ bool isValidTime(AbsTime time);
  * Return the current time according to the specified clock type.
  *
  * @param clock         Either CLOCK_REALTIME or CLOCK_MONOTONIC
+ *
  * @return the current time according to the clock in question
  *
  * @note the precision of the clock is system specific
  **/
+#ifdef __KERNEL__
+static INLINE AbsTime currentTime(clockid_t clock)
+{
+  // clock is always a constant, so gcc reduces this to a single call
+  return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
+}
+#else
 AbsTime currentTime(clockid_t clock);
+#endif
 
 #ifndef __KERNEL__
 /**

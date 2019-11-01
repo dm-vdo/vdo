@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.c#3 $
+ * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.c#4 $
  */
 
 #include "stringUtils.h"
@@ -38,22 +38,17 @@ static const struct timespec invalidTime = {
 static const long BILLION = 1000 * 1000 * 1000;
 #endif
 
-
+#ifndef __KERNEL__
 /*****************************************************************************/
 AbsTime currentTime(clockid_t clock)
 {
-#ifdef __KERNEL__
-  struct timespec now;
-  getnstimeofday(&now);
-  return 1000000000ul * now.tv_sec + now.tv_nsec;
-#else
   struct timespec ts;
   if (clock_gettime(clock, &ts) != 0) {
     ts = invalidTime;
   }
   return ts;
-#endif
 }
+#endif
 
 #ifndef __KERNEL__
 /*****************************************************************************/
