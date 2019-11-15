@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#13 $
  */
 
 #include "physicalLayer.h"
@@ -59,68 +59,68 @@ void submitMetadataVIO(VIO *vio __attribute__((unused)))
 }
 
 /**********************************************************************/
-void hashDataVIO(DataVIO *dataVIO __attribute__((unused)))
+void hashDataVIO(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void checkForDuplication(DataVIO *dataVIO __attribute__((unused)))
+void checkForDuplication(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void verifyDuplication(DataVIO *dataVIO __attribute__((unused)))
+void verifyDuplication(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void updateDedupeIndex(DataVIO *dataVIO __attribute__((unused)))
+void updateDedupeIndex(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void zeroDataVIO(DataVIO *dataVIO __attribute__((unused)))
+void zeroDataVIO(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void copyData(DataVIO *source      __attribute__((unused)),
-              DataVIO *destination __attribute__((unused)))
+void copyData(struct data_vio *source      __attribute__((unused)),
+              struct data_vio *destination __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void applyPartialWrite(DataVIO *dataVIO __attribute__((unused)))
+void applyPartialWrite(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void acknowledgeDataVIO(DataVIO *dataVIO __attribute__((unused)))
+void acknowledgeDataVIO(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void compressDataVIO(DataVIO *dataVIO __attribute__((unused)))
+void compressDataVIO(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void writeDataVIO(DataVIO *dataVIO __attribute__((unused)))
+void writeDataVIO(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void readDataVIO(DataVIO *dataVIO __attribute__((unused)))
+void readDataVIO(struct data_vio *dataVIO __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
@@ -133,8 +133,8 @@ void writeCompressedBlock(struct allocating_vio *allocatingVIO
 }
 
 /**********************************************************************/
-bool compareDataVIOs(DataVIO *first  __attribute__((unused)),
-		     DataVIO *second __attribute__((unused)))
+bool compareDataVIOs(struct data_vio *first  __attribute__((unused)),
+		     struct data_vio *second __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
   return false;
