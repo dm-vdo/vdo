@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#9 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#10 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -479,6 +479,21 @@ suffix is optional""").format(options
       parents = [self.__namingOptions,
                  self._forceOptionParser(),
                  self.__commonOptions],
+      help = highLevelHelp,
+      description = description)
+   
+    # version command.
+    commandText = _("""
+                    """)
+    highLevelHelp = _("""
+      Shows the current version of VDO manager.
+                      """)
+    description = _("""
+      {0} This command does not need root privileges.
+                    """).format(highLevelHelp)
+    self._versionCommandParser = subparserAdder.add_parser(
+      "version",
+      parents = [self.__commonOptions],
       help = highLevelHelp,
       description = description)
 

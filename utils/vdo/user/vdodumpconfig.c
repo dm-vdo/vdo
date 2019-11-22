@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoDumpConfig.c#3 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoDumpConfig.c#4 $
  */
 
 #include <err.h>
@@ -46,10 +46,17 @@ static const char helpString[] =
   "DESCRIPTION\n"
   "  vdodumpconfig dumps the configuration of a VDO volume, whether or not\n"
   "  the VDO is running.\n"
+  "OPTIONS\n"
+  "    --help\n"
+  "       Print this help message and exit.\n"
+  "\n"
+  "    --version\n"
+  "       Show the version of vdodmeventd.\n"
   "\n";
 
 static struct option options[] = {
   { "help",            no_argument,       NULL, 'h' },
+  { "version",         no_argument,       NULL, 'V' },
   { NULL,              0,                 NULL,  0  },
 };
 
@@ -81,6 +88,11 @@ static const char *processArgs(int argc, char *argv[])
     case 'h':
       printf("%s", helpString);
       exit(0);
+
+    case 'V':
+      fprintf(stdout, "vdodumpconfig version is: %s\n", CURRENT_VERSION);
+      exit(0);
+      break;
 
     default:
       usage(argv[0]);

@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#13 $
+.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#14 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -151,6 +151,8 @@ vdo \- manage kernel VDO devices and related configuration information
 .B status
 |
 .B stop
+|
+.B version
 }
 [ options... ]
 .in -6
@@ -427,6 +429,15 @@ must be run with root privileges. Applicable options include:
 .startOptionList
 \*[targetSpecRequired]
 \-\-force
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B version
+Displays the version of the VDO manager. This command does not require root
+privileges. Applicable options include:
+.startOptionList
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose

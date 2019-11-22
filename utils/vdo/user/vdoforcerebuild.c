@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoForceRebuild.c#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoForceRebuild.c#2 $
  */
 
 #include <err.h>
@@ -44,11 +44,19 @@ static const char helpString[] =
   "DESCRIPTION\n"
   "  vdoforcerebuild forces an existing VDO device to exit read-only\n"
   "  mode and to attempt to regenerate as much metadata as possible.\n"
+  "\n"
+  "OPTIONS\n"
+  "    --help\n"
+  "       Print this help message and exit.\n"
+  "\n"
+  "    --version\n"
+  "       Show the version of vdoforcerebuild.\n"
   "\n";
 
 // N.B. the option array must be in sync with the option string.
 static struct option options[] = {
   { "help",                  no_argument,       NULL, 'h' },
+  { "version",               no_argument,       NULL, 'V' },
   { NULL,                    0,                 NULL,  0  },
 };
 static char optionString[] = "h";
@@ -65,6 +73,11 @@ int main(int argc, char *argv[])
     switch (c) {
     case 'h':
       printf("%s", helpString);
+      exit(0);
+      break;
+
+    case 'V':
+      fprintf(stdout, "vdoforcerebuild version is: %s\n", CURRENT_VERSION);
       exit(0);
       break;
 

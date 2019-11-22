@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#5 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#6 $
 
-VDO_VERSION = 6.2.2.24
+VDO_VERSION = 6.2.2.33
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -88,7 +88,6 @@ PROGS = vdodmeventd        \
         vdodumpconfig      \
         vdoforcerebuild    \
         vdoformat          \
-        vdoprepareupgrade  \
         vdoreadonly        \
         vdosetuuid
 
