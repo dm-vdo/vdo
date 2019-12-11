@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#4 $
  */
 
 #include "blockMapUtils.h"
@@ -35,7 +35,7 @@
 #include "vdoInternal.h"
 
 /**********************************************************************/
-bool isValidDataBlock(const SlabDepot *depot, PhysicalBlockNumber pbn)
+bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
 {
   if ((pbn < depot->firstBlock) || (pbn >= depot->lastBlock)) {
     return false;
