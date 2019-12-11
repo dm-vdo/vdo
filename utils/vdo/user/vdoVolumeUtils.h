@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#2 $
  */
 
 #ifndef VDO_VOLUME_UTILS_H
@@ -64,7 +64,7 @@ void freeVDOFromFile(VDO **vdoPtr);
  *
  * @return VDO_SUCCESS or an error code
  **/
-int loadSlabSummarySync(VDO *vdo, SlabSummary **summaryPtr)
+int loadSlabSummarySync(VDO *vdo, struct slab_summary **summaryPtr)
   __attribute__((warn_unused_result));
 
 #endif // VDO_VOLUME_UTILS_H
