@@ -21,7 +21,7 @@
 
   FileUtils - Provides dmmgmnt file-related capabilities.
 
-  $Id: //eng/linux-vdo/src/python/vdo/utils/FileUtils.py#2 $
+  $Id: //eng/linux-vdo/src/python/vdo/utils/FileUtils.py#3 $
 
 """
 from __future__ import absolute_import
@@ -231,8 +231,13 @@ class FileOpen(FileTouch):
   ######################################################################
   # Overridden methods
   ######################################################################
-  def next(self):
-    return self.file.next()
+  def __next__(self):
+    return next(self.file)
+
+  ######################################################################
+  # For python2 compatibility
+  ##
+  next = __next__
 
   ######################################################################
   def __enter__(self):
@@ -279,7 +284,7 @@ class FileOpen(FileTouch):
 
   ######################################################################
   def __iter__(self):
-    return self.__file
+    return self
 
   ######################################################################
   # Protected methods
