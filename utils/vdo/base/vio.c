@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/vio.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/vio.c#10 $
  */
 
 #include "vio.h"
@@ -42,24 +42,24 @@ void freeVIO(VIO **vioPtr)
 }
 
 /**********************************************************************/
-void initializeVIO(VIO           *vio,
-                   VIOType        type,
-                   VIOPriority    priority,
-                   VDOCompletion *parent,
-                   VDO           *vdo,
-                   PhysicalLayer *layer)
+void initializeVIO(VIO                   *vio,
+                   VIOType                type,
+                   VIOPriority            priority,
+                   struct vdo_completion *parent,
+                   VDO                   *vdo,
+                   PhysicalLayer         *layer)
 {
   vio->vdo      = vdo;
   vio->type     = type;
   vio->priority = priority;
 
-  VDOCompletion *completion = vioAsCompletion(vio);
+  struct vdo_completion *completion = vioAsCompletion(vio);
   initializeCompletion(completion, VIO_COMPLETION, layer);
   completion->parent = parent;
 }
 
 /**********************************************************************/
-void vioDoneCallback(VDOCompletion *completion)
+void vioDoneCallback(struct vdo_completion *completion)
 {
   VIO *vio = asVIO(completion);
   completion->callback     = vio->callback;
@@ -115,7 +115,7 @@ void updateVIOErrorStats(VIO *vio, const char *format, ...)
  *
  * @param completion  The VIO
  **/
-static void handleMetadataIOError(VDOCompletion *completion)
+static void handleMetadataIOError(struct vdo_completion *completion)
 {
   VIO *vio = asVIO(completion);
   updateVIOErrorStats(vio,
@@ -137,7 +137,7 @@ void launchMetadataVIO(VIO                 *vio,
   vio->callback     = callback;
   vio->errorHandler = errorHandler;
 
-  VDOCompletion *completion = vioAsCompletion(vio);
+  struct vdo_completion *completion = vioAsCompletion(vio);
   resetCompletion(completion);
   completion->callback     = vioDoneCallback;
   completion->errorHandler = handleMetadataIOError;
@@ -150,7 +150,7 @@ void launchMetadataVIO(VIO                 *vio,
  *
  * @param completion  The flush VIO
  **/
-static void handleFlushError(VDOCompletion *completion)
+static void handleFlushError(struct vdo_completion *completion)
 {
   logErrorWithStringError(completion->result, "Error flushing layer");
   completion->errorHandler = asVIO(completion)->errorHandler;
@@ -163,7 +163,7 @@ void launchFlush(VIO *vio, VDOAction *callback, VDOAction *errorHandler)
   ASSERT_LOG_ONLY(getWritePolicy(vio->vdo) == WRITE_POLICY_ASYNC,
 		  "pure flushes should not currently be issued in sync mode");
 
-  VDOCompletion *completion = vioAsCompletion(vio);
+  struct vdo_completion *completion = vioAsCompletion(vio);
   resetCompletion(completion);
   completion->callback     = callback;
   completion->errorHandler = handleFlushError;
