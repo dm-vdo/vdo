@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#2 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -50,17 +50,17 @@ int formatVDO(const VDOConfig *config,
   __attribute__((warn_unused_result));
 
 /**
- * Make a VDOLayout according to a VDOConfig. Exposed for testing only.
+ * Make a vdo_layout according to a VDOConfig. Exposed for testing only.
  *
- * @param [in]  config          The VDOConfig to generate a VDOLayout from
+ * @param [in]  config          The VDOConfig to generate a vdo_layout from
  * @param [in]  startingOffset  The start of the layouts
- * @param [out] vdoLayoutPtr    A pointer to hold the new VDOLayout
+ * @param [out] vdoLayoutPtr    A pointer to hold the new vdo_layout
  *
  * @return VDO_SUCCESS or an error
  **/
 int makeVDOLayoutFromConfig(const VDOConfig      *config,
                             PhysicalBlockNumber   startingOffset,
-                            VDOLayout           **vdoLayoutPtr)
+                            struct vdo_layout   **vdoLayoutPtr)
   __attribute__((warn_unused_result));
 
 /**

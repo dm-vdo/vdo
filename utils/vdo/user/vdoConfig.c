@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#6 $
  */
 
 #include <uuid/uuid.h>
@@ -46,9 +46,9 @@
 /**********************************************************************/
 int makeVDOLayoutFromConfig(const VDOConfig      *config,
                             PhysicalBlockNumber   startingOffset,
-                            VDOLayout           **vdoLayoutPtr)
+                            struct vdo_layout   **vdoLayoutPtr)
 {
-  VDOLayout *vdoLayout;
+  struct vdo_layout *vdoLayout;
   int result = makeVDOLayout(config->physicalBlocks, startingOffset,
                              DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT,
                              config->recoveryJournalSize,
@@ -158,15 +158,15 @@ int formatVDO(const VDOConfig *config,
  * Clear a partition by writing zeros to every block in that partition.
  *
  * @param layer   The underlying layer
- * @param layout  The VDOLayout
+ * @param layout  The vdo_layout
  * @param id      The ID of the partition to clear
  *
  * @return VDO_SUCCESS or an error code
  **/
 __attribute__((warn_unused_result))
-static int clearPartition(PhysicalLayer *layer,
-                          VDOLayout     *layout,
-                          PartitionID    id)
+static int clearPartition(PhysicalLayer     *layer,
+                          struct vdo_layout *layout,
+                          PartitionID        id)
 {
   struct partition    *partition = getVDOPartition(layout, id);
   BlockCount           size      = getFixedLayoutPartitionSize(partition);

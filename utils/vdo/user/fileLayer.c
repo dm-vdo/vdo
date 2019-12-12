@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#3 $
  */
 
 #include "fileLayer.h"
@@ -174,7 +174,7 @@ static int isBlockDevice(const char *path, bool *device)
 }
 
 /**********************************************************************/
-static void vacuousFlush(VDOFlush **vdoFlush __attribute__((unused)))
+static void vacuousFlush(struct vdo_flush **vdoFlush __attribute__((unused)))
 {
 }
 
