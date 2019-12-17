@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#14 $
  */
 
 #include "physicalLayer.h"
@@ -47,13 +47,13 @@ ThreadID getCallbackThreadID(void)
 }
 
 /**********************************************************************/
-void destroy_vio(VIO **vioPtr __attribute__((unused)))
+void destroy_vio(struct vio **vioPtr __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
 
 /**********************************************************************/
-void submitMetadataVIO(VIO *vio __attribute__((unused)))
+void submitMetadataVIO(struct vio *vio __attribute__((unused)))
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
 }
