@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#4 $
  */
 
 #ifndef BLOCK_MAP_UTILS_H
@@ -31,17 +31,17 @@
  * passed to examineBlockMapPages() which will iterate over the entire block
  * map and call this function once for each non-empty mapping.
  *
- * @param slot        The BlockMapSlot where this entry was found
+ * @param slot        The block_map_slot where this entry was found
  * @param height      The height of the block map entry in the tree
  * @param pbn         The PBN encoded in the entry
  * @param state       The mapping state encoded in the entry
  *
  * @return VDO_SUCCESS or an error code
  **/
-typedef int MappingExaminer(BlockMapSlot        slot,
-                            Height              height,
-                            PhysicalBlockNumber pbn,
-                            BlockMappingState   state)
+typedef int MappingExaminer(struct block_map_slot slot,
+                            Height                height,
+                            PhysicalBlockNumber   pbn,
+                            BlockMappingState     state)
   __attribute__((warn_unused_result));
 
 /**

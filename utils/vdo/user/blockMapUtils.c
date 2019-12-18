@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#5 $
  */
 
 #include "blockMapUtils.h"
@@ -80,7 +80,7 @@ static int readAndExaminePage(VDO                 *vdo,
     return VDO_SUCCESS;
   }
 
-  BlockMapSlot blockMapSlot = {
+  struct block_map_slot blockMapSlot = {
     .pbn  = pagePBN,
     .slot = 0,
   };
