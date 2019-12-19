@@ -1,12 +1,3 @@
 [Unit]
-Description=VDO volume services
-After=systemd-remount-fs.service
-
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/usr/bin/vdo start --all --confFile /etc/vdoconf.yml
-ExecStop=/usr/bin/vdo stop --all --confFile /etc/vdoconf.yml
-
-[Install]
-WantedBy=multi-user.target
+Description=VDO volume services (provided for compatibility)
+Documentation=man:vdo(8)
