@@ -20,21 +20,23 @@
 """
   StatStruct -- classes for sampling statistics from a VDO via ioctls
 
-  $Id: //eng/linux-vdo/src/python/vdo/statistics/StatStruct.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/statistics/StatStruct.py#2 $
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ctypes import *
 import collections
 import fcntl
 import os
 import sys
+import yaml
 
 from .Field import Field
 from .LabeledValue import LabeledValue
+
+from vdo.utils import Command, CommandError, runCommand
 
 class Samples(object):
   """
@@ -45,7 +47,7 @@ class Samples(object):
     Create a new set of samples by sampling a VDO device.
 
     :param assays:    The types of samples to take
-    :param devices:   The device to sample (a dictionary containing
+    :param device:    The device to sample (a dictionary containing
                       the user-supplied name and the name to use for sampling)
     :param mustBeVDO: If set to False, errors resulting from the device not
                       being a VDO will be suppressed
@@ -76,7 +78,7 @@ class Samples(object):
     Assay a device.
 
     :param assays:    The types of samples to take
-    :param devices:   The device to sample (a dictionary containing
+    :param device:    The device to sample (a dictionary containing
                       the user-supplied name and the name to use for sampling)
     :param mustBeVDO: If set to False, errors resulting from the device not
                       being a VDO will be suppressed
@@ -84,15 +86,18 @@ class Samples(object):
     :return: The results of the assays or None if the device is not a VDO and
              mustBeVDO is set to False
     """
+    user = device["user"]
     try:
       return Samples(assays, device, mustBeVDO)
     except IOError as ioe:
-      user = device["user"]
       if (ioe.errno == 22):
         if mustBeVDO:
           raise Exception("Device {0} is not a VDO".format(user))
         return None
       raise Exception("Error sampling device {0}: {1}".format(user, ioe))
+    except Exception as ex:
+      raise Exception("Error sampling device {0}: {1}".format(user, ex))
+      
 
   @staticmethod
   def assayDevices(assays, devices, mustBeVDO=True):
@@ -223,51 +228,29 @@ class StatStruct(Field):
     labelPrefix      = kwargs.pop('labelPrefix', None)
     self.labelPrefix = labelPrefix + ' ' if (labelPrefix != None) else ''
     self.ioctl       = kwargs.pop('ioctl', None)
-    self.procFile    = kwargs.pop('procFile', None)
-    self.procRoot    = kwargs.pop('procRoot', None)
     self.fields      = fields
-    super(StatStruct, self).__init__(name, self._getCClass(), **kwargs)
+    super(StatStruct, self).__init__(name, **kwargs)
     self.fieldsByName = dict()
     for field in fields:
       self.fieldsByName[field.name] = field
 
-  def _getCClass(self):
-    """
-    Get the Structure class which represents the C struct for a StatStruct
-    or Field. If the Structure class hasn't yet been made for the given type,
-    it will be created.
-
-    :return: The class defined by the specified set of Fields
-    """
-    className = type(self).__name__ + '.c'
-    cType     = self.cClasses.get(className)
-    if not cType:
-      fieldList = [(field.name, field.cType) for field in self.fields
-                   if field.inStruct]
-      cType = type(str(className), (Structure,), { '_fields_': fieldList });
-      self.cClasses[className] = cType
-
-    return cType
-
   def sample(self, name):
     """
-    Get a sample from a VDO via an ioctl.
+    Get a sample from a VDO via a dmsetup message call.
 
-    :param name: The name of the proc directory from which to read
+    :param name: The name of the vdo to call
 
     :return: The sample
     """
-    stats    = self.cType()
-    procPath = os.path.join("/proc", self.procRoot, name, self.procFile)
-    with open(procPath, 'rb') as fd:
-      fd.readinto(stats)
+    output = runCommand(["dmsetup", "message", name, "0", self.ioctl])
+    stats = yaml.safe_load(output)
     return self._extract(stats)
 
   def _extract(self, stats):
     """
     Extract the sampled values from the return of an ioctl call.
 
-    :param stats: The structure returned from an ioctl
+    :param stats: The dict returned from an ioctl
 
     :return: The sample as a Sample
     """
@@ -280,12 +263,7 @@ class StatStruct(Field):
     """
     :inherit:
     """
-    myStats = getattr(stats, self.name, stats)
-    if (self.length > 1) and (myStats != stats):
-      # The current field is actually an array, so make a list of the
-      # extractions of each element of the array.
-      return [self.extractSample(s, self) for s in myStats]
-
+    myStats = stats[self.name]
     # The current field is a struct which is not an array, so recursively
     # extract each sub-field of that struct
     sample = dict()

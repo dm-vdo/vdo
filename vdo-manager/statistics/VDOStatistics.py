@@ -34,7 +34,7 @@ class BlockAllocatorStatistics(StatStruct):
       Uint64Field("slabsOpened"),
       # The number of times since loading that a slab has been re-opened
       Uint64Field("slabsReopened"),
-    ], procRoot="vdo", **kwargs)
+    ], **kwargs)
 
 # Counters for tracking the number of items written (blocks, requests, etc.)
 # that keep track of totals at steps in the write pipeline. Three counters
@@ -52,7 +52,7 @@ class CommitStatistics(StatStruct):
       Uint64Field("written"),
       # The total number of items for which a write operation has completed
       Uint64Field("committed"),
-    ], procRoot="vdo", **kwargs)
+    ], **kwargs)
 
 # Counters for events in the recovery journal
 class RecoveryJournalStatistics(StatStruct):
@@ -66,7 +66,7 @@ class RecoveryJournalStatistics(StatStruct):
       CommitStatistics("entries", labelPrefix = "entries"),
       # Write/Commit totals for journal blocks
       CommitStatistics("blocks", labelPrefix = "blocks"),
-    ], labelPrefix="journal", procRoot="vdo", **kwargs)
+    ], labelPrefix="journal", **kwargs)
 
 # The statistics for the compressed block packer.
 class PackerStatistics(StatStruct):
@@ -78,7 +78,7 @@ class PackerStatistics(StatStruct):
       Uint64Field("compressedBlocksWritten"),
       # Number of VIOs that are pending in the packer
       Uint64Field("compressedFragmentsInPacker"),
-    ], procRoot="vdo", **kwargs)
+    ], **kwargs)
 
 # The statistics for the slab journals.
 class SlabJournalStatistics(StatStruct):
@@ -94,7 +94,7 @@ class SlabJournalStatistics(StatStruct):
       Uint64Field("blocksWritten"),
       # Number of times we had to wait for the tail to write
       Uint64Field("tailBusyCount"),
-    ], labelPrefix="slab journal", procRoot="vdo", **kwargs)
+    ], labelPrefix="slab journal", **kwargs)
 
 # The statistics for the slab summary.
 class SlabSummaryStatistics(StatStruct):
@@ -102,7 +102,7 @@ class SlabSummaryStatistics(StatStruct):
     super(SlabSummaryStatistics, self).__init__(name, [
       # Number of blocks written
       Uint64Field("blocksWritten"),
-    ], labelPrefix="slab summary", procRoot="vdo", **kwargs)
+    ], labelPrefix="slab summary", **kwargs)
 
 # The statistics for the reference counts.
 class RefCountsStatistics(StatStruct):
@@ -110,7 +110,7 @@ class RefCountsStatistics(StatStruct):
     super(RefCountsStatistics, self).__init__(name, [
       # Number of reference blocks written
       Uint64Field("blocksWritten"),
-    ], labelPrefix="reference", procRoot="vdo", **kwargs)
+    ], labelPrefix="reference", **kwargs)
 
 # The statistics for the block map.
 class BlockMapStatistics(StatStruct):
@@ -156,7 +156,7 @@ class BlockMapStatistics(StatStruct):
       Uint64Field("pagesSaved"),
       # the number of flushes issued
       Uint64Field("flushCount"),
-    ], labelPrefix="block map", procRoot="vdo", **kwargs)
+    ], labelPrefix="block map", **kwargs)
 
 # The dedupe statistics from hash locks
 class HashLockStatistics(StatStruct):
@@ -170,7 +170,7 @@ class HashLockStatistics(StatStruct):
       Uint64Field("concurrentDataMatches"),
       # Number of writes whose hash collided with an in-flight write
       Uint64Field("concurrentHashCollisions"),
-    ], procRoot="vdo", **kwargs)
+    ], **kwargs)
 
 # Counts of error conditions in VDO.
 class ErrorStatistics(StatStruct):
@@ -182,7 +182,7 @@ class ErrorStatistics(StatStruct):
       Uint64Field("noSpaceErrorCount"),
       # number of times a VIO completed with a VDO_READ_ONLY error
       Uint64Field("readOnlyErrorCount"),
-    ], procRoot="vdo", **kwargs)
+    ], **kwargs)
 
 # The statistics of the vdo service.
 class VDOStatistics(StatStruct):
@@ -191,7 +191,7 @@ class VDOStatistics(StatStruct):
       Uint32Field("version"),
       Uint32Field("releaseVersion"),
       # Number of blocks used for data
-      Uint64Field("dataBlocksUsed", available = "((not $inRecoveryMode) and ($mode != b'read-only'))"),
+      Uint64Field("dataBlocksUsed", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))"),
       # Number of blocks used for VDO metadata
       Uint64Field("overheadBlocksUsed", available = "not $inRecoveryMode"),
       # Number of logical blocks that are currently mapped to physical blocks
@@ -200,16 +200,16 @@ class VDOStatistics(StatStruct):
       Uint64Field("physicalBlocks"),
       # number of logical blocks
       Uint64Field("logicalBlocks"),
-      Uint64Field("oneKBlocks", derived = "$physicalBlocks * $blockSize // 1024", label = "1K-blocks"),
-      Uint64Field("oneKBlocksUsed", label = "1K-blocks used", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024", available = "not $inRecoveryMode"),
-      Uint64Field("oneKBlocksAvailable", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024", label = "1K-blocks available", available = "not $inRecoveryMode"),
-      Uint8Field("usedPercent", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)", available = "((not $inRecoveryMode) and ($mode != b'read-only'))"),
-      Uint8Field("savings", display = False, derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1", available = "not $inRecoveryMode"),
-      Uint8Field("savingPercent", derived = "$savings if ($savings >= 0) else NotAvailable()", available = "((not $inRecoveryMode) and ($mode != b'read-only'))"),
+      Uint64Field("oneKBlocks", label = "1K-blocks", derived = "$physicalBlocks * $blockSize // 1024"),
+      Uint64Field("oneKBlocksUsed", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024", label = "1K-blocks used", available = "not $inRecoveryMode"),
+      Uint64Field("oneKBlocksAvailable", label = "1K-blocks available", available = "not $inRecoveryMode", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024"),
+      Uint8Field("usedPercent", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))"),
+      Uint8Field("savings", derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1", display = False, available = "not $inRecoveryMode"),
+      Uint8Field("savingPercent", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))", derived = "$savings if ($savings >= 0) else NotAvailable()"),
       # Size of the block map page cache, in bytes
       Uint64Field("blockMapCacheSize"),
       # String describing the active write policy of the VDO
-      StringField("writePolicy", length = 15),
+      StringField("writePolicy"),
       # The physical block size
       Uint64Field("blockSize"),
       # Number of times the VDO has successfully recovered
@@ -217,11 +217,11 @@ class VDOStatistics(StatStruct):
       # Number of times the VDO has recovered from read-only mode
       Uint64Field("readOnlyRecoveries", label = "read-only recovery count"),
       # String describing the operating mode of the VDO
-      StringField("mode", length = 15, label = "operating mode"),
+      StringField("mode", label = "operating mode"),
       # Whether the VDO is in recovery mode
       BoolField("inRecoveryMode", display = False),
       # What percentage of recovery mode work has been completed
-      Uint8Field("recoveryPercentage", available = "$inRecoveryMode", label = "recovery progress (%)"),
+      Uint8Field("recoveryPercentage", label = "recovery progress (%)", available = "$inRecoveryMode"),
       # The statistics for the compressed block packer
       PackerStatistics("packer"),
       # Counters for events in the block allocator
@@ -240,7 +240,7 @@ class VDOStatistics(StatStruct):
       HashLockStatistics("hashLock"),
       # Counts of error conditions
       ErrorStatistics("errors"),
-    ], procFile="dedupe_stats", procRoot="vdo", **kwargs)
+    ], ioctl="dedupe_stats", **kwargs)
 
   statisticsVersion = 30
 

@@ -38,7 +38,7 @@ class BioStats(StatStruct):
       Uint64Field("flush"),
       # Number of REQ_FUA bios
       Uint64Field("fua"),
-    ], procRoot="vdo", **kwargs)
+    ], **kwargs)
 
 class MemoryUsage(StatStruct):
   def __init__(self, name="MemoryUsage", **kwargs):
@@ -51,7 +51,7 @@ class MemoryUsage(StatStruct):
       Uint64Field("biosUsed"),
       # Maximum number of bios allocated.
       Uint64Field("peakBioCount"),
-    ], procRoot="vdo", **kwargs)
+    ], **kwargs)
 
 # UDS index statistics
 class IndexStatistics(StatStruct):
@@ -75,7 +75,7 @@ class IndexStatistics(StatStruct):
       Uint32Field("currDedupeQueries", label = "current dedupe queries"),
       # Maximum number of dedupe queries that have been in flight
       Uint32Field("maxDedupeQueries", label = "maximum dedupe queries"),
-    ], procRoot="vdo", **kwargs)
+    ], **kwargs)
 
 class KernelStatistics(StatStruct):
   def __init__(self, name="KernelStatistics", **kwargs):
@@ -84,7 +84,7 @@ class KernelStatistics(StatStruct):
       Uint32Field("releaseVersion", display = False),
       # The VDO instance
       Uint32Field("instance"),
-      StringField("fiveTwelveByteEmulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'", label = "512 byte emulation"),
+      StringField("fiveTwelveByteEmulation", label = "512 byte emulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'"),
       # Current number of active VIOs
       Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
       # Maximum number of active VIOs
@@ -117,7 +117,7 @@ class KernelStatistics(StatStruct):
       MemoryUsage("memoryUsage", labelPrefix = "KVDO module"),
       # The statistics for the UDS index
       IndexStatistics("index"),
-    ], procFile="kernel_stats", procRoot="vdo", **kwargs)
+    ], ioctl="kernel_stats", **kwargs)
 
   statisticsVersion = 30
 
