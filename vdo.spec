@@ -122,7 +122,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate_alloptions.yml
 %doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdoremove.yml
-%doc %{_defaultdocdir}/%{name}/examples/ansible/vdo.py
 %dir %{_defaultdocdir}/%{name}/examples/monitor
 %doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_logicalSpace.pl
 %doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_physicalSpace.pl
