@@ -14,8 +14,6 @@
       device: /dev/blockdevice
       logicalsize: 1T
       blockmapcachesize: 21G
-      readcache: enabled
-      readcachesize: 64M
       writepolicy: async
       emulate512: enabled
       slabsize: 16G
