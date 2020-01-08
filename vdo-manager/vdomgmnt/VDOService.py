@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#8 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#9 $
 
 """
 from __future__ import absolute_import
@@ -542,6 +542,17 @@ class VDOService(Service):
     """
     self._announce(_("Removing VDO {0}").format(self.getName()))
 
+    # Fail if the device does not exist and --force is not specified. If
+    # this remove is being run to undo a failed create, the device will
+    # exist.
+    try:
+      os.stat(self.device)
+    except OSError:
+      if not force:
+        msg = _("Device {0} not found. Remove VDO with --force.").format(
+          self.device)
+        raise VDOMissingDeviceError(msg)
+
     localRemoveSteps = []
     try:
       self.stop(force, localRemoveSteps)
@@ -556,17 +567,6 @@ class VDOService(Service):
           _("Steps to clean up VDO {0}:").format(self.getName()))
         removeSteps.extend(["    {0}".format(s) for s in localRemoveSteps])
       raise
-
-    # Fail if the device does not exist and --force is not specified. If
-    # this remove is being run to undo a failed create, the device will
-    # exist.
-    try:
-      os.stat(self.device)
-    except OSError:
-      if not force:
-        msg = _("Device {0} not found. Remove VDO with --force.").format(
-          self.device)
-        raise VDOMissingDeviceError(msg)
 
     self.config.removeVdo(self.getName())
 
