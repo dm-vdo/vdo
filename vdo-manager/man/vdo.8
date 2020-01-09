@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#3 $
+.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#4 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -638,13 +638,17 @@ Specifies the VDO driver log level: \*[logLevelChoices]. Levels are
 case sensitive; the default is \*[logLevelDefault].
 .TP
 .B \-\-vdoPhysicalThreads=\fIthread count\fR
-Specifies the number of threads across which to subdivide parts of the VDO
-processing based on physical block addresses. The value must be at least
-\*[physicalThreadsMin] and less than or equal to \*[physicalThreadsMax]. Each
-additional thread after the first will use an additional
-\*[physicalThreadOverheadMB] MB of RAM. vdoPhysicalThreads,
-vdoHashZonesThreads and vdoLogicalThreads must be either all zero or all
-non-zero. The default is \*[physicalThreadsDefault].
+
+Specifies the number of threads across which to subdivide parts of the
+VDO processing based on physical block addresses. The value must be at
+least \*[physicalThreadsMin] and less than or equal to
+\*[physicalThreadsMax]. The value must also be less than or equal to
+the slab count (which can be found via the \fBstatus\fR command after
+device creation). Each additional thread after the first will use an
+additional \*[physicalThreadOverheadMB] MB of RAM. vdoPhysicalThreads,
+vdoHashZonesThreads and vdoLogicalThreads must be either all zero or
+all non-zero. The default is \*[physicalThreadsDefault].
+
 .TP
 .B \-\-vdoSlabSize=\fImegabytes\fR
 Set the free space allocator's slab size. Must be a power of two between
