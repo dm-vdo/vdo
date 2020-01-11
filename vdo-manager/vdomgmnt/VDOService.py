@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#9 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#10 $
 
 """
 from __future__ import absolute_import
@@ -312,13 +312,18 @@ class VDOService(Service):
     idDir = '/dev/disk/by-id'
     aliases = []
     if os.path.isdir(idDir):
+      # Ignore lvm-pv-*; these can become invalid between
+      # invocations of vdo commands.
       aliases = [absname
                  for absname in (os.path.join(idDir, name)
                                  for name in os.listdir(idDir))
-                 if os.path.realpath(absname) == realpath]
+                 if ((os.path.realpath(absname) == realpath)
+                     and (re.match(r".*/lvm-pv-", absname) is None))]
+      
     if len(aliases) > 0:
       self.log.debug("found aliases for {original}: {aliases}"
                      .format(original = realpath, aliases = aliases))
+
       # A device can have multiple names; dm-name-*, dm-uuid-*, ata-*,
       # wwn-*, etc.  Do we have a way to prioritize them?
       #
