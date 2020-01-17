@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#10 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#11 $
 
 """
 from __future__ import absolute_import
@@ -185,6 +185,7 @@ class VDOService(Service):
     'blockMapCacheSize'     : 'blockMapCacheSize',
     'blockMapPeriod'        : 'blockMapPeriod',
     'maxDiscardSize'        : 'maxDiscardSize',
+    'uuid'                  : 'uuid',
     'vdoAckThreads'         : 'ackThreads',
     'vdoBioRotationInterval': 'bioRotationInterval',
     'vdoBioThreads'         : 'bioThreads',
@@ -229,6 +230,12 @@ class VDOService(Service):
       if getattr(args, option, None) is not None:
         msg = _("Cannot change option {0} after VDO creation").format(
                   option)
+        raise ServiceError(msg, exitStatus = UserExitStatus)
+    # Can't use --all and --uuid with a specific uuid
+    if getattr(args, "uuid", None) is not None:
+      if args.uuid != "" and args.all:
+        msg = _("Cannot change uuid to a specific value when --all is"
+                " set").format(option)
         raise ServiceError(msg, exitStatus = UserExitStatus)
 
   ######################################################################
@@ -695,6 +702,7 @@ class VDOService(Service):
     status[self.vdoPhysicalThreadsKey] = self.physicalThreads
     status[_("Slab size")] = str(self.slabSize)
     status[_("Configured write policy")] = self.writePolicy
+    status[_("UUID")] = self._getUUID()
     status[_("Index checkpoint frequency")] = self.indexCfreq
     status[_("Index memory setting")] = self.indexMemory
     status[_("Index parallel factor")] = self.indexThreads
@@ -926,8 +934,15 @@ class VDOService(Service):
     for option in self.modifiableOptions:
       value = getattr(args, option, None)
       if value is not None:
-        setattr(self, self.modifiableOptions[option], value)
-        modified = True
+        if option == "uuid":
+          if self.running():
+            self._announce("Can't modify uuid on VDO {0} while it is running."
+                           " Skipping change.".format(self.getName()))
+            continue
+          self._setUUID(value)
+        else:
+          setattr(self, self.modifiableOptions[option], value)
+          modified = True
 
     if modified:
       self.config.addVdo(self.getName(), self, True)
@@ -1870,6 +1885,21 @@ class VDOService(Service):
     if persist:
       self.config.addVdo(self.getName(), self, replace = True)
       self.config.persist()
+
+  ######################################################################
+  def _setUUID(self, uuid):
+    """Sets a new uuid for the vdo volume, either by providing a value
+    or having the tool generate a new random one.
+    """
+    try:
+      if uuid == "":
+        runCommand(["vdosetuuid", self.device])
+      else:
+        runCommand(["vdosetuuid", "--uuid", uuid, self.device])        
+    except Exception as ex:
+      self.log.error(_("Can't set the UUID for VDO volume {0};"
+                       " {1!s}").format(self.getName(), ex))
+      raise
 
   ######################################################################
   def _startCompression(self):

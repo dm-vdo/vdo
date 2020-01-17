@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#3 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#4 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -339,6 +339,7 @@ suffix is optional""").format(options
     self._changeableModifyOptions = ["blockMapCacheSize",
                                      "blockMapPeriod",
                                      "maxDiscardSize",
+                                     "uuid",
                                      "vdoAckThreads",
                                      "vdoBioRotationInterval",
                                      "vdoBioThreads",
@@ -352,6 +353,7 @@ suffix is optional""").format(options
                  self._blockMapCacheSizeOptionParser(noDefault = True),
                  self._blockMapPeriodOptionParser(noDefault = True),
                  self._maxDiscardSizeOptionParser(noDefault = True),
+                 self._uuidOptionParser(noDefault = True),
                  self._vdoAckThreadsOptionParser(noDefault = True),
                  self._vdoBioRotationIntervalOptionParser(noDefault = True),
                  self._vdoBioThreadsOptionParser(noDefault = True),
@@ -741,6 +743,29 @@ suffix is optional""").format(options
                                  """)
       .format(sparseIndex = Defaults.sparseIndex))
 
+    return parser
+
+  ####################################################################
+  def _uuidOptionParser(self, noDefault = False):
+    """
+    Arguments:
+      noDefault (boolean) - if True, no default is mentioned in the help text
+    """
+    defaultHelp = ("" if noDefault else
+                   "The default is {0}.".format(Defaults.uuid))
+
+    parser = argparse.ArgumentParser(add_help = False)
+    parser.add_argument("--uuid",
+                        type = self.__optionCheck(Defaults.checkUUIDValue),
+                        metavar = "<uuid>",
+                        help = _("""
+      Sets the UUID of the VDO volume. The value needs to be either a
+      valid uuid or an empty string. If an empty string is specified, a
+      new random uuid is generated for the VDO volume.
+      {defaultHelp}
+                                 """)
+      .format(defaultHelp = defaultHelp))
+    
     return parser
 
   ####################################################################

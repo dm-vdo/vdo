@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#4 $
+.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#5 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -77,6 +77,8 @@
 .ds slabSizeMin 128M
 .ds slabSizeMax 32G
 .ds sparseIndexDefault disabled
+.ds uuidDefault ""
+
 .
 .\" Formatting for per-command option lists: indented, no filling
 .nr optionListIndent 15
@@ -133,6 +135,8 @@ vdo \- manage kernel VDO devices and related configuration information
 .B growLogical
 |
 .B growPhysical
+|
+.B import
 |
 .B list
 |
@@ -326,6 +330,7 @@ not affected. Applicable options include:
 \-\-blockMapCacheSize=\fIsize\fP
 \-\-blockMapPeriod=\fIperiod\fP
 \-\-maxDiscardSize=\fIsize\fP
+\-\-uuid=\fIuuid\fP
 \-\-vdoAckThreads=\fIthread count\fP
 \-\-vdoBioThreads=\fIthread count\fP
 \-\-vdoCpuThreads=\fIthread count\fP
@@ -584,6 +589,12 @@ The value must be at least \*[maxDiscardSizeMin] and less than
 .TP
 .B \-\-sparseIndex=\*[bool]
 Enables sparse indexing. The default is \*[sparseIndexDefault].
+.TP
+.B \-\-uuid=\fIuuid\fR
+Sets the UUID of the VDO volume. The value needs to be either a
+valid uuid or an empty string. If an empty string is specified, a
+new random uuid is generated for the VDO volume.
+The default is \*[uuidDefault]..
 .TP
 .B \-\-vdoAckThreads=\fIthread count\fR
 Specifies the number of threads to use for acknowledging completion of
