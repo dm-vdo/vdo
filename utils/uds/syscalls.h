@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Red Hat, Inc.
+ * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/syscalls.h#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.h#3 $
  */
 
 #ifndef SYSCALLS_H
@@ -29,24 +29,6 @@
 #include "logger.h"
 #include "typeDefs.h"
 #include "uds-error.h"
-
-/**
- * Wrap the read(2) system call.
- *
- * @param fd           The descriptor from which to read
- * @param buf          The buffer to read into
- * @param count        The maximum number of bytes to read
- * @param context      The calling context (for logging)
- * @param bytesReadPtr A pointer to hold the number of bytes read
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingReadInterruptible(int         fd,
-                             void       *buf,
-                             size_t      count,
-                             const char *context,
-                             ssize_t    *bytesReadPtr)
-  __attribute__((warn_unused_result));
 
 /**
  * Wrap the read(2) system call, looping as long as errno is EINTR.
@@ -84,25 +66,6 @@ int loggingPread(int         fd,
                  off_t       offset,
                  const char *context,
                  ssize_t    *bytesReadPtr)
-  __attribute__((warn_unused_result));
-
-/**
- * Wrap the write(2) system call.
- *
- * @param fd              The descriptor from which to write
- * @param buf             The buffer to write from
- * @param count           The maximum number of bytes to write
- * @param context         The calling context (for logging)
- * @param bytesWrittenPtr A pointer to hold the number of bytes written;
- *                        on error, -1 is returned
- *
- * @return UDS_SUCCESS or an error code
- **/
-int loggingWriteInterruptible(int         fd,
-                              const void *buf,
-                              size_t      count,
-                              const char *context,
-                              ssize_t    *bytesWrittenPtr)
   __attribute__((warn_unused_result));
 
 /**
@@ -248,30 +211,6 @@ int setThreadSignalMask(sigset_t   *mask,
                         int         how,
                         const char *context,
                         sigset_t   *oldMask)
-  __attribute__((warn_unused_result));
-
-/**
- * Daemonizes the current process, and store the resulting PID in a file.
- *
- * If <tt>runDir</tt> could not be created, or switching to it via
- * <tt>chdir</tt> failed, the daemonized process's <tt>runDir</tt> will be the
- * root directory ("/").
- *
- * If <tt>pidFile</tt> already exists and represents a running process, this
- * function will return an error code.
- *
- * @param runDir  The directory to run the daemonized process in
- * @param pidFile The path to the file to store the PID in
- * @param context The calling context (for logging)
- *
- * @return UDS_SUCCESS or error code
- *
- * @note Callers should take care to convert any paths that are relative to
- * absolute paths <b>before</b> calling this function.
- *
- * @see #makeAbsPath
- **/
-int daemonize(const char *runDir, const char *pidFile, const char *context)
   __attribute__((warn_unused_result));
 
 /**********************************************************************/

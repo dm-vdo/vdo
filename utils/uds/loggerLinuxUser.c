@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Red Hat, Inc.
+ * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/loggerLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/loggerLinuxUser.c#3 $
  */
 
 #include "logger.h"
@@ -143,7 +143,7 @@ static void formatCurrentTime(char *buffer, size_t bufferSize)
 {
   *buffer = 0;
 
-  AbsTime now = currentTime(CT_REALTIME);
+  AbsTime now = currentTime(CLOCK_REALTIME);
   if (!isValidTime(now)) {
     return;
   }
@@ -177,6 +177,7 @@ void logMessagePack(int         priority,
                     const char *fmt2,
                     va_list     args2)
 {
+  openLogger();
   if (priority > getLogLevel()) {
     return;
   }

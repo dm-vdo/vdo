@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Red Hat, Inc.
+ * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.c#5 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.c#6 $
  */
 
 #include <uuid/uuid.h>
@@ -141,8 +141,7 @@ static int configureVDO(VDO *vdo)
 /**********************************************************************/
 int formatVDO(const VDOConfig *config,
               IndexConfig     *indexConfig,
-              PhysicalLayer   *layer,
-              BlockCount      *logicalBlocksPtr)
+              PhysicalLayer   *layer)
 {
   STATIC_ASSERT(sizeof(uuid_t) == sizeof(UUID));
 
@@ -150,8 +149,7 @@ int formatVDO(const VDOConfig *config,
   uuid_t uuid;
   uuid_generate(uuid);
 
-  return formatVDOWithNonce(config, indexConfig, layer, nowUsec(), uuid,
-                            logicalBlocksPtr);
+  return formatVDOWithNonce(config, indexConfig, layer, nowUsec(), uuid);
 }
 
 /**
@@ -199,16 +197,13 @@ static int clearPartition(PhysicalLayer *layer,
 /**
  * Construct a VDO and write out its super block.
  *
- * @param [in]  config            The configuration parameters for the VDO
- * @param [in]  layer             The physical layer the VDO will sit on
- * @param [in]  geometry          The geometry of the physical layer
- * @param [out] logicalBlocksPtr  If not NULL, will be set to the number of
- *                                logical blocks the VDO was formatted to have
+ * @param config            The configuration parameters for the VDO
+ * @param layer             The physical layer the VDO will sit on
+ * @param geometry          The geometry of the physical layer
  **/
 static int makeAndWriteVDO(const VDOConfig      *config,
                            PhysicalLayer        *layer,
-                           VolumeGeometry       *geometry,
-                           BlockCount           *logicalBlocksPtr)
+                           VolumeGeometry       *geometry)
 {
   VDO *vdo;
   int result = makeVDO(layer, &vdo);
@@ -245,10 +240,6 @@ static int makeAndWriteVDO(const VDOConfig      *config,
     return result;
   }
 
-  if (logicalBlocksPtr != NULL) {
-    *logicalBlocksPtr = vdo->config.logicalBlocks;
-  }
-
   freeVDO(&vdo);
   return VDO_SUCCESS;
 }
@@ -258,8 +249,7 @@ int formatVDOWithNonce(const VDOConfig *config,
                        IndexConfig     *indexConfig,
                        PhysicalLayer   *layer,
                        Nonce            nonce,
-                       UUID             uuid,
-                       BlockCount      *logicalBlocksPtr)
+                       UUID             uuid)
 {
   int result = registerStatusCodes();
   if (result != VDO_SUCCESS) {
@@ -282,7 +272,7 @@ int formatVDOWithNonce(const VDOConfig *config,
     return result;
   }
 
-  result = makeAndWriteVDO(config, layer, &geometry, logicalBlocksPtr);
+  result = makeAndWriteVDO(config, layer, &geometry);
   if (result != VDO_SUCCESS) {
     return result;
   }

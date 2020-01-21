@@ -30,8 +30,19 @@ gigabytes, T for terabytes, or P for petabytes is optional. The
 default unit is megabytes.
 .TP
 .B \-\-slab\-bits=\fIbits\fP
-Specify the slab size in bits. The maximum size is 23, and the
-default is 19.
+Set the free space allocator's slab size to 2^\fIbits\fP 4 KB blocks.
+\fIbits\fP must be a value between 4 and 23 (inclusive), corresponding
+to a slab size between 128 KB and 32 GB. The default value is 19
+which results in a slab size of 2 GB. This allocator manages the
+space VDO uses to store user data.
+
+The maximum number of slabs in the system is 8192, so this value
+determines the maximum physical size of a VDO volume. One slab is
+the minimum amount by which a VDO volume can be grown. Smaller
+slabs also increase the potential for parallelism if the device
+has multiple physical threads. Therefore, this value should be set
+as small as possible, given the eventual maximal size of the
+volume.
 .TP
 .B \-\-uds\-checkpoint\-frequency=\fIfrequency\fP
 Specify the frequency of checkpoints. The default is never.

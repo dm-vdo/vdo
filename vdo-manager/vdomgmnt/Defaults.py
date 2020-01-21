@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 Red Hat, Inc.
+# Copyright (c) 2020 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#9 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#10 $
 
 """
 from __future__ import absolute_import
@@ -109,7 +109,7 @@ class Defaults(object):
                         'debug']
   vdoTargetName = 'vdo'
   writePolicy = 'auto'
-  writePolicyChoices = ['async', 'sync', 'auto']
+  writePolicyChoices = ['async', 'async-unsafe', 'sync', 'auto']
 
   ######################################################################
   # Public methods

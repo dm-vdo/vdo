@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Red Hat, Inc.
+ * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,16 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/indexLayoutLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/indexLayoutLinuxUser.c#4 $
  */
 
 #include "errors.h"
-#include "fileIORegion.h"
 #include "indexLayout.h"
 #include "indexLayoutParser.h"
+#include "ioFactory.h"
 #include "logger.h"
 #include "memoryAlloc.h"
-#include "singleFileLayout.h"
 #include "uds.h"
 
 /*****************************************************************************/
@@ -51,7 +50,6 @@ int makeIndexLayout(const char              *name,
   }
 
   // note file will be set to memory owned by params
-  //
   result = parseLayoutString(params, parameterTable, COUNT_OF(parameterTable));
   if (result != UDS_SUCCESS) {
     FREE(params);
@@ -64,39 +62,21 @@ int makeIndexLayout(const char              *name,
                                    "no index specified");
   }
 
-  if (newLayout && size == 0) {
-    result = udsComputeIndexSize(config, 0, &size);
-    if (result != UDS_SUCCESS) {
-      FREE(params);
-      return result;
-    }
-  }
-
-  IORegion *region = NULL;
-  if (newLayout) {
-    result = openFileRegion(file, FU_CREATE_READ_WRITE, &region);
-    if (result == UDS_SUCCESS) {
-      result = setFileRegionLimit(region, offset + size);
-    }
-  } else {
-    result = openFileRegion(file, FU_READ_WRITE, &region);
-  }
-
+  IOFactory *factory = NULL;
+  result = makeIOFactory(file,
+                         newLayout ? FU_CREATE_READ_WRITE : FU_READ_WRITE,
+                         &factory);
   FREE(params);
   if (result != UDS_SUCCESS) {
-    closeIORegion(&region);
     return result;
   }
-
-
-  if (newLayout) {
-    result = createSingleFileLayout(region, offset, size, config, layoutPtr);
-  } else {
-    result = loadSingleFileLayout(region, offset, layoutPtr);
-  }
-
+  IndexLayout *layout;
+  result = makeIndexLayoutFromFactory(factory, offset, size, newLayout, config,
+                                      &layout);
+  putIOFactory(factory);
   if (result != UDS_SUCCESS) {
-    closeIORegion(&region);
+    return result;
   }
-  return result;
+  *layoutPtr = layout;
+  return UDS_SUCCESS;
 }

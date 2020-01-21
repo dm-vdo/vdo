@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 Red Hat, Inc.
+# Copyright (c) 2020 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,22 +16,17 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/uds/Makefile#3 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/uds/Makefile#5 $
 
 # UDS_INTERNAL_VERSION is the short version name, which is used to version the
 # UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
 # version name used in distribution builds.  We extract these values from the
 # traditional location.
-UDS_VERSION      = 7.0.1.4
+UDS_VERSION      = 8.0.0.84
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
 DEPDIR  = .deps
-
-DOXY_DIR  = $(TOP_DIR)/src/doxygen
-DOXY_FILE = $(TOP_DIR)/src/public/Doxyfile.in
-DOXY_EDIT = sed -e 's/@MARKETING_VERSION@/$(BUILD_VERSION)/'
-DOXY_WARN_LOG = $(shell grep '^WARN_LOGFILE' $(DOXY_FILE) | cut -f 2 -d=)
 
 ifeq ($(origin CC), default)
   CC=gcc
@@ -82,9 +77,7 @@ vpath %.c ./util
 
 UDS_OBJECTS =	MurmurHash3.o			\
 		bits.o				\
-		blockIORegion.o			\
 		buffer.o			\
-		bufferedIORegion.o		\
 		bufferedReader.o		\
 		bufferedWriter.o		\
 		cacheCounters.o			\
@@ -92,33 +85,32 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		chapterIndex.o			\
 		chapterWriter.o			\
 		config.o			\
-		context.o			\
 		deltaIndex.o			\
 		deltaMemory.o			\
 		errors.o			\
 		eventCount.o			\
-		fileBufferedReader.o		\
 		fileIORegion.o			\
 		fileUtils.o			\
 		funnelQueue.o			\
 		geometry.o			\
-		grid.o				\
 		hashUtils.o			\
 		index.o				\
 		indexCheckpoint.o		\
 		indexComponent.o		\
 		indexConfig.o			\
 		indexInternals.o		\
+		indexLayout.o			\
 		indexLayoutLinuxUser.o		\
 		indexLayoutParser.o		\
 		indexPageMap.o			\
+		indexRouter.o			\
 		indexSession.o			\
 		indexState.o			\
 		indexStateData.o		\
+		indexVersion.o			\
 		indexZone.o			\
-		ioRegion.o			\
+		ioFactoryLinuxUser.o		\
 		loadType.o			\
-		localIndexRouter.o		\
 		logger.o			\
 		loggerLinuxUser.o		\
 		masterIndex005.o		\
@@ -132,21 +124,14 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		openChapter.o			\
 		openChapterZone.o		\
 		pageCache.o			\
-		parameter.o			\
-		pathBuffer.o			\
 		permassert.o			\
 		permassertLinuxUser.o		\
 		radixSort.o			\
 		random.o			\
-		readOnlyVolume.o		\
 		recordPage.o			\
-		regionIndexComponent.o		\
-		regionIndexState.o		\
 		request.o			\
-		requestQueue.o			\
+		requestQueueUser.o		\
 		searchList.o			\
-		session.o			\
-		singleFileLayout.o		\
 		sparseCache.o			\
 		stringLinuxUser.o		\
 		stringUtils.o			\
@@ -157,11 +142,9 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		threadSemaphoreLinuxUser.o	\
 		threadOnce.o			\
 		timeUtils.o			\
-		timeUtilsLinuxUser.o		\
 		udsMain.o			\
-		udsState.o			\
 		volume.o			\
-		volumeInternals.o		\
+		volumeStore.o			\
 		zone.o
 
 .PHONY: all

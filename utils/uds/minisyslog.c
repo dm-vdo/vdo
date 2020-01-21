@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Red Hat, Inc.
+ * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/minisyslog.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/minisyslog.c#2 $
  */
 
 #include <fcntl.h>
@@ -131,7 +131,7 @@ static void logIt(int         priority,
   char        buffer[1024];
   char       *bufEnd = buffer + sizeof(buffer);
   char       *bufp = buffer;
-  time_t      t = asTimeT(currentTime(CT_REALTIME));
+  time_t      t = asTimeT(currentTime(CLOCK_REALTIME));
   struct tm   tm;
   char        timestamp[64];
   timestamp[0] = '\0';

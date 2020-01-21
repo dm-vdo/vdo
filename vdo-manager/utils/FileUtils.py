@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 Red Hat, Inc.
+# Copyright (c) 2020 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@
 
   FileUtils - Provides dmmgmnt file-related capabilities.
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/FileUtils.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/FileUtils.py#3 $
 
 """
 from __future__ import absolute_import
@@ -231,8 +231,13 @@ class FileOpen(FileTouch):
   ######################################################################
   # Overridden methods
   ######################################################################
-  def next(self):
-    return self.file.next()
+  def __next__(self):
+    return next(self.file)
+
+  ######################################################################
+  # For python2 compatibility
+  ##
+  next = __next__
 
   ######################################################################
   def __enter__(self):

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Red Hat, Inc.
+ * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/syscalls.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.c#3 $
  */
 
 #include "syscalls.h"
@@ -32,16 +32,6 @@
 #include "permassert.h"
 
 /**********************************************************************/
-int loggingReadInterruptible(int         fd,
-                             void       *buf,
-                             size_t      count,
-                             const char *context,
-                             ssize_t    *bytesReadPtr)
-{
-  return checkIOErrors(read(fd, buf, count), __func__, context, bytesReadPtr);
-}
-
-/**********************************************************************/
 int loggingRead(int         fd,
                 void       *buf,
                 size_t      count,
@@ -50,9 +40,9 @@ int loggingRead(int         fd,
 {
   int result;
   do {
-    result =  loggingReadInterruptible(fd, buf, count, context, bytesReadPtr);
+    result = checkIOErrors(read(fd, buf, count), __func__, context,
+                           bytesReadPtr);
   } while (result == EINTR);
-
   return result;
 }
 
@@ -86,17 +76,6 @@ int loggingPread(int         fd,
 }
 
 /**********************************************************************/
-int loggingWriteInterruptible(int         fd,
-                              const void *buf,
-                              size_t      count,
-                              const char *context,
-                              ssize_t    *bytesWrittenPtr)
-{
-  return checkIOErrors(write(fd, buf, count), __func__, context,
-                       bytesWrittenPtr);
-}
-
-/**********************************************************************/
 int loggingWrite(int         fd,
                  const void *buf,
                  size_t      count,
@@ -105,8 +84,8 @@ int loggingWrite(int         fd,
 {
   int result;
   do {
-    result = loggingWriteInterruptible(fd, buf, count, context,
-                                       bytesWrittenPtr);
+    result = checkIOErrors(write(fd, buf, count), __func__, context,
+                           bytesWrittenPtr);
   } while (result == EINTR);
 
   return result;
@@ -236,47 +215,4 @@ int setThreadSignalMask(sigset_t   *mask,
 {
   return checkSystemCall(pthread_sigmask(how, mask, oldMask),
                          __func__, context);
-}
-
-/**********************************************************************/
-int daemonize(const char *runDir, const char *pidFile, const char *context)
-{
-  bool nochdir = false;
-  int result = makeDirectory(runDir, 0755, "server run dir", __func__);
-  if ((result == UDS_SUCCESS) || (result == EEXIST)) {
-    result = checkSystemCall(chdir(runDir), __func__, context);
-    nochdir = (result == UDS_SUCCESS);
-  }
-  if (!nochdir) {
-    logWarning("failed to change runDir to %s; using '/'.", runDir);
-  }
-
-  int fd;
-  result = openFile(pidFile, FU_CREATE_READ_WRITE, &fd);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  result = checkSystemCall(daemon(nochdir, false), __func__, context);
-  if (result != UDS_SUCCESS) {
-    ASSERT_LOG_ONLY((loggingClose(fd, context) == UDS_SUCCESS),
-                    "closing pidFile");
-    return result;
-  }
-
-  char *strBuf;
-  result = allocSprintf(__func__, &strBuf, "%d\n", getpid());
-  if (result != UDS_SUCCESS) {
-    ASSERT_LOG_ONLY((loggingClose(fd, context) == UDS_SUCCESS),
-                    "closing pidFile");
-    return logErrorWithStringError(result, "couldn't get pid");
-  }
-  result = writeBuffer(fd, strBuf, strlen(strBuf));
-  FREE(strBuf);
-  if (result != UDS_SUCCESS) {
-    ASSERT_LOG_ONLY((loggingClose(fd, context) == UDS_SUCCESS),
-                    "closing pidFile");
-    return result;
-  }
-  return loggingClose(fd, context);
 }

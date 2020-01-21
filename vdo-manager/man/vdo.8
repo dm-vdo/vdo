@@ -1,6 +1,6 @@
 .TH VDO 8 "2018-07-19" "Red Hat" \" -*- nroff -*-
 .\"
-.\" Copyright (c) 2018 Red Hat, Inc.
+.\" Copyright (c) 2020 Red Hat, Inc.
 .\"
 .\" This program is free software; you can redistribute it and/or
 .\" modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#14 $
+.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#18 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -95,7 +95,6 @@
 .\" Value string for options. Show the possible values, properly
 .\" italicized, but restore the original font when we're done.
 .ds bool \fR{ \fP\fI enabled \fP\fR | \fP\fI disabled \fP\fR } \fP
-.ds writePolicy \fR{ \fP\fI sync \fP\fR | \fP\fI async \fP\fR | \fP\fI auto \fP\fR} \fP
 .ds targetSpec \fR{ \fP\-\-all\fP | \fP\-\-name=\fIvolume\fP\fR }\fP
 .ds targetSpecRequired \*[targetSpec]\fR (required)\fP
 .
@@ -178,7 +177,7 @@ volumes. This command must be run with root privileges.
 Applicable options include:
 .startOptionList
 \*[targetSpecRequired]
-\-\-writePolicy=\*[writePolicy]\fR (required)\fP
+\-\-writePolicy=\fIpolicy\fP\fR (required)\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -221,7 +220,7 @@ Applicable options include:
 \-\-vdoLogicalSize=\fIsize\fP
 \-\-vdoPhysicalThreads=\fIthread count\fP
 \-\-vdoSlabSize=\fIsize\fP
-\-\-writePolicy=\*[writePolicy]
+\-\-writePolicy=\fIpolicy\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -339,7 +338,7 @@ root privileges. Applicaable options include:
 \-\-vdoLogicalThreads=\fIthread count\fP
 \-\-vdoLogLevel=\fIlevel\fP
 \-\-vdoPhysicalThreads=\fIthread count\fP
-\-\-writePolicy=\*[writePolicy]
+\-\-writePolicy=\fIpolicy\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -507,7 +506,7 @@ The logical size of the VDO volume.
 The size of a VDO volume's underlying physical storage.
 .TP
 .B Configured write policy
-The configured value of the write policy (sync, async or auto).
+The configured value of the write policy (sync, async, async-unsafe or auto).
 .TP
 .B VDO Statistics
 Output of the \fBvdostats\fP utility.
@@ -693,36 +692,53 @@ Specifies the VDO driver log level: \*[logLevelChoices]. Levels are
 case sensitive; the default is \*[logLevelDefault].
 .TP
 .B \-\-vdoPhysicalThreads=\fIthread count\fR
-Specifies the number of threads across which to subdivide parts of the VDO
-processing based on physical block addresses. The value must be at least
-\*[physicalThreadsMin] and less than or equal to \*[physicalThreadsMax]. Each
-additional thread after the first will use an additional
-\*[physicalThreadOverheadMB] MB of RAM. vdoPhysicalThreads,
-vdoHashZonesThreads and vdoLogicalThreads must be either all zero or all
-non-zero. The default is \*[physicalThreadsDefault].
+Specifies the number of threads across which to subdivide parts of the
+VDO processing based on physical block addresses. The value must be at
+least \*[physicalThreadsMin] and less than or equal to
+\*[physicalThreadsMax]. The value must also be less than or equal to
+the slab count (which can be found via the \fBstatus\fR command after
+device creation). Each additional thread after the first will use an
+additional \*[physicalThreadOverheadMB] MB of RAM. vdoPhysicalThreads,
+vdoHashZonesThreads and vdoLogicalThreads must be either all zero or
+all non-zero. The default is \*[physicalThreadsDefault].
 .TP
 .B \-\-vdoSlabSize=\fImegabytes\fR
-Specifies the size of the increment by which a VDO is grown. Using a smaller
-size constrains the total maximum physical size that can be accommodated.
-Must be a power of two between \*[slabSizeMin] and \*[slabSizeMax].
-\*[lvmOptionalSuffix]. If no suffix is used, the value will be interpreted as
-\*[lvmUnitsDefault]. The default is \*[slabSizeDefault].
+Set the free space allocator's slab size. Must be a power of two between
+\*[slabSizeMin] and \*[slabSizeMax] (inclusive). \*[lvmOptionalSuffix].
+If no suffix is used, the value will be interpreted as \*[lvmUnitsDefault].
+The default is \*[slabSizeDefault]. This allocator manages the space VDO
+uses to store user data.
+
+The maximum number of slabs in the system is 8192, so this value determines
+the maximum physical size of a VDO volume. One slab is the minimum amount
+by which a VDO volume can be grown. Smaller slabs also increase the potential
+for parallelism if the device has multiple physical threads. Therefore, this
+value should be set as small as possible, given the eventual maximal size
+of the volume.
+
 .TP
 .B \-\-verbose
 Prints commands before executing them.
 .TP
-.B \-\-writePolicy=\*[writePolicy]
+.B \-\-writePolicy=\fIpolicy\fR
 Specifies the write policy:
 .RS
 .TP
 .B sync
-Writes are acknowledged only after data is stably written. \fBThis
-policy is not supported if the underlying storage is not also synchronous.\fP
+Writes are acknowledged only after the data is guaranteed to persist.
 .TP
 .B async
-Writes are acknowledged after data has been \fIcached\fP for writing to
-stable storage. Data which has not been flushed is not guaranteed to persist
-in this mode.
+Writes are acknowledged when the data has been cached for writing to the
+underlying storage. Data which has not been flushed is not guaranteed
+to persist in this mode, however this mode is ACID compliant (after
+recovery from a crash any unflushed write is guaranteed either to have
+persisted all its data, or to have done nothing). Most databases and
+filesystems should use this mode.
+.TP
+.B async-unsafe
+Writes are handled like 'async' but there is no guarantee of the atomicity
+async provides. This mode should only be used for better performance when
+atomicity is not required.
 .TP
 .B auto
 VDO will check the storage device and determine whether it supports
@@ -760,6 +776,44 @@ If a multipath device is used, \fBudev\fP should be configured to
 either not create any /dev/disk/by-id symbolic links for any of the
 devices used, or to only create a link for the multipath device
 itself.
+.
+.
+.SH AUTOMATIC MOUNTING
+Mounting a filesystem atop a VDO at boot time is usually easy, but
+does require some care to ensure VDO is started before the mount
+is attempted.
+.PP
+There are two ways to mount filesystems automatically during system
+startup: adding a line to \fB/etc/fstab\fP, or adding a mount unit
+to systemd (on systemd-based systems).
+
+For \fB/etc/fstab\fP mounting, in order to make sure the mount waits
+for the VDO to start, use the mount option
+\fBx-systemd.requires=vdo.service\fP
+For example, an \fB/etc/fstab\fP line involving VDO could be the following:
+.PP
+.nf
+.nh
+/dev/mapper/vdo0 /vdo xfs defaults,x-systemd.requires=vdo.service 0 0
+.fi
+.hyResume
+.PP
+To add a mount unit, modify the example from \fB/usr/share/doc/vdo/examples\fP
+to match your mount point and configuration, and add it to
+/etc/systemd/system.
+.PP
+Complications may arise if you have VDO layered atop other software
+defined devices, e.g. VDO atop LVM, VDO atop ISCSI, or VDO both above and
+below a single type of software defined device.
+.PP
+You may need to add dependencies to the VDO service, by adding a symlink to
+the required service into the appropriate \fBvdo.service.requires\fP
+directory. For instance, you may need to create an 
+\fB/etc/systemd/system/vdo.service.requires/\fP directory and symlink
+\fBiscsi.service\fP into it, in order to make the VDO service wait for the
+iscsi service to have started. More information can be found in 
+\fBsystemd.unit(5)\fP about setting up dependencies in this way.
+.
 .
 .
 .SH FILES

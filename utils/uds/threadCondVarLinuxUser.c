@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Red Hat, Inc.
+ * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,50 +16,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/homer/userLinux/uds/threadCondVarLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/jasper/userLinux/uds/threadCondVarLinuxUser.c#4 $
  */
 
-#include "threadCondVar.h"
-
 #include "permassert.h"
-
-/**********************************************************************/
-int initCondAttr(pthread_condattr_t *cond_attr)
-{
-  int result = pthread_condattr_init(cond_attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_condattr_init error");
-}
-
-/**********************************************************************/
-int setClockCondAttr(pthread_condattr_t *cond_attr, clockid_t clockID)
-{
-  int result = pthread_condattr_setclock(cond_attr, clockID);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_condattr_setclock error, clockID: %d",
-                                clockID);
-}
-
-/**********************************************************************/
-int destroyCondAttr(pthread_condattr_t *cond_attr)
-{
-  int result = pthread_condattr_destroy(cond_attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_condattr_destroy error");
-}
-
-/**********************************************************************/
-int initCondWithAttr(CondVar *cond, pthread_condattr_t *cond_attr)
-{
-  int result = pthread_cond_init(cond, cond_attr);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_cond_init error");
-}
+#include "threads.h"
 
 /**********************************************************************/
 int initCond(CondVar *cond)
 {
-  return initCondWithAttr(cond, NULL);
+  int result = pthread_cond_init(cond, NULL);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result,
+                                "pthread_cond_init error");
 }
 
 /**********************************************************************/
@@ -87,9 +55,10 @@ int waitCond(CondVar *cond, Mutex *mutex)
 }
 
 /**********************************************************************/
-int timedWaitCond(CondVar *cond, Mutex *mutex, const AbsTime *deadline)
+int timedWaitCond(CondVar *cond, Mutex *mutex, RelTime timeout)
 {
-  return pthread_cond_timedwait(cond, mutex, deadline);
+  struct timespec ts = asTimeSpec(futureTime(CLOCK_REALTIME, timeout));
+  return pthread_cond_timedwait(cond, mutex, &ts);
 }
 
 /**********************************************************************/

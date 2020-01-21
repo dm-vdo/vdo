@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 Red Hat, Inc.
+# Copyright (c) 2020 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#29 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#31 $
 
 """
 from __future__ import absolute_import
@@ -48,6 +48,7 @@ import os
 import re
 from socket import gethostbyname
 import stat
+import textwrap
 import time
 import yaml
 
@@ -143,7 +144,7 @@ class VDOService(Service):
       a smaller size constrains the maximum physical size that can be
       accomodated. Must be a power of two between 128M and 32G.
     uuid (str): uuid of vdo volume.
-    writePolicy (str): sync, async or auto.
+    writePolicy (str): sync, async, async-unsafe or auto.
   """
   log = logging.getLogger('vdo.vdomgmnt.Service.VDOService')
   yaml_tag = "!VDOService"
@@ -1577,7 +1578,9 @@ class VDOService(Service):
     if force:
       commandLine.append("--force")
     commandLine.append(self.device)
-    runCommand(commandLine)
+    output = runCommand(commandLine).rstrip()
+    if output:
+      self._announce(textwrap.indent(output, "      "))
 
   ######################################################################
   def _generateDeviceMapperTable(self):

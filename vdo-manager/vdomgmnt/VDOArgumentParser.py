@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2018 Red Hat, Inc.
+# Copyright (c) 2020 Red Hat, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#10 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#13 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -1036,12 +1036,15 @@ suffix is optional""").format(options
                                   Defaults.checkPhysicalThreadCount),
                         metavar = "<threadCount>",
                         help = _("""
-      Specifies the number of threads across which to subdivide parts of the
-      VDO processing based on physical block addresses. The value must be at
-      least {min} and less than or equal to {max}. Each additional thread
-      after the first will use an additional {overhead} MB of RAM.
-      vdoPhysicalThreads, vdoHashZonesThreads and vdoLogicalThreads must be
-      either all zero or all non-zero. {defaultHelp}
+      Specifies the number of threads across which to subdivide parts
+      of the VDO processing based on physical block addresses. The
+      value must be at least {min} and less than or equal to {max}.
+      The value must also be less than or equal to the slab count
+      (which can be found via the 'status' command after device
+      creation). Each additional thread after the first will use an
+      additional {overhead} MB of RAM. vdoPhysicalThreads,
+      vdoHashZonesThreads and vdoLogicalThreads must be either all
+      zero or all non-zero. {defaultHelp}
                                  """)
       .format(min = Defaults.physicalThreadsMin,
               max = Defaults.physicalThreadsMax,
@@ -1058,11 +1061,18 @@ suffix is optional""").format(options
                         default = Defaults.slabSize,
                         metavar = "<megabytes>",
                         help = _("""
-      Specifies the size of the increment by which a VDO is grown. Using a
-      smaller size constrains the total maximum physical size that can be
-      accommodated. Must be a power of two between {minSize} and {maxSize};
-      the default is {defaultSlabSize}. {suffixOptions}. If no suffix is
-      used, the value will be interpreted as {defaultUnits}.
+      Set the free space allocator's slab size. Must be a power of two between
+      {minSize} and {maxSize}; the default is {defaultSlabSize}.
+      {suffixOptions}. If no suffix is used, the value will be interpreted as
+      {defaultUnits}. This allocator manages the space VDO uses to store user
+      data.
+      
+      The maximum number of slabs in the system is 8192, so this value
+      determines the maximum physical size of a VDO volume. One slab is the
+      minimum amount by which a VDO volume can be grown. Smaller slabs also
+      increase the potential for parallelism if the device has multiple
+      physical threads. Therefore, this value should be set as small as
+      possible, given the eventual maximal size of the volume.
                                  """)
       .format(minSize = Defaults.slabSizeMin,
               maxSize = Defaults.slabSizeMax,
@@ -1100,15 +1110,19 @@ suffix is optional""").format(options
                         default = None if required else Defaults.writePolicy,
                         required = required,
                         help = _("""
-      Specifies the write policy. 'sync' means writes are acknowledged only
-      after data is on stable storage. 'sync' policy is not supported if the
-      underlying storage is not also synchronous. 'async' means that writes
-      are acknowledged when data has been cached for writing to stable
-      storage; data which has not been flushed is not guaranteed to persist
-      in this mode. 'auto' means that VDO will check the storage device
-      and determine whether it supports flushes. If it does, VDO will run
-      in async mode, otherwise it will run in sync mode.
-      {defaultHelp}
+      Specifies the write policy. If 'sync', writes are acknowledged only
+      after the data is guaranteed to persist. If 'async', writes are
+      acknowledged when the data has been cached for writing to the
+      underlying storage. Data which has not been flushed is not guaranteed
+      to persist in this mode, however this mode is ACID compliant (after
+      recovery from a crash any unflushed write is guaranteed either to have
+      persisted all its data, or to have done nothing). Most databases and
+      filesystems should use this mode. If 'async-unsafe', writes are handled
+      like 'async' but there is no guarantee of the above atomicity. This
+      mode should only be used for better performance when atomicity is
+      not required. If 'auto', VDO will check the underlying storage and
+      determine whether it supports flushes. If it does, VDO will run in async
+      mode, otherwise it will run in sync mode. {defaultHelp}
                                  """)
       .format(defaultHelp = defaultHelp))
 

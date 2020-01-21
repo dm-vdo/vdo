@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Red Hat, Inc.
+ * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.h#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.h#2 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -35,18 +35,15 @@
  * given layer. Once a layer has been formatted, it can be loaded and shut down
  * repeatedly. If a new VDO is desired, this function should be called again.
  *
- * @param [in]  config            The configuration parameters for the VDO
- * @param [in]  indexConfig       The configuration parameters for the index
- * @param [in]  layer             The physical layer the VDO will sit on
- * @param [out] logicalBlocksPtr  If not NULL, will be set to the number of
- *                                logical blocks the VDO was formatted to have
+ * @param config            The configuration parameters for the VDO
+ * @param indexConfig       The configuration parameters for the index
+ * @param layer             The physical layer the VDO will sit on
  *
  * @return VDO_SUCCESS or an error
  **/
 int formatVDO(const VDOConfig *config,
               IndexConfig     *indexConfig,
-              PhysicalLayer   *layer,
-              BlockCount      *logicalBlocksPtr)
+              PhysicalLayer   *layer)
   __attribute__((warn_unused_result));
 
 /**
@@ -69,14 +66,12 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
  * which attempt to ensure that version numbers are properly updated when
  * formats change.
  *
- * @param [in]  config            The configuration parameters for the VDO
- * @param [in]  indexConfig       The configuration parameters for the index
- * @param [in]  indexBlocks       Size of the index in blocks
- * @param [in]  layer             The physical layer the VDO will sit on
- * @param [in]  nonce             The nonce for the VDO
- * @param [in]  uuid              The uuid for the VDO
- * @param [out] logicalBlocksPtr  If not NULL, will be set to the number of
- *                                logical blocks the VDO was formatted to have
+ * @param config            The configuration parameters for the VDO
+ * @param indexConfig       The configuration parameters for the index
+ * @param indexBlocks       Size of the index in blocks
+ * @param layer             The physical layer the VDO will sit on
+ * @param nonce             The nonce for the VDO
+ * @param uuid              The uuid for the VDO
  *
  * @return VDO_SUCCESS or an error
  **/
@@ -84,8 +79,7 @@ int formatVDOWithNonce(const VDOConfig *config,
                        IndexConfig     *indexConfig,
                        PhysicalLayer   *layer,
                        Nonce            nonce,
-                       UUID             uuid,
-                       BlockCount      *logicalBlocksPtr)
+                       UUID             uuid)
   __attribute__((warn_unused_result));
 
 /**
