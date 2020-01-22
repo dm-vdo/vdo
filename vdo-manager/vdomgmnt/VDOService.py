@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#11 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#12 $
 
 """
 from __future__ import absolute_import
@@ -319,13 +319,16 @@ class VDOService(Service):
     idDir = '/dev/disk/by-id'
     aliases = []
     if os.path.isdir(idDir):
-      # Ignore lvm-pv-*; these can become invalid between
-      # invocations of vdo commands.
       aliases = [absname
                  for absname in (os.path.join(idDir, name)
                                  for name in os.listdir(idDir))
-                 if ((os.path.realpath(absname) == realpath)
-                     and (re.match(r".*/lvm-pv-", absname) is None))]
+                 if os.path.realpath(absname) == realpath]
+      if realpath is not None:
+        deviceUUID = self._getDeviceUUID(realpath)
+        if deviceUUID is not None:
+          self.log.debug("pruning {uuid} from aliases".format(
+            uuid=deviceUUID))
+          aliases = [a for a in aliases if not deviceUUID in a]
       
     if len(aliases) > 0:
       self.log.debug("found aliases for {original}: {aliases}"
@@ -1675,6 +1678,27 @@ class VDOService(Service):
     baseName = os.path.basename(basePath)
     output = runCommand(["cat", "/sys/class/block/" + baseName + "/size"]);
     return SizeString("{0}s".format(output));
+
+  ######################################################################
+  def _getDeviceUUID(self, devicePath):
+    """Get the UUID of the device passed in,
+
+    Arguments:
+      devicePath (path): path to a device.
+
+    Returns:
+      UUID as a string, or None if none found
+    """
+    try:
+      output = runCommand(["blkid", "-s", "UUID", "-o", "value",
+                           devicePath]).strip()
+    except CommandError as ex:
+      self.log.info("blkid failed: " + str(ex))
+      return None
+    if output == "":
+      return None
+    else:
+      return output
 
   ######################################################################
   def _hasHolders(self):
