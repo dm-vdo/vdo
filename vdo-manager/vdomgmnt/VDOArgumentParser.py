@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#4 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#5 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -187,6 +187,7 @@ suffix is optional""").format(options
                   self._indexMemOptionParser(),
                   self._maxDiscardSizeOptionParser(),
                   self._sparseIndexOptionParser(),
+                  self._uuidOptionParser(),
                   self._vdoAckThreadsOptionParser(),
                   self._vdoBioRotationIntervalOptionParser(),
                   self._vdoBioThreadsOptionParser(),

@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#12 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#13 $
 
 """
 from __future__ import absolute_import
@@ -143,6 +143,7 @@ class VDOService(Service):
     slabSize (SizeString): The size increment by which a VDO is grown. Using
       a smaller size constrains the maximum physical size that can be
       accomodated. Must be a power of two between 128M and 32G.
+    uuid (str): uuid of vdo volume.
     writePolicy (str): sync, async or auto.
   """
   log = logging.getLogger('vdo.vdomgmnt.Service.VDOService')
@@ -313,6 +314,9 @@ class VDOService(Service):
     if not force:
       self._createCheckCleanDevice()
 
+    # Check to see if any other known VDO volume has the same UUID
+    self._checkForExistingUUID(self.uuid)
+    
     # Find a stable name for the real device, that won't change from
     # one boot cycle to the next.
     realpath = os.path.realpath(self.device)
@@ -368,6 +372,8 @@ class VDOService(Service):
                                                self.getName()))
 
     self._constructVdoFormat(force)
+    self._setUUID(self.uuid)
+      
     self._constructServiceStart()
 
     # The create is done.
@@ -942,7 +948,15 @@ class VDOService(Service):
             self._announce("Can't modify uuid on VDO {0} while it is running."
                            " Skipping change.".format(self.getName()))
             continue
-          self._setUUID(value)
+          try:
+            self._checkForExistingUUID(value)
+            self._setUUID(value)
+          except VDOServiceError as ex:
+            self._announce("Can't modify uuid on VDO {0}. Skipping change: {1}."
+                           .format(self.getName(), ex))
+            continue          
+          setattr(self, self.modifiableOptions[option], value)
+          modified = True
         else:
           setattr(self, self.modifiableOptions[option], value)
           modified = True
@@ -1008,6 +1022,7 @@ class VDOService(Service):
             "physicalSize",
             "physicalThreads",
             "slabSize",
+            "uuid",
             "writePolicy"]
 
   ######################################################################
@@ -1186,6 +1201,8 @@ class VDOService(Service):
 
     self.vdoLogLevel = kw.get('vdoLogLevel')
 
+    self.uuid = kw.get('uuid')
+    
     self.indexCfreq = self._defaultIfNone(kw, 'cfreq', Defaults.cfreq)
     self._setMemoryAttr(self._defaultIfNone(kw, 'indexMem',
                                             Defaults.indexMem))
@@ -1242,6 +1259,43 @@ class VDOService(Service):
     self.blockMapPeriod = max(self.blockMapPeriod, Defaults.blockMapPeriodMin)
     self.blockMapPeriod = min(self.blockMapPeriod, Defaults.blockMapPeriodMax)
 
+  ######################################################################
+  def _checkForExistingUUID(self, uuid):
+    """ Checks that the device does not have an already existing UUID.
+
+    Arguments:
+      uuid (str) - the uuid to check for
+
+    Raises: VDOServiceError
+    """
+    # If we're planning on generating a new random uuid there is no
+    # need to check for existing uuid as we assume random is random
+    # enough.
+    if uuid is None or uuid == "":
+      return
+
+    # get unique set of known running vdo storage devices.
+    cmd = ['dmsetup', 'table', '--target', Defaults.vdoTargetName]
+    vdos = set([line.split(' ')[5]
+                for line in runCommand(cmd, noThrow=True).splitlines()])
+    # add to it a list of known offline vdo storage devices.
+    vdos |= set([vdo.device for vdo in self.config.getAllVdos().values()])
+    vdos = list(vdos)
+
+    conflictVdos = []
+    for vdo in vdos:
+      try:
+        config = yaml.safe_load(runCommand(["vdodumpconfig", vdo]))
+        if uuid == config["UUID"]:
+          conflictVdos.append(vdo) 
+      except:
+        pass
+    if len(conflictVdos) > 0:
+      conflictList = ", ".join(conflictVdos)
+      msg = _("UUID {0} already exists in VDO volume(s) stored on {1}").format(
+        uuid, conflictList)
+      raise VDOServiceError(msg, exitStatus = StateExitStatus)
+      
   ######################################################################
   def _clearMetadata(self):
     """Clear the VDO metadata from the storage device"""
@@ -1914,16 +1968,25 @@ class VDOService(Service):
   def _setUUID(self, uuid):
     """Sets a new uuid for the vdo volume, either by providing a value
     or having the tool generate a new random one.
+
+    Arguments:
+      uuid (str) - the uuid to set
+
+    Raises:
+      Exception
     """
+    if uuid is None:
+      return
+    
     try:
       if uuid == "":
         runCommand(["vdosetuuid", self.device])
       else:
         runCommand(["vdosetuuid", "--uuid", uuid, self.device])        
     except Exception as ex:
-      self.log.error(_("Can't set the UUID for VDO volume {0};"
-                       " {1!s}").format(self.getName(), ex))
-      raise
+      msg = _("Can't set the UUID for VDO volume {0}; {1!s}").format(
+        self.getName(), ex)
+      raise VDOServiceError(msg, exitStatus = StateExitStatus)
 
   ######################################################################
   def _startCompression(self):
