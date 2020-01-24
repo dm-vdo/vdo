@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/vdoPageCache.c#16 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/vdoPageCache.c#17 $
  */
 
 #include "vdoPageCacheInternals.h"
@@ -157,8 +157,8 @@ int makeVDOPageCache(PhysicalLayer          *layer,
     return result;
   }
 
-  result = makeDirtyLists(maximumAge, writeDirtyPagesCallback, cache,
-                          &cache->dirtyLists);
+  result = make_dirty_lists(maximumAge, writeDirtyPagesCallback, cache,
+                            &cache->dirtyLists);
   if (result != VDO_SUCCESS) {
     freeVDOPageCache(&cache);
     return result;
@@ -187,7 +187,7 @@ void freeVDOPageCache(struct vdo_page_cache **cachePtr)
     }
   }
 
-  freeDirtyLists(&cache->dirtyLists);
+  free_dirty_lists(&cache->dirtyLists);
   freeIntMap(&cache->pageMap);
   FREE(cache->infos);
   FREE(cache->pages);
@@ -199,7 +199,7 @@ void freeVDOPageCache(struct vdo_page_cache **cachePtr)
 void setVDOPageCacheInitialPeriod(struct vdo_page_cache *cache,
                                   SequenceNumber         period)
 {
-  setCurrentPeriod(cache->dirtyLists, period);
+  set_current_period(cache->dirtyLists, period);
 }
 
 /**********************************************************************/
@@ -1032,7 +1032,7 @@ void advanceVDOPageCachePeriod(struct vdo_page_cache *cache,
                                SequenceNumber         period)
 {
   assertOnCacheThread(cache, __func__);
-  advancePeriod(cache->dirtyLists, period);
+  advance_period(cache->dirtyLists, period);
 }
 
 /**
@@ -1305,8 +1305,8 @@ void markCompletedVDOPageDirty(struct vdo_completion *completion,
 
   struct page_info *info = vdoPageComp->info;
   setInfoState(info, PS_DIRTY);
-  addToDirtyLists(info->cache->dirtyLists, &info->listNode, oldDirtyPeriod,
-                  newDirtyPeriod);
+  add_to_dirty_lists(info->cache->dirtyLists, &info->listNode, oldDirtyPeriod,
+                     newDirtyPeriod);
 }
 
 /**********************************************************************/
@@ -1358,7 +1358,7 @@ void drainVDOPageCache(struct vdo_page_cache *cache)
                   "drainVDOPageCache() called during block map drain");
 
   if (!is_suspending(&cache->zone->state)) {
-    flushDirtyLists(cache->dirtyLists);
+    flush_dirty_lists(cache->dirtyLists);
     savePages(cache);
   }
 

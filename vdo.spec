@@ -139,4 +139,4 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_sysconfdir}/bash_completion.d/vdostats
 
 %changelog
-* Wed Jan 22 2020 - corwin@bf30-1 - 8.0.0.0-1
+* Thu Jan 23 2020 - corwin@bf30-1 - 8.0.0.0-1
