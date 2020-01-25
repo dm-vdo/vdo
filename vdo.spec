@@ -73,6 +73,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_bindir}/vdoformat
 %{_bindir}/vdoprepareupgrade
 %{_bindir}/vdoreadonly
+%{_bindir}/vdosetuuid
 %dir %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}/__pycache__/*
 %{python3_sitelib}/%{name}/__init__.py
@@ -134,6 +135,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
+%{_mandir}/man8/vdosetuuid.8.gz
 %dir %{_sysconfdir}/bash_completion.d
 %{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats

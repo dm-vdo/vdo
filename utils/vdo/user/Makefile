@@ -17,7 +17,7 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/Makefile#2 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/Makefile#3 $
 
 VDO_VERSION = 8.0.0.0
 
@@ -90,7 +90,8 @@ PROGS = vdodmeventd        \
         vdoforcerebuild    \
         vdoformat          \
         vdoprepareupgrade  \
-        vdoreadonly
+        vdoreadonly        \
+        vdosetuuid
 
 DMEVENT_LIB = libdevmapper-event-lvm2vdo.so
 

@@ -16,13 +16,14 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#1 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#2 $
 
 INSTALLFILES=vdodmeventd.8 \
         vdodumpconfig.8    \
 	vdodumpmetadata.8  \
 	vdoforcerebuild.8  \
-	vdoformat.8
+	vdoformat.8        \
+        vdosetuuid.8
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
