@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#13 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#14 $
 
 """
 from __future__ import absolute_import
@@ -201,9 +201,18 @@ class VDOService(Service):
     beginCreate = 'beginCreate'
     beginGrowLogical = 'beginGrowLogical'
     beginGrowPhysical = 'beginGrowPhysical'
+    beginImport = 'beginImport'
     beginRunningSetWritePolicy = 'beginRunningSetWritePolicy'
     finished = 'finished'
     unknown = 'unknown'
+    names = { beginCreate                : 'create',
+              beginGrowLogical           : 'grow logical',
+              beginGrowPhysical          : 'grow physical',
+              beginImport                : 'import',
+              beginRunningSetWritePolicy : 'write policy',
+              finished                   : 'unknown',
+              unknown                    : 'unknown' }
+              
 
     ####################################################################
     @classmethod
@@ -214,8 +223,8 @@ class VDOService(Service):
       via normal processing.
       """
       return [cls.beginCreate, cls.beginGrowLogical, cls.beginGrowPhysical,
-              cls.beginRunningSetWritePolicy, cls.finished]
-
+              cls.beginImport, cls.beginRunningSetWritePolicy, cls.finished]
+      
   ######################################################################
   # Public methods
   ######################################################################
@@ -285,29 +294,11 @@ class VDOService(Service):
 
     self._handlePreviousOperationFailure()
 
-    if self.isConstructed:
-      msg = _("VDO volume {0} already exists").format(self.getName())
-      raise VDOServiceExistsError(msg)
+    # Check for various creation issues.
+    self._checkForExistingVDO()
 
-    # Check that there isn't already a vdo using the device we were given.
-    if self.config.isDeviceConfigured(self.device):
-      msg = _("Device {0} already configured for VDO use").format(
-              self.device)
-      raise VDODeviceAlreadyConfiguredError(msg)
-
-    # Check that there isn't an already extant dm target with the VDO's name.
-    if self._mapperDeviceExists():
-      msg = _("Name conflict with extant device mapper target {0}").format(
-              self.getName())
-      raise VDOServiceError(msg, exitStatus = StateExitStatus)
-
-    # Check that we have enough kernel memory to at least create the index.
-    self._validateAvailableMemory(self.indexMemory);
-
-    # Check that the hash zone, logical and physical threads are consistent.
-    self._validateModifiableThreadCounts(self.hashZoneThreads,
-                                         self.logicalThreads,
-                                         self.physicalThreads)
+    # Validate some parameters.
+    self._validateParameters()
 
     # Perform a verification that the storage device doesn't already
     # have something on it.
@@ -317,46 +308,8 @@ class VDOService(Service):
     # Check to see if any other known VDO volume has the same UUID
     self._checkForExistingUUID(self.uuid)
     
-    # Find a stable name for the real device, that won't change from
-    # one boot cycle to the next.
-    realpath = os.path.realpath(self.device)
-    idDir = '/dev/disk/by-id'
-    aliases = []
-    if os.path.isdir(idDir):
-      aliases = [absname
-                 for absname in (os.path.join(idDir, name)
-                                 for name in os.listdir(idDir))
-                 if os.path.realpath(absname) == realpath]
-      if realpath is not None:
-        deviceUUID = self._getDeviceUUID(realpath)
-        if deviceUUID is not None:
-          self.log.debug("pruning {uuid} from aliases".format(
-            uuid=deviceUUID))
-          aliases = [a for a in aliases if not deviceUUID in a]
-      
-    if len(aliases) > 0:
-      self.log.debug("found aliases for {original}: {aliases}"
-                     .format(original = realpath, aliases = aliases))
-
-      # A device can have multiple names; dm-name-*, dm-uuid-*, ata-*,
-      # wwn-*, etc.  Do we have a way to prioritize them?
-      #
-      # LVM volumes and MD arrays can be renamed; prioritize dm-name-*
-      # below dm-uuid-* and likewise for md-*.
-      #
-      # Otherwise, just sort and take the first name; that'll at least
-      # be consistent from run to run.
-      uuidAliases = [a
-                     for a in aliases
-                     if re.match(r".*/[dm][dm]-uuid-", a) is not None]
-      if len(uuidAliases) > 0:
-        aliases = uuidAliases
-      aliases.sort()
-      self.device = aliases[0]
-      self.log.debug("using {new}".format(new = self.device))
-    else:
-      self.log.debug("no aliases for {original} found in {idDir}!"
-                     .format(original = realpath, idDir = idDir))
+    # Find a stable name for the storage device.
+    self._setStableName()
 
     # Make certain the kernel module is installed.
     self._installKernelModule(self.vdoLogLevel)
@@ -469,7 +422,7 @@ class VDOService(Service):
     self._resume()
 
     # Get the new logical size
-    vdoConfig = self._getConfigFromVDO()
+    vdoConfig = self._getVDOConfigFromVDO()
     logicalSize = (vdoConfig["logicalBlocks"]
                    * (vdoConfig["blockSize"] // Constants.SECTOR_SIZE))
     self.logicalSize = SizeString("{0}s".format(logicalSize))
@@ -528,7 +481,7 @@ class VDOService(Service):
     self._resume()
 
     # Get the new physical size
-    vdoConfig = self._getConfigFromVDO()
+    vdoConfig = self._getVDOConfigFromVDO()
     sectorsPerBlock = vdoConfig["blockSize"] // Constants.SECTOR_SIZE
     physicalSize = vdoConfig["physicalBlocks"] * sectorsPerBlock
     self.physicalSize = SizeString("{0}s".format(physicalSize))
@@ -539,6 +492,68 @@ class VDOService(Service):
     # The grow is done.
     self._setOperationState(self.OperationState.finished)
 
+  ######################################################################
+  @transactional
+  def importDevice(self):
+    """Imports and starts a VDO target."""
+    self._announce(_("Importing VDO {0}").format(self.getName()))
+    self.log.debug("confFile is {0}".format(self.config.filepath))
+
+    self._handlePreviousOperationFailure()
+
+    # Import creation parameters from the disk, making sure we don't
+    # overwrite uuid if its passed in.
+    config = self._getConfigFromVDO()
+    vdoConfig = config["VDOConfig"]
+    sectorsPerBlock = vdoConfig["blockSize"] // Constants.SECTOR_SIZE
+    physicalSize = vdoConfig["physicalBlocks"] * sectorsPerBlock
+    self.physicalSize = SizeString("{0}s".format(physicalSize))
+    logicalSize = vdoConfig["logicalBlocks"] * sectorsPerBlock
+    self.logicalSize = SizeString("{0}s".format(logicalSize))
+    self.slabSize = vdoConfig["slabSize"]
+    
+ 
+    indexConfig = config["IndexConfig"] 
+    self.indexMem = indexConfig["memory"]
+    self.indexSparse = indexConfig["sparse"]
+    self.indexCfreq = indexConfig["checkpointFrequency"]
+
+    uuid = self.uuid
+    self.uuid = config["UUID"] 
+    if uuid is not None:
+      self.uuid = uuid
+
+    # Check for various creation issues.
+    self._checkForExistingVDO()
+
+    # Validate some parameters.
+    self._validateParameters()
+
+    # Check for uuid conflicts among all vdos we can find.
+    self._checkForExistingUUID(self.uuid)    
+
+    # Find a stable name for the storage device.
+    self._setStableName()
+
+    # Make certain the kernel module is installed.
+    self._installKernelModule(self.vdoLogLevel)
+
+    # Do the import.
+    self._setOperationState(self.OperationState.beginImport)
+
+    # As setting the operation state updates (and persists) the config file
+    # we need to be certain to remove this instance if something goes wrong.
+    transaction = Transaction.transaction()
+    transaction.addUndoStage(self.config.persist)
+    transaction.addUndoStage(functools.partial(self.config.removeVdo,
+                                               self.getName()))
+    self._setUUID(self.uuid)
+
+    self._constructServiceStart()
+
+    # The create is done.
+    self._setOperationState(self.OperationState.finished)
+    
   ######################################################################
   def reconnect(self):
     """Enables deduplication on this VDO device."""
@@ -1297,6 +1312,30 @@ class VDOService(Service):
       raise VDOServiceError(msg, exitStatus = StateExitStatus)
       
   ######################################################################
+  def _checkForExistingVDO(self):
+    """Check to see if there is an existing VDO volume running with the 
+       same name as this VDO, or it already exists in this config file
+
+    Raises:
+      VDOServiceExistsError VDODeviceAlreadyConfiguredError
+    """
+    if self.isConstructed:
+      msg = _("VDO volume {0} already exists").format(self.getName())
+      raise VDOServiceExistsError(msg)
+
+    # Check that there isn't already a vdo using the device we were given.
+    if self.config.isDeviceConfigured(self.device):
+      msg = _("Device {0} already configured for VDO use").format(
+              self.device)
+      raise VDODeviceAlreadyConfiguredError(msg)
+
+    # Check that there isn't an already extant dm target with the VDO's name.
+    if self._mapperDeviceExists():
+      msg = _("Name conflict with extant device mapper target {0}").format(
+              self.getName())
+      raise VDOServiceError(msg, exitStatus = StateExitStatus)
+
+  ######################################################################
   def _clearMetadata(self):
     """Clear the VDO metadata from the storage device"""
     try:
@@ -1393,7 +1432,10 @@ class VDOService(Service):
     automatically recovered.
     """
     return (self.previousOperationFailure
-            and (self.operationState == self.OperationState.beginCreate))
+            and (
+              self.operationState in [self.OperationState.beginCreate,
+                                      self.OperationState.beginImport]
+            ))
 
   ######################################################################
   def _computedWritePolicy(self):
@@ -1436,7 +1478,7 @@ class VDOService(Service):
     self._formatTarget(force)
     transaction.addUndoStage(self.remove)
 
-    vdoConfig = self._getConfigFromVDO()
+    vdoConfig = self._getVDOConfigFromVDO()
     sectorsPerBlock = vdoConfig["blockSize"] // Constants.SECTOR_SIZE
     physicalSize = vdoConfig["physicalBlocks"] * sectorsPerBlock
     self.physicalSize = SizeString("{0}s".format(physicalSize))
@@ -1554,7 +1596,7 @@ class VDOService(Service):
                                   "physical", str(self.physicalThreads)])
     vdoConf = " ".join(["0", str(numSectors), Defaults.vdoTargetName,
                         "V2", self.device,
-                        str(self._getConfigFromVDO()['physicalBlocks']),
+                        str(self._getVDOConfigFromVDO()['physicalBlocks']),
                         str(self.logicalBlockSize),
                         str(cachePages), str(self.blockMapPeriod),
                         self.mdRaid5Mode, self.writePolicy,
@@ -1597,24 +1639,22 @@ class VDOService(Service):
                     + tableItems[len(dmTable):])
 
   ######################################################################
-  def _generatePreviousOperationFailureResponse(self, operation = "create"):
+  def _generatePreviousOperationFailureResponse(self):
     """Generates the required response to a previous operation failure.
 
     Logs a message indicating that the previous operation failed and raises the
     VDOServicePreviousOperationError exception with the same message.
 
     Arguments:
-      operation (str) - the operation that failed; default to "create" as that
-                        is currently the only operation that is not
-                        automatically recovered
+      operation (str) - the operation that failed; default to "create".
 
     Raises:
       VDOServicePreviousOperationError
     """
+
     msg = _("VDO volume {0} previous operation ({1}) is incomplete{2}").format(
-            self.getName(), operation,
-            "; recover by performing 'remove --force'"
-              if operation == "create" else "")
+            self.getName(), self.OperationState.names[self.operationState],
+            "; recover by performing 'remove --force'")
     raise VDOServicePreviousOperationError(msg)
 
   ######################################################################
@@ -1656,6 +1696,9 @@ class VDOService(Service):
       self._recoverGrowLogical()
     elif self.operationState == self.OperationState.beginGrowPhysical:
       self._recoverGrowPhysical()
+    elif self.operationState == self.OperationState.beginImport:
+      # Import is not automatically recovered.
+      self._generatePreviousOperationFailureResponse()
     elif self.operationState == self.OperationState.beginRunningSetWritePolicy:
       self._recoverRunningSetWritePolicy()
     else:
@@ -1695,7 +1738,16 @@ class VDOService(Service):
     """
     config = yaml.safe_load(runCommand(["vdodumpconfig",
                                         self.device]))
-    return config["VDOConfig"]
+    return config
+
+  ######################################################################
+  def _getIndexConfigFromVDO(self):
+    """Returns a dictionary of the index configuration values as reported
+    by the actual uds index used by the vdo.
+    """
+    config = yaml.safe_load(runCommand(["vdodumpconfig",
+                                        self.device]))
+    return config["IndexConfig"]
 
   ######################################################################
   def _getUUID(self):
@@ -1704,6 +1756,15 @@ class VDOService(Service):
     config = yaml.safe_load(runCommand(["vdodumpconfig",
                                         self.device]))
     return "VDO-" + config["UUID"]
+
+  ######################################################################
+  def _getVDOConfigFromVDO(self):
+    """Returns a dictionary of the configuration values as reported from
+    the actual vdo storage.
+    """
+    config = yaml.safe_load(runCommand(["vdodumpconfig",
+                                        self.device]))
+    return config["VDOConfig"]
 
   ######################################################################
   def _getDeduplicationStatus(self):
@@ -1859,7 +1920,7 @@ class VDOService(Service):
       raise VDOServiceError(msg, exitStatus = DeveloperExitStatus)
     else:
       # Get the correct logical size from vdo.
-      vdoConfig = self._getConfigFromVDO()
+      vdoConfig = self._getVDOConfigFromVDO()
       logicalSize = (vdoConfig["logicalBlocks"]
                       * (vdoConfig["blockSize"] // Constants.SECTOR_SIZE))
       self.logicalSize = SizeString("{0}s".format(logicalSize))
@@ -1891,7 +1952,7 @@ class VDOService(Service):
       raise VDOServiceError(msg, exitStatus = DeveloperExitStatus)
     else:
       # Get the correct physical size from vdo.
-      vdoConfig = self._getConfigFromVDO()
+      vdoConfig = self._getVDOConfigFromVDO()
       physicalSize = (vdoConfig["physicalBlocks"]
                       * (vdoConfig["blockSize"] // Constants.SECTOR_SIZE))
       self.physicalSize = SizeString("{0}s".format(physicalSize))
@@ -1964,6 +2025,49 @@ class VDOService(Service):
       self.config.addVdo(self.getName(), self, replace = True)
       self.config.persist()
 
+  #####################################################################
+  def _setStableName(self):
+    # Find a stable name for the real device, that won't change from
+    # one boot cycle to the next.
+    realpath = os.path.realpath(self.device)
+    idDir = '/dev/disk/by-id'
+    aliases = []
+    if os.path.isdir(idDir):
+      aliases = [absname
+                 for absname in (os.path.join(idDir, name)
+                                 for name in os.listdir(idDir))
+                 if os.path.realpath(absname) == realpath]
+      if realpath is not None:
+        deviceUUID = self._getDeviceUUID(realpath)
+        if deviceUUID is not None:
+          self.log.debug("pruning {uuid} from aliases".format(
+            uuid=deviceUUID))
+          aliases = [a for a in aliases if not deviceUUID in a]
+      
+    if len(aliases) > 0:
+      self.log.debug("found aliases for {original}: {aliases}"
+                     .format(original = realpath, aliases = aliases))
+
+      # A device can have multiple names; dm-name-*, dm-uuid-*, ata-*,
+      # wwn-*, etc.  Do we have a way to prioritize them?
+      #
+      # LVM volumes and MD arrays can be renamed; prioritize dm-name-*
+      # below dm-uuid-* and likewise for md-*.
+      #
+      # Otherwise, just sort and take the first name; that'll at least
+      # be consistent from run to run.
+      uuidAliases = [a
+                     for a in aliases
+                     if re.match(r".*/[dm][dm]-uuid-", a) is not None]
+      if len(uuidAliases) > 0:
+        aliases = uuidAliases
+      aliases.sort()
+      self.device = aliases[0]
+      self.log.debug("using {new}".format(new = self.device))
+    else:
+      self.log.debug("no aliases for {original} found in {idDir}!"
+                     .format(original = realpath, idDir = idDir))
+      
   ######################################################################
   def _setUUID(self, uuid):
     """Sets a new uuid for the vdo volume, either by providing a value
@@ -2105,3 +2209,14 @@ class VDOService(Service):
         and (not ((hashZone == 0) and (logical == 0) and (physical == 0)))):
       raise ArgumentError(_("hash zone, logical and physical threads must"
                             " either all be zero or all be non-zero"))
+
+  ######################################################################
+  def _validateParameters(self):    
+    # Check that we have enough kernel memory to at least create the index.
+    self._validateAvailableMemory(self.indexMemory);
+
+    # Check that the hash zone, logical and physical threads are consistent.
+    self._validateModifiableThreadCounts(self.hashZoneThreads,
+                                         self.logicalThreads,
+                                         self.physicalThreads)
+    

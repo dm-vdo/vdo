@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#6 $
+.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#7 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -309,6 +309,38 @@ with root privileges. Applicable options include:
 \-\-confFile=\fIfile\fP
 \-\-verbose
 \-\-logfile=\fIfile\fP
+.endOptionList
+.TP
+.B import
+Creates a VDO volume from an existing VDO formatted storage
+device by importing it into VDO manager for use.
+
+If \fB\-\-activate=disabled\fP is specified the VDO volume is
+imported but not made available. This command must be run with
+root privileges. Applicaable options include:
+.startOptionList
+\-\-name=\fIvolume\fP\fR (required)\fP
+\-\-device=\fIdevice\fP\fR (required)\fP
+\-\-activate=\*[bool]
+\-\-blockMapCacheSize=\fIsize\fP
+\-\-blockMapPeriod=\fIperiod\fP
+\-\-compression=\*[bool]
+\-\-deduplication=\*[bool]
+\-\-emulate512=\*[bool]
+\-\-maxDiscardSize=\fIsize\fP
+\-\-uuid=\fIuuid\fP
+\-\-vdoAckThreads=\fIthread count\fP
+\-\-vdoBioRotationInterval=\fII/O count\fP
+\-\-vdoBioThreads=\fIthread count\fP
+\-\-vdoCpuThreads=\fIthread count\fP
+\-\-vdoHashZoneThreads=\fIthread count\fP
+\-\-vdoLogicalThreads=\fIthread count\fP
+\-\-vdoLogLevel=\fIlevel\fP
+\-\-vdoPhysicalThreads=\fIthread count\fP
+\-\-writePolicy=\*[writePolicy]
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
 .endOptionList
 .TP
 .B list
@@ -717,12 +749,11 @@ supplied on the command line, and if some are found, use one of those
 instead. This name will be written into the config file for future
 use. If no such links are found, the device name as supplied is used.
 .PP
-This may cause problems if a VDO storage volume needs to be copied
+This may cause problems if a VDO storage device needs to be copied
 from a failing device to a replacement, or from a small device to a
-larger one to allow for expansion. In cases like these, the config
-file may need to be edited to refer to the new device; there is
-currently no automated way to make this change with the administrative
-tools. (If a logical volume is used as the VDO storage volume, VDO
+larger one to allow for expansion. In cases like these, you can use
+the import command to create a new VDO volume from the copied storage
+device. (If a logical volume is used as the VDO storage volume, VDO
 will find the storage via the volume's UUID; the standard LVM tools
 can be used to manage the migration or growth of the volume.)
 .PP

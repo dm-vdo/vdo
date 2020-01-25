@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#5 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#6 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -162,16 +162,17 @@ suffix is optional""").format(options
                  self.__commonOptions],
       help = highLevelHelp,
       description = description)
-
     # create command.
     highLevelHelp = _("""
       Creates a VDO volume and its associated index and makes it available.
                       """)
     description = _("""
       {0} If --activate={1} is specified the VDO volume is created but not made
-      available. Will not overwrite an existing file system or formatted VDO
-      volume unless --force is given. This command must be run with root
-      privileges.
+      available. If the specified device is already in use by a VDO volume (as
+      determined from the configuration file) the create will always be 
+      rejected, even if --force is specified. If the device is not so in use
+      but is formatted as a VDO volume or contains an existing file system
+      the create will be rejected unless --force is given.
                     """).format(highLevelHelp, Constants.disabled)
     self._createCommandParser = subparserAdder.add_parser(
       "create",
@@ -311,6 +312,41 @@ suffix is optional""").format(options
     self._growPhysicalCommandParser = subparserAdder.add_parser(
       "growPhysical",
       parents = [self._nameOptionParser(), self.__commonOptions],
+      help = highLevelHelp,
+      description = description)
+
+    # import command.
+    highLevelHelp = _("""
+      Creates a VDO volume from an existing VDO formatted storage device by
+      importing it into VDO manager for use.
+                      """)
+    description = _("""
+      {0} If --activate={1} is specified the VDO volume is created but not made
+      available. This command must be run with root privileges.
+                    """).format(highLevelHelp, Constants.disabled)
+
+    self._importCommandParser = subparserAdder.add_parser(
+      "import",
+       parents = [self._nameOptionParser(),
+                  self._deviceOptionParser(),
+                  self._activateOptionParser(),
+                  self._blockMapCacheSizeOptionParser(),
+                  self._blockMapPeriodOptionParser(),
+                  self._compressionOptionParser(),
+                  self._deduplicationOptionParser(),
+                  self._emulate512OptionParser(),
+                  self._maxDiscardSizeOptionParser(),
+                  self._uuidOptionParser(),
+                  self._vdoAckThreadsOptionParser(),
+                  self._vdoBioRotationIntervalOptionParser(),
+                  self._vdoBioThreadsOptionParser(),
+                  self._vdoCpuThreadsOptionParser(),
+                  self._vdoHashZoneThreadsOptionParser(),
+                  self._vdoLogicalThreadsOptionParser(),
+                  self._vdoLogLevelOptionParser(),
+                  self._vdoPhysicalThreadsOptionParser(),
+                  self._writePolicyOptionParser(),
+                  self.__commonOptions],
       help = highLevelHelp,
       description = description)
 
