@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#7 $
  */
 
 #include <uuid/uuid.h>
@@ -101,8 +101,8 @@ static int configureVDO(VDO *vdo)
 
   struct partition *depotPartition
     = getVDOPartition(vdo->layout, BLOCK_ALLOCATOR_PARTITION);
-  BlockCount depotSize = getFixedLayoutPartitionSize(depotPartition);
-  PhysicalBlockNumber origin = getFixedLayoutPartitionOffset(depotPartition);
+  BlockCount depotSize = get_fixed_layout_partition_size(depotPartition);
+  PhysicalBlockNumber origin = get_fixed_layout_partition_offset(depotPartition);
   result = makeSlabDepot(depotSize, origin, slabConfig, getThreadConfig(vdo),
                          vdo->nonce, 1, vdo->layer, NULL,
                          vdo->readOnlyNotifier, vdo->recoveryJournal,
@@ -122,8 +122,8 @@ static int configureVDO(VDO *vdo)
   struct partition *blockMapPartition
     = getVDOPartition(vdo->layout, BLOCK_MAP_PARTITION);
   result = makeBlockMap(vdo->config.logicalBlocks, getThreadConfig(vdo), 0,
-                        getFixedLayoutPartitionOffset(blockMapPartition),
-                        getFixedLayoutPartitionSize(blockMapPartition),
+                        get_fixed_layout_partition_offset(blockMapPartition),
+                        get_fixed_layout_partition_size(blockMapPartition),
                         &vdo->blockMap);
   if (result != VDO_SUCCESS) {
     return result;
@@ -169,8 +169,8 @@ static int clearPartition(PhysicalLayer     *layer,
                           PartitionID        id)
 {
   struct partition    *partition = getVDOPartition(layout, id);
-  BlockCount           size      = getFixedLayoutPartitionSize(partition);
-  PhysicalBlockNumber  start     = getFixedLayoutPartitionOffset(partition);
+  BlockCount           size      = get_fixed_layout_partition_size(partition);
+  PhysicalBlockNumber  start     = get_fixed_layout_partition_offset(partition);
 
   BlockCount bufferBlocks = 1;
   for (BlockCount n = size;
