@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#8 $
  */
 
 #include <uuid/uuid.h>
@@ -115,8 +115,8 @@ static int configureVDO(VDO *vdo)
     BlockCount dataBlocks
       = slabConfig.dataBlocks * calculateSlabCount(vdo->depot);
     vdo->config.logicalBlocks
-      = dataBlocks - computeForestSize(dataBlocks,
-                                       DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
+      = dataBlocks - compute_forest_size(dataBlocks,
+                                         DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
   }
 
   struct partition *blockMapPartition
