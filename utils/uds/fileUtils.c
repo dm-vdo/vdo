@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/fileUtils.c#6 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#1 $
  */
 
 #include "fileUtils.h"

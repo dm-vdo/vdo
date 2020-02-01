@@ -16,18 +16,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/compiler.h#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/compiler.h#1 $
  */
 
 #ifndef COMMON_COMPILER_H
 #define COMMON_COMPILER_H
 
-#include "compilerDefs.h"
+#ifdef __KERNEL__
+#include <linux/compiler.h>
+#endif
 
 // Count the elements in a static array while attempting to catch some type
 // errors. (See http://stackoverflow.com/a/1598827 for an explanation.)
 #define COUNT_OF(x) ((sizeof(x) / sizeof(0[x])) \
                      / ((size_t) (!(sizeof(x) % sizeof(0[x])))))
+
+#ifndef __KERNEL__
+#define container_of(ptr, type, member)               \
+  __extension__ ({                                    \
+    __typeof__(((type *)0)->member) *__mptr = (ptr);  \
+    (type *)((char *)__mptr - offsetof(type,member)); \
+  })
+#endif
 
 #define const_container_of(ptr, type, member)                     \
   __extension__ ({                                                \
@@ -35,8 +45,21 @@
     (const type *)((const char *)__mptr - offsetof(type,member)); \
   })
 
-// The "inline" keyword alone takes affect only when the optimization level
+// The "inline" keyword alone takes effect only when the optimization level
 // is high enough.  Define INLINE to force the gcc to "always inline".
 #define INLINE __attribute__((always_inline)) inline
+
+#ifndef __KERNEL__
+/**
+ * CPU Branch-prediction hints, courtesy of GCC. Defining these as inline
+ * functions instead of macros spoils their magic, sadly.
+ **/
+#define likely(expr)    __builtin_expect(!!(expr), 1)
+#define unlikely(expr)  __builtin_expect(!!(expr), 0)
+#endif
+
+#ifdef __KERNEL__
+#define __STRING(x) #x
+#endif
 
 #endif /* COMMON_COMPILER_H */

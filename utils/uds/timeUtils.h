@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.h#5 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#2 $
  */
 
 #ifndef TIME_UTILS_H
@@ -33,30 +33,19 @@
 #include <time.h>
 #endif
 
-// Absolute time.
-#ifdef __KERNEL__
-typedef int64_t AbsTime;
-#else
-typedef struct timespec AbsTime;
+// Some constants that are defined in kernel headers.
+#ifndef __KERNEL__
+#define NSEC_PER_SEC  1000000000L
+#define NSEC_PER_MSEC 1000000L
+#define NSEC_PER_USEC 1000L
 #endif
+
+// Absolute time.
+typedef int64_t AbsTime;
 
 // Relative time, the length of a time interval, or the difference between
 // two times.  A signed 64-bit number of nanoseconds.
 typedef int64_t RelTime;
-
-#ifndef __KERNEL__
-/**
- * Return true if the time is valid.
- *
- * @param time  a time
- *
- * @return true if the time is valid
- *
- * @note an invalid time is generally returned from a failed attempt
- *      to get the time from the system
- **/
-bool isValidTime(AbsTime time);
-#endif
 
 /**
  * Return the current time according to the specified clock type.
@@ -98,16 +87,24 @@ AbsTime futureTime(clockid_t clock, RelTime reltime);
  *
  * @return the relative time between the two timestamps
  **/
-#ifdef __KERNEL__
 static INLINE RelTime timeDifference(AbsTime a, AbsTime b)
 {
   return a - b;
 }
-#else
-RelTime timeDifference(AbsTime a, AbsTime b);
-#endif
 
 
+
+/**
+ * Convert an AbsTime value to milliseconds
+ *
+ * @param abstime  The absolute time
+ *
+ * @return the equivalent number of milliseconds since the epoch
+ **/
+static INLINE int64_t absTimeToMilliseconds(AbsTime abstime)
+{
+  return abstime / NSEC_PER_MSEC;
+}
 
 /**
  * Convert seconds to a RelTime value
@@ -216,6 +213,31 @@ static INLINE int64_t relTimeToNanoseconds(RelTime reltime)
 uint64_t nowUsec(void) __attribute__((warn_unused_result));
 
 /**
+ * Convert from an AbsTime to seconds truncating
+ *
+ * @param time  an AbsTime time
+ *
+ * @return a 64 bit signed number of seconds
+ **/
+static INLINE int64_t absTimeToSeconds(AbsTime time)
+{
+  return time / NSEC_PER_SEC;
+}
+
+/**
+ * Convert from seconds to an AbsTime,
+ *
+ * @param time  a 64 bit signed number of seconds
+ *
+ * @return an AbsTime time
+ **/
+static INLINE AbsTime fromSeconds(int64_t time)
+{
+  return time * NSEC_PER_SEC;
+}
+
+#ifndef __KERNEL__
+/**
  * Convert from an AbsTime to a time_t
  *
  * @param time  an AbsTime time
@@ -224,59 +246,46 @@ uint64_t nowUsec(void) __attribute__((warn_unused_result));
  **/
 static INLINE time_t asTimeT(AbsTime time)
 {
-#ifdef __KERNEL__
-  return time / 1000000000;
-#else
-  return time.tv_sec;
-#endif
+  return time / NSEC_PER_SEC;
 }
 
-/**
- * Convert from a time_t to an AbsTime,
- *
- * @param time  a time_t time
- *
- * @return an AbsTime time
- **/
-static INLINE AbsTime fromTimeT(time_t time)
-{
-#ifdef __KERNEL__
-  return time * 1000000000;
-#else
-  AbsTime abs;
-  abs.tv_sec = time;
-  abs.tv_nsec = 0;
-  return abs;
-#endif
-}
-
-#ifndef __KERNEL__
 /**
  * Convert from an AbsTime to a struct timespec
  *
  * @param time  an AbsTime time
  *
- * @return a time_t time
+ * @return a timespec time
  **/
 static INLINE struct timespec asTimeSpec(AbsTime time)
 {
-  return time;
+  return (struct timespec) { time / NSEC_PER_SEC, time % NSEC_PER_SEC };
 }
-#endif
 
-#ifndef __KERNEL__
+/**
+ * Convert from struct timespec to AbsTime
+ *
+ * @param ts the struct timespec to be converted
+ *
+ * @return an AbsTime equivalent of ts.
+ **/
+static INLINE AbsTime fromTimeSpec(struct timespec ts)
+{
+  return ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
+}
+
 /**
  * Convert from an AbsTime to a struct timeval
  *
  * @param time  an AbsTime time
  *
- * @return a time_t time
+ * @return a struct timeval time
  **/
 static INLINE struct timeval asTimeVal(AbsTime time)
 {
-  struct timeval tv = { time.tv_sec, time.tv_nsec / 1000 };
-  return tv;
+  struct timespec ts = asTimeSpec(time);
+  return (struct timeval) { ts.tv_sec, ts.tv_nsec / NSEC_PER_USEC };
 }
-#endif
+
+#endif /* __KERNEL__ */
 
 #endif /* TIME_UTILS_H */

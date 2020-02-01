@@ -16,19 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.c#1 $
  */
 
 #include "syscalls.h"
 
-#include <sched.h>
-#include <stdio.h>
 #include <sys/prctl.h>
-#include <syslog.h>
 #include <unistd.h>
 
-#include "fileUtils.h"
-#include "memoryAlloc.h"
 #include "permassert.h"
 
 /**********************************************************************/
@@ -135,84 +130,4 @@ int processControl(int option, unsigned long arg2, unsigned long arg3,
                                 "option: %d, arg2: %lu, arg3: %lu, "
                                 "arg4: %lu, arg5: %lu",
                                 option, arg2, arg3, arg4, arg5);
-}
-
-/**********************************************************************/
-int setUpSigmask(const int *signals, sigset_t *sigset, const char *context)
-{
-  int result = checkSystemCall(sigemptyset(sigset), __func__, context);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  if (signals != NULL) {
-    for (int i = 0; signals[i] != -1; i++) {
-      result = checkSystemCall(sigaddset(sigset, signals[i]),
-                               __func__, context);
-      if (result != UDS_SUCCESS) {
-        return result;
-      }
-    }
-  }
-
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-int setSignalHandler(int signal, struct sigaction *action, const char *context)
-{
-  return checkSystemCall(sigaction(signal, action, NULL), __func__, context);
-}
-
-/**********************************************************************/
-int ignoreSignals(const int *signals, const char *context)
-{
-  struct sigaction ignore;
-  memset(&ignore, 0, sizeof(ignore));
-  ignore.sa_handler = SIG_IGN;
-
-  for (int i = 0; signals[i] != -1; i++) {
-    int result = setSignalHandler(signals[i], &ignore, context);
-    if (result != UDS_SUCCESS) {
-      return result;
-    }
-  }
-
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-int restoreSignalHandlers(const int *signals, const char *context)
-{
-  struct sigaction defaults;
-  memset(&defaults, 0, sizeof(defaults));
-  defaults.sa_handler = SIG_DFL;
-
-  for (int i = 0; signals[i] != -1; i++) {
-    int result = setSignalHandler(signals[i], &defaults, context);
-    if (result != UDS_SUCCESS) {
-      return result;
-    }
-  }
-
-  return UDS_SUCCESS;
-}
-
-/**********************************************************************/
-int setSignalMask(sigset_t   *mask,
-                  int         how,
-                  const char *context,
-                  sigset_t   *oldMask)
-{
-  return checkSystemCall(sigprocmask(how, mask, oldMask), __func__, context);
-}
-
-/**********************************************************************/
-int setThreadSignalMask(sigset_t   *mask,
-                        int         how,
-                        const char *context,
-                        sigset_t   *oldMask)
-{
-  return checkSystemCall(pthread_sigmask(how, mask, oldMask),
-                         __func__, context);
 }

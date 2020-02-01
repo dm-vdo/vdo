@@ -16,17 +16,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/atomicDefs.h#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/atomicDefs.h#1 $
  */
 
-#ifndef LINUX_USER_ATOMIC_DEFS_H
-#define LINUX_USER_ATOMIC_DEFS_H
+#ifndef ATOMIC_DEFS_H
+#define ATOMIC_DEFS_H
+
+#ifdef __KERNEL__
+#include <linux/atomic.h>
+#else
 
 #include "compiler.h"
 #include "typeDefs.h"
 
 // The atomic interfaces are chosen to exactly match those interfaces defined
-// by the Linux kernel.  This is the matching user-mode implementation.
+// by the Linux kernel.  The rest of this file is the matching user-mode
+// implementation.
 
 typedef struct {
   int32_t value;
@@ -486,4 +491,5 @@ static INLINE void atomic64_set_release(atomic64_t *atom, long value)
     __xchg_result;                                                      \
   })
 
-#endif /* LINUX_USER_ATOMIC_DEFS_H */
+#endif /* __KERNEL__ */
+#endif /* ATOMIC_DEFS_H */

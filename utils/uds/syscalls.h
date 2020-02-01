@@ -16,14 +16,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/syscalls.h#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#1 $
  */
 
 #ifndef SYSCALLS_H
 #define SYSCALLS_H 1
 
 #include <errno.h>
-#include <signal.h>
 
 #include "compiler.h"
 #include "logger.h"
@@ -133,85 +132,6 @@ int loggingClose(int fd, const char *context)
  **/
 int processControl(int option, unsigned long arg2, unsigned long arg3,
                    unsigned long arg4, unsigned long arg5);
-
-/**
- * Set up a signal mask, starting with an empty sigset and adding to it the
- * specified signals. If <tt>signals</tt> is NULL, an empty sigset is set up.
- *
- * @param signals An array of signal numbers, the last of which is -1
- * @param sigset  The signal set to set up
- * @param context The calling context (for logging)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int setUpSigmask(const int *signals, sigset_t *sigset, const char *context)
-  __attribute__((warn_unused_result));
-
-/**
- * Set a signal handler.
- *
- * @param signal  The signal to handle
- * @param action  The handler to set
- * @param context The calling context (for logging)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int setSignalHandler(int signal, struct sigaction *action, const char *context)
-  __attribute__((warn_unused_result));
-
-/**
- * Set up to ignore a list of signals.
- *
- * @param signals An array of signal numbers, the last of which is -1
- * @param context The calling context (for logging)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int ignoreSignals(const int *signals, const char *context)
-  __attribute__((warn_unused_result));
-
-/**
- * Restore the default signal handlers for a list of signals.
- *
- * @param signals An array of signal numbers, the last of which is -1
- * @param context The calling context (for logging)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int restoreSignalHandlers(const int *signals, const char *context)
-  __attribute__((warn_unused_result));
-
-/**
- * Set the signal mask.
- *
- * @param mask    The mask to set (may be NULL)
- * @param how     The operation to perform (see sigprocmask(2)).
- * @param context The calling context (for logging)
- * @param oldMask A pointer to hold the previous mask (may be NULL)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int setSignalMask(sigset_t   *mask,
-                  int         how,
-                  const char *context,
-                  sigset_t   *oldMask)
-  __attribute__((warn_unused_result));
-
-/**
- * Set the signal mask for the current thread.
- *
- * @param mask    The mask to set (may be NULL)
- * @param how     The operation to perform (see pthread_sigmask).
- * @param context The calling context (for logging)
- * @param oldMask A pointer to hold the previous mask (may be NULL)
- *
- * @return UDS_SUCCESS or an error code
- **/
-int setThreadSignalMask(sigset_t   *mask,
-                        int         how,
-                        const char *context,
-                        sigset_t   *oldMask)
-  __attribute__((warn_unused_result));
 
 /**********************************************************************/
 static INLINE int logSystemCallErrno(const char *function, const char *context)
