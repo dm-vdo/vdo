@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#14 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#15 $
 
 """
 from __future__ import absolute_import
@@ -48,6 +48,7 @@ import os
 import re
 from socket import gethostbyname
 import stat
+import textwrap
 import time
 import yaml
 
@@ -1576,7 +1577,9 @@ class VDOService(Service):
     if force:
       commandLine.append("--force")
     commandLine.append(self.device)
-    runCommand(commandLine)
+    output = runCommand(commandLine).rstrip()
+    if output:
+      self._announce(textwrap.indent(output, "      "))
 
   ######################################################################
   def _generateDeviceMapperTable(self):
