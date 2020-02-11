@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#4 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#5 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -650,13 +650,15 @@ class VersionOperation(VDOOperation):
   # Overridden methods
   ######################################################################
   def __init__(self):
-    super(VersionOperation, self).__init__()
+    super(VersionOperation, self).__init__(requiresRoot=False,
+                                           checkBinaries=True,
+                                           requiresRunMode=True)
 
   ######################################################################
   def execute(self, unused_args):
-    kms = VDOKernelModuleService()
-    kms.start()
-    print(kms.version())
+    output = runCommand(['vdoformat', '--version'], noThrow=True)
+    version = re.findall('\d+', output)
+    print("VDO version: " + '.'.join(version))
 
 ########################################################################
 class OptionToggle(VDOOperation):
