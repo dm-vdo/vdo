@@ -47,10 +47,6 @@ class MemoryUsage(StatStruct):
       Uint64Field("bytesUsed"),
       # Maximum tracked bytes allocated.
       Uint64Field("peakBytesUsed"),
-      # Bio structures currently allocated (size not tracked).
-      Uint64Field("biosUsed"),
-      # Maximum number of bios allocated.
-      Uint64Field("peakBioCount"),
     ], **kwargs)
 
 # UDS index statistics
@@ -84,7 +80,7 @@ class KernelStatistics(StatStruct):
       Uint32Field("releaseVersion", display = False),
       # The VDO instance
       Uint32Field("instance"),
-      StringField("fiveTwelveByteEmulation", label = "512 byte emulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'"),
+      StringField("fiveTwelveByteEmulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'", label = "512 byte emulation"),
       # Current number of active VIOs
       Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
       # Maximum number of active VIOs
@@ -119,7 +115,7 @@ class KernelStatistics(StatStruct):
       IndexStatistics("index"),
     ], ioctl="kernel_stats", **kwargs)
 
-  statisticsVersion = 30
+  statisticsVersion = 31
 
   def sample(self, device):
     sample = super(KernelStatistics, self).sample(device)
