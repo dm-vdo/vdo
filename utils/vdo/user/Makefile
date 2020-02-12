@@ -17,7 +17,7 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/Makefile#3 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/Makefile#4 $
 
 VDO_VERSION = 8.0.0.0
 
@@ -89,7 +89,6 @@ PROGS = vdodmeventd        \
         vdodumpconfig      \
         vdoforcerebuild    \
         vdoformat          \
-        vdoprepareupgrade  \
         vdoreadonly        \
         vdosetuuid
 
