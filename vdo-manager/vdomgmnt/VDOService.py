@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#15 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#16 $
 
 """
 from __future__ import absolute_import
@@ -1290,10 +1290,12 @@ class VDOService(Service):
     if uuid is None or uuid == "":
       return
 
-    # get unique set of known running vdo storage devices.
+    # Get unique set of known running vdo storage devices. This code
+    # should ignore no output and the string "no devices found"
     cmd = ['dmsetup', 'table', '--target', Defaults.vdoTargetName]
-    vdos = set([line.split(' ')[5]
-                for line in runCommand(cmd, noThrow=True).splitlines()])
+    vdoTables = [line for line in runCommand(cmd, noThrow=True).splitlines()
+                 if line != "No devices found"]
+    vdos = set([table.split(' ')[5] for table in vdoTables])
     # add to it a list of known offline vdo storage devices.
     vdos |= set([vdo.device for vdo in self.config.getAllVdos().values()])
     vdos = list(vdos)
