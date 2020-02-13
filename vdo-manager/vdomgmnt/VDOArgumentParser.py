@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#7 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#8 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -1036,12 +1036,15 @@ suffix is optional""").format(options
                                   Defaults.checkPhysicalThreadCount),
                         metavar = "<threadCount>",
                         help = _("""
-      Specifies the number of threads across which to subdivide parts of the
-      VDO processing based on physical block addresses. The value must be at
-      least {min} and less than or equal to {max}. Each additional thread
-      after the first will use an additional {overhead} MB of RAM.
-      vdoPhysicalThreads, vdoHashZonesThreads and vdoLogicalThreads must be
-      either all zero or all non-zero. {defaultHelp}
+      Specifies the number of threads across which to subdivide parts
+      of the VDO processing based on physical block addresses. The
+      value must be at least {min} and less than or equal to {max}.
+      The value must also be less than or equal to the slab count
+      (which can be found via the 'status' command after device
+      creation). Each additional thread after the first will use an
+      additional {overhead} MB of RAM. vdoPhysicalThreads,
+      vdoHashZonesThreads and vdoLogicalThreads must be either all
+      zero or all non-zero. {defaultHelp}
                                  """)
       .format(min = Defaults.physicalThreadsMin,
               max = Defaults.physicalThreadsMax,
