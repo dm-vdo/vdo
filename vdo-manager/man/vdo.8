@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#8 $
+.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#9 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -772,6 +772,44 @@ If a multipath device is used, \fBudev\fP should be configured to
 either not create any /dev/disk/by-id symbolic links for any of the
 devices used, or to only create a link for the multipath device
 itself.
+.
+.
+.SH AUTOMATIC MOUNTING
+Mounting a filesystem atop a VDO at boot time is usually easy, but
+does require some care to ensure VDO is started before the mount
+is attempted.
+.PP
+There are two ways to mount filesystems automatically during system
+startup: adding a line to \fB/etc/fstab\fP, or adding a mount unit
+to systemd (on systemd-based systems).
+
+For \fB/etc/fstab\fP mounting, in order to make sure the mount waits
+for the VDO to start, use the mount option
+\fBx-systemd.requires=vdo.service\fP
+For example, an \fB/etc/fstab\fP line involving VDO could be the following:
+.PP
+.nf
+.nh
+/dev/mapper/vdo0 /vdo xfs defaults,x-systemd.requires=vdo.service 0 0
+.fi
+.hyResume
+.PP
+To add a mount unit, modify the example from \fB/usr/share/doc/vdo/examples\fP
+to match your mount point and configuration, and add it to
+/etc/systemd/system.
+.PP
+Complications may arise if you have VDO layered atop other software
+defined devices, e.g. VDO atop LVM, VDO atop ISCSI, or VDO both above and
+below a single type of software defined device.
+.PP
+You may need to add dependencies to the VDO service, by adding a symlink to
+the required service into the appropriate \fBvdo.service.requires\fP
+directory. For instance, you may need to create an 
+\fB/etc/systemd/system/vdo.service.requires/\fP directory and symlink
+\fBiscsi.service\fP into it, in order to make the VDO service wait for the
+iscsi service to have started. More information can be found in 
+\fBsystemd.unit(5)\fP about setting up dependencies in this way.
+.
 .
 .
 .SH FILES
