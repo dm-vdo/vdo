@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#4 $
  */
 
 #include <err.h>
@@ -382,8 +382,14 @@ int main(int argc, char *argv[])
 
   result = formatVDO(&config, &indexConfig, layer);
   if (result != VDO_SUCCESS) {
-    errx(result, "formatVDO failed on '%s': %s",
-         filename, stringError(result, errorBuffer, sizeof(errorBuffer)));
+    const char *extraHelp = "";
+    if (result == VDO_TOO_MANY_SLABS) {
+      extraHelp = "\nReduce the device size or increase the slab size";
+    }
+    errx(result, "formatVDO failed on '%s': %s%s",
+         filename,
+         stringError(result, errorBuffer, sizeof(errorBuffer)),
+         extraHelp);
   }
 
   result = loadVDO(layer, true, NULL, &vdo);
