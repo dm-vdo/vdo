@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#10 $
  */
 
 #include <uuid/uuid.h>
@@ -80,14 +80,14 @@ static int configureVDO(VDO *vdo)
     return result;
   }
 
-  result = makeRecoveryJournal(vdo->nonce, vdo->layer,
-                               getVDOPartition(vdo->layout,
-                                               RECOVERY_JOURNAL_PARTITION),
-                               vdo->completeRecoveries,
-                               vdo->config.recoveryJournalSize,
-                               RECOVERY_JOURNAL_TAIL_BUFFER_SIZE,
-                               vdo->readOnlyNotifier, getThreadConfig(vdo),
-                               &vdo->recoveryJournal);
+  result = make_recovery_journal(vdo->nonce, vdo->layer,
+                                 getVDOPartition(vdo->layout,
+                                                 RECOVERY_JOURNAL_PARTITION),
+                                 vdo->completeRecoveries,
+                                 vdo->config.recoveryJournalSize,
+                                 RECOVERY_JOURNAL_TAIL_BUFFER_SIZE,
+                                 vdo->readOnlyNotifier, getThreadConfig(vdo),
+                                 &vdo->recoveryJournal);
   if (result != VDO_SUCCESS) {
     return result;
   }
