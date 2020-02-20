@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#7 $
  */
 
 #include "blockMapUtils.h"
@@ -37,13 +37,13 @@
 /**********************************************************************/
 bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
 {
-  if ((pbn < depot->firstBlock) || (pbn >= depot->lastBlock)) {
+  if ((pbn < depot->first_block) || (pbn >= depot->last_block)) {
     return false;
   }
 
-  PhysicalBlockNumber sbnMask = (1ULL << depot->slabSizeShift) - 1;
-  SlabBlockNumber     sbn     = (pbn - depot->firstBlock) & sbnMask;
-  return (sbn < getSlabConfig(depot)->dataBlocks);
+  PhysicalBlockNumber sbnMask = (1ULL << depot->slab_size_shift) - 1;
+  SlabBlockNumber     sbn     = (pbn - depot->first_block) & sbnMask;
+  return (sbn < get_slab_config(depot)->dataBlocks);
 }
 
 /**

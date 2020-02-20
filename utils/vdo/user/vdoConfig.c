@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#11 $
  */
 
 #include <uuid/uuid.h>
@@ -103,17 +103,17 @@ static int configureVDO(VDO *vdo)
     = getVDOPartition(vdo->layout, BLOCK_ALLOCATOR_PARTITION);
   BlockCount depotSize = get_fixed_layout_partition_size(depotPartition);
   PhysicalBlockNumber origin = get_fixed_layout_partition_offset(depotPartition);
-  result = makeSlabDepot(depotSize, origin, slabConfig, getThreadConfig(vdo),
-                         vdo->nonce, 1, vdo->layer, NULL,
-                         vdo->readOnlyNotifier, vdo->recoveryJournal,
-                         &vdo->state, &vdo->depot);
+  result = make_slab_depot(depotSize, origin, slabConfig, getThreadConfig(vdo),
+                           vdo->nonce, 1, vdo->layer, NULL,
+                           vdo->readOnlyNotifier, vdo->recoveryJournal,
+                           &vdo->state, &vdo->depot);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
   if (vdo->config.logicalBlocks == 0) {
     BlockCount dataBlocks
-      = slabConfig.dataBlocks * calculateSlabCount(vdo->depot);
+      = slabConfig.dataBlocks * calculate_slab_count(vdo->depot);
     vdo->config.logicalBlocks
       = dataBlocks - compute_forest_size(dataBlocks,
                                          DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
