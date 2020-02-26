@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#7 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -128,10 +128,10 @@ int loadSlabSummarySync(VDO *vdo, struct slab_summary **summaryPtr)
   }
 
   struct slab_summary *summary = NULL;
-  result = makeSlabSummary(vdo->layer, slabSummaryPartition, threadConfig,
-                           depot->slab_size_shift,
-                           depot->slab_config.dataBlocks,
-                           NULL, &summary);
+  result = make_slab_summary(vdo->layer, slabSummaryPartition, threadConfig,
+                             depot->slab_size_shift,
+                             depot->slab_config.dataBlocks,
+                             NULL, &summary);
   if (result != VDO_SUCCESS) {
     warnx("Could not create in-memory slab summary");
   }
@@ -143,15 +143,15 @@ int loadSlabSummarySync(VDO *vdo, struct slab_summary **summaryPtr)
   PhysicalBlockNumber origin
     = get_fixed_layout_partition_offset(slabSummaryPartition);
   result = vdo->layer->reader(vdo->layer, origin,
-                              getSlabSummarySize(VDO_BLOCK_SIZE),
+                              get_slab_summary_size(VDO_BLOCK_SIZE),
                               (char *) summary->entries, NULL);
   if (result != VDO_SUCCESS) {
     warnx("Could not read summary data");
     return result;
   }
 
-  summary->zonesToCombine = depot->old_zone_count;
-  combineZones(summary);
+  summary->zones_to_combine = depot->old_zone_count;
+  combine_zones(summary);
   *summaryPtr = summary;
   return VDO_SUCCESS;
 }

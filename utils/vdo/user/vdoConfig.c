@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#13 $
  */
 
 #include <uuid/uuid.h>
@@ -52,7 +52,7 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
   int result = makeVDOLayout(config->physicalBlocks, startingOffset,
                              DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT,
                              config->recoveryJournalSize,
-                             getSlabSummarySize(VDO_BLOCK_SIZE), &vdoLayout);
+                             get_slab_summary_size(VDO_BLOCK_SIZE), &vdoLayout);
   if (result != VDO_SUCCESS) {
     return result;
   }
