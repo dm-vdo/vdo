@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#2 $
  */
 
 #include <dlfcn.h>
@@ -326,8 +326,6 @@ int main(int argc, char *argv[])
   }
 
   char *devName = argv[optind];
-
-  openLogger();
 
   if (doRegister && doUnregister) {
     errx(1, "Only one of -r and -u can be specified");

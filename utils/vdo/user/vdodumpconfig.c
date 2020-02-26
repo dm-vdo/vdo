@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#5 $
  */
 
 #include <err.h>
@@ -143,8 +143,6 @@ int main(int argc, char *argv[])
   }
 
   const char *vdoBacking = processArgs(argc, argv);
-
-  openLogger();
 
   VDOConfig config;
   struct volume_geometry geometry;

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#6 $
  */
 
 #include <err.h>
@@ -271,8 +271,6 @@ int main(int argc, char *argv[])
   }
 
   char *filename = argv[optind];
-
-  openLogger();
 
   struct stat statbuf;
   result = loggingStatMissingOk(filename, &statbuf, "Getting status");

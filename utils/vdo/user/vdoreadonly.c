@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoReadOnly.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoReadOnly.c#3 $
  */
 
 #include <err.h>
@@ -104,8 +104,6 @@ int main(int argc, char *argv[])
     usage(argv[0], usageString);
   }
 
-  openLogger();
-  
   char *filename = argv[optind];
   PhysicalLayer *layer;
   result = makeFileLayer(filename, 0, &layer);
