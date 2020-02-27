@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/logger.h#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/logger.h#2 $
  */
 
 #ifndef LOGGER_H
@@ -80,23 +80,18 @@
  **/
 
 #ifndef __KERNEL__
-/*
- * In user mode, the functions in this file are not thread safe in the sense
- * that nothing prevents multiple threads from closing loggers out from under
- * other threads.  In reality this isn't a problem since there are no calls to
- * closeLogger() in production code.
- */
-
 /**
- * Start the logger.
+ * Initialize the user space logger using optional environment
+ * variables to set the default log level and log file. Can be called
+ * more than once, but only the first call affects logging by user
+ * space programs. For testing purposes, when the logging environment
+ * needs to be changed, see reinitLogger. The kernel module uses
+ * kernel logging facilities and therefore doesn't need an openLogger
+ * method.
  **/
 void openLogger(void);
 
-/**
- * Stop the logger.
- **/
-void closeLogger(void);
-#endif
+#endif /* __KERNEL__ */
 
 /**
  * Get the current logging level.
@@ -311,5 +306,6 @@ void logMessage(int priority, const char *format, ...)
  * large number of data structures.
  **/
 void pauseForLogger(void);
+
 
 #endif /* LOGGER_H */

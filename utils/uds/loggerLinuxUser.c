@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#2 $
  */
 
 #include "logger.h"
@@ -36,7 +36,6 @@ const char IDS_ENVIRONMENT_VARIABLE[]        = "UDS_LOG_IDS";
 static const char IDENTITY[]       = "UDS";
 
 static OnceState loggerOnce = ONCE_STATE_INITIALIZER;
-static Mutex     loggerMutex;   // never destroyed....
 
 static unsigned int  opened      = 0;
 static FILE         *fp          = NULL;
@@ -46,24 +45,6 @@ static bool          ids         = true;
 /**********************************************************************/
 static void initLogger(void)
 {
-  int result = initMutex(&loggerMutex);
-  if (result != UDS_SUCCESS) {
-    logErrorWithStringError(result, "cannot initialize logger mutex");
-  }
-}
-
-/**********************************************************************/
-void openLogger(void)
-{
-  performOnce(&loggerOnce, initLogger);
-
-  lockMutex(&loggerMutex);
-  if (opened > 0) {
-    ++opened;
-    unlockMutex(&loggerMutex);
-    return;
-  }
-
   const char *udsLogLevel = getenv("UDS_LOG_LEVEL");
   if (udsLogLevel != NULL) {
     setLogLevel(stringToPriority(udsLogLevel));
@@ -93,7 +74,6 @@ void openLogger(void)
         FREE(logFile);
       }
       opened = 1;
-      unlockMutex(&loggerMutex);
       return;
     }
     error = errno;
@@ -118,24 +98,12 @@ void openLogger(void)
     FREE(logFile);
   }
   opened = 1;
-  unlockMutex(&loggerMutex);
 }
 
 /**********************************************************************/
-void closeLogger(void)
+void openLogger(void)
 {
   performOnce(&loggerOnce, initLogger);
-
-  lockMutex(&loggerMutex);
-  if (opened > 0 && --opened == 0) {
-    if (fp == NULL) {
-      miniCloselog();
-    } else {
-      fclose(fp);
-      fp = NULL;
-    }
-  }
-  unlockMutex(&loggerMutex);
 }
 
 /**********************************************************************/
@@ -293,3 +261,4 @@ void pauseForLogger(void)
 {
   // User-space logger can't be overrun, so this is a no-op.
 }
+
