@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#14 $
  */
 
 #include <uuid/uuid.h>
@@ -129,7 +129,7 @@ static int configureVDO(VDO *vdo)
     return result;
   }
 
-  result = makeSuperBlock(vdo->layer, &vdo->superBlock);
+  result = make_super_block(vdo->layer, &vdo->superBlock);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -298,8 +298,8 @@ static int prepareSuperBlock(VDO *vdo)
   }
 
   setLoadConfigFromGeometry(&geometry, &vdo->loadConfig);
-  result = loadSuperBlock(vdo->layer, getFirstBlockOffset(vdo),
-                          &vdo->superBlock);
+  result = load_super_block(vdo->layer, getFirstBlockOffset(vdo),
+                            &vdo->superBlock);
   if (result != VDO_SUCCESS) {
     return result;
   }
