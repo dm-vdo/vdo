@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#9 $
  */
 
 #include "blockMapUtils.h"
@@ -116,7 +116,7 @@ int examineBlockMapEntries(VDO *vdo, MappingExaminer *examiner)
 {
   // Examine flat pages.
   struct block_map  *map           = getBlockMap(vdo);
-  PageCount          flatPageCount = map->flatPageCount;
+  PageCount          flatPageCount = map->flat_page_count;
 
   for (PageNumber pageNumber = 0; pageNumber < flatPageCount; pageNumber++) {
     PhysicalBlockNumber pbn = pageNumber + BLOCK_MAP_FLAT_PAGE_ORIGIN;
@@ -126,20 +126,20 @@ int examineBlockMapEntries(VDO *vdo, MappingExaminer *examiner)
     }
   }
 
-  int result = ASSERT((map->rootOrigin != 0),
+  int result = ASSERT((map->root_origin != 0),
                       "block map root origin must be non-zero");
   if (result != VDO_SUCCESS) {
     return result;
   }
-  result = ASSERT((map->rootCount != 0),
+  result = ASSERT((map->root_count != 0),
                   "block map root count must be non-zero");
   if (result != VDO_SUCCESS) {
     return result;
   }
 
   Height height = BLOCK_MAP_TREE_HEIGHT - 1;
-  for (uint8_t rootIndex = 0; rootIndex < map->rootCount; rootIndex++) {
-    result = readAndExaminePage(vdo, rootIndex + map->rootOrigin, height,
+  for (uint8_t rootIndex = 0; rootIndex < map->root_count; rootIndex++) {
+    result = readAndExaminePage(vdo, rootIndex + map->root_origin, height,
                                 examiner);
     if (result != VDO_SUCCESS) {
       return result;
@@ -207,7 +207,7 @@ int findLBNPage(VDO *vdo, LogicalBlockNumber lbn, PhysicalBlockNumber *pbnPtr)
 
   struct block_map *map = getBlockMap(vdo);
   PageNumber pageNumber = lbn / BLOCK_MAP_ENTRIES_PER_PAGE;
-  if (pageNumber < map->flatPageCount) {
+  if (pageNumber < map->flat_page_count) {
     // It's in the flat section of the block map.
     *pbnPtr = BLOCK_MAP_FLAT_PAGE_ORIGIN + pageNumber;
     return VDO_SUCCESS;
@@ -215,14 +215,14 @@ int findLBNPage(VDO *vdo, LogicalBlockNumber lbn, PhysicalBlockNumber *pbnPtr)
 
   // It's in the tree section of the block map.
   SlotNumber slots[BLOCK_MAP_TREE_HEIGHT];
-  RootCount rootIndex = pageNumber % map->rootCount;
-  pageNumber -= map->flatPageCount;
+  RootCount rootIndex = pageNumber % map->root_count;
+  pageNumber -= map->flat_page_count;
   for (int i = 1; i < BLOCK_MAP_TREE_HEIGHT; i++) {
     slots[i] = pageNumber % BLOCK_MAP_ENTRIES_PER_PAGE;
     pageNumber /= BLOCK_MAP_ENTRIES_PER_PAGE;
   }
 
-  PhysicalBlockNumber pbn = map->rootOrigin + rootIndex;
+  PhysicalBlockNumber pbn = map->root_origin + rootIndex;
   for (int i = BLOCK_MAP_TREE_HEIGHT - 1; i > 0; i--) {
     BlockMappingState state;
     int result = readSlotFromPage(vdo, pbn, slots[i], &pbn, &state);

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#15 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#16 $
  */
 
 #include <uuid/uuid.h>
@@ -121,10 +121,10 @@ static int configureVDO(VDO *vdo)
 
   struct partition *blockMapPartition
     = getVDOPartition(vdo->layout, BLOCK_MAP_PARTITION);
-  result = makeBlockMap(vdo->config.logicalBlocks, getThreadConfig(vdo), 0,
-                        get_fixed_layout_partition_offset(blockMapPartition),
-                        get_fixed_layout_partition_size(blockMapPartition),
-                        &vdo->blockMap);
+  result = make_block_map(vdo->config.logicalBlocks, getThreadConfig(vdo), 0,
+                          get_fixed_layout_partition_offset(blockMapPartition),
+                          get_fixed_layout_partition_size(blockMapPartition),
+                          &vdo->blockMap);
   if (result != VDO_SUCCESS) {
     return result;
   }
