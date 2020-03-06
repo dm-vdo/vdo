@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#11 $
  */
 
 #include "blockMapUtils.h"
@@ -86,7 +86,7 @@ static int readAndExaminePage(VDO                 *vdo,
   };
   for (; blockMapSlot.slot < BLOCK_MAP_ENTRIES_PER_PAGE; blockMapSlot.slot++) {
     struct data_location mapped
-      = unpackBlockMapEntry(&page->entries[blockMapSlot.slot]);
+      = unpack_block_map_entry(&page->entries[blockMapSlot.slot]);
 
     result = examiner(blockMapSlot, height, mapped.pbn, mapped.state);
     if (result != VDO_SUCCESS) {
@@ -94,7 +94,7 @@ static int readAndExaminePage(VDO                 *vdo,
       return result;
     }
 
-    if (!isMappedLocation(&mapped)) {
+    if (!is_mapped_location(&mapped)) {
       continue;
     }
 
@@ -181,7 +181,7 @@ static int readSlotFromPage(VDO                 *vdo,
 
   struct data_location mapped;
   if (is_block_map_page_initialized(page)) {
-    mapped = unpackBlockMapEntry(&page->entries[slot]);
+    mapped = unpack_block_map_entry(&page->entries[slot]);
   } else {
     mapped = (struct data_location) {
       .state = MAPPING_STATE_UNMAPPED,
