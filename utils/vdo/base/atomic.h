@@ -16,13 +16,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/atomic.h#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/atomic.h#2 $
  */
 
 #ifndef ATOMIC_H
 #define ATOMIC_H
 
+#ifdef __KERNEL__
+#include <linux/atomic.h>
+#else
 #include "atomicDefs.h"
+#endif
 #include "compiler.h"
 #include "typeDefs.h"
 
