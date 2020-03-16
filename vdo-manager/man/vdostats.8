@@ -1,47 +1,43 @@
-.TH VDOSTATS 8 "2018-07-18" "Red Hat" \" -*- nroff -*-
-.\" As of groff 1.22.2, friendly display macros (.DS/.DE) haven't been
-.\" written. Try to fake it.
-.de DS
-.  nf
-.  ft CR
-..
-.de DE
-.  fi
-.  ft R
-..
-.
-.\" Save the default hyphenation mode, so we can suspend (.nh) and
- \" resume.
-.nr defaultHyphenationMode \n[.hy]
-.de hyResume
-.  hy \n[defaultHyphenationMode]
-..
-.
+.TH VDOSTATS 8 "2020-02-18" "Red Hat" \" -*- nroff -*-
 .SH NAME
-vdostats \- get configuration and statistics from a running VDO volume
-.
-.
+vdostats \- Display configuration and statistics of VDO volumes
+
 .SH SYNOPSIS
-.nh
-.in +6
-.ti -6
 .B vdostats
-.RB [ \-\-verbose ]
-.RB [ \-\-human\-readable ]
-.RB [ \-\-si ]
-.RB [ \-\-all ]
-.RB [ \-\-version ]
-.RB [
-.IR device...
-.RB ]
-.in -6
-.
-.
+[\fI\,OPTION\/\fR]... [\fI\,DEVICE\/\fR]...
+
 .SH DESCRIPTION
-.hyResume
-The \fBvdostats\fR utility display statistics for each configured (or
-specified) VDO device.
-.PP
+\fBvdostats\fR displays configuration and statistics information for the
+given VDO devices. If no devices are given, it displays information
+about all VDO devices.
+
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Show help message and exit
+.TP
+\fB\-a\fR, \fB\-\-all\fR
+This option is only for backwards compatibility. It is now
+equivalent to \fB\-\-verbose\fR.
+.TP
+\fB\-\-human\-readable\fR
+Display block values in readable form (Base 2: 1 KB = 2^10 bytes =
+1024 bytes).
+.TP
+\fB\-\-si\fR
+Modifies the output of the \fB\-\-human\-readable\fR option to use SI
+units (Base 10: 1 KB = 10^3 bytes = 1000 bytes). If the
+\fB\-\-human\-readable\fR option is not supplied, this option has no
+effect.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Displays the utilization and block I/O (bios) statistics for the
+selected VDO devices.
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Prints the vdostats version number and exits
+
+.SH OUTPUT
 The default output format is a table with the following columns,
 similar to that of the Linux \fBdf\fR utility:
 .TP
@@ -68,6 +64,7 @@ The percentage of physical blocks used on a VDO volume
 The percentage of physical blocks saved on a VDO
 volume (= [logical blocks used - physical blocks used] /
 logical blocks used)
+
 .SH VERBOSE OUTPUT
 The \fB\-\-verbose\fR option displays VDO device statistics in YAML
 format for the specified VDO devices. The following fields will
@@ -471,68 +468,36 @@ The current count of bytes allocated by the kernel VDO module.
 .B KVDO module peak bytes used
 The peak count of bytes allocated by the kernel VDO module, since the
 module was loaded.
-.
-.
-.SH OPTIONS
-.TP
-.B \-\-verbose
-Displays the utilization and block I/O (bios) statistics for the
-selected VDO devices.
-.TP
-.B \-\-human\-readable
-Displays block values in readable form (Base 2: 1 KB = 2^10 bytes =
-1024 bytes).
-.\" A superscript would be desirable, but it'd be ugly (at best) in ASCII.
-.TP
-.B \-\-si
-Modifies the output of the \fB\-\-human\-readable\fR option to use SI
-units (Base 10: 1 KB = 10^3 bytes = 1000 bytes). If the
-\fB\-\-human\-readable\fR option is not supplied, this option has no
-effect.
-.TP
-.B \-\-all
-This option is only for backwards compatibility. It is now
-equivalent to \fB\-\-verbose\fR.
-.TP
-.B \-\-version
-Displays the \fBvdostats\fR version.
-.TP
-.I device...
-Specifies one or more specific volumes to report on. If this argument
-is omitted, \fBvdostats\fR will report on all devices.
-.
-.
+
 .SH EXAMPLES
 The following example shows sample output if no options are provided:
 .PP
-.DS
+.EX
 Device             1K-blocks  Used       Available   Use% Space Saving%
 /dev/mapper/my_vdo 1932562432 427698104  1504864328  22%  21%
-.DE
+.EE
 .PP
 With the \fB\-\-human\-readable\fR option, block counts are converted
 to conventional units (1 KB = 1024 bytes):
 .PP
-.DS
+.EX
 Device             Size   Used    Available   Use%   Space Saving%
 /dev/mapper/my_vdo 1.8T   407.9G  1.4T        22%    21%
-.DE
+.EE
 .PP
 With the \fB\-\-si\fR option as well, the block counts are reported
 using SI units (1 KB = 1000 bytes):
 .PP
-.DS
+.EX
 Device             Size   Used    Available   Use%    Space Saving%
 /dev/mapper/my_vdo 2.0T   438G    1.5T        22%     21%
-.DE
+.EE
 .\" Add example of verbose mode?
 .\" The VDO integration manual didn't have one.
-.
-.
+
 .SH NOTES
 The output may be incomplete when the command is run by an
 unprivileged user.
-.
-.
+
 .SH SEE ALSO
 .BR vdo (8).
