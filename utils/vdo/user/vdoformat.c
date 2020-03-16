@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#8 $
  */
 
 #include <err.h>
@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
     freeVDO(&vdo);
   }
 
-  IndexConfig indexConfig;
+  struct index_config indexConfig;
   result = parseIndexConfig(&configStrings, &indexConfig);
   if (result != UDS_SUCCESS) {
     errx(result, "parseIndexConfig failed: %s",

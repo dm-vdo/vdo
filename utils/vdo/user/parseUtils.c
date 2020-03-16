@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#4 $
  */
 
 #include "parseUtils.h"
@@ -127,10 +127,10 @@ static int parseMem(char *string, uint32_t *sizePtr)
 }
 
 /**********************************************************************/
-int parseIndexConfig(UdsConfigStrings *configStrings,
-                     IndexConfig      *configPtr)
+int parseIndexConfig(UdsConfigStrings    *configStrings,
+                     struct index_config *configPtr)
 {
-  IndexConfig config;
+  struct index_config config;
   memset(&config, 0, sizeof(config));
 
   config.mem = UDS_MEMORY_CONFIG_256MB;
@@ -153,7 +153,7 @@ int parseIndexConfig(UdsConfigStrings *configStrings,
     if (number != (unsigned int) number) {
       return ERANGE;
     }
-    config.checkpointFrequency = number;
+    config.checkpoint_frequency = number;
   }
 
   if (configStrings->sparse != NULL) {

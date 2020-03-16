@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#16 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#17 $
  */
 
 #include <uuid/uuid.h>
@@ -140,7 +140,7 @@ static int configureVDO(VDO *vdo)
 
 /**********************************************************************/
 int formatVDO(const VDOConfig *config,
-              IndexConfig     *indexConfig,
+              struct index_config *indexConfig,
               PhysicalLayer   *layer)
 {
   STATIC_ASSERT(sizeof(uuid_t) == sizeof(UUID));
@@ -213,7 +213,7 @@ static int makeAndWriteVDO(const VDOConfig        *config,
 
   vdo->config                      = *config;
   vdo->nonce                       = geometry->nonce;
-  vdo->loadConfig.firstBlockOffset = getDataRegionOffset(*geometry);
+  vdo->loadConfig.firstBlockOffset = get_data_region_offset(*geometry);
   result = configureVDO(vdo);
   if (result != VDO_SUCCESS) {
     freeVDO(&vdo);
@@ -246,7 +246,7 @@ static int makeAndWriteVDO(const VDOConfig        *config,
 
 /**********************************************************************/
 int formatVDOWithNonce(const VDOConfig *config,
-                       IndexConfig     *indexConfig,
+                       struct index_config *indexConfig,
                        PhysicalLayer   *layer,
                        Nonce            nonce,
                        UUID             uuid)
@@ -262,12 +262,12 @@ int formatVDOWithNonce(const VDOConfig *config,
   }
 
   struct volume_geometry geometry;
-  result = initializeVolumeGeometry(nonce, uuid, indexConfig, &geometry);
+  result = initialize_volume_geometry(nonce, uuid, indexConfig, &geometry);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  result = clearVolumeGeometry(layer);
+  result = clear_volume_geometry(layer);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -277,7 +277,7 @@ int formatVDOWithNonce(const VDOConfig *config,
     return result;
   }
 
-  result = writeVolumeGeometry(layer, &geometry);
+  result = write_volume_geometry(layer, &geometry);
   return result;
 }
 
@@ -292,7 +292,7 @@ __attribute__((warn_unused_result))
 static int prepareSuperBlock(VDO *vdo)
 {
   struct volume_geometry geometry;
-  int result = loadVolumeGeometry(vdo->layer, &geometry);
+  int result = load_volume_geometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     return result;
   }

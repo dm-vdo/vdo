@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#7 $
  */
 
 #include <err.h>
@@ -123,7 +123,7 @@ static void readVDOConfig(const char             *vdoBacking,
 
   *configPtr = vdo->config;
 
-  result = loadVolumeGeometry(vdo->layer, geometryPtr);
+  result = load_volume_geometry(vdo->layer, geometryPtr);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not read VDO geometry from '%s'", vdoBacking);
   }
@@ -160,16 +160,16 @@ int main(int argc, char *argv[])
   printf("  recoveryJournalSize: %" PRIu64 "\n", config.recoveryJournalSize);
   printf("  slabJournalBlocks: %" PRIu64 "\n", config.slabJournalBlocks);
   printf("UUID: %s\n", uuid);
-  printf("ReleaseVersion: %u\n", geometry.releaseVersion);
+  printf("ReleaseVersion: %u\n", geometry.release_version);
   printf("Nonce: %" PRIu64 "\n", geometry.nonce);
   printf("IndexRegion: %" PRIu64 "\n",
-         geometry.regions[INDEX_REGION].startBlock);
+         geometry.regions[INDEX_REGION].start_block);
   printf("DataRegion: %" PRIu64 "\n",
-         geometry.regions[DATA_REGION].startBlock);
+         geometry.regions[DATA_REGION].start_block);
   printf("IndexConfig:\n");
-  printf("  memory: %u\n", geometry.indexConfig.mem);
+  printf("  memory: %u\n", geometry.index_config.mem);
   printf("  checkpointFrequency: %u\n",
-         geometry.indexConfig.checkpointFrequency);
-  printf("  sparse: %s\n", geometry.indexConfig.sparse ? "true" : "false");
+         geometry.index_config.checkpoint_frequency);
+  printf("  sparse: %s\n", geometry.index_config.sparse ? "true" : "false");
   exit(0);
 }

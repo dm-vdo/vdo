@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#4 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -41,9 +41,9 @@
  *
  * @return VDO_SUCCESS or an error
  **/
-int formatVDO(const VDOConfig *config,
-              IndexConfig     *indexConfig,
-              PhysicalLayer   *layer)
+int formatVDO(const VDOConfig		*config,
+              struct index_config	*indexConfig,
+              PhysicalLayer		*layer)
   __attribute__((warn_unused_result));
 
 /**
@@ -75,11 +75,11 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
  *
  * @return VDO_SUCCESS or an error
  **/
-int formatVDOWithNonce(const VDOConfig *config,
-                       IndexConfig     *indexConfig,
-                       PhysicalLayer   *layer,
-                       Nonce            nonce,
-                       UUID             uuid)
+int formatVDOWithNonce(const VDOConfig		*config,
+                       struct index_config	*indexConfig,
+                       PhysicalLayer		*layer,
+                       Nonce			 nonce,
+                       UUID			 uuid)
   __attribute__((warn_unused_result));
 
 /**

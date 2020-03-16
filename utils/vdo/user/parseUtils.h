@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.h#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.h#2 $
  */
 
 #ifndef PARSE_UTILS_H
@@ -63,13 +63,13 @@ int parseSize(const char *arg, bool lvmMode, uint64_t *sizePtr)
   __attribute__((warn_unused_result));
 
 /**
- * Parse UdsConfigStrings into an IndexConfig.
+ * Parse UdsConfigStrings into a index_config.
  *
  * @param [in]  configStrings  The UDS config strings read.
- * @param [out] configPtr      A pointer to return the IndexConfig.
+ * @param [out] configPtr      A pointer to return the struct index_config.
  **/
-int parseIndexConfig(UdsConfigStrings *configStrings,
-                     IndexConfig      *configPtr)
+int parseIndexConfig(UdsConfigStrings    *configStrings,
+                     struct index_config *configPtr)
   __attribute__((warn_unused_result));
 
 #endif // PARSE_UTILS_H
