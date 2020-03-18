@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#17 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#18 $
  */
 
 #include <uuid/uuid.h>
@@ -49,10 +49,11 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
                             struct vdo_layout   **vdoLayoutPtr)
 {
   struct vdo_layout *vdoLayout;
-  int result = makeVDOLayout(config->physicalBlocks, startingOffset,
-                             DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT,
-                             config->recoveryJournalSize,
-                             get_slab_summary_size(VDO_BLOCK_SIZE), &vdoLayout);
+  int result = make_vdo_layout(config->physicalBlocks, startingOffset,
+                               DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT,
+                               config->recoveryJournalSize,
+                               get_slab_summary_size(VDO_BLOCK_SIZE),
+                               &vdoLayout);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -81,8 +82,8 @@ static int configureVDO(VDO *vdo)
   }
 
   result = make_recovery_journal(vdo->nonce, vdo->layer,
-                                 getVDOPartition(vdo->layout,
-                                                 RECOVERY_JOURNAL_PARTITION),
+                                 get_vdo_partition(vdo->layout,
+                                                   RECOVERY_JOURNAL_PARTITION),
                                  vdo->completeRecoveries,
                                  vdo->config.recoveryJournalSize,
                                  RECOVERY_JOURNAL_TAIL_BUFFER_SIZE,
@@ -100,7 +101,7 @@ static int configureVDO(VDO *vdo)
   }
 
   struct partition *depotPartition
-    = getVDOPartition(vdo->layout, BLOCK_ALLOCATOR_PARTITION);
+    = get_vdo_partition(vdo->layout, BLOCK_ALLOCATOR_PARTITION);
   BlockCount depotSize = get_fixed_layout_partition_size(depotPartition);
   PhysicalBlockNumber origin = get_fixed_layout_partition_offset(depotPartition);
   result = make_slab_depot(depotSize, origin, slabConfig, getThreadConfig(vdo),
@@ -120,7 +121,7 @@ static int configureVDO(VDO *vdo)
   }
 
   struct partition *blockMapPartition
-    = getVDOPartition(vdo->layout, BLOCK_MAP_PARTITION);
+    = get_vdo_partition(vdo->layout, BLOCK_MAP_PARTITION);
   result = make_block_map(vdo->config.logicalBlocks, getThreadConfig(vdo), 0,
                           get_fixed_layout_partition_offset(blockMapPartition),
                           get_fixed_layout_partition_size(blockMapPartition),
@@ -166,7 +167,7 @@ static int clearPartition(PhysicalLayer     *layer,
                           struct vdo_layout *layout,
                           PartitionID        id)
 {
-  struct partition    *partition = getVDOPartition(layout, id);
+  struct partition    *partition = get_vdo_partition(layout, id);
   BlockCount           size      = get_fixed_layout_partition_size(partition);
   PhysicalBlockNumber  start     = get_fixed_layout_partition_offset(partition);
 

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#8 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -118,7 +118,7 @@ void freeVDOFromFile(VDO **vdoPtr)
 int loadSlabSummarySync(VDO *vdo, struct slab_summary **summaryPtr)
 {
   struct partition *slabSummaryPartition
-    = getVDOPartition(vdo->layout, SLAB_SUMMARY_PARTITION);
+    = get_vdo_partition(vdo->layout, SLAB_SUMMARY_PARTITION);
   struct slab_depot *depot = vdo->depot;
   ThreadConfig *threadConfig;
   int result = makeOneThreadConfig(&threadConfig);
