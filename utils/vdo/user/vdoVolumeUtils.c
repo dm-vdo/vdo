@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#9 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -77,7 +77,7 @@ static int loadVDOFromFile(const char  *filename,
 
   // Create the VDO.
   VDO *vdo;
-  result = loadVDO(layer, validateConfig, decoder, &vdo);
+  result = load_vdo(layer, validateConfig, decoder, &vdo);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
     char errBuf[ERRBUF_SIZE];
