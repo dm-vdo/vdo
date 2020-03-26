@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#10 $
  */
 
 #include <err.h>
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
            "If you are sure you want to format this device again, use the\n"
            "--force option.");
     }
-    freeVDO(&vdo);
+    free_vdo(&vdo);
   }
 
   struct index_config indexConfig;
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
   // Display default logical size, max capacity, etc.
   describeCapacity(vdo, logicalSize, slabBits);
 
-  freeVDO(&vdo);
+  free_vdo(&vdo);
 
   // Close and sync the underlying file.
   layer->destroy(&layer);

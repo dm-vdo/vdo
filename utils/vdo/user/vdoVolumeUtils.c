@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#11 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -110,7 +110,7 @@ void freeVDOFromFile(VDO **vdoPtr)
   }
 
   PhysicalLayer *layer = (*vdoPtr)->layer;
-  freeVDO(vdoPtr);
+  free_vdo(vdoPtr);
   layer->destroy(&layer);
 }
 

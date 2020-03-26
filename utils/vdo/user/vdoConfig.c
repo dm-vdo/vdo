@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#18 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#19 $
  */
 
 #include <uuid/uuid.h>
@@ -75,7 +75,7 @@ static int configureVDO(VDO *vdo)
   // The layout starts 1 block past the beginning of the data region, as the
   // data region contains the super block but the layout does not.
   int result = makeVDOLayoutFromConfig(&vdo->config,
-                                       getFirstBlockOffset(vdo) + 1,
+                                       get_first_block_offset(vdo) + 1,
                                        &vdo->layout);
   if (result != VDO_SUCCESS) {
     return result;
@@ -84,11 +84,11 @@ static int configureVDO(VDO *vdo)
   result = make_recovery_journal(vdo->nonce, vdo->layer,
                                  get_vdo_partition(vdo->layout,
                                                    RECOVERY_JOURNAL_PARTITION),
-                                 vdo->completeRecoveries,
+                                 vdo->complete_recoveries,
                                  vdo->config.recoveryJournalSize,
                                  RECOVERY_JOURNAL_TAIL_BUFFER_SIZE,
-                                 vdo->readOnlyNotifier, getThreadConfig(vdo),
-                                 &vdo->recoveryJournal);
+                                 vdo->read_only_notifier, get_thread_config(vdo),
+                                 &vdo->recovery_journal);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -104,9 +104,9 @@ static int configureVDO(VDO *vdo)
     = get_vdo_partition(vdo->layout, BLOCK_ALLOCATOR_PARTITION);
   BlockCount depotSize = get_fixed_layout_partition_size(depotPartition);
   PhysicalBlockNumber origin = get_fixed_layout_partition_offset(depotPartition);
-  result = make_slab_depot(depotSize, origin, slabConfig, getThreadConfig(vdo),
+  result = make_slab_depot(depotSize, origin, slabConfig, get_thread_config(vdo),
                            vdo->nonce, 1, vdo->layer, NULL,
-                           vdo->readOnlyNotifier, vdo->recoveryJournal,
+                           vdo->read_only_notifier, vdo->recovery_journal,
                            &vdo->state, &vdo->depot);
   if (result != VDO_SUCCESS) {
     return result;
@@ -122,20 +122,20 @@ static int configureVDO(VDO *vdo)
 
   struct partition *blockMapPartition
     = get_vdo_partition(vdo->layout, BLOCK_MAP_PARTITION);
-  result = make_block_map(vdo->config.logicalBlocks, getThreadConfig(vdo), 0,
+  result = make_block_map(vdo->config.logicalBlocks, get_thread_config(vdo), 0,
                           get_fixed_layout_partition_offset(blockMapPartition),
                           get_fixed_layout_partition_size(blockMapPartition),
-                          &vdo->blockMap);
+                          &vdo->block_map);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  result = make_super_block(vdo->layer, &vdo->superBlock);
+  result = make_super_block(vdo->layer, &vdo->super_block);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  setVDOState(vdo, VDO_NEW);
+  set_vdo_state(vdo, VDO_NEW);
   return VDO_SUCCESS;
 }
 
@@ -207,41 +207,41 @@ static int makeAndWriteVDO(const VDOConfig        *config,
                            struct volume_geometry *geometry)
 {
   VDO *vdo;
-  int result = makeVDO(layer, &vdo);
+  int result = make_vdo(layer, &vdo);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
   vdo->config                      = *config;
   vdo->nonce                       = geometry->nonce;
-  vdo->loadConfig.firstBlockOffset = get_data_region_offset(*geometry);
+  vdo->load_config.firstBlockOffset = get_data_region_offset(*geometry);
   result = configureVDO(vdo);
   if (result != VDO_SUCCESS) {
-    freeVDO(&vdo);
+    free_vdo(&vdo);
     return result;
   }
 
   result = clearPartition(layer, vdo->layout, BLOCK_MAP_PARTITION);
   if (result != VDO_SUCCESS) {
     logErrorWithStringError(result, "cannot clear block map partition");
-    freeVDO(&vdo);
+    free_vdo(&vdo);
     return result;
   }
 
   result = clearPartition(layer, vdo->layout, RECOVERY_JOURNAL_PARTITION);
   if (result != VDO_SUCCESS) {
     logErrorWithStringError(result, "cannot clear recovery journal partition");
-    freeVDO(&vdo);
+    free_vdo(&vdo);
     return result;
   }
 
-  result = saveVDOComponents(vdo);
+  result = save_vdo_components(vdo);
   if (result != VDO_SUCCESS) {
-    freeVDO(&vdo);
+    free_vdo(&vdo);
     return result;
   }
 
-  freeVDO(&vdo);
+  free_vdo(&vdo);
   return VDO_SUCCESS;
 }
 
@@ -257,7 +257,7 @@ int formatVDOWithNonce(const VDOConfig *config,
     return result;
   }
 
-  result = validateVDOConfig(config, layer->getBlockCount(layer), false);
+  result = validate_vdo_config(config, layer->getBlockCount(layer), false);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -298,19 +298,19 @@ static int prepareSuperBlock(VDO *vdo)
     return result;
   }
 
-  setLoadConfigFromGeometry(&geometry, &vdo->loadConfig);
-  result = load_super_block(vdo->layer, getFirstBlockOffset(vdo),
-                            &vdo->superBlock);
+  setLoadConfigFromGeometry(&geometry, &vdo->load_config);
+  result = load_super_block(vdo->layer, get_first_block_offset(vdo),
+                            &vdo->super_block);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  result = validateVDOVersion(vdo);
+  result = validate_vdo_version(vdo);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  return decodeVDOComponent(vdo);
+  return decode_vdo_component(vdo);
 }
 
 /**
@@ -326,27 +326,27 @@ static int updateVDOSuperBlockState(PhysicalLayer *layer,
                                     VDOState       newState)
 {
   VDO *vdo;
-  int result = makeVDO(layer, &vdo);
+  int result = make_vdo(layer, &vdo);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
   result = prepareSuperBlock(vdo);
   if (result != VDO_SUCCESS) {
-    freeVDO(&vdo);
+    free_vdo(&vdo);
     return result;
   }
 
-  if (requireReadOnly && !inReadOnlyMode(vdo)) {
-    freeVDO(&vdo);
+  if (requireReadOnly && !in_read_only_mode(vdo)) {
+    free_vdo(&vdo);
     return logErrorWithStringError(VDO_NOT_READ_ONLY,
                                    "Can't force rebuild on a normal VDO");
   }
 
-  setVDOState(vdo, newState);
+  set_vdo_state(vdo, newState);
 
-  result = saveReconfiguredVDO(vdo);
-  freeVDO(&vdo);
+  result = save_reconfigured_vdo(vdo);
+  free_vdo(&vdo);
   return result;
 }
 
