@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#11 $
  */
 
 #include <err.h>
@@ -151,9 +151,9 @@ static void printReadableSize(size_t size)
 }
 
 /**********************************************************************/
-static void describeCapacity(const VDO    *vdo,
-                             uint64_t      logicalSize,
-                             unsigned int  slabBits)
+static void describeCapacity(const struct vdo *vdo,
+                             uint64_t          logicalSize,
+                             unsigned int      slabBits)
 {
   if (logicalSize == 0) {
     printf("Logical blocks defaulted to %" PRIu64 " blocks.\n",
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
   }
 
   // Check whether there's a VDO on this device already...
-  VDO *vdo;
+  struct vdo *vdo;
   result = load_vdo(layer, false, NULL, &vdo);
   if (result == VDO_SUCCESS) {
     if (force) {

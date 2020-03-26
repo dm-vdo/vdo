@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#19 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#20 $
  */
 
 #include <uuid/uuid.h>
@@ -70,7 +70,7 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
  * @return VDO_SUCCESS or an error
  **/
 __attribute__((warn_unused_result))
-static int configureVDO(VDO *vdo)
+static int configureVDO(struct vdo *vdo)
 {
   // The layout starts 1 block past the beginning of the data region, as the
   // data region contains the super block but the layout does not.
@@ -206,7 +206,7 @@ static int makeAndWriteVDO(const VDOConfig        *config,
                            PhysicalLayer          *layer,
                            struct volume_geometry *geometry)
 {
-  VDO *vdo;
+  struct vdo *vdo;
   int result = make_vdo(layer, &vdo);
   if (result != VDO_SUCCESS) {
     return result;
@@ -290,7 +290,7 @@ int formatVDOWithNonce(const VDOConfig *config,
  * @return VDO_SUCCESS or an error if the super block could not be read
  **/
 __attribute__((warn_unused_result))
-static int prepareSuperBlock(VDO *vdo)
+static int prepareSuperBlock(struct vdo *vdo)
 {
   struct volume_geometry geometry;
   int result = load_volume_geometry(vdo->layer, &geometry);
@@ -325,7 +325,7 @@ static int updateVDOSuperBlockState(PhysicalLayer *layer,
                                     bool           requireReadOnly,
                                     VDOState       newState)
 {
-  VDO *vdo;
+  struct vdo *vdo;
   int result = make_vdo(layer, &vdo);
   if (result != VDO_SUCCESS) {
     return result;

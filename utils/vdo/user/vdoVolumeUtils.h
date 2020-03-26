@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#3 $
  */
 
 #ifndef VDO_VOLUME_UTILS_H
@@ -35,7 +35,7 @@
  *
  * @return VDO_SUCCESS or an error code
  **/
-int makeVDOFromFile(const char *filename, bool readOnly, VDO **vdoPtr)
+int makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr)
   __attribute__((warn_unused_result));
 
 /**
@@ -46,7 +46,7 @@ int makeVDOFromFile(const char *filename, bool readOnly, VDO **vdoPtr)
  *
  * @return VDO_SUCCESS or an error code
  **/
-int readVDOWithoutValidation(const char *filename, VDO **vdoPtr)
+int readVDOWithoutValidation(const char *filename, struct vdo **vdoPtr)
   __attribute__((warn_unused_result));
 
 /**
@@ -54,7 +54,7 @@ int readVDOWithoutValidation(const char *filename, VDO **vdoPtr)
  *
  * @param vdoPtr  The pointer to the VDO to free
  **/
-void freeVDOFromFile(VDO **vdoPtr);
+void freeVDOFromFile(struct vdo **vdoPtr);
 
 /**
  * Set up a slab summary and read the on-disk slab summary to populate it.
@@ -64,7 +64,7 @@ void freeVDOFromFile(VDO **vdoPtr);
  *
  * @return VDO_SUCCESS or an error code
  **/
-int loadSlabSummarySync(VDO *vdo, struct slab_summary **summaryPtr)
+int loadSlabSummarySync(struct vdo *vdo, struct slab_summary **summaryPtr)
   __attribute__((warn_unused_result));
 
 #endif // VDO_VOLUME_UTILS_H

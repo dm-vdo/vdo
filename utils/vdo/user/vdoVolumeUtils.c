@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#13 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -52,7 +52,7 @@ static int loadVDOFromFile(const char  *filename,
                            bool         readOnly,
                            bool         validateConfig,
                            VDODecoder  *decoder,
-                           VDO        **vdoPtr)
+                           struct vdo **vdoPtr)
 {
   int result = ASSERT(validateConfig || readOnly,
                       "Cannot make a writable VDO"
@@ -76,7 +76,7 @@ static int loadVDOFromFile(const char  *filename,
   }
 
   // Create the VDO.
-  VDO *vdo;
+  struct vdo *vdo;
   result = load_vdo(layer, validateConfig, decoder, &vdo);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
@@ -91,19 +91,19 @@ static int loadVDOFromFile(const char  *filename,
 }
 
 /**********************************************************************/
-int makeVDOFromFile(const char *filename, bool readOnly, VDO **vdoPtr)
+int makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr)
 {
   return loadVDOFromFile(filename, readOnly, true, NULL, vdoPtr);
 }
 
 /**********************************************************************/
-int readVDOWithoutValidation(const char *filename, VDO **vdoPtr)
+int readVDOWithoutValidation(const char *filename, struct vdo **vdoPtr)
 {
   return loadVDOFromFile(filename, true, false, NULL, vdoPtr);
 }
 
 /**********************************************************************/
-void freeVDOFromFile(VDO **vdoPtr)
+void freeVDOFromFile(struct vdo **vdoPtr)
 {
   if (*vdoPtr == NULL) {
     return;
@@ -115,7 +115,7 @@ void freeVDOFromFile(VDO **vdoPtr)
 }
 
 /**********************************************************************/
-int loadSlabSummarySync(VDO *vdo, struct slab_summary **summaryPtr)
+int loadSlabSummarySync(struct vdo *vdo, struct slab_summary **summaryPtr)
 {
   struct partition *slabSummaryPartition
     = get_vdo_partition(vdo->layout, SLAB_SUMMARY_PARTITION);

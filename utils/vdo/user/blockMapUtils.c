@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#13 $
  */
 
 #include "blockMapUtils.h"
@@ -57,7 +57,7 @@ bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
  *
  * @return VDO_SUCCESS or an error
  **/
-static int readAndExaminePage(VDO                 *vdo,
+static int readAndExaminePage(struct vdo          *vdo,
                               PhysicalBlockNumber  pagePBN,
                               Height               height,
                               MappingExaminer     *examiner)
@@ -112,7 +112,7 @@ static int readAndExaminePage(VDO                 *vdo,
 }
 
 /**********************************************************************/
-int examineBlockMapEntries(VDO *vdo, MappingExaminer *examiner)
+int examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner)
 {
   // Examine flat pages.
   struct block_map  *map           = get_block_map(vdo);
@@ -160,7 +160,7 @@ int examineBlockMapEntries(VDO *vdo, MappingExaminer *examiner)
  *
  * @return VDO_SUCCESS or an error
  **/
-static int readSlotFromPage(VDO                 *vdo,
+static int readSlotFromPage(struct vdo          *vdo,
                             PhysicalBlockNumber  pbn,
                             SlotNumber           slot,
                             PhysicalBlockNumber *mappedPBNPtr,
@@ -197,7 +197,9 @@ static int readSlotFromPage(VDO                 *vdo,
 }
 
 /**********************************************************************/
-int findLBNPage(VDO *vdo, LogicalBlockNumber lbn, PhysicalBlockNumber *pbnPtr)
+int findLBNPage(struct vdo *vdo,
+                LogicalBlockNumber lbn,
+                PhysicalBlockNumber *pbnPtr)
 {
   if (lbn >= vdo->config.logicalBlocks) {
     warnx("VDO has only %" PRIu64 " logical blocks, cannot dump mapping for"
@@ -238,7 +240,7 @@ int findLBNPage(VDO *vdo, LogicalBlockNumber lbn, PhysicalBlockNumber *pbnPtr)
 }
 
 /**********************************************************************/
-int findLBNMapping(VDO                 *vdo,
+int findLBNMapping(struct vdo          *vdo,
                    LogicalBlockNumber   lbn,
                    PhysicalBlockNumber *pbnPtr,
                    BlockMappingState   *statePtr)
