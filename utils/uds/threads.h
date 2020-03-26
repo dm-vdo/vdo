@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/threads.h#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/threads.h#2 $
  */
 
 #ifndef THREADS_H
@@ -43,7 +43,6 @@ typedef struct { EventCount *eventCount; } CondVar;
 typedef struct mutex                       Mutex;
 typedef struct semaphore                   Semaphore;
 typedef struct kernelThread               *Thread;
-typedef pid_t                              ThreadId;
 
 typedef struct {
   Semaphore mutex;       // Mutex for this barrier object
@@ -57,7 +56,6 @@ typedef pthread_cond_t    CondVar;
 typedef pthread_mutex_t   Mutex;
 typedef sem_t             Semaphore;
 typedef pthread_t         Thread;
-typedef pid_t             ThreadId;
 
 #ifndef NDEBUG
 #define MUTEX_INITIALIZER PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
@@ -111,7 +109,7 @@ unsigned int getNumCores(void);
  *
  * @return the thread id
  **/
-ThreadId getThreadId(void) __attribute__((warn_unused_result));
+pid_t get_thread_id(void) __attribute__((warn_unused_result));
 
 #ifndef __KERNEL__
 /**

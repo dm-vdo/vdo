@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#2 $
  */
 
 #include <fcntl.h>
@@ -152,7 +152,7 @@ static void logIt(int         priority,
     char tname[16];
     getThreadName(tname);
     bufp = appendToBuffer(bufp, bufEnd, "[%u]: %-6s (%s/%d) ",
-                          getpid(), priorityStr, tname, getThreadId());
+                          getpid(), priorityStr, tname, get_thread_id());
   } else {
     bufp = appendToBuffer(bufp, bufEnd, ": ");
   }
