@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#10 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -120,7 +120,7 @@ int loadSlabSummarySync(VDO *vdo, struct slab_summary **summaryPtr)
   struct partition *slabSummaryPartition
     = get_vdo_partition(vdo->layout, SLAB_SUMMARY_PARTITION);
   struct slab_depot *depot = vdo->depot;
-  ThreadConfig *threadConfig;
+  struct thread_config *threadConfig;
   int result = makeOneThreadConfig(&threadConfig);
   if (result != VDO_SUCCESS) {
     warnx("Could not create thread config");
