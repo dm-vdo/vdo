@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#5 $
  */
 
 #include "fileLayer.h"
@@ -181,7 +181,7 @@ static void vacuousFlush(struct vdo_flush **vdoFlush __attribute__((unused)))
 /**
  * Free a FileLayer and NULL out the reference to it.
  *
- * Implements LayerDestructor.
+ * Implements layer_destructor.
  *
  * @param layerPtr  A pointer to the layer to free
  **/
