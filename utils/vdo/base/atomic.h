@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/atomic.h#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/atomic.h#3 $
  */
 
 #ifndef ATOMIC_H
@@ -33,15 +33,15 @@
 #define ATOMIC_INITIALIZER(value) { (value) }
 
 typedef struct {
-  atomic_t value;
+	atomic_t value;
 } __attribute__((aligned(4))) Atomic32;
 
 typedef struct {
-  atomic64_t value;
+	atomic64_t value;
 } __attribute__((aligned(8))) Atomic64;
 
 typedef struct {
-  Atomic32 value;
+	Atomic32 value;
 } __attribute__((aligned(4))) AtomicBool;
 
 /**
@@ -53,7 +53,7 @@ typedef struct {
  **/
 static INLINE void loadFence(void)
 {
-  smp_rmb();
+	smp_rmb();
 }
 
 /**
@@ -65,7 +65,7 @@ static INLINE void loadFence(void)
  **/
 static INLINE void storeFence(void)
 {
-  smp_wmb();
+	smp_wmb();
 }
 
 /**
@@ -75,7 +75,7 @@ static INLINE void storeFence(void)
  **/
 static INLINE void memoryFence(void)
 {
-  smp_mb();
+	smp_mb();
 }
 
 /**
@@ -88,9 +88,9 @@ static INLINE void memoryFence(void)
  **/
 static INLINE uint32_t atomicLoad32(const Atomic32 *atom)
 {
-  uint32_t value = atomic_read(&atom->value);
-  loadFence();
-  return value;
+	uint32_t value = atomic_read(&atom->value);
+	loadFence();
+	return value;
 }
 
 /**
@@ -104,9 +104,9 @@ static INLINE uint32_t atomicLoad32(const Atomic32 *atom)
  **/
 static INLINE uint64_t atomicLoad64(const Atomic64 *atom)
 {
-  uint64_t value = atomic64_read(&atom->value);
-  loadFence();
-  return value;
+	uint64_t value = atomic64_read(&atom->value);
+	loadFence();
+	return value;
 }
 
 /**
@@ -119,7 +119,7 @@ static INLINE uint64_t atomicLoad64(const Atomic64 *atom)
  **/
 static INLINE bool atomicLoadBool(const AtomicBool *atom)
 {
-  return (atomicLoad32(&atom->value) > 0);
+	return (atomicLoad32(&atom->value) > 0);
 }
 
 /**
@@ -132,8 +132,8 @@ static INLINE bool atomicLoadBool(const AtomicBool *atom)
  **/
 static INLINE void atomicStore32(Atomic32 *atom, uint32_t newValue)
 {
-  storeFence();
-  atomic_set(&atom->value, newValue);
+	storeFence();
+	atomic_set(&atom->value, newValue);
 }
 
 /**
@@ -146,8 +146,8 @@ static INLINE void atomicStore32(Atomic32 *atom, uint32_t newValue)
  **/
 static INLINE void atomicStore64(Atomic64 *atom, uint64_t newValue)
 {
-  storeFence();
-  atomic64_set(&atom->value, newValue);
+	storeFence();
+	atomic64_set(&atom->value, newValue);
 }
 
 /**
@@ -160,7 +160,7 @@ static INLINE void atomicStore64(Atomic64 *atom, uint64_t newValue)
  **/
 static INLINE void atomicStoreBool(AtomicBool *atom, bool newValue)
 {
-  atomicStore32(&atom->value, (newValue ? 1 : 0));
+	atomicStore32(&atom->value, (newValue ? 1 : 0));
 }
 
 /**
@@ -173,7 +173,7 @@ static INLINE void atomicStoreBool(AtomicBool *atom, bool newValue)
  **/
 static INLINE uint32_t atomicAdd32(Atomic32 *atom, int32_t delta)
 {
-  return atomic_add_return(delta, &atom->value);
+	return atomic_add_return(delta, &atom->value);
 }
 
 /**
@@ -186,7 +186,7 @@ static INLINE uint32_t atomicAdd32(Atomic32 *atom, int32_t delta)
  **/
 static INLINE uint64_t atomicAdd64(Atomic64 *atom, int64_t delta)
 {
-  return atomic64_add_return(delta, &atom->value);
+	return atomic64_add_return(delta, &atom->value);
 }
 
 /**
@@ -200,29 +200,28 @@ static INLINE uint64_t atomicAdd64(Atomic64 *atom, int64_t delta)
  *
  * @return               true if the atom was changed, false otherwise
  **/
-static INLINE bool compareAndSwap32(Atomic32 *atom,
-                                    uint32_t  requiredValue,
-                                    uint32_t  newValue)
+static INLINE bool
+compareAndSwap32(Atomic32 *atom, uint32_t requiredValue, uint32_t newValue)
 {
-  /*
-   * Our initial implementation, for x86, effectively got a full
-   * memory barrier because of how "lock cmpxchg" operates. The
-   * atomic_cmpxchg interface provides for a full barrier *if* the
-   * exchange is done, but not necessarily if it is not.
-   *
-   * Do we need the full barrier always? We need to investigate that,
-   * as part of (eventually) converting to using that API directly.
-   * For now, play it safe, and ensure the same behavior on other
-   * architectures too.
-   */
+	/*
+	 * Our initial implementation, for x86, effectively got a full
+	 * memory barrier because of how "lock cmpxchg" operates. The
+	 * atomic_cmpxchg interface provides for a full barrier *if* the
+	 * exchange is done, but not necessarily if it is not.
+	 *
+	 * Do we need the full barrier always? We need to investigate that,
+	 * as part of (eventually) converting to using that API directly.
+	 * For now, play it safe, and ensure the same behavior on other
+	 * architectures too.
+	 */
 #ifndef __x86_64__
-  smp_mb();
+	smp_mb();
 #endif
-  int oldValue = atomic_cmpxchg(&atom->value, requiredValue, newValue);
+	int oldValue = atomic_cmpxchg(&atom->value, requiredValue, newValue);
 #ifndef __x86_64__
-  smp_mb();
+	smp_mb();
 #endif
-  return requiredValue == (uint32_t) oldValue;
+	return requiredValue == (uint32_t) oldValue;
 }
 
 /**
@@ -236,18 +235,20 @@ static INLINE bool compareAndSwap32(Atomic32 *atom,
  *
  * @return               true if the atom was changed, false otherwise
  **/
-static INLINE bool compareAndSwap64(Atomic64 *atom,
-                                    uint64_t  requiredValue,
-                                    uint64_t  newValue)
+static INLINE
+bool compareAndSwap64(Atomic64 *atom,
+		     uint64_t requiredValue,
+		     uint64_t newValue)
 {
 #ifndef __x86_64__
-  smp_mb();
+	smp_mb();
 #endif
-  long oldValue = atomic64_cmpxchg(&atom->value, requiredValue, newValue);
+	long oldValue =
+		atomic64_cmpxchg(&atom->value, requiredValue, newValue);
 #ifndef __x86_64__
-  smp_mb();
+	smp_mb();
 #endif
-  return requiredValue == (uint64_t) oldValue;
+	return requiredValue == (uint64_t) oldValue;
 }
 
 /**
@@ -261,12 +262,12 @@ static INLINE bool compareAndSwap64(Atomic64 *atom,
  *
  * @return               true if the atom was changed, false otherwise
  **/
-static INLINE bool compareAndSwapBool(AtomicBool *atom,
-                                      bool        requiredValue,
-                                      bool        newValue)
+static INLINE bool
+compareAndSwapBool(AtomicBool *atom, bool requiredValue, bool newValue)
 {
-  return compareAndSwap32(&atom->value, (requiredValue ? 1 : 0),
-                          (newValue ? 1 : 0));
+	return compareAndSwap32(&atom->value,
+				(requiredValue ? 1 : 0),
+				(newValue ? 1 : 0));
 }
 
 /**
@@ -279,7 +280,7 @@ static INLINE bool compareAndSwapBool(AtomicBool *atom,
  **/
 static INLINE uint32_t relaxedLoad32(const Atomic32 *atom)
 {
-  return atomic_read(&atom->value);
+	return atomic_read(&atom->value);
 }
 
 /**
@@ -292,7 +293,7 @@ static INLINE uint32_t relaxedLoad32(const Atomic32 *atom)
  **/
 static INLINE uint64_t relaxedLoad64(const Atomic64 *atom)
 {
-  return atomic64_read(&atom->value);
+	return atomic64_read(&atom->value);
 }
 
 /**
@@ -305,7 +306,7 @@ static INLINE uint64_t relaxedLoad64(const Atomic64 *atom)
  **/
 static INLINE bool relaxedLoadBool(const AtomicBool *atom)
 {
-  return (relaxedLoad32(&atom->value) > 0);
+	return (relaxedLoad32(&atom->value) > 0);
 }
 
 /**
@@ -317,7 +318,7 @@ static INLINE bool relaxedLoadBool(const AtomicBool *atom)
  **/
 static INLINE void relaxedStore32(Atomic32 *atom, uint32_t newValue)
 {
-  atomic_set(&atom->value, newValue);
+	atomic_set(&atom->value, newValue);
 }
 
 /**
@@ -329,7 +330,7 @@ static INLINE void relaxedStore32(Atomic32 *atom, uint32_t newValue)
  **/
 static INLINE void relaxedStore64(Atomic64 *atom, uint64_t newValue)
 {
-  atomic64_set(&atom->value, newValue);
+	atomic64_set(&atom->value, newValue);
 }
 
 /**
@@ -341,7 +342,7 @@ static INLINE void relaxedStore64(Atomic64 *atom, uint64_t newValue)
  **/
 static INLINE void relaxedStoreBool(AtomicBool *atom, bool newValue)
 {
-  relaxedStore32(&atom->value, (newValue ? 1 : 0));
+	relaxedStore32(&atom->value, (newValue ? 1 : 0));
 }
 
 /**
@@ -355,9 +356,9 @@ static INLINE void relaxedStoreBool(AtomicBool *atom, bool newValue)
  **/
 static INLINE uint32_t relaxedAdd32(Atomic32 *atom, int32_t delta)
 {
-  uint32_t newValue = (relaxedLoad32(atom) + delta);
-  relaxedStore32(atom, newValue);
-  return newValue;
+	uint32_t newValue = (relaxedLoad32(atom) + delta);
+	relaxedStore32(atom, newValue);
+	return newValue;
 }
 
 /**
@@ -371,9 +372,9 @@ static INLINE uint32_t relaxedAdd32(Atomic32 *atom, int32_t delta)
  **/
 static INLINE uint64_t relaxedAdd64(Atomic64 *atom, int64_t delta)
 {
-  uint64_t newValue = (relaxedLoad64(atom) + delta);
-  relaxedStore64(atom, newValue);
-  return newValue;
+	uint64_t newValue = (relaxedLoad64(atom) + delta);
+	relaxedStore64(atom, newValue);
+	return newValue;
 }
 
 #endif /* ATOMIC_H */
