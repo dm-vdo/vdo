@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#9 $
  */
 
 #include <err.h>
@@ -154,11 +154,11 @@ int main(int argc, char *argv[])
   // This output must be valid YAML.
   printf("VDOConfig:\n");
   printf("  blockSize: %d\n", VDO_BLOCK_SIZE);
-  printf("  logicalBlocks: %" PRIu64 "\n", config.logicalBlocks);
-  printf("  physicalBlocks: %" PRIu64 "\n", config.physicalBlocks);
-  printf("  slabSize: %" PRIu64 "\n", config.slabSize);
-  printf("  recoveryJournalSize: %" PRIu64 "\n", config.recoveryJournalSize);
-  printf("  slabJournalBlocks: %" PRIu64 "\n", config.slabJournalBlocks);
+  printf("  logicalBlocks: %" PRIu64 "\n", config.logical_blocks);
+  printf("  physicalBlocks: %" PRIu64 "\n", config.physical_blocks);
+  printf("  slabSize: %" PRIu64 "\n", config.slab_size);
+  printf("  recoveryJournalSize: %" PRIu64 "\n", config.recovery_journal_size);
+  printf("  slabJournalBlocks: %" PRIu64 "\n", config.slab_journal_blocks);
   printf("UUID: %s\n", uuid);
   printf("ReleaseVersion: %u\n", geometry.release_version);
   printf("Nonce: %" PRIu64 "\n", geometry.nonce);

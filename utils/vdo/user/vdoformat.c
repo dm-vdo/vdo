@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#11 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#12 $
  */
 
 #include <err.h>
@@ -157,20 +157,20 @@ static void describeCapacity(const struct vdo *vdo,
 {
   if (logicalSize == 0) {
     printf("Logical blocks defaulted to %" PRIu64 " blocks.\n",
-           vdo->config.logicalBlocks);
+           vdo->config.logical_blocks);
   }
 
   SlabCount slabCount = calculate_slab_count(vdo->depot);
   const SlabConfig *slabConfig = get_slab_config(vdo->depot);
-  size_t totalSize = slabCount * slabConfig->slabBlocks * VDO_BLOCK_SIZE;
-  size_t maxTotalSize = MAX_SLABS * slabConfig->slabBlocks * VDO_BLOCK_SIZE;
+  size_t totalSize = slabCount * slabConfig->slab_blocks * VDO_BLOCK_SIZE;
+  size_t maxTotalSize = MAX_SLABS * slabConfig->slab_blocks * VDO_BLOCK_SIZE;
 
   printf("The VDO volume can address ");
   printReadableSize(totalSize);
   printf(" in %u data slab%s", slabCount, (slabCount != 1) ? "s" : "");
   if (slabCount > 1) {
     printf(", each ");
-    printReadableSize(slabConfig->slabBlocks * VDO_BLOCK_SIZE);
+    printReadableSize(slabConfig->slab_blocks * VDO_BLOCK_SIZE);
   }
   printf(".\n");
 
@@ -304,20 +304,20 @@ int main(int argc, char *argv[])
   }
 
   VDOConfig config = {
-    .logicalBlocks       = logicalSize / VDO_BLOCK_SIZE,
-    .physicalBlocks      = physicalSize / VDO_BLOCK_SIZE,
-    .slabSize            = 1 << slabBits,
-    .slabJournalBlocks   = DEFAULT_SLAB_JOURNAL_SIZE,
-    .recoveryJournalSize = DEFAULT_RECOVERY_JOURNAL_SIZE,
+    .logical_blocks        = logicalSize / VDO_BLOCK_SIZE,
+    .physical_blocks       = physicalSize / VDO_BLOCK_SIZE,
+    .slab_size             = 1 << slabBits,
+    .slab_journal_blocks   = DEFAULT_SLAB_JOURNAL_SIZE,
+    .recovery_journal_size = DEFAULT_RECOVERY_JOURNAL_SIZE,
   };
 
-  if ((config.logicalBlocks * VDO_BLOCK_SIZE) != (BlockCount) logicalSize) {
+  if ((config.logical_blocks * VDO_BLOCK_SIZE) != (BlockCount) logicalSize) {
     errx(1, "logical size must be a multiple of block size %d",
          VDO_BLOCK_SIZE);
   }
 
   char errorBuffer[ERRBUF_SIZE];
-  if (config.logicalBlocks > MAXIMUM_LOGICAL_BLOCKS) {
+  if (config.logical_blocks > MAXIMUM_LOGICAL_BLOCKS) {
     errx(VDO_OUT_OF_RANGE,
          "%" PRIu64 " requested logical space exceeds the maximum "
          "(%" PRIu64 "): %s",
@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
   }
 
   PhysicalLayer *layer;
-  result = makeFileLayer(filename, config.physicalBlocks, &layer);
+  result = makeFileLayer(filename, config.physical_blocks, &layer);
   if (result != VDO_SUCCESS) {
     errx(result, "makeFileLayer failed on '%s'", filename);
   }
@@ -369,12 +369,12 @@ int main(int argc, char *argv[])
     if (logicalSize > 0) {
       printf("Formatting '%s' with %" PRIu64 " logical and %" PRIu64
              " physical blocks of %u bytes.\n",
-             filename, config.logicalBlocks, config.physicalBlocks,
+             filename, config.logical_blocks, config.physical_blocks,
              VDO_BLOCK_SIZE);
     } else {
       printf("Formatting '%s' with default logical and %" PRIu64
              " physical blocks of %u bytes.\n",
-             filename, config.physicalBlocks, VDO_BLOCK_SIZE);
+             filename, config.physical_blocks, VDO_BLOCK_SIZE);
     }
   }
 

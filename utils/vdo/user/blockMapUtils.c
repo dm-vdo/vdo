@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#14 $
  */
 
 #include "blockMapUtils.h"
@@ -43,7 +43,7 @@ bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
 
   PhysicalBlockNumber sbnMask = (1ULL << depot->slab_size_shift) - 1;
   slab_block_number   sbn     = (pbn - depot->first_block) & sbnMask;
-  return (sbn < get_slab_config(depot)->dataBlocks);
+  return (sbn < get_slab_config(depot)->data_blocks);
 }
 
 /**
@@ -201,9 +201,9 @@ int findLBNPage(struct vdo *vdo,
                 LogicalBlockNumber lbn,
                 PhysicalBlockNumber *pbnPtr)
 {
-  if (lbn >= vdo->config.logicalBlocks) {
+  if (lbn >= vdo->config.logical_blocks) {
     warnx("VDO has only %" PRIu64 " logical blocks, cannot dump mapping for"
-          " LBA %" PRIu64, vdo->config.logicalBlocks, lbn);
+          " LBA %" PRIu64, vdo->config.logical_blocks, lbn);
     return VDO_OUT_OF_RANGE;
   }
 

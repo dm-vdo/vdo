@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#14 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -130,7 +130,7 @@ int loadSlabSummarySync(struct vdo *vdo, struct slab_summary **summaryPtr)
   struct slab_summary *summary = NULL;
   result = make_slab_summary(vdo->layer, slabSummaryPartition, threadConfig,
                              depot->slab_size_shift,
-                             depot->slab_config.dataBlocks,
+                             depot->slab_config.data_blocks,
                              NULL, &summary);
   if (result != VDO_SUCCESS) {
     warnx("Could not create in-memory slab summary");

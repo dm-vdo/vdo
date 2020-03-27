@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#20 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#21 $
  */
 
 #include <uuid/uuid.h>
@@ -49,9 +49,9 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
                             struct vdo_layout   **vdoLayoutPtr)
 {
   struct vdo_layout *vdoLayout;
-  int result = make_vdo_layout(config->physicalBlocks, startingOffset,
+  int result = make_vdo_layout(config->physical_blocks, startingOffset,
                                DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT,
-                               config->recoveryJournalSize,
+                               config->recovery_journal_size,
                                get_slab_summary_size(VDO_BLOCK_SIZE),
                                &vdoLayout);
   if (result != VDO_SUCCESS) {
@@ -85,7 +85,7 @@ static int configureVDO(struct vdo *vdo)
                                  get_vdo_partition(vdo->layout,
                                                    RECOVERY_JOURNAL_PARTITION),
                                  vdo->complete_recoveries,
-                                 vdo->config.recoveryJournalSize,
+                                 vdo->config.recovery_journal_size,
                                  RECOVERY_JOURNAL_TAIL_BUFFER_SIZE,
                                  vdo->read_only_notifier, get_thread_config(vdo),
                                  &vdo->recovery_journal);
@@ -94,7 +94,8 @@ static int configureVDO(struct vdo *vdo)
   }
 
   SlabConfig slabConfig;
-  result = configure_slab(vdo->config.slabSize, vdo->config.slabJournalBlocks,
+  result = configure_slab(vdo->config.slab_size,
+                          vdo->config.slab_journal_blocks,
                           &slabConfig);
   if (result != VDO_SUCCESS) {
     return result;
@@ -112,17 +113,17 @@ static int configureVDO(struct vdo *vdo)
     return result;
   }
 
-  if (vdo->config.logicalBlocks == 0) {
+  if (vdo->config.logical_blocks == 0) {
     BlockCount dataBlocks
-      = slabConfig.dataBlocks * calculate_slab_count(vdo->depot);
-    vdo->config.logicalBlocks
+      = slabConfig.data_blocks * calculate_slab_count(vdo->depot);
+    vdo->config.logical_blocks
       = dataBlocks - compute_forest_size(dataBlocks,
                                          DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
   }
 
   struct partition *blockMapPartition
     = get_vdo_partition(vdo->layout, BLOCK_MAP_PARTITION);
-  result = make_block_map(vdo->config.logicalBlocks, get_thread_config(vdo), 0,
+  result = make_block_map(vdo->config.logical_blocks, get_thread_config(vdo), 0,
                           get_fixed_layout_partition_offset(blockMapPartition),
                           get_fixed_layout_partition_size(blockMapPartition),
                           &vdo->block_map);
@@ -214,7 +215,7 @@ static int makeAndWriteVDO(const VDOConfig        *config,
 
   vdo->config                      = *config;
   vdo->nonce                       = geometry->nonce;
-  vdo->load_config.firstBlockOffset = get_data_region_offset(*geometry);
+  vdo->load_config.first_block_offset = get_data_region_offset(*geometry);
   result = configureVDO(vdo);
   if (result != VDO_SUCCESS) {
     free_vdo(&vdo);
