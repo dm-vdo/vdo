@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#5 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -27,7 +27,7 @@
 #include "types.h"
 #include "volumeGeometry.h"
 
-// The VDOConfig structure is fully declared in types.h
+// The vdo_config structure is fully declared in types.h
 
 /**
  * Format a physical layer to function as a new VDO. This function must be
@@ -41,23 +41,23 @@
  *
  * @return VDO_SUCCESS or an error
  **/
-int formatVDO(const VDOConfig		*config,
+int formatVDO(const struct vdo_config	*config,
               struct index_config	*indexConfig,
               PhysicalLayer		*layer)
   __attribute__((warn_unused_result));
 
 /**
- * Make a vdo_layout according to a VDOConfig. Exposed for testing only.
+ * Make a vdo_layout according to a vdo_config. Exposed for testing only.
  *
- * @param [in]  config          The VDOConfig to generate a vdo_layout from
+ * @param [in]  config          The vdo_config to generate a vdo_layout from
  * @param [in]  startingOffset  The start of the layouts
  * @param [out] vdoLayoutPtr    A pointer to hold the new vdo_layout
  *
  * @return VDO_SUCCESS or an error
  **/
-int makeVDOLayoutFromConfig(const VDOConfig      *config,
-                            PhysicalBlockNumber   startingOffset,
-                            struct vdo_layout   **vdoLayoutPtr)
+int makeVDOLayoutFromConfig(const struct vdo_config      *config,
+                            PhysicalBlockNumber		  startingOffset,
+                            struct vdo_layout		**vdoLayoutPtr)
   __attribute__((warn_unused_result));
 
 /**
@@ -75,7 +75,7 @@ int makeVDOLayoutFromConfig(const VDOConfig      *config,
  *
  * @return VDO_SUCCESS or an error
  **/
-int formatVDOWithNonce(const VDOConfig		*config,
+int formatVDOWithNonce(const struct vdo_config	*config,
                        struct index_config	*indexConfig,
                        PhysicalLayer		*layer,
                        Nonce			 nonce,

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#21 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#22 $
  */
 
 #include <uuid/uuid.h>
@@ -44,9 +44,9 @@
 #include "volumeGeometry.h"
 
 /**********************************************************************/
-int makeVDOLayoutFromConfig(const VDOConfig      *config,
-                            PhysicalBlockNumber   startingOffset,
-                            struct vdo_layout   **vdoLayoutPtr)
+int makeVDOLayoutFromConfig(const struct vdo_config  *config,
+                            PhysicalBlockNumber       startingOffset,
+                            struct vdo_layout       **vdoLayoutPtr)
 {
   struct vdo_layout *vdoLayout;
   int result = make_vdo_layout(config->physical_blocks, startingOffset,
@@ -93,7 +93,7 @@ static int configureVDO(struct vdo *vdo)
     return result;
   }
 
-  SlabConfig slabConfig;
+  struct slab_config slabConfig;
   result = configure_slab(vdo->config.slab_size,
                           vdo->config.slab_journal_blocks,
                           &slabConfig);
@@ -141,9 +141,9 @@ static int configureVDO(struct vdo *vdo)
 }
 
 /**********************************************************************/
-int formatVDO(const VDOConfig *config,
-              struct index_config *indexConfig,
-              PhysicalLayer   *layer)
+int formatVDO(const struct vdo_config *config,
+              struct index_config     *indexConfig,
+              PhysicalLayer           *layer)
 {
   STATIC_ASSERT(sizeof(uuid_t) == sizeof(UUID));
 
@@ -203,9 +203,9 @@ static int clearPartition(PhysicalLayer     *layer,
  * @param layer             The physical layer the VDO will sit on
  * @param geometry          The geometry of the physical layer
  **/
-static int makeAndWriteVDO(const VDOConfig        *config,
-                           PhysicalLayer          *layer,
-                           struct volume_geometry *geometry)
+static int makeAndWriteVDO(const struct vdo_config *config,
+                           PhysicalLayer           *layer,
+                           struct volume_geometry  *geometry)
 {
   struct vdo *vdo;
   int result = make_vdo(layer, &vdo);
@@ -247,11 +247,11 @@ static int makeAndWriteVDO(const VDOConfig        *config,
 }
 
 /**********************************************************************/
-int formatVDOWithNonce(const VDOConfig *config,
-                       struct index_config *indexConfig,
-                       PhysicalLayer   *layer,
-                       Nonce            nonce,
-                       UUID             uuid)
+int formatVDOWithNonce(const struct vdo_config *config,
+                       struct index_config     *indexConfig,
+                       PhysicalLayer           *layer,
+                       Nonce                    nonce,
+                       UUID                     uuid)
 {
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {
