@@ -15,7 +15,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/base/Makefile#1 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/base/Makefile#2 $
 
 VDO_VERSION = 8.0.0.0
 
@@ -86,11 +86,6 @@ libvdo.a: $(OBJECTS)
 	echo $$(OBJECTS)
 	$(RM) $@
 	$(AR) cr $@ $(OBJECTS)
-
-# Suppress a pedantic warning, which we can't fix without some serious
-# divergence from upstream: The lz4 package freely casts const pointer
-# values to non-const pointer values.
-lz4.o: CFLAGS:= $(filter-out -Wcast-qual,$(CFLAGS))
 
 %.o: %.c
 	$(COMPILE.c) -MMD -MF $(DEPDIR)/$*.d.new -MP -MT $@ -o $@ $<
