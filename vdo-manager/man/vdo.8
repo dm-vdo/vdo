@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#10 $
+.\" $Id: //eng/linux-vdo/src/python/vdo/man/vdo.8#11 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -95,7 +95,6 @@
 .\" Value string for options. Show the possible values, properly
 .\" italicized, but restore the original font when we're done.
 .ds bool \fR{ \fP\fI enabled \fP\fR | \fP\fI disabled \fP\fR } \fP
-.ds writePolicy \fR{ \fP\fI sync \fP\fR | \fP\fI async \fP\fR | \fP\fI auto \fP\fR} \fP
 .ds targetSpec \fR{ \fP\-\-all\fP | \fP\-\-name=\fIvolume\fP\fR }\fP
 .ds targetSpecRequired \*[targetSpec]\fR (required)\fP
 .
@@ -178,7 +177,7 @@ volumes. This command must be run with root privileges.
 Applicable options include:
 .startOptionList
 \*[targetSpecRequired]
-\-\-writePolicy=\*[writePolicy]\fR (required)\fP
+\-\-writePolicy=\fIpolicy\fP\fR (required)\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -221,7 +220,7 @@ Applicable options include:
 \-\-vdoLogicalSize=\fIsize\fP
 \-\-vdoPhysicalThreads=\fIthread count\fP
 \-\-vdoSlabSize=\fIsize\fP
-\-\-writePolicy=\*[writePolicy]
+\-\-writePolicy=\fIpolicy\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -339,7 +338,7 @@ root privileges. Applicaable options include:
 \-\-vdoLogicalThreads=\fIthread count\fP
 \-\-vdoLogLevel=\fIlevel\fP
 \-\-vdoPhysicalThreads=\fIthread count\fP
-\-\-writePolicy=\*[writePolicy]
+\-\-writePolicy=\fIpolicy\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -507,7 +506,7 @@ The logical size of the VDO volume.
 The size of a VDO volume's underlying physical storage.
 .TP
 .B Configured write policy
-The configured value of the write policy (sync, async or auto).
+The configured value of the write policy (sync, async, async-unsafe or auto).
 .TP
 .B VDO Statistics
 Output of the \fBvdostats\fP utility.
@@ -723,18 +722,25 @@ of the volume.
 .B \-\-verbose
 Prints commands before executing them.
 .TP
-.B \-\-writePolicy=\*[writePolicy]
+.B \-\-writePolicy=\fIpolicy\fR
 Specifies the write policy:
 .RS
 .TP
 .B sync
-Writes are acknowledged only after data is stably written. \fBThis
-policy is not supported if the underlying storage is not also synchronous.\fP
+Writes are acknowledged only after the data is guaranteed to persist.
 .TP
 .B async
-Writes are acknowledged after data has been \fIcached\fP for writing to
-stable storage. Data which has not been flushed is not guaranteed to persist
-in this mode.
+Writes are acknowledged when the data has been cached for writing to the
+underlying storage. Data which has not been flushed is not guaranteed
+to persist in this mode, however this mode is ACID compliant (after
+recovery from a crash any unflushed write is guaranteed either to have
+persisted all its data, or to have done nothing). Most databases and
+filesystems should use this mode.
+.TP
+.B async-unsafe
+Writes are handled like 'async' but there is no guarantee of the atomicity
+async provides. This mode should only be used for better performance when
+atomicity is not required.
 .TP
 .B auto
 VDO will check the storage device and determine whether it supports

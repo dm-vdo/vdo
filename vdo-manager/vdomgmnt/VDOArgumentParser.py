@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#8 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#9 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -1110,15 +1110,19 @@ suffix is optional""").format(options
                         default = None if required else Defaults.writePolicy,
                         required = required,
                         help = _("""
-      Specifies the write policy. 'sync' means writes are acknowledged only
-      after data is on stable storage. 'sync' policy is not supported if the
-      underlying storage is not also synchronous. 'async' means that writes
-      are acknowledged when data has been cached for writing to stable
-      storage; data which has not been flushed is not guaranteed to persist
-      in this mode. 'auto' means that VDO will check the storage device
-      and determine whether it supports flushes. If it does, VDO will run
-      in async mode, otherwise it will run in sync mode.
-      {defaultHelp}
+      Specifies the write policy. If 'sync', writes are acknowledged only
+      after the data is guaranteed to persist. If 'async', writes are
+      acknowledged when the data has been cached for writing to the
+      underlying storage. Data which has not been flushed is not guaranteed
+      to persist in this mode, however this mode is ACID compliant (after
+      recovery from a crash any unflushed write is guaranteed either to have
+      persisted all its data, or to have done nothing). Most databases and
+      filesystems should use this mode. If 'async-unsafe', writes are handled
+      like 'async' but there is no guarantee of the above atomicity. This
+      mode should only be used for better performance when atomicity is
+      not required. If 'auto', VDO will check the underlying storage and
+      determine whether it supports flushes. If it does, VDO will run in async
+      mode, otherwise it will run in sync mode. {defaultHelp}
                                  """)
       .format(defaultHelp = defaultHelp))
 

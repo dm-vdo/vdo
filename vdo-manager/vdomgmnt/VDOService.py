@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#16 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#17 $
 
 """
 from __future__ import absolute_import
@@ -145,7 +145,7 @@ class VDOService(Service):
       a smaller size constrains the maximum physical size that can be
       accomodated. Must be a power of two between 128M and 32G.
     uuid (str): uuid of vdo volume.
-    writePolicy (str): sync, async or auto.
+    writePolicy (str): sync, async, async-unsafe or auto.
   """
   log = logging.getLogger('vdo.vdomgmnt.Service.VDOService')
   yaml_tag = "!VDOService"

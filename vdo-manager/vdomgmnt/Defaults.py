@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#4 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#5 $
 
 """
 from __future__ import absolute_import
@@ -109,7 +109,7 @@ class Defaults(object):
                         'debug']
   vdoTargetName = 'vdo'
   writePolicy = 'auto'
-  writePolicyChoices = ['async', 'sync', 'auto']
+  writePolicyChoices = ['async', 'async-unsafe', 'sync', 'auto']
 
   ######################################################################
   # Public methods
