@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#5 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#6 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -419,12 +419,8 @@ class ImportOperation(VDOOperation):
     del argsDict['name']
 
     vdo = VDOService(args.name, conf, **argsDict)
-
-    transaction = Transaction.transaction()
     vdo.importDevice()
-    transaction.addUndoStage(vdo.remove)
 
-    conf.persist()
     vdo.announceReady()
     
 ########################################################################
