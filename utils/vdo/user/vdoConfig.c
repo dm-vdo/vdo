@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#22 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#23 $
  */
 
 #include <uuid/uuid.h>
@@ -166,7 +166,7 @@ int formatVDO(const struct vdo_config *config,
 __attribute__((warn_unused_result))
 static int clearPartition(PhysicalLayer     *layer,
                           struct vdo_layout *layout,
-                          PartitionID        id)
+                          partition_id       id)
 {
   struct partition    *partition = get_vdo_partition(layout, id);
   BlockCount           size      = get_fixed_layout_partition_size(partition);
