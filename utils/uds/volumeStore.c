@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#3 $
  */
 
 #include "geometry.h"
@@ -68,16 +68,16 @@ int initializeVolumePage(const struct geometry *geometry,
 
 /*****************************************************************************/
 int openVolumeStore(struct volume_store *volumeStore,
-                    IndexLayout  *layout,
+                    struct index_layout *layout,
                     unsigned int  reservedBuffers __attribute__((unused)),
                     size_t        bytesPerPage)
 {
 #ifdef __KERNEL__
-  return openVolumeBufio(layout, bytesPerPage, reservedBuffers,
-                         &volumeStore->vs_client);
+  return open_volume_bufio(layout, bytesPerPage, reservedBuffers,
+                           &volumeStore->vs_client);
 #else
   volumeStore->vs_bytesPerPage = bytesPerPage;
-  return openVolumeRegion(layout, &volumeStore->vs_region);
+  return open_volume_region(layout, &volumeStore->vs_region);
 #endif
 }
 

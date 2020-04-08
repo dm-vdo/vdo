@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#4 $
  */
 
 #include "errors.h"
@@ -28,16 +28,16 @@
 #include "uds.h"
 
 /*****************************************************************************/
-int makeIndexLayout(const char *name,
-		    bool newLayout,
-		    const UdsConfiguration config,
-		    IndexLayout **layoutPtr)
+int make_index_layout(const char *name,
+		      bool new_layout,
+		      const UdsConfiguration config,
+		      struct index_layout **layout_ptr)
 {
 	char *file = NULL;
 	uint64_t offset = 0;
 	uint64_t size = 0;
 
-	LayoutParameter parameterTable[] = {
+	LayoutParameter parameter_table[] = {
 		{ "file", LP_STRING | LP_DEFAULT, { .str = &file }, false },
 		{ "size", LP_UINT64, { .num = &size }, false },
 		{ "offset", LP_UINT64, { .num = &offset }, false },
@@ -45,14 +45,14 @@ int makeIndexLayout(const char *name,
 
 	char *params = NULL;
 	int result =
-		duplicateString(name, "makeIndexLayout parameters", &params);
+		duplicateString(name, "make_index_layout parameters", &params);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
 	// note file will be set to memory owned by params
 	result = parseLayoutString(
-		params, parameterTable, COUNT_OF(parameterTable));
+		params, parameter_table, COUNT_OF(parameter_table));
 	if (result != UDS_SUCCESS) {
 		FREE(params);
 		return result;
@@ -65,20 +65,21 @@ int makeIndexLayout(const char *name,
 	}
 
 	IOFactory *factory = NULL;
-	result = makeIOFactory(file,
-			       newLayout ? FU_CREATE_READ_WRITE : FU_READ_WRITE,
-			       &factory);
+	result =
+		makeIOFactory(file,
+			      new_layout ? FU_CREATE_READ_WRITE : FU_READ_WRITE,
+			      &factory);
 	FREE(params);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
-	IndexLayout *layout;
-	result = makeIndexLayoutFromFactory(
-		factory, offset, size, newLayout, config, &layout);
+	struct index_layout *layout;
+	result = make_index_layout_from_factory(
+		factory, offset, size, new_layout, config, &layout);
 	putIOFactory(factory);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
-	*layoutPtr = layout;
+	*layout_ptr = layout;
 	return UDS_SUCCESS;
 }
