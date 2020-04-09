@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/atomicDefs.h#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/atomicDefs.h#2 $
  */
 
 #ifndef ATOMIC_DEFS_H
@@ -157,11 +157,31 @@ static INLINE void smp_wmb(void)
 }
 
 /**
- * Provide a memory barrier before an atomic operation.
+ * Provide a memory barrier before an atomic read-modify-write operation
+ * that does not imply one.
  **/
 static INLINE void smp_mb__before_atomic(void)
 {
+#if defined(__x86_64__) || defined(__s390__)
+  // Atomic operations are already serializing on x86 and s390
+  barrier();
+#else
   smp_mb();
+#endif
+}
+
+/**
+ * Provide a memory barrier after an atomic read-modify-write operation
+ * that does not imply one.
+ **/
+static INLINE void smp_mb__after_atomic(void)
+{
+#if defined(__x86_64__) || defined(__s390__)
+  // Atomic operations are already serializing on x86 and s390
+  barrier();
+#else
+  smp_mb();
+#endif
 }
 
 /**
