@@ -16,11 +16,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/systemd/Makefile#3 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/examples/systemd/Makefile#4 $
 
 SERVICEFILE=vdo.service
 EXAMPLEFILES=VDO.mount.example
 PRESETFILE=97-vdo.preset
+TEMPLATEFILE=vdo-start-by-dev@.service
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
@@ -40,6 +41,7 @@ clean:;
 
 install:
 	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -m 644 $(TEMPLATEFILE) $(INSTALLDIR)
 	$(INSTALL) $(INSTALLOWNER) -m 644 $(SERVICEFILE) $(INSTALLDIR)
 	$(INSTALL) $(INSTALLOWNER) -d $(PRESETDIR)
 	$(INSTALL) $(INSTALLOWNER) -m 644 $(PRESETFILE) $(PRESETDIR)

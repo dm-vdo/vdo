@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.3.4
+Version: 6.1.3.23
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -66,6 +66,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %files
 #defattr(-,root,root)
 %{_bindir}/vdo
+%{_bindir}/vdo-by-dev
 %{_bindir}/vdostats
 %{_bindir}/vdodmeventd
 %{_bindir}/vdodumpconfig
@@ -171,6 +172,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python_sitelib}/%{name}/utils/__init__.pyc
 %{python_sitelib}/%{name}/utils/__init__.pyo
 %{_unitdir}/vdo.service
+%{_unitdir}/vdo-start-by-dev@.service
 %{_presetdir}/97-vdo.preset
 %dir %{_defaultdocdir}/%{name}
 %license %{_defaultdocdir}/%{name}/COPYING
@@ -192,8 +194,8 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
-
+%{_sysconfdir}/udev/rules.d/69-vdo-start-by-dev.rules
 
 %changelog
-* Tue Aug 20 2019 - J. corwin Coburn <corwin@redhat.com> - 6.1.3.4-1
-HASH(0x334e760)
+* Thu Apr 09 2020 - J. corwin Coburn <corwin@redhat.com> - 6.1.3.23-1
+HASH(0xc49bf8)

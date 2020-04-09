@@ -1,0 +1,1 @@
+ENV{ID_FS_TYPE}=="vdo", PROGRAM="/usr/bin/systemd-escape -p $env{DEVNAME}", ENV{SYSTEMD_WANTS}+="vdo-start-by-dev@%c"

@@ -16,11 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/vdo-manager/Makefile#2 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/vdo-manager/Makefile#3 $
 
 SUBDIRS=man statistics utils vdomgmnt
 
-PROGS=vdo vdostats
+PROGS=vdo vdo-by-dev vdostats
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
