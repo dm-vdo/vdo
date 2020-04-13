@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/compiler.h#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/compiler.h#2 $
  */
 
 #ifndef COMMON_COMPILER_H
@@ -48,6 +48,13 @@
 // The "inline" keyword alone takes effect only when the optimization level
 // is high enough.  Define INLINE to force the gcc to "always inline".
 #define INLINE __attribute__((always_inline)) inline
+
+#ifndef __KERNEL__
+#define __always_unused __attribute__((unused))
+#define __maybe_unused __attribute__((unused))
+#define __must_check __attribute__((warn_unused_result))
+#define __packed __attribute__((packed))
+#endif
 
 #ifndef __KERNEL__
 /**

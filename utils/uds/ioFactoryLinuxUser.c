@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#3 $
  */
 
 #include "atomicDefs.h"
@@ -75,7 +75,7 @@ size_t getWritableSize(IOFactory *factory __attribute__((unused)))
    * pages tell us no way to determine what that maximum is.  Fortunately, any
    * attempt to write to a location that is too large will return an EFBIG
    * error.
-   */ 
+   */
   return SIZE_MAX;
 }
 
@@ -101,7 +101,7 @@ int openBufferedReader(IOFactory       *factory,
   if (result != UDS_SUCCESS) {
     return result;
   }
-  result = makeBufferedReader(region, readerPtr);
+  result = make_buffered_reader(region, readerPtr);
   putIORegion(region);
   return result;
 }
@@ -118,7 +118,7 @@ int openBufferedWriter(IOFactory       *factory,
   if (result != UDS_SUCCESS) {
     return result;
   }
-  result = makeBufferedWriter(region, writerPtr);
+  result = make_buffered_writer(region, writerPtr);
   putIORegion(region);
   return result;
 }
