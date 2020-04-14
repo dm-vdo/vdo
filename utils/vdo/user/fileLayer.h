@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.h#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.h#2 $
  */
 
 #ifndef FILE_LAYER_H
@@ -34,7 +34,7 @@
  * @return a success or error code
  **/
 int makeFileLayer(const char     *name,
-                  BlockCount      blockCount,
+                  block_count_t   blockCount,
                   PhysicalLayer **layerPtr)
   __attribute__((warn_unused_result));
 

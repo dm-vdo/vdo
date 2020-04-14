@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#14 $
  */
 
 #include <err.h>
@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
     .recovery_journal_size = DEFAULT_RECOVERY_JOURNAL_SIZE,
   };
 
-  if ((config.logical_blocks * VDO_BLOCK_SIZE) != (BlockCount) logicalSize) {
+  if ((config.logical_blocks * VDO_BLOCK_SIZE) != (block_count_t) logicalSize) {
     errx(1, "logical size must be a multiple of block size %d",
          VDO_BLOCK_SIZE);
   }

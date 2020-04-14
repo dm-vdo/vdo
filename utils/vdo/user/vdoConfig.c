@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#23 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#24 $
  */
 
 #include <uuid/uuid.h>
@@ -103,7 +103,7 @@ static int configureVDO(struct vdo *vdo)
 
   struct partition *depotPartition
     = get_vdo_partition(vdo->layout, BLOCK_ALLOCATOR_PARTITION);
-  BlockCount depotSize = get_fixed_layout_partition_size(depotPartition);
+  block_count_t depotSize = get_fixed_layout_partition_size(depotPartition);
   PhysicalBlockNumber origin = get_fixed_layout_partition_offset(depotPartition);
   result = make_slab_depot(depotSize, origin, slabConfig, get_thread_config(vdo),
                            vdo->nonce, 1, vdo->layer, NULL,
@@ -114,7 +114,7 @@ static int configureVDO(struct vdo *vdo)
   }
 
   if (vdo->config.logical_blocks == 0) {
-    BlockCount dataBlocks
+    block_count_t dataBlocks
       = slabConfig.data_blocks * calculate_slab_count(vdo->depot);
     vdo->config.logical_blocks
       = dataBlocks - compute_forest_size(dataBlocks,
@@ -169,11 +169,11 @@ static int clearPartition(PhysicalLayer     *layer,
                           partition_id       id)
 {
   struct partition    *partition = get_vdo_partition(layout, id);
-  BlockCount           size      = get_fixed_layout_partition_size(partition);
+  block_count_t        size      = get_fixed_layout_partition_size(partition);
   PhysicalBlockNumber  start     = get_fixed_layout_partition_offset(partition);
 
-  BlockCount bufferBlocks = 1;
-  for (BlockCount n = size;
+  block_count_t bufferBlocks = 1;
+  for (block_count_t n = size;
        (bufferBlocks < 4096) && ((n & 0x1) == 0);
        n >>= 1) {
     bufferBlocks <<= 1;

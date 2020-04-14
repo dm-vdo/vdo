@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#6 $
  */
 
 #include "fileLayer.h"
@@ -37,7 +37,7 @@
 
 typedef struct fileLayer {
   PhysicalLayer common;
-  BlockCount    blockCount;
+  block_count_t blockCount;
   int           fd;
   char          name[];
 } FileLayer;
@@ -50,7 +50,7 @@ static inline FileLayer *asFileLayer(PhysicalLayer *layer)
 }
 
 /**********************************************************************/
-static BlockCount getBlockCount(PhysicalLayer *header)
+static block_count_t getBlockCount(PhysicalLayer *header)
 {
   return asFileLayer(header)->blockCount;
 }
@@ -211,7 +211,7 @@ static void freeLayer(PhysicalLayer **layerPtr)
  **/
 static int setupFileLayer(const char     *name,
                           bool            readOnly,
-                          BlockCount      blockCount,
+                          block_count_t   blockCount,
                           PhysicalLayer **layerPtr)
 {
   int result = ASSERT(layerPtr != NULL, "layerPtr must not be NULL");
@@ -258,7 +258,7 @@ static int setupFileLayer(const char     *name,
   }
 
   // Make sure the physical blocks == size of the block device
-  BlockCount deviceBlocks;
+  block_count_t deviceBlocks;
   if (blockDevice) {
     uint64_t bytes;
     if (ioctl(layer->fd, BLKGETSIZE64, &bytes) < 0) {
@@ -305,7 +305,7 @@ static int setupFileLayer(const char     *name,
 
 /**********************************************************************/
 int makeFileLayer(const char           *name,
-                  BlockCount            blockCount,
+                  block_count_t         blockCount,
                   PhysicalLayer       **layerPtr)
 {
   return setupFileLayer(name, false, blockCount, layerPtr);
