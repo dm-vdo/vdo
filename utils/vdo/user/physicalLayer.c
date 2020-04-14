@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#15 $
  */
 
 #include "physicalLayer.h"
@@ -29,9 +29,9 @@
 // for user tools.
 
 /**********************************************************************/
-CRC32Checksum update_crc32(CRC32Checksum  crc,
-                           const byte    *buffer,
-                           size_t         length)
+crc32_checksum_t update_crc32(crc32_checksum_t  crc,
+                              const byte       *buffer,
+                              size_t            length)
 {
   return crc32(crc, buffer, length);
 }
