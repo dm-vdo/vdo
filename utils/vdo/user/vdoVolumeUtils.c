@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#15 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -47,12 +47,11 @@
  *
  * @return VDO_SUCCESS or an error code
  **/
-__attribute__((warn_unused_result))
-static int loadVDOFromFile(const char  *filename,
-                           bool         readOnly,
-                           bool         validateConfig,
-                           VDODecoder  *decoder,
-                           struct vdo **vdoPtr)
+static int __must_check loadVDOFromFile(const char *filename,
+					bool readOnly,
+					bool validateConfig,
+					VDODecoder *decoder,
+					struct vdo **vdoPtr)
 {
   int result = ASSERT(validateConfig || readOnly,
                       "Cannot make a writable VDO"

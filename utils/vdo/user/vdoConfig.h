@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#6 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -41,10 +41,9 @@
  *
  * @return VDO_SUCCESS or an error
  **/
-int formatVDO(const struct vdo_config	*config,
-              struct index_config	*indexConfig,
-              PhysicalLayer		*layer)
-  __attribute__((warn_unused_result));
+int __must_check formatVDO(const struct vdo_config *config,
+			   struct index_config *indexConfig,
+			   PhysicalLayer *layer);
 
 /**
  * Make a vdo_layout according to a vdo_config. Exposed for testing only.
@@ -55,10 +54,10 @@ int formatVDO(const struct vdo_config	*config,
  *
  * @return VDO_SUCCESS or an error
  **/
-int makeVDOLayoutFromConfig(const struct vdo_config      *config,
-                            PhysicalBlockNumber		  startingOffset,
-                            struct vdo_layout		**vdoLayoutPtr)
-  __attribute__((warn_unused_result));
+int __must_check
+makeVDOLayoutFromConfig(const struct vdo_config *config,
+			PhysicalBlockNumber startingOffset,
+			struct vdo_layout **vdoLayoutPtr);
 
 /**
  * This is a version of formatVDO() which allows the caller to supply the
@@ -75,12 +74,11 @@ int makeVDOLayoutFromConfig(const struct vdo_config      *config,
  *
  * @return VDO_SUCCESS or an error
  **/
-int formatVDOWithNonce(const struct vdo_config	*config,
-                       struct index_config	*indexConfig,
-                       PhysicalLayer		*layer,
-                       Nonce			 nonce,
-                       UUID			 uuid)
-  __attribute__((warn_unused_result));
+int __must_check formatVDOWithNonce(const struct vdo_config *config,
+				    struct index_config *indexConfig,
+				    PhysicalLayer *layer,
+				    Nonce nonce,
+				    UUID uuid);
 
 /**
  * Force the VDO to exit read-only mode and rebuild when it next loads
@@ -88,8 +86,7 @@ int formatVDOWithNonce(const struct vdo_config	*config,
  *
  * @param layer  The physical layer on which the VDO resides
  **/
-int forceVDORebuild(PhysicalLayer *layer)
-  __attribute__((warn_unused_result));
+int __must_check forceVDORebuild(PhysicalLayer *layer);
 
 /**
  * Force the VDO to enter read-only mode when off-line.  This is only
@@ -97,7 +94,6 @@ int forceVDORebuild(PhysicalLayer *layer)
  *
  * @param layer  The physical layer on which the VDO resides
  **/
-int setVDOReadOnlyMode(PhysicalLayer *layer)
-  __attribute__((warn_unused_result));
+int __must_check setVDOReadOnlyMode(PhysicalLayer *layer);
 
 #endif /* VDO_CONFIG_H */

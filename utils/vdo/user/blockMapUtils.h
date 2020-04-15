@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#6 $
  */
 
 #ifndef BLOCK_MAP_UTILS_H
@@ -38,11 +38,11 @@
  *
  * @return VDO_SUCCESS or an error code
  **/
-typedef int MappingExaminer(struct block_map_slot slot,
-                            Height                height,
-                            PhysicalBlockNumber   pbn,
-                            BlockMappingState     state)
-  __attribute__((warn_unused_result));
+typedef int __must_check
+MappingExaminer(struct block_map_slot slot,
+		Height height,
+		PhysicalBlockNumber pbn,
+		BlockMappingState state);
 
 /**
  * Check whether a given PBN is a valid PBN for a data block. This
@@ -53,8 +53,8 @@ typedef int MappingExaminer(struct block_map_slot slot,
  *
  * @return true if the PBN can be used for a data block
  **/
-bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
-  __attribute__((warn_unused_result));
+bool __must_check
+isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn);
 
 /**
  * Apply a mapping examiner to each mapped block map entry in a VDO.
@@ -64,8 +64,8 @@ bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
  *
  * @return VDO_SUCCESS or an error code
  **/
-int examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner)
-  __attribute__((warn_unused_result));
+int __must_check
+examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner);
 
 /**
  * Find the PBN for the block map page encoding a particular LBN mapping.
@@ -77,10 +77,9 @@ int examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner)
  *
  * @return VDO_SUCCESS or an error code
  **/
-int findLBNPage(struct vdo          *vdo,
-                LogicalBlockNumber   lbn,
-                PhysicalBlockNumber *pbnPtr)
-  __attribute__((warn_unused_result));
+int __must_check findLBNPage(struct vdo *vdo,
+			     LogicalBlockNumber lbn,
+			     PhysicalBlockNumber *pbnPtr);
 
 /**
  * Look up the mapping for a single LBN in the block map.
@@ -92,11 +91,10 @@ int findLBNPage(struct vdo          *vdo,
  *
  * @return VDO_SUCCESS or an error code
  **/
-int findLBNMapping(struct vdo          *vdo,
-                   LogicalBlockNumber   lbn,
-                   PhysicalBlockNumber *pbnPtr,
-                   BlockMappingState   *statePtr)
-  __attribute__((warn_unused_result));
+int __must_check findLBNMapping(struct vdo *vdo,
+				LogicalBlockNumber lbn,
+				PhysicalBlockNumber *pbnPtr,
+				BlockMappingState *statePtr);
 
 /**
  * Read a single block map page into the buffer. The page will be marked
@@ -110,10 +108,9 @@ int findLBNMapping(struct vdo          *vdo,
  *
  * @return VDO_SUCCESS or an error code
  **/
-int readBlockMapPage(PhysicalLayer         *layer,
-                     PhysicalBlockNumber    pbn,
-                     Nonce                  nonce,
-                     struct block_map_page *page)
-  __attribute__((warn_unused_result));
+int __must_check readBlockMapPage(PhysicalLayer *layer,
+				  PhysicalBlockNumber pbn,
+				  Nonce nonce,
+				  struct block_map_page *page);
 
 #endif // BLOCK_MAP_UTILS_H

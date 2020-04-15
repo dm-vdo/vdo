@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.h#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.h#3 $
  */
 
 #ifndef FILE_LAYER_H
@@ -33,10 +33,9 @@
  *
  * @return a success or error code
  **/
-int makeFileLayer(const char     *name,
-                  block_count_t   blockCount,
-                  PhysicalLayer **layerPtr)
-  __attribute__((warn_unused_result));
+int __must_check makeFileLayer(const char *name,
+			       block_count_t blockCount,
+			       PhysicalLayer **layerPtr);
 
 /**
  * Make a read only file layer implementation of a physical layer.
@@ -46,7 +45,7 @@ int makeFileLayer(const char     *name,
  *
  * @return a success or error code
  **/
-int makeReadOnlyFileLayer(const char *name, PhysicalLayer **layerPtr)
-  __attribute__((warn_unused_result));
+int __must_check
+makeReadOnlyFileLayer(const char *name, PhysicalLayer **layerPtr);
 
 #endif // FILE_LAYER_H

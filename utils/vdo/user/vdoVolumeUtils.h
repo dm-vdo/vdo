@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#4 $
  */
 
 #ifndef VDO_VOLUME_UTILS_H
@@ -35,8 +35,8 @@
  *
  * @return VDO_SUCCESS or an error code
  **/
-int makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr)
-  __attribute__((warn_unused_result));
+int __must_check
+makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr);
 
 /**
  * Load a VDO from a file without validating the config.
@@ -46,8 +46,8 @@ int makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr)
  *
  * @return VDO_SUCCESS or an error code
  **/
-int readVDOWithoutValidation(const char *filename, struct vdo **vdoPtr)
-  __attribute__((warn_unused_result));
+int __must_check
+readVDOWithoutValidation(const char *filename, struct vdo **vdoPtr);
 
 /**
  * Free the VDO made with makeVDOFromFile().
@@ -64,7 +64,7 @@ void freeVDOFromFile(struct vdo **vdoPtr);
  *
  * @return VDO_SUCCESS or an error code
  **/
-int loadSlabSummarySync(struct vdo *vdo, struct slab_summary **summaryPtr)
-  __attribute__((warn_unused_result));
+int __must_check
+loadSlabSummarySync(struct vdo *vdo, struct slab_summary **summaryPtr);
 
 #endif // VDO_VOLUME_UTILS_H

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#24 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#25 $
  */
 
 #include <uuid/uuid.h>
@@ -69,8 +69,7 @@ int makeVDOLayoutFromConfig(const struct vdo_config  *config,
  *
  * @return VDO_SUCCESS or an error
  **/
-__attribute__((warn_unused_result))
-static int configureVDO(struct vdo *vdo)
+static int __must_check configureVDO(struct vdo *vdo)
 {
   // The layout starts 1 block past the beginning of the data region, as the
   // data region contains the super block but the layout does not.
@@ -163,10 +162,9 @@ int formatVDO(const struct vdo_config *config,
  *
  * @return VDO_SUCCESS or an error code
  **/
-__attribute__((warn_unused_result))
-static int clearPartition(PhysicalLayer     *layer,
-                          struct vdo_layout *layout,
-                          partition_id       id)
+static int __must_check clearPartition(PhysicalLayer *layer,
+				       struct vdo_layout *layout,
+				       partition_id id)
 {
   struct partition    *partition = get_vdo_partition(layout, id);
   block_count_t        size      = get_fixed_layout_partition_size(partition);
@@ -290,8 +288,7 @@ int formatVDOWithNonce(const struct vdo_config *config,
  *
  * @return VDO_SUCCESS or an error if the super block could not be read
  **/
-__attribute__((warn_unused_result))
-static int prepareSuperBlock(struct vdo *vdo)
+static int __must_check prepareSuperBlock(struct vdo *vdo)
 {
   struct volume_geometry geometry;
   int result = load_volume_geometry(vdo->layer, &geometry);
@@ -321,10 +318,10 @@ static int prepareSuperBlock(struct vdo *vdo)
  * @param requireReadOnly  Whether the existing VDO must be in read-only mode
  * @param newState         The new state to store in the VDO
  **/
-__attribute__((warn_unused_result))
-static int updateVDOSuperBlockState(PhysicalLayer *layer,
-                                    bool           requireReadOnly,
-                                    VDOState       newState)
+static int __must_check
+updateVDOSuperBlockState(PhysicalLayer *layer,
+			 bool requireReadOnly,
+			 VDOState newState)
 {
   struct vdo *vdo;
   int result = make_vdo(layer, &vdo);
