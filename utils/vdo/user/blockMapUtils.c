@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#15 $
  */
 
 #include "blockMapUtils.h"
@@ -116,9 +116,9 @@ int examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner)
 {
   // Examine flat pages.
   struct block_map  *map           = get_block_map(vdo);
-  PageCount          flatPageCount = map->flat_page_count;
+  page_count_t       flatPageCount = map->flat_page_count;
 
-  for (PageNumber pageNumber = 0; pageNumber < flatPageCount; pageNumber++) {
+  for (page_number_t pageNumber = 0; pageNumber < flatPageCount; pageNumber++) {
     PhysicalBlockNumber pbn = pageNumber + BLOCK_MAP_FLAT_PAGE_ORIGIN;
     int result = readAndExaminePage(vdo, pbn, 0, examiner);
     if (result != VDO_SUCCESS) {
@@ -208,7 +208,7 @@ int findLBNPage(struct vdo *vdo,
   }
 
   struct block_map *map = get_block_map(vdo);
-  PageNumber pageNumber = lbn / BLOCK_MAP_ENTRIES_PER_PAGE;
+  page_number_t pageNumber = lbn / BLOCK_MAP_ENTRIES_PER_PAGE;
   if (pageNumber < map->flat_page_count) {
     // It's in the flat section of the block map.
     *pbnPtr = BLOCK_MAP_FLAT_PAGE_ORIGIN + pageNumber;
