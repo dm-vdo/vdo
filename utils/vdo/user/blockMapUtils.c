@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#15 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#16 $
  */
 
 #include "blockMapUtils.h"
@@ -197,9 +197,9 @@ static int readSlotFromPage(struct vdo          *vdo,
 }
 
 /**********************************************************************/
-int findLBNPage(struct vdo *vdo,
-                LogicalBlockNumber lbn,
-                PhysicalBlockNumber *pbnPtr)
+int findLBNPage(struct vdo             *vdo,
+                logical_block_number_t  lbn,
+                PhysicalBlockNumber    *pbnPtr)
 {
   if (lbn >= vdo->config.logical_blocks) {
     warnx("VDO has only %" PRIu64 " logical blocks, cannot dump mapping for"
@@ -240,10 +240,10 @@ int findLBNPage(struct vdo *vdo,
 }
 
 /**********************************************************************/
-int findLBNMapping(struct vdo          *vdo,
-                   LogicalBlockNumber   lbn,
-                   PhysicalBlockNumber *pbnPtr,
-                   BlockMappingState   *statePtr)
+int findLBNMapping(struct vdo             *vdo,
+                   logical_block_number_t  lbn,
+                   PhysicalBlockNumber    *pbnPtr,
+                   BlockMappingState      *statePtr)
 {
   PhysicalBlockNumber pagePBN;
   int result = findLBNPage(vdo, lbn, &pagePBN);

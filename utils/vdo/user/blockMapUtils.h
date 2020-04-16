@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#7 $
  */
 
 #ifndef BLOCK_MAP_UTILS_H
@@ -78,7 +78,7 @@ examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner);
  * @return VDO_SUCCESS or an error code
  **/
 int __must_check findLBNPage(struct vdo *vdo,
-			     LogicalBlockNumber lbn,
+			     logical_block_number_t lbn,
 			     PhysicalBlockNumber *pbnPtr);
 
 /**
@@ -92,7 +92,7 @@ int __must_check findLBNPage(struct vdo *vdo,
  * @return VDO_SUCCESS or an error code
  **/
 int __must_check findLBNMapping(struct vdo *vdo,
-				LogicalBlockNumber lbn,
+				logical_block_number_t lbn,
 				PhysicalBlockNumber *pbnPtr,
 				BlockMappingState *statePtr);
 
