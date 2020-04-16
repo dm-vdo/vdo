@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#25 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#26 $
  */
 
 #include <uuid/uuid.h>
@@ -248,7 +248,7 @@ static int makeAndWriteVDO(const struct vdo_config *config,
 int formatVDOWithNonce(const struct vdo_config *config,
                        struct index_config     *indexConfig,
                        PhysicalLayer           *layer,
-                       Nonce                    nonce,
+                       nonce_t                  nonce,
                        UUID                     uuid)
 {
   int result = register_status_codes();

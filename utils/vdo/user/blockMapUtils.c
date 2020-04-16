@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#16 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#17 $
  */
 
 #include "blockMapUtils.h"
@@ -59,7 +59,7 @@ bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
  **/
 static int readAndExaminePage(struct vdo          *vdo,
                               PhysicalBlockNumber  pagePBN,
-                              Height               height,
+                              height_t             height,
                               MappingExaminer     *examiner)
 {
   struct block_map_page *page;
@@ -137,7 +137,7 @@ int examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner)
     return result;
   }
 
-  Height height = BLOCK_MAP_TREE_HEIGHT - 1;
+  height_t height = BLOCK_MAP_TREE_HEIGHT - 1;
   for (uint8_t rootIndex = 0; rootIndex < map->root_count; rootIndex++) {
     result = readAndExaminePage(vdo, rootIndex + map->root_origin, height,
                                 examiner);
@@ -264,7 +264,7 @@ int findLBNMapping(struct vdo             *vdo,
 /**********************************************************************/
 int readBlockMapPage(PhysicalLayer            *layer,
                      PhysicalBlockNumber       pbn,
-                     Nonce                     nonce,
+                     nonce_t                   nonce,
                      struct block_map_page    *page)
 {
   int result = layer->reader(layer, pbn, 1, (char *) page, NULL);
