@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#17 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#18 $
  */
 
 #include "blockMapUtils.h"
@@ -35,14 +35,15 @@
 #include "vdoInternal.h"
 
 /**********************************************************************/
-bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
+bool isValidDataBlock(const struct slab_depot *depot,
+                      physical_block_number_t  pbn)
 {
   if ((pbn < depot->first_block) || (pbn >= depot->last_block)) {
     return false;
   }
 
-  PhysicalBlockNumber sbnMask = (1ULL << depot->slab_size_shift) - 1;
-  slab_block_number   sbn     = (pbn - depot->first_block) & sbnMask;
+  physical_block_number_t sbnMask = (1ULL << depot->slab_size_shift) - 1;
+  slab_block_number       sbn     = (pbn - depot->first_block) & sbnMask;
   return (sbn < get_slab_config(depot)->data_blocks);
 }
 
@@ -57,10 +58,10 @@ bool isValidDataBlock(const struct slab_depot *depot, PhysicalBlockNumber pbn)
  *
  * @return VDO_SUCCESS or an error
  **/
-static int readAndExaminePage(struct vdo          *vdo,
-                              PhysicalBlockNumber  pagePBN,
-                              height_t             height,
-                              MappingExaminer     *examiner)
+static int readAndExaminePage(struct vdo              *vdo,
+                              physical_block_number_t  pagePBN,
+                              height_t                 height,
+                              MappingExaminer         *examiner)
 {
   struct block_map_page *page;
   int result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
@@ -119,7 +120,7 @@ int examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner)
   page_count_t       flatPageCount = map->flat_page_count;
 
   for (page_number_t pageNumber = 0; pageNumber < flatPageCount; pageNumber++) {
-    PhysicalBlockNumber pbn = pageNumber + BLOCK_MAP_FLAT_PAGE_ORIGIN;
+    physical_block_number_t pbn = pageNumber + BLOCK_MAP_FLAT_PAGE_ORIGIN;
     int result = readAndExaminePage(vdo, pbn, 0, examiner);
     if (result != VDO_SUCCESS) {
       return result;
@@ -160,11 +161,11 @@ int examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner)
  *
  * @return VDO_SUCCESS or an error
  **/
-static int readSlotFromPage(struct vdo          *vdo,
-                            PhysicalBlockNumber  pbn,
-                            SlotNumber           slot,
-                            PhysicalBlockNumber *mappedPBNPtr,
-                            BlockMappingState   *mappedStatePtr)
+static int readSlotFromPage(struct vdo              *vdo,
+                            physical_block_number_t  pbn,
+                            SlotNumber               slot,
+                            physical_block_number_t *mappedPBNPtr,
+                            BlockMappingState       *mappedStatePtr)
 {
   struct block_map_page *page;
   int result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
@@ -197,9 +198,9 @@ static int readSlotFromPage(struct vdo          *vdo,
 }
 
 /**********************************************************************/
-int findLBNPage(struct vdo             *vdo,
-                logical_block_number_t  lbn,
-                PhysicalBlockNumber    *pbnPtr)
+int findLBNPage(struct vdo              *vdo,
+                logical_block_number_t   lbn,
+                physical_block_number_t *pbnPtr)
 {
   if (lbn >= vdo->config.logical_blocks) {
     warnx("VDO has only %" PRIu64 " logical blocks, cannot dump mapping for"
@@ -224,7 +225,7 @@ int findLBNPage(struct vdo             *vdo,
     pageNumber /= BLOCK_MAP_ENTRIES_PER_PAGE;
   }
 
-  PhysicalBlockNumber pbn = map->root_origin + rootIndex;
+  physical_block_number_t pbn = map->root_origin + rootIndex;
   for (int i = BLOCK_MAP_TREE_HEIGHT - 1; i > 0; i--) {
     BlockMappingState state;
     int result = readSlotFromPage(vdo, pbn, slots[i], &pbn, &state);
@@ -240,12 +241,12 @@ int findLBNPage(struct vdo             *vdo,
 }
 
 /**********************************************************************/
-int findLBNMapping(struct vdo             *vdo,
-                   logical_block_number_t  lbn,
-                   PhysicalBlockNumber    *pbnPtr,
-                   BlockMappingState      *statePtr)
+int findLBNMapping(struct vdo              *vdo,
+                   logical_block_number_t   lbn,
+                   physical_block_number_t *pbnPtr,
+                   BlockMappingState       *statePtr)
 {
-  PhysicalBlockNumber pagePBN;
+  physical_block_number_t pagePBN;
   int result = findLBNPage(vdo, lbn, &pagePBN);
   if (result != VDO_SUCCESS) {
     return result;
@@ -263,7 +264,7 @@ int findLBNMapping(struct vdo             *vdo,
 
 /**********************************************************************/
 int readBlockMapPage(PhysicalLayer            *layer,
-                     PhysicalBlockNumber       pbn,
+                     physical_block_number_t   pbn,
                      nonce_t                   nonce,
                      struct block_map_page    *page)
 {

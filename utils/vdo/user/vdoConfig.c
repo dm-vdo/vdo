@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#26 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#27 $
  */
 
 #include <uuid/uuid.h>
@@ -45,7 +45,7 @@
 
 /**********************************************************************/
 int makeVDOLayoutFromConfig(const struct vdo_config  *config,
-                            PhysicalBlockNumber       startingOffset,
+                            physical_block_number_t   startingOffset,
                             struct vdo_layout       **vdoLayoutPtr)
 {
   struct vdo_layout *vdoLayout;
@@ -103,7 +103,8 @@ static int __must_check configureVDO(struct vdo *vdo)
   struct partition *depotPartition
     = get_vdo_partition(vdo->layout, BLOCK_ALLOCATOR_PARTITION);
   block_count_t depotSize = get_fixed_layout_partition_size(depotPartition);
-  PhysicalBlockNumber origin = get_fixed_layout_partition_offset(depotPartition);
+  physical_block_number_t origin
+    = get_fixed_layout_partition_offset(depotPartition);
   result = make_slab_depot(depotSize, origin, slabConfig, get_thread_config(vdo),
                            vdo->nonce, 1, vdo->layer, NULL,
                            vdo->read_only_notifier, vdo->recovery_journal,
@@ -166,9 +167,9 @@ static int __must_check clearPartition(PhysicalLayer *layer,
 				       struct vdo_layout *layout,
 				       partition_id id)
 {
-  struct partition    *partition = get_vdo_partition(layout, id);
-  block_count_t        size      = get_fixed_layout_partition_size(partition);
-  PhysicalBlockNumber  start     = get_fixed_layout_partition_offset(partition);
+  struct partition *partition = get_vdo_partition(layout, id);
+  block_count_t size = get_fixed_layout_partition_size(partition);
+  physical_block_number_t start = get_fixed_layout_partition_offset(partition);
 
   block_count_t bufferBlocks = 1;
   for (block_count_t n = size;
@@ -184,7 +185,7 @@ static int __must_check clearPartition(PhysicalLayer *layer,
     return result;
   }
 
-  for (PhysicalBlockNumber pbn = start;
+  for (physical_block_number_t pbn = start;
        (pbn < start + size) && (result == VDO_SUCCESS);
        pbn += bufferBlocks) {
     result = layer->writer(layer, pbn, bufferBlocks, zeroBuffer, NULL);

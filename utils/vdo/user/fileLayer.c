@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#7 $
  */
 
 #include "fileLayer.h"
@@ -77,11 +77,11 @@ static int bufferAllocator(PhysicalLayer   *header,
 }
 
 /**********************************************************************/
-static int fileReader(PhysicalLayer       *header,
-                      PhysicalBlockNumber  startBlock,
-                      size_t               blockCount,
-                      char                *buffer,
-                      size_t              *blocksRead)
+static int fileReader(PhysicalLayer           *header,
+                      physical_block_number_t  startBlock,
+                      size_t                   blockCount,
+                      char                    *buffer,
+                      size_t                  *blocksRead)
 {
   FileLayer *layer = asFileLayer(header);
 
@@ -116,11 +116,11 @@ static int fileReader(PhysicalLayer       *header,
 }
 
 /**********************************************************************/
-static int fileWriter(PhysicalLayer       *header,
-                      PhysicalBlockNumber  startBlock,
-                      size_t               blockCount,
-                      char                *buffer,
-                      size_t              *blocksWritten)
+static int fileWriter(PhysicalLayer           *header,
+                      physical_block_number_t  startBlock,
+                      size_t                   blockCount,
+                      char                    *buffer,
+                      size_t                  *blocksWritten)
 {
   FileLayer *layer = asFileLayer(header);
 
@@ -153,11 +153,12 @@ static int fileWriter(PhysicalLayer       *header,
 }
 
 /**********************************************************************/
-static int noWriter(PhysicalLayer       *header __attribute__((unused)),
-                    PhysicalBlockNumber  startBlock __attribute__((unused)),
-                    size_t               blockCount __attribute__((unused)),
-                    char                *buffer __attribute__((unused)),
-                    size_t              *blocksWritten __attribute__((unused)))
+static int
+noWriter(PhysicalLayer           *header __attribute__((unused)),
+         physical_block_number_t  startBlock __attribute__((unused)),
+         size_t                   blockCount __attribute__((unused)),
+         char                    *buffer __attribute__((unused)),
+         size_t                  *blocksWritten __attribute__((unused)))
 {
   return EPERM;
 }

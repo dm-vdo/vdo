@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#8 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -56,7 +56,7 @@ int __must_check formatVDO(const struct vdo_config *config,
  **/
 int __must_check
 makeVDOLayoutFromConfig(const struct vdo_config *config,
-			PhysicalBlockNumber startingOffset,
+			physical_block_number_t startingOffset,
 			struct vdo_layout **vdoLayoutPtr);
 
 /**
