@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#6 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#7 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -435,16 +435,13 @@ class ListOperation(VDOOperation):
 
   ######################################################################
   def execute(self, args):
-    cmd = ['dmsetup', 'status', '--target', Defaults.vdoTargetName]
-    vdos = set([line.split(':')[0]
-                for line in runCommand(cmd, noThrow=True).splitlines()])
+    vdos = set()
+    cmd = ["lsblk", "--pairs", "--paths", "--output", "type,name"]
+    for line in runCommand(cmd, noThrow=True).splitlines():
+      blktype, foo, name = line.replace('"','').partition(" ")
+      if blktype.split("=")[1] == "vdo":
+        vdos.add(os.path.basename(name.split("=")[1]))
     
-    cmd = ['lvs', '--config', 'devices/scan_lvs=1', '--select',
-           'segtype=vdo-pool', '--noheadings', '--option', 'lv_dm_path']
-    lvmVdos = set([os.path.basename(line)
-                   for line in runCommand(cmd, noThrow=True).splitlines()])
-    vdos = vdos - lvmVdos
-
     if args.all:
       conf = Configuration(self.confFile)
       vdos |= set(conf.getAllVdos().keys())
