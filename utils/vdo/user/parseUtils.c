@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#5 $
  */
 
 #include "parseUtils.h"
@@ -105,7 +105,7 @@ int parseSize(const char *arg, bool lvmMode, uint64_t *sizePtr)
 
 static int parseMem(char *string, uint32_t *sizePtr)
 {
-  UdsMemoryConfigSize mem;
+  uds_memory_config_size_t mem;
   if (strcmp(string, "0.25") == 0) {
     mem = UDS_MEMORY_CONFIG_256MB;
   } else if (strcmp(string, "0.5") == 0) {
