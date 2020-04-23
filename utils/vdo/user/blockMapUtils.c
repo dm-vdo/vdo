@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#19 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#20 $
  */
 
 #include "blockMapUtils.h"
@@ -116,22 +116,13 @@ static int readAndExaminePage(struct vdo              *vdo,
 int examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner)
 {
   // Examine flat pages.
-  struct block_map  *map           = get_block_map(vdo);
-  page_count_t       flatPageCount = map->flat_page_count;
-
-  for (page_number_t pageNumber = 0; pageNumber < flatPageCount; pageNumber++) {
-    physical_block_number_t pbn = pageNumber + BLOCK_MAP_FLAT_PAGE_ORIGIN;
-    int result = readAndExaminePage(vdo, pbn, 0, examiner);
-    if (result != VDO_SUCCESS) {
-      return result;
-    }
-  }
-
+  struct block_map *map = get_block_map(vdo);
   int result = ASSERT((map->root_origin != 0),
                       "block map root origin must be non-zero");
   if (result != VDO_SUCCESS) {
     return result;
   }
+
   result = ASSERT((map->root_count != 0),
                   "block map root count must be non-zero");
   if (result != VDO_SUCCESS) {
@@ -210,16 +201,10 @@ int findLBNPage(struct vdo              *vdo,
 
   struct block_map *map = get_block_map(vdo);
   page_number_t pageNumber = lbn / BLOCK_MAP_ENTRIES_PER_PAGE;
-  if (pageNumber < map->flat_page_count) {
-    // It's in the flat section of the block map.
-    *pbnPtr = BLOCK_MAP_FLAT_PAGE_ORIGIN + pageNumber;
-    return VDO_SUCCESS;
-  }
 
   // It's in the tree section of the block map.
   SlotNumber slots[BLOCK_MAP_TREE_HEIGHT];
   root_count_t rootIndex = pageNumber % map->root_count;
-  pageNumber -= map->flat_page_count;
   for (int i = 1; i < BLOCK_MAP_TREE_HEIGHT; i++) {
     slots[i] = pageNumber % BLOCK_MAP_ENTRIES_PER_PAGE;
     pageNumber /= BLOCK_MAP_ENTRIES_PER_PAGE;
