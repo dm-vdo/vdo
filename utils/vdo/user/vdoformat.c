@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#15 $
  */
 
 #include <err.h>
@@ -160,7 +160,7 @@ static void describeCapacity(const struct vdo *vdo,
            vdo->config.logical_blocks);
   }
 
-  SlabCount slabCount = calculate_slab_count(vdo->depot);
+  slab_count_t slabCount = calculate_slab_count(vdo->depot);
   const struct slab_config *slabConfig = get_slab_config(vdo->depot);
   size_t totalSize = slabCount * slabConfig->slab_blocks * VDO_BLOCK_SIZE;
   size_t maxTotalSize = MAX_SLABS * slabConfig->slab_blocks * VDO_BLOCK_SIZE;
