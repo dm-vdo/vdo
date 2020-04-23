@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#2 $
  */
 
 #include "requestQueue.h"
@@ -84,8 +84,8 @@ struct requestQueue {
   const char            *name;       // name of queue
   RequestQueueProcessor *processOne; // function to process 1 request
 
-  FunnelQueue *mainQueue;       // new incoming requests
-  FunnelQueue *retryQueue;      // old requests to retry first
+  struct funnel_queue *mainQueue; // new incoming requests
+  struct funnel_queue *retryQueue; // old requests to retry first
   EventCount  *workEvent;       // signal to wake the worker thread
 
   Thread thread;                // thread id of the worker thread
@@ -164,9 +164,9 @@ static RelTime *getWakeTime(RequestQueue *queue)
 }
 
 /**********************************************************************/
-static Request *removeHead(FunnelQueue *queue)
+static Request *removeHead(struct funnel_queue *queue)
 {
-  FunnelQueueEntry *entry = funnelQueuePoll(queue);
+  struct funnel_queue_entry *entry = funnel_queue_poll(queue);
   if (entry == NULL) {
     return NULL;
   }
@@ -286,13 +286,13 @@ int makeRequestQueue(const char             *queueName,
   queue->currentBatch    = 0;
   queue->waitNanoseconds = DEFAULT_WAIT_TIME;
 
-  result = makeFunnelQueue(&queue->mainQueue);
+  result = make_funnel_queue(&queue->mainQueue);
   if (result != UDS_SUCCESS) {
     requestQueueFinish(queue);
     return result;
   }
 
-  result = makeFunnelQueue(&queue->retryQueue);
+  result = make_funnel_queue(&queue->retryQueue);
   if (result != UDS_SUCCESS) {
     requestQueueFinish(queue);
     return result;
@@ -326,7 +326,7 @@ static INLINE void wakeUpWorker(RequestQueue *queue)
 void requestQueueEnqueue(RequestQueue *queue, Request *request)
 {
   bool unbatched = request->unbatched;
-  funnelQueuePut(request->requeued ? queue->retryQueue : queue->mainQueue,
+  funnel_queue_put(request->requeued ? queue->retryQueue : queue->mainQueue,
                  &request->requestQueueLink);
 
   /*
@@ -350,7 +350,7 @@ void requestQueueFinish(RequestQueue *queue)
    * This memory barrier ensures that any requests we queued will be seen.  The
    * point is that when dequeueRequest sees the following update to the alive
    * flag, it will also be able to see any change we made to a next field in
-   * the FunnelQueue entry.  The corresponding read barrier is in
+   * the funnel queue entry.  The corresponding read barrier is in
    * dequeueRequest.
    */
   smp_wmb();
@@ -371,7 +371,7 @@ void requestQueueFinish(RequestQueue *queue)
   }
 
   freeEventCount(queue->workEvent);
-  freeFunnelQueue(queue->mainQueue);
-  freeFunnelQueue(queue->retryQueue);
+  free_funnel_queue(queue->mainQueue);
+  free_funnel_queue(queue->retryQueue);
   FREE(queue);
 }
