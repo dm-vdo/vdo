@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#2 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/man/Makefile#1 $
 
 INSTALLFILES=vdodmeventd.8 \
         vdodumpconfig.8    \
