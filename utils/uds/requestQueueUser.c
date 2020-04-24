@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#3 $
  */
 
 #include "requestQueue.h"
@@ -86,7 +86,7 @@ struct requestQueue {
 
   struct funnel_queue *mainQueue; // new incoming requests
   struct funnel_queue *retryQueue; // old requests to retry first
-  EventCount  *workEvent;       // signal to wake the worker thread
+  struct event_count  *workEvent; // signal to wake the worker thread
 
   Thread thread;                // thread id of the worker thread
   bool   started;               // true if the worker was started
@@ -212,8 +212,8 @@ static Request *dequeueRequest(RequestQueue *queue)
     }
 
     // Looks like there's no work. Prepare to wait for more work. If the
-    // EventCount is signalled after this returns, we won't wait later on.
-    EventToken waitToken = eventCountPrepare(queue->workEvent);
+    // event count is signalled after this returns, we won't wait later on.
+    event_token_t waitToken = event_count_prepare(queue->workEvent);
 
     // First poll for shutdown to ensure we don't miss work that was enqueued
     // immediately before a shutdown request.
@@ -231,7 +231,7 @@ static Request *dequeueRequest(RequestQueue *queue)
     // we got the event key.
     request = pollQueues(queue);
     if ((request != NULL) || shuttingDown) {
-      eventCountCancel(queue->workEvent, waitToken);
+      event_count_cancel(queue->workEvent, waitToken);
       return request;
     }
 
@@ -239,10 +239,10 @@ static Request *dequeueRequest(RequestQueue *queue)
     // of requests we processed since the last wait.
     adjustWaitTime(queue);
 
-    // If the EventCount hasn't been signalled since we got the waitToken,
+    // If the event count hasn't been signalled since we got the waitToken,
     // wait until it is signalled or until the wait times out.
     RelTime *wakeTime = getWakeTime(queue);
-    eventCountWait(queue->workEvent, waitToken, wakeTime);
+    event_count_wait(queue->workEvent, waitToken, wakeTime);
 
     if (wakeTime == NULL) {
       // We've been roused from dormancy. Clear the flag so enqueuers can stop
@@ -298,7 +298,7 @@ int makeRequestQueue(const char             *queueName,
     return result;
   }
 
-  result = makeEventCount(&queue->workEvent);
+  result = make_event_count(&queue->workEvent);
   if (result != UDS_SUCCESS) {
     requestQueueFinish(queue);
     return result;
@@ -319,7 +319,7 @@ int makeRequestQueue(const char             *queueName,
 /**********************************************************************/
 static INLINE void wakeUpWorker(RequestQueue *queue)
 {
-  eventCountBroadcast(queue->workEvent);
+  event_count_broadcast(queue->workEvent);
 }
 
 /**********************************************************************/
@@ -370,7 +370,7 @@ void requestQueueFinish(RequestQueue *queue)
     }
   }
 
-  freeEventCount(queue->workEvent);
+  free_event_count(queue->workEvent);
   free_funnel_queue(queue->mainQueue);
   free_funnel_queue(queue->retryQueue);
   FREE(queue);
