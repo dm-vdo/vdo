@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 8.0.0.0
+Version: 8.1.0.0
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -140,4 +140,4 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_sysconfdir}/bash_completion.d/vdostats
 
 %changelog
-* Fri Apr 24 2020 - corwin@bf30-1 - 8.0.0.0-1
+* Tue Apr 28 2020 - corwin@bf30-1 - 8.1.0.0-1

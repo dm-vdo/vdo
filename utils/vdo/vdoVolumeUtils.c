@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#16 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#17 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -29,11 +29,78 @@
 #include "slabDepotInternals.h"
 #include "slabSummaryInternals.h"
 #include "types.h"
+#include "vdoDecode.h"
 #include "vdoInternal.h"
 #include "vdoLayout.h"
-#include "vdoLoad.h"
 
 #include "fileLayer.h"
+
+/**********************************************************************/
+static int __must_check
+decode_vdo(struct vdo *vdo, bool validate_config)
+{
+	int result = start_vdo_decode(vdo, validate_config);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	result = decode_vdo_layout(get_component_buffer(vdo->super_block),
+				   &vdo->layout);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	return finish_vdo_decode(vdo);
+}
+
+/**********************************************************************/
+int load_vdo_superblock(PhysicalLayer *layer,
+                        struct volume_geometry *geometry,
+                        bool validate_config,
+                        VDODecoder *decoder,
+                        struct vdo **vdo_ptr)
+{
+	struct vdo *vdo;
+	int result = make_vdo(layer, &vdo);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	setLoadConfigFromGeometry(geometry, &vdo->load_config);
+	result = load_super_block(layer, get_first_block_offset(vdo),
+				  &vdo->super_block);
+	if (result != VDO_SUCCESS) {
+		free_vdo(&vdo);
+		return result;
+	}
+
+	result = ((decoder == NULL) ?
+                  decode_vdo(vdo, validate_config) :
+                  decoder(vdo, validate_config));
+	if (result != VDO_SUCCESS) {
+		free_vdo(&vdo);
+		return result;
+	}
+
+	*vdo_ptr = vdo;
+	return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+int load_vdo(PhysicalLayer *layer,
+	     bool validate_config,
+	     VDODecoder *decoder,
+	     struct vdo **vdo_ptr)
+{
+	struct volume_geometry geometry;
+	int result = load_volume_geometry(layer, &geometry);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	return load_vdo_superblock(layer, &geometry, validate_config,
+                                   decoder, vdo_ptr);
+}
 
 /**
  * Load a VDO from a file.

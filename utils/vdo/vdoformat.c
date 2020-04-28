@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#15 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#16 $
  */
 
 #include <err.h>
@@ -44,10 +44,10 @@
 #include "vdo.h"
 #include "vdoInternal.h"
 #include "vdoConfig.h"
-#include "vdoLoad.h"
 
 #include "fileLayer.h"
 #include "parseUtils.h"
+#include "vdoVolumeUtils.h"
 
 enum {
   MIN_SLAB_BITS        =  4,

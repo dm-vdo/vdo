@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#5 $
  */
 
 #ifndef VDO_VOLUME_UTILS_H
@@ -24,7 +24,54 @@
 
 #include "fixedLayout.h"
 #include "types.h"
-#include "vdoLoad.h"
+#include "volumeGeometry.h"
+
+/**
+ * A function which decodes a vdo from a super block.
+ *
+ * @param vdo              The vdo to be decoded (its super block must already
+ *                         be loaded)
+ * @param validate_config  If <code>true</code>, the vdo's configuration will
+ *                         be validated before the decode is attempted
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+typedef int VDODecoder(struct vdo *vdo, bool validate_config);
+
+/**
+ * Load a vdo from a specified super block location.
+ *
+ * @param [in]  layer            The physical layer the vdo sits on
+ * @param [in]  geometry         A pointer to the geometry for the volume
+ * @param [in]  validate_config  Whether to validate the vdo against the layer
+ * @param [in]  decoder          The vdo decoder to use, if NULL, the default
+ *                               decoder will be used
+ * @param [out] vdo_ptr          A pointer to hold the decoded vdo
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int load_vdo_superblock(PhysicalLayer *layer,
+                        struct volume_geometry *geometry,
+                        bool validate_config,
+                        VDODecoder *decoder,
+                        struct vdo **vdo_ptr)
+	__attribute__((warn_unused_result));
+
+/**
+ * Load a vdo volume.
+ *
+ * @param [in]  layer            The physical layer the vdo sits on
+ * @param [in]  validate_config  Whether to validate the vdo against the layer
+ * @param [in]  decoder          The vdo decoder to use, if NULL, the default
+ *                               decoder will be used
+ * @param [out] vdo_ptr          A pointer to hold the decoded vdo
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int __must_check load_vdo(PhysicalLayer *layer,
+                          bool validate_config,
+                          VDODecoder *decoder,
+                          struct vdo **vdo_ptr);
 
 /**
  * Load a VDO from a file.
