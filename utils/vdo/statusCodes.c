@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/statusCodes.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/statusCodes.c#5 $
  */
 
 #include "statusCodes.h"
@@ -68,7 +68,6 @@ const struct errorInfo vdo_status_list[] = {
 	{ "VDO_INVALID_ADMIN_STATE", "Invalid operation for current state" },
 };
 
-#ifndef __KERNEL__
 static OnceState vdo_status_codes_registered = ONCE_STATE_INITIALIZER;
 static int status_code_registration_result;
 
@@ -97,15 +96,10 @@ static void do_status_code_registration(void)
 	status_code_registration_result =
 		(result == UDS_SUCCESS) ? VDO_SUCCESS : result;
 }
-#endif
 
 /**********************************************************************/
 int register_status_codes(void)
 {
-#ifdef __KERNEL__
-	return VDO_SUCCESS;
-#else
 	performOnce(&vdo_status_codes_registered, do_status_code_registration);
 	return status_code_registration_result;
-#endif
 }
