@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.h#2 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.h#3 $
  */
 
 #ifndef BUFFERED_READER_H
@@ -49,11 +49,10 @@ typedef struct bufferedReader BufferedReader;
  *
  * @return UDS_SUCCESS or error code.
  **/
-int make_buffered_reader(struct ioFactory *factory,
-			 struct dm_bufio_client *client,
-			 sector_t block_limit,
-			 BufferedReader **reader_ptr)
-	__attribute__((warn_unused_result));
+int __must_check make_buffered_reader(struct ioFactory *factory,
+				      struct dm_bufio_client *client,
+				      sector_t block_limit,
+				      BufferedReader **reader_ptr);
 #else
 /**
  * Make a new buffered reader.
@@ -63,8 +62,8 @@ int make_buffered_reader(struct ioFactory *factory,
  *
  * @return UDS_SUCCESS or error code.
  **/
-int make_buffered_reader(struct ioRegion *region, BufferedReader **reader_ptr)
-	__attribute__((warn_unused_result));
+int __must_check
+make_buffered_reader(struct ioRegion *region, BufferedReader **reader_ptr);
 #endif
 
 /**
@@ -83,8 +82,8 @@ void free_buffered_reader(BufferedReader *reader);
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int read_from_buffered_reader(BufferedReader *reader, void *data, size_t length)
-	__attribute__((warn_unused_result));
+int __must_check
+read_from_buffered_reader(BufferedReader *reader, void *data, size_t length);
 
 /**
  * Verify that the data currently in the buffer matches the required value.
@@ -99,8 +98,7 @@ int read_from_buffered_reader(BufferedReader *reader, void *data, size_t length)
  * @note If the value matches, the matching contents are consumed. However,
  *       if the match fails, any buffer contents are left as is.
  **/
-int verify_buffered_data(BufferedReader *reader,
-			 const void *value,
-			 size_t length) __attribute__((warn_unused_result));
+int __must_check
+verify_buffered_data(BufferedReader *reader, const void *value, size_t length);
 
 #endif // BUFFERED_READER_H

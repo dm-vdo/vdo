@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#3 $
  */
 
 #include <fcntl.h>
@@ -106,8 +106,7 @@ void miniSyslog(int priority, const char *format, ...)
 }
 
 /**********************************************************************/
-__attribute__((warn_unused_result))
-static bool writeMsg(int fd, const char *msg)
+static bool __must_check writeMsg(int fd, const char *msg)
 {
   size_t bytesToWrite = strlen(msg);
   ssize_t bytesWritten = write(fd, msg, bytesToWrite);

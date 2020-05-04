@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.h#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.h#2 $
  */
 
 #ifndef FILE_UTILS_H
@@ -51,8 +51,7 @@ typedef enum {
  *
  * @return UDS_SUCCESS or an error code
  **/
-int fileExists(const char *path, bool *exists)
-  __attribute__((warn_unused_result));
+int __must_check fileExists(const char *path, bool *exists);
 
 /**
  * Open a file.
@@ -63,8 +62,7 @@ int fileExists(const char *path, bool *exists)
  *
  * @return UDS_SUCCESS or an error code
  **/
-int openFile(const char *path, FileAccess access, int *fd)
-  __attribute__((warn_unused_result));
+int __must_check openFile(const char *path, FileAccess access, int *fd);
 
 /**
  * Close a file.
@@ -98,8 +96,7 @@ void tryCloseFile(int fd);
  *                              the file
  *         UDS_ASSERTION_FAILED if there was any other error
  **/
-int syncAndCloseFile(int fd, const char *errorMessage)
-  __attribute__((warn_unused_result));
+int __must_check syncAndCloseFile(int fd, const char *errorMessage);
 
 /**
  * Attempt to sync and then close a file, ignoring errors.
@@ -117,8 +114,7 @@ void trySyncAndCloseFile(int fd);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int readBuffer(int fd, void *buffer, unsigned int length)
-  __attribute__((warn_unused_result));
+int __must_check readBuffer(int fd, void *buffer, unsigned int length);
 
 /**
  * Read into a buffer from a file at a given offset into the file.
@@ -131,12 +127,11 @@ int readBuffer(int fd, void *buffer, unsigned int length)
  *
  * @return UDS_SUCCESS or an error code
  **/
-int readDataAtOffset(int     fd,
-                     off_t   offset,
-                     void   *buffer,
-                     size_t  size,
-                     size_t *length)
-  __attribute__((warn_unused_result));
+int __must_check readDataAtOffset(int fd,
+				  off_t offset,
+				  void *buffer,
+				  size_t size,
+				  size_t *length);
 
 
 /**
@@ -148,8 +143,7 @@ int readDataAtOffset(int     fd,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int writeBuffer(int fd, const void *buffer, unsigned int length)
-  __attribute__((warn_unused_result));
+int __must_check writeBuffer(int fd, const void *buffer, unsigned int length);
 
 /**
  * Write a buffer to a file starting at a given offset in the file.
@@ -161,11 +155,10 @@ int writeBuffer(int fd, const void *buffer, unsigned int length)
  *
  * @return UDS_SUCCESS or an error code
  **/
-int writeBufferAtOffset(int           fd,
-                        off_t         offset,
-                        const void   *buffer,
-                        unsigned int  length)
-  __attribute__((warn_unused_result));
+int __must_check writeBufferAtOffset(int fd,
+				     off_t offset,
+				     const void *buffer,
+				     unsigned int length);
 
 /**
  * Determine the size of an open file.
@@ -175,8 +168,7 @@ int writeBufferAtOffset(int           fd,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int getOpenFileSize(int fd, off_t *sizePtr)
-  __attribute__((warn_unused_result));
+int __must_check getOpenFileSize(int fd, off_t *sizePtr);
 
 /**
  * Remove a file, logging an error if any.
@@ -198,8 +190,8 @@ int removeFile(const char *fileName);
  *
  * @note                Logs errors encountered.
  **/
-bool fileNameMatch(const char *pattern, const char *string, int flags)
-  __attribute__((warn_unused_result));
+bool __must_check
+fileNameMatch(const char *pattern, const char *string, int flags);
 
 /**
  * Convert a path to an absolute path by adding the current working directory
@@ -222,8 +214,8 @@ int makeAbsPath(const char *path, char **absPath);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingStat(const char *path, struct stat *buf, const char *context)
-  __attribute__((warn_unused_result));
+int __must_check
+loggingStat(const char *path, struct stat *buf, const char *context);
 
 /**
  * Wrap the stat(2) system call. Use this version if it should not be an
@@ -235,10 +227,8 @@ int loggingStat(const char *path, struct stat *buf, const char *context)
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingStatMissingOk(const char  *path,
-                         struct stat *buf,
-                         const char  *context)
-  __attribute__((warn_unused_result));
+int __must_check
+loggingStatMissingOk(const char *path, struct stat *buf, const char *context);
 
 /**
  * Wrap the fstat(2) system call.
@@ -249,8 +239,7 @@ int loggingStatMissingOk(const char  *path,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingFstat(int fd, struct stat *buf, const char *context)
-  __attribute__((warn_unused_result));
+int __must_check loggingFstat(int fd, struct stat *buf, const char *context);
 
 /**
  * Wrap the fsync(2) system call.
@@ -260,7 +249,6 @@ int loggingFstat(int fd, struct stat *buf, const char *context)
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingFsync(int fd, const char *context)
-  __attribute__((warn_unused_result));
+int __must_check loggingFsync(int fd, const char *context);
 
 #endif /* FILE_UTILS_H */

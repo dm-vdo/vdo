@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#2 $
  */
 
 #ifndef SYSCALLS_H
@@ -40,12 +40,11 @@
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingRead(int         fd,
-                void       *buf,
-                size_t      count,
-                const char *context,
-                ssize_t    *bytesReadPtr)
-  __attribute__((warn_unused_result));
+int __must_check loggingRead(int fd,
+			     void *buf,
+			     size_t count,
+			     const char *context,
+			     ssize_t *bytesReadPtr);
 
 /**
  * Wrap the pread(2) system call, looping as long as errno is EINTR.
@@ -59,13 +58,12 @@ int loggingRead(int         fd,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingPread(int         fd,
-                 void       *buf,
-                 size_t      count,
-                 off_t       offset,
-                 const char *context,
-                 ssize_t    *bytesReadPtr)
-  __attribute__((warn_unused_result));
+int __must_check loggingPread(int fd,
+			      void *buf,
+			      size_t count,
+			      off_t offset,
+			      const char *context,
+			      ssize_t *bytesReadPtr);
 
 /**
  * Wrap the write(2) system call, looping as long as errno is EINTR.
@@ -79,12 +77,11 @@ int loggingPread(int         fd,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingWrite(int         fd,
-                 const void *buf,
-                 size_t      count,
-                 const char *context,
-                 ssize_t    *bytesWrittenPtr)
-  __attribute__((warn_unused_result));
+int __must_check loggingWrite(int fd,
+			      const void *buf,
+			      size_t count,
+			      const char *context,
+			      ssize_t *bytesWrittenPtr);
 
 /**
  * Wrap the pwrite(2) system call, looping as long as errno is EINTR.
@@ -99,13 +96,12 @@ int loggingWrite(int         fd,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingPwrite(int         fd,
-                  const void *buf,
-                  size_t      count,
-                  off_t       offset,
-                  const char *context,
-                  ssize_t    *bytesWrittenPtr)
-  __attribute__((warn_unused_result));
+int __must_check loggingPwrite(int fd,
+			       const void *buf,
+			       size_t count,
+			       off_t offset,
+			       const char *context,
+			       ssize_t *bytesWrittenPtr);
 
 /**
  * Wrap the close(2) system call.
@@ -115,8 +111,7 @@ int loggingPwrite(int         fd,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int loggingClose(int fd, const char *context)
-  __attribute__((warn_unused_result));
+int __must_check loggingClose(int fd, const char *context);
 
 /**
  * Perform operations on a process.

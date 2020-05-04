@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#2 $
+ * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#3 $
  */
 
 #ifndef NUMERIC_H
@@ -39,8 +39,7 @@
  *
  * @return The lesser of a and b
  **/
-__attribute__((warn_unused_result))
-static INLINE int minInt(int a, int b)
+static INLINE int __must_check minInt(int a, int b)
 {
   return ((a < b) ? a : b);
 }
@@ -53,8 +52,7 @@ static INLINE int minInt(int a, int b)
  *
  * @return The greater of a and b
  **/
-__attribute__((warn_unused_result))
-static INLINE int maxInt(int a, int b)
+static INLINE int __must_check maxInt(int a, int b)
 {
   return ((a > b) ? a : b);
 }
@@ -67,8 +65,7 @@ static INLINE int maxInt(int a, int b)
  *
  * @return The greater of a and b
  **/
-__attribute__((warn_unused_result))
-static INLINE unsigned int maxUInt(unsigned int a, unsigned int b)
+static INLINE unsigned int __must_check maxUInt(unsigned int a, unsigned int b)
 {
   return ((a > b) ? a : b);
 }
@@ -81,8 +78,7 @@ static INLINE unsigned int maxUInt(unsigned int a, unsigned int b)
  *
  * @return The greater of a and b
  **/
-__attribute__((warn_unused_result))
-static INLINE long maxLong(long a, long b)
+static INLINE long __must_check maxLong(long a, long b)
 {
   return ((a > b) ? a : b);
 }
@@ -95,8 +91,8 @@ static INLINE long maxLong(long a, long b)
  *
  * @return The greater of a and b
  **/
-__attribute__((warn_unused_result))
-static INLINE unsigned long maxULong(unsigned long a, unsigned long b)
+static INLINE unsigned long __must_check
+maxULong(unsigned long a, unsigned long b)
 {
   return ((a > b) ? a : b);
 }
@@ -109,8 +105,7 @@ static INLINE unsigned long maxULong(unsigned long a, unsigned long b)
  *
  * @return The lesser of a and b
  **/
-__attribute__((warn_unused_result))
-static INLINE size_t minSizeT(size_t a, size_t b)
+static INLINE size_t __must_check minSizeT(size_t a, size_t b)
 {
   return ((a < b) ? a : b);
 }
@@ -123,8 +118,7 @@ static INLINE size_t minSizeT(size_t a, size_t b)
  *
  * @return The greater of a and b
  **/
-__attribute__((warn_unused_result))
-static INLINE size_t maxSizeT(size_t a, size_t b)
+static INLINE size_t __must_check maxSizeT(size_t a, size_t b)
 {
   return ((a > b) ? a : b);
 }
@@ -137,8 +131,7 @@ static INLINE size_t maxSizeT(size_t a, size_t b)
  *
  * @return The lesser of a and b
  **/
-__attribute__((warn_unused_result))
-static INLINE uint64_t minUInt64(uint64_t a, uint64_t b)
+static INLINE uint64_t __must_check minUInt64(uint64_t a, uint64_t b)
 {
   return ((a < b) ? a : b);
 }
@@ -151,8 +144,7 @@ static INLINE uint64_t minUInt64(uint64_t a, uint64_t b)
  *
  * @return The extracted quantity
  **/
-__attribute__((warn_unused_result))
-static INLINE uint64_t getUInt64BE(const uint8_t* data)
+static INLINE uint64_t __must_check getUInt64BE(const uint8_t* data)
 {
   return get_unaligned_be64(data);
 }
@@ -211,8 +203,7 @@ static INLINE void encodeUInt64BE(uint8_t  *data,
  *
  * @return The extracted quantity
  **/
-__attribute__((warn_unused_result))
-static INLINE uint32_t getUInt32BE(const uint8_t* data)
+static INLINE uint32_t __must_check getUInt32BE(const uint8_t* data)
 {
   return get_unaligned_be32(data);
 }
@@ -272,8 +263,7 @@ static INLINE void encodeUInt32BE(uint8_t  *data,
  *
  * @return The extracted quantity
  **/
-__attribute__((warn_unused_result))
-static INLINE uint16_t getUInt16BE(const uint8_t* data)
+static INLINE uint16_t __must_check getUInt16BE(const uint8_t* data)
 {
   return get_unaligned_be16(data);
 }
@@ -332,8 +322,7 @@ static INLINE void encodeUInt16BE(uint8_t  *data,
  *
  * @return The extracted quantity
  **/
-__attribute__((warn_unused_result))
-static INLINE int64_t getInt64LE(const uint8_t* data)
+static INLINE int64_t __must_check getInt64LE(const uint8_t* data)
 {
   return get_unaligned_le64(data);
 }
@@ -392,8 +381,7 @@ static INLINE void encodeInt64LE(uint8_t *data,
  *
  * @return The extracted quantity
  **/
-__attribute__((warn_unused_result))
-static INLINE uint64_t getUInt64LE(const uint8_t* data)
+static INLINE uint64_t __must_check getUInt64LE(const uint8_t* data)
 {
   return get_unaligned_le64(data);
 }
@@ -452,8 +440,7 @@ static INLINE void encodeUInt64LE(uint8_t  *data,
  *
  * @return The extracted quantity
  **/
-__attribute__((warn_unused_result))
-static INLINE int32_t getInt32LE(const uint8_t* data)
+static INLINE int32_t __must_check getInt32LE(const uint8_t* data)
 {
   return get_unaligned_le32(data);
 }
@@ -513,8 +500,7 @@ static INLINE void encodeInt32LE(uint8_t *data,
  *
  * @return The extracted quantity
  **/
-__attribute__((warn_unused_result))
-static INLINE uint32_t getUInt32LE(const uint8_t* data)
+static INLINE uint32_t __must_check getUInt32LE(const uint8_t* data)
 {
   return get_unaligned_le32(data);
 }
@@ -573,8 +559,7 @@ static INLINE void encodeUInt32LE(uint8_t  *data,
  *
  * @return The extracted quantity
  **/
-__attribute__((warn_unused_result))
-static INLINE uint16_t getUInt16LE(const uint8_t* data)
+static INLINE uint16_t __must_check getUInt16LE(const uint8_t* data)
 {
   return get_unaligned_le16(data);
 }

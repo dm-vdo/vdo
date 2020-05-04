@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/ioFactory.h#2 $
+ * $Id: //eng/uds-releases/krusty/src/uds/ioFactory.h#3 $
  */
 
 #ifndef IO_FACTORY_H
@@ -63,8 +63,7 @@ enum { UDS_BLOCK_SIZE = 4096 };
  *
  * @return UDS_SUCCESS or an error code
  **/
-int makeIOFactory(const char *path, IOFactory **factoryPtr)
-  __attribute__((warn_unused_result));
+int __must_check makeIOFactory(const char *path, IOFactory **factoryPtr);
 #else
 /**
  * Create an IOFactory.  The IOFactory is returned with a reference count of 1.
@@ -76,10 +75,8 @@ int makeIOFactory(const char *path, IOFactory **factoryPtr)
  *
  * @return UDS_SUCCESS or an error code
  **/
-int makeIOFactory(const char  *path,
-                  FileAccess   access,
-                  IOFactory  **factoryPtr)
-  __attribute__((warn_unused_result));
+int __must_check
+makeIOFactory(const char *path, FileAccess access, IOFactory **factoryPtr);
 #endif
 
 /**
@@ -106,7 +103,7 @@ void putIOFactory(IOFactory *factory);
  *
  * @return the writable size (in bytes)
  **/
-size_t getWritableSize(IOFactory *factory) __attribute__((warn_unused_result));
+size_t __must_check getWritableSize(IOFactory *factory);
 
 #ifdef __KERNEL__
 /**
@@ -120,12 +117,11 @@ size_t getWritableSize(IOFactory *factory) __attribute__((warn_unused_result));
  *
  * @return UDS_SUCCESS or an error code
  **/
-int makeBufio(IOFactory               *factory,
-              off_t                    offset,
-              size_t                   blockSize,
-              unsigned int             reservedBuffers,
-              struct dm_bufio_client **clientPtr)
-  __attribute__((warn_unused_result));
+int __must_check makeBufio(IOFactory *factory,
+			   off_t offset,
+			   size_t blockSize,
+			   unsigned int reservedBuffers,
+			   struct dm_bufio_client **clientPtr);
 #else
 /**
  * Create an IORegion for a region of the index.
@@ -137,11 +133,10 @@ int makeBufio(IOFactory               *factory,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int makeIORegion(IOFactory  *factory,
-                 off_t       offset,
-                 size_t      size,
-                 IORegion  **regionPtr)
-  __attribute__((warn_unused_result));
+int __must_check makeIORegion(IOFactory *factory,
+			      off_t offset,
+			      size_t size,
+			      IORegion **regionPtr);
 #endif
 
 /**
@@ -154,11 +149,10 @@ int makeIORegion(IOFactory  *factory,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int openBufferedReader(IOFactory       *factory,
-                       off_t            offset,
-                       size_t           size,
-                       BufferedReader **readerPtr)
-  __attribute__((warn_unused_result));
+int __must_check openBufferedReader(IOFactory *factory,
+				    off_t offset,
+				    size_t size,
+				    BufferedReader **readerPtr);
 
 /**
  * Create a BufferedWriter for a region of the index.
@@ -170,10 +164,9 @@ int openBufferedReader(IOFactory       *factory,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int openBufferedWriter(IOFactory       *factory,
-                       off_t            offset,
-                       size_t           size,
-                       BufferedWriter **writerPtr)
-  __attribute__((warn_unused_result));
+int __must_check openBufferedWriter(IOFactory *factory,
+				    off_t offset,
+				    size_t size,
+				    BufferedWriter **writerPtr);
 
 #endif // IO_FACTORY_H

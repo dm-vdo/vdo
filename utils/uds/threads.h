@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/threads.h#3 $
+ * $Id: //eng/uds-releases/krusty/src/uds/threads.h#5 $
  */
 
 #ifndef THREADS_H
@@ -88,11 +88,10 @@ void applyToThreads(void applyFunc(void *, struct task_struct *),
  *
  * @return       success or failure indication
  **/
-int createThread(void       (*threadFunc)(void *),
-                 void        *threadData,
-                 const char  *name,
-                 Thread      *newThread)
-  __attribute__((warn_unused_result));
+int __must_check createThread(void       (*threadFunc)(void *),
+                              void        *threadData,
+                              const char  *name,
+                              Thread      *newThread);
 
 /**
  * Retrieve the current numbers of cores.
@@ -109,7 +108,7 @@ unsigned int getNumCores(void);
  *
  * @return the thread id
  **/
-pid_t get_thread_id(void) __attribute__((warn_unused_result));
+pid_t __must_check get_thread_id(void);
 
 #ifndef __KERNEL__
 /**
@@ -148,8 +147,7 @@ void exitThread(void);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int initializeBarrier(Barrier *barrier, unsigned int threadCount)
-  __attribute__((warn_unused_result));
+int __must_check initializeBarrier(Barrier *barrier, unsigned int threadCount);
 
 /**
  * Destroy a thread synchronization barrier.
@@ -180,7 +178,7 @@ int enterBarrier(Barrier *barrier, bool *winner);
  *
  * @return           UDS_SUCCESS or error code
  **/
-int initCond(CondVar *cond) __attribute__((warn_unused_result));
+int __must_check initCond(CondVar *cond);
 
 /**
  * Signal a condition variable.
@@ -252,15 +250,14 @@ int initializeMutex(Mutex *mutex, bool assertOnError);
  *
  * @return UDS_SUCCESS or an error code
  **/
-__attribute__((warn_unused_result))
 #ifdef __KERNEL__
-static INLINE int initMutex(Mutex *mutex)
+static INLINE int __must_check initMutex(Mutex *mutex)
 {
   mutex_init(mutex);
   return UDS_SUCCESS;
 }
 #else
-int initMutex(Mutex *mutex);
+int __must_check initMutex(Mutex *mutex);
 #endif
 
 /**
@@ -315,15 +312,15 @@ void unlockMutex(Mutex *mutex);
  *
  * @return UDS_SUCCESS or an error code
  **/
-__attribute__((warn_unused_result))
 #ifdef __KERNEL__
-static INLINE int initializeSemaphore(Semaphore *semaphore, unsigned int value)
+static INLINE int __must_check
+initializeSemaphore(Semaphore *semaphore, unsigned int value)
 {
   sema_init(semaphore, value);
   return UDS_SUCCESS;
 }
 #else
-int initializeSemaphore(Semaphore *semaphore, unsigned int value);
+int __must_check initializeSemaphore(Semaphore *semaphore, unsigned int value);
 #endif
 
 /**
@@ -373,9 +370,9 @@ void acquireSemaphore(Semaphore *semaphore);
  *
  * @return true if a permit was acquired, otherwise false
  **/
-__attribute__((warn_unused_result))
 #ifdef __KERNEL__
-static INLINE bool attemptSemaphore(Semaphore *semaphore, RelTime timeout)
+static INLINE bool __must_check
+attemptSemaphore(Semaphore *semaphore, RelTime timeout)
 {
   if (timeout <= 0) {
     // No timeout, just try to grab the semaphore.
@@ -386,7 +383,7 @@ static INLINE bool attemptSemaphore(Semaphore *semaphore, RelTime timeout)
   }
 }
 #else
-bool attemptSemaphore(Semaphore *semaphore, RelTime timeout);
+bool __must_check attemptSemaphore(Semaphore *semaphore, RelTime timeout);
 #endif
 
 /**

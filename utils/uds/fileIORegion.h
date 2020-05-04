@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.h#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.h#2 $
  */
 
 #ifndef FILE_IO_REGION_H
@@ -38,12 +38,11 @@
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int makeFileRegion(IOFactory   *factory,
-                   int          fd,
-                   FileAccess   access,
-                   off_t        offset,
-                   size_t       size,
-                   IORegion   **regionPtr)
-  __attribute__((warn_unused_result));
+int __must_check makeFileRegion(IOFactory *factory,
+				int fd,
+				FileAccess access,
+				off_t offset,
+				size_t size,
+				IORegion **regionPtr);
 
 #endif // FILE_IO_REGION_H

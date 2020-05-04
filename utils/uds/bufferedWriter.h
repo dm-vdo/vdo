@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.h#3 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.h#4 $
  */
 
 #ifndef BUFFERED_WRITER_H
@@ -44,11 +44,10 @@ typedef struct bufferedWriter BufferedWriter;
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int make_buffered_writer(struct ioFactory *factory,
-			 struct dm_bufio_client *client,
-			 sector_t block_limit,
-			 BufferedWriter **writer_ptr)
-	__attribute__((warn_unused_result));
+int __must_check make_buffered_writer(struct ioFactory *factory,
+				      struct dm_bufio_client *client,
+				      sector_t block_limit,
+				      BufferedWriter **writer_ptr);
 #else
 /**
  * Make a new buffered writer.
@@ -58,8 +57,8 @@ int make_buffered_writer(struct ioFactory *factory,
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int make_buffered_writer(struct ioRegion *region, BufferedWriter **writer_ptr)
-	__attribute__((warn_unused_result));
+int __must_check
+make_buffered_writer(struct ioRegion *region, BufferedWriter **writer_ptr);
 #endif
 
 /**
@@ -81,9 +80,8 @@ void free_buffered_writer(BufferedWriter *buffer);
  *                      or flush the buffer.  Once a write or flush error
  *                      occurs it is sticky.
  **/
-int write_to_buffered_writer(BufferedWriter *buffer,
-			     const void *data,
-			     size_t len) __attribute__((warn_unused_result));
+int __must_check
+write_to_buffered_writer(BufferedWriter *buffer, const void *data, size_t len);
 
 /**
  * Zero data in the buffer, writing as needed.
@@ -96,8 +94,7 @@ int write_to_buffered_writer(BufferedWriter *buffer,
  *                      or flush the buffer.  Once a write or flush error
  *                      occurs it is sticky.
  **/
-int write_zeros_to_buffered_writer(BufferedWriter *bw, size_t len)
-	__attribute__((warn_unused_result));
+int __must_check write_zeros_to_buffered_writer(BufferedWriter *bw, size_t len);
 
 /**
  * Flush any partial data from the buffer.
@@ -109,8 +106,7 @@ int write_zeros_to_buffered_writer(BufferedWriter *bw, size_t len)
  *                      or flush the buffer.  Once a write or flush error
  *                      occurs it is sticky.
  **/
-int flush_buffered_writer(BufferedWriter *buffer)
-	__attribute__((warn_unused_result));
+int __must_check flush_buffered_writer(BufferedWriter *buffer);
 
 /**
  * Return the size of the remaining space in the buffer (for testing)
@@ -119,8 +115,7 @@ int flush_buffered_writer(BufferedWriter *buffer)
  *
  * @return              The number of available bytes in the buffer.
  **/
-size_t space_remaining_in_write_buffer(BufferedWriter *buffer)
-	__attribute__((warn_unused_result));
+size_t __must_check space_remaining_in_write_buffer(BufferedWriter *buffer);
 
 /**
  * Return whether the buffer was ever written to.
@@ -130,8 +125,7 @@ size_t space_remaining_in_write_buffer(BufferedWriter *buffer)
  * @return              True if at least one call to write_to_buffered_writer
  *                      was made.
  **/
-bool was_buffered_writer_used(const BufferedWriter *buffer)
-	__attribute__((warn_unused_result));
+bool __must_check was_buffered_writer_used(const BufferedWriter *buffer);
 
 /**
  * Note the buffer has been used.

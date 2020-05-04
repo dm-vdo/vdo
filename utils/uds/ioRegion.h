@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/ioRegion.h#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/ioRegion.h#2 $
  */
 
 #ifndef IO_REGION_H
@@ -64,8 +64,8 @@ static INLINE void getIORegion(IORegion *region)
  *
  * @return UDS_SUCCESS or an error code.
  **/
-__attribute__((warn_unused_result))
-static INLINE int getRegionDataSize(IORegion *region, off_t *extent)
+static INLINE int __must_check
+getRegionDataSize(IORegion *region, off_t *extent)
 {
   return region->getDataSize(region, extent);
 }
@@ -80,8 +80,7 @@ static INLINE int getRegionDataSize(IORegion *region, off_t *extent)
  *
  * @return UDS_SUCCESS or an error code.
  **/
-__attribute__((warn_unused_result))
-static INLINE int getRegionLimit(IORegion *region, off_t *limit)
+static INLINE int __must_check getRegionLimit(IORegion *region, off_t *limit)
 {
   return region->getLimit(region, limit);
 }
@@ -120,12 +119,12 @@ static INLINE void putIORegion(IORegion *region)
  *         UDS_INCORRECT_ALIGNMENT if the offset is incorrect,
  *         UDS_END_OF_FILE or UDS_SHORT_READ if the data is not available,
  **/
-__attribute__((warn_unused_result))
-static INLINE int readFromRegion(IORegion *region,
-                                 off_t     offset,
-                                 void     *buffer,
-                                 size_t    size,
-                                 size_t   *length)
+static INLINE int __must_check
+readFromRegion(IORegion *region,
+	       off_t offset,
+	       void *buffer,
+	       size_t size,
+	       size_t *length)
 {
   return region->read(region, offset, buffer, size, length);
 }
@@ -138,8 +137,7 @@ static INLINE int readFromRegion(IORegion *region,
  * @return UDS_SUCCESS or an error code, particularly UDS_UNSUPPORTED for
  *         regions where this operation is not implemented.
  **/
-__attribute__((warn_unused_result))
-static INLINE int syncRegionContents(IORegion *region)
+static INLINE int __must_check syncRegionContents(IORegion *region)
 {
   return region->syncContents(region);
 }
@@ -161,12 +159,12 @@ static INLINE int syncRegionContents(IORegion *region)
  *         UDS_BUFFER_ERROR if the buffer size is incorrect,
  *         UDS_OUT_OF_RANGE if the offset plus length exceeds the region limits
  **/
-__attribute__((warn_unused_result))
-static INLINE int writeToRegion(IORegion   *region,
-                                off_t       offset,
-                                const void *data,
-                                size_t      size,
-                                size_t      length)
+static INLINE int __must_check
+writeToRegion(IORegion *region,
+	      off_t offset,
+	      const void *data,
+	      size_t size,
+	      size_t length)
 {
   return region->write(region, offset, data, size, length);
 }
