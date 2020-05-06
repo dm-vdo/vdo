@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.h#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.h#3 $
  */
 
 #ifndef FILE_IO_REGION_H
@@ -29,7 +29,7 @@
 /**
  * Make an IORegion using an open file descriptor.
  *
- * @param [in]  factory    The IOFactory holding the open file descriptor.
+ * @param [in]  factory    The IO factory holding the open file descriptor.
  * @param [in]  fd         The file descriptor.
  * @param [in]  access     The access kind for the file.
  * @param [in]  offset     The byte offset to the start of the region.
@@ -38,7 +38,7 @@
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int __must_check makeFileRegion(IOFactory *factory,
+int __must_check makeFileRegion(struct io_factory *factory,
 				int fd,
 				FileAccess access,
 				off_t offset,

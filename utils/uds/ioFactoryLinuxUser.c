@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#4 $
  */
 
 #include "atomicDefs.h"
@@ -27,98 +27,114 @@
 /*
  * A user mode IOFactory object controls access to an index stored in a file.
  */
-struct ioFactory {
-  int      fd;
-  atomic_t refCount;
+struct io_factory {
+	int fd;
+	atomic_t ref_count;
 };
 
 /*****************************************************************************/
-void getIOFactory(IOFactory *factory)
+void get_io_factory(struct io_factory *factory)
 {
-  atomic_inc(&factory->refCount);
+	atomic_inc(&factory->ref_count);
 }
 
 /*****************************************************************************/
-int makeIOFactory(const char *path, FileAccess access, IOFactory **factoryPtr)
+int make_io_factory(const char *path,
+		    FileAccess access,
+		    struct io_factory **factory_ptr)
 {
-  IOFactory *factory;
-  int result = ALLOCATE(1, IOFactory, __func__, &factory);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
+	struct io_factory *factory;
+	int result = ALLOCATE(1, struct io_factory, __func__, &factory);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
 
-  result = openFile(path, access, &factory->fd);
-  if (result != UDS_SUCCESS) {
-    FREE(factory);
-    return result;
-  }
+	result = openFile(path, access, &factory->fd);
+	if (result != UDS_SUCCESS) {
+		FREE(factory);
+		return result;
+	}
 
-  atomic_set_release(&factory->refCount, 1);
-  *factoryPtr = factory;
-  return UDS_SUCCESS;
+	atomic_set_release(&factory->ref_count, 1);
+	*factory_ptr = factory;
+	return UDS_SUCCESS;
 }
 
 /*****************************************************************************/
-void putIOFactory(IOFactory *factory)
+void put_io_factory(struct io_factory *factory)
 {
-  if (atomic_add_return(-1, &factory->refCount) <= 0) {
-    closeFile(factory->fd, NULL);
-    FREE(factory);
-  }
+	if (atomic_add_return(-1, &factory->ref_count) <= 0) {
+		closeFile(factory->fd, NULL);
+		FREE(factory);
+	}
 }
 
 /*****************************************************************************/
-size_t getWritableSize(IOFactory *factory __attribute__((unused)))
+size_t get_writable_size(struct io_factory *factory __attribute__((unused)))
 {
-  /*
-   * The actual maximum is dependent upon the type of filesystem, and the man
-   * pages tell us no way to determine what that maximum is.  Fortunately, any
-   * attempt to write to a location that is too large will return an EFBIG
-   * error.
-   */
-  return SIZE_MAX;
+	/*
+	 * The actual maximum is dependent upon the type of filesystem, and the
+	 * man pages tell us no way to determine what that maximum is.
+	 * Fortunately, any attempt to write to a location that is too large
+	 * will return an EFBIG error.
+	 */
+	return SIZE_MAX;
 }
 
 /*****************************************************************************/
-int makeIORegion(IOFactory  *factory,
-                 off_t       offset,
-                 size_t      size,
-                 IORegion  **regionPtr)
+int make_io_region(struct io_factory *factory,
+		   off_t offset,
+		   size_t size,
+		   IORegion **region_ptr)
 {
-  return makeFileRegion(factory, factory->fd, FU_READ_WRITE, offset, size,
-                        regionPtr);
+	return makeFileRegion(factory,
+                              factory->fd,
+                              FU_READ_WRITE,
+                              offset,
+                              size,
+                              region_ptr);
 }
 
 /*****************************************************************************/
-int openBufferedReader(IOFactory       *factory,
-                       off_t            offset,
-                       size_t           size,
-                       BufferedReader **readerPtr)
+
+int open_buffered_reader(struct io_factory *factory,
+			 off_t offset,
+			 size_t size,
+			 BufferedReader **reader_ptr)
 {
-  IORegion *region;
-  int result = makeFileRegion(factory, factory->fd, FU_READ_WRITE, offset,
-                              size, &region);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-  result = make_buffered_reader(region, readerPtr);
-  putIORegion(region);
-  return result;
+	IORegion *region;
+	int result = makeFileRegion(factory,
+                                    factory->fd,
+                                    FU_READ_WRITE,
+                                    offset,
+                                    size,
+                                    &region);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
+	result = make_buffered_reader(region, reader_ptr);
+	putIORegion(region);
+	return result;
 }
 
 /*****************************************************************************/
-int openBufferedWriter(IOFactory       *factory,
-                       off_t            offset,
-                       size_t           size,
-                       BufferedWriter **writerPtr)
+int open_buffered_writer(struct io_factory *factory,
+			 off_t offset,
+			 size_t size,
+			 BufferedWriter **writer_ptr)
 {
-  IORegion *region;
-  int result = makeFileRegion(factory, factory->fd, FU_READ_WRITE, offset,
-                              size, &region);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-  result = make_buffered_writer(region, writerPtr);
-  putIORegion(region);
-  return result;
+	IORegion *region;
+	int result = makeFileRegion(factory,
+                                    factory->fd,
+                                    FU_READ_WRITE,
+                                    offset,
+                                    size,
+                                    &region);
+		
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
+	result = make_buffered_writer(region, writer_ptr);
+	putIORegion(region);
+	return result;
 }

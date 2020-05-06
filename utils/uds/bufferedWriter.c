@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#3 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#4 $
  */
 
 #include "bufferedWriter.h"
@@ -31,8 +31,8 @@
 
 struct bufferedWriter {
 #ifdef __KERNEL__
-	// IOFactory owning the block device
-	IOFactory *bw_factory;
+	// IO factory owning the block device
+	struct io_factory *bw_factory;
 	// The dm_bufio_client to write to
 	struct dm_bufio_client *bw_client;
 	// The current dm_buffer
@@ -101,7 +101,7 @@ int flush_previous_buffer(BufferedWriter *bw)
 
 /*****************************************************************************/
 #ifdef __KERNEL__
-int make_buffered_writer(IOFactory *factory,
+int make_buffered_writer(struct io_factory *factory,
 			 struct dm_bufio_client *client,
 			 sector_t block_limit,
 			 BufferedWriter **writer_ptr)
@@ -124,7 +124,7 @@ int make_buffered_writer(IOFactory *factory,
 		.bw_used = false,
 	};
 
-	getIOFactory(factory);
+	get_io_factory(factory);
 	*writer_ptr = writer;
 	return UDS_SUCCESS;
 }
@@ -178,7 +178,7 @@ void free_buffered_writer(BufferedWriter *bw)
 	}
 #ifdef __KERNEL__
 	dm_bufio_client_destroy(bw->bw_client);
-	putIOFactory(bw->bw_factory);
+	put_io_factory(bw->bw_factory);
 #else
 	putIORegion(bw->bw_region);
 	FREE(bw->bw_start);

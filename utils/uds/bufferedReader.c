@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#2 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#3 $
  */
 
 #include "bufferedReader.h"
@@ -39,8 +39,8 @@
 
 struct bufferedReader {
 #ifdef __KERNEL__
-	// IOFactory owning the block device
-	IOFactory *br_factory;
+	// IO factory owning the block device
+	struct io_factory *br_factory;
 	// The dm_bufio_client to read from
 	struct dm_bufio_client *br_client;
 	// The current dm_buffer
@@ -76,7 +76,7 @@ static void read_ahead(BufferedReader *br, sector_t block_number)
 
 /*****************************************************************************/
 #ifdef __KERNEL__
-int make_buffered_reader(IOFactory *factory,
+int make_buffered_reader(struct io_factory *factory,
 			 struct dm_bufio_client *client,
 			 sector_t block_limit,
 			 BufferedReader **reader_ptr)
@@ -98,7 +98,7 @@ int make_buffered_reader(IOFactory *factory,
 	};
 
 	read_ahead(reader, 0);
-	getIOFactory(factory);
+	get_io_factory(factory);
 	*reader_ptr = reader;
 	return UDS_SUCCESS;
 }
@@ -143,7 +143,7 @@ void free_buffered_reader(BufferedReader *br)
 		dm_bufio_release(br->br_buffer);
 	}
 	dm_bufio_client_destroy(br->br_client);
-	putIOFactory(br->br_factory);
+	put_io_factory(br->br_factory);
 #else
 	putIORegion(br->br_region);
 	FREE(br->br_start);

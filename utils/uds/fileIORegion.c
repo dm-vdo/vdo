@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#2 $
  */
 
 #include "fileIORegion.h"
@@ -30,7 +30,7 @@
 
 typedef struct fileIORegion {
   IORegion   common;
-  IOFactory *factory;
+  struct io_factory *factory;
   int        fd;
   bool       reading;
   bool       writing;
@@ -76,7 +76,7 @@ static int validateIO(FileIORegion *fior,
 static void fior_free(IORegion *region)
 {
   FileIORegion *fior = asFileIORegion(region);
-  putIOFactory(fior->factory);
+  put_io_factory(fior->factory);
   FREE(fior);
 }
 
@@ -169,7 +169,7 @@ static int fior_syncContents(IORegion *region)
 }
 
 /*****************************************************************************/
-int makeFileRegion(IOFactory   *factory,
+int makeFileRegion(struct io_factory   *factory,
                    int          fd,
                    FileAccess   access,
                    off_t        offset,
@@ -182,7 +182,7 @@ int makeFileRegion(IOFactory   *factory,
     return result;
   }
 
-  getIOFactory(factory);
+  get_io_factory(factory);
 
   fior->common.free         = fior_free;
   fior->common.getDataSize  = fior_getDataSize;
