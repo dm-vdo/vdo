@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#2 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#3 $
 
 VDO_VERSION = 8.1.0.0
 
@@ -48,6 +48,12 @@ C_WARNS          =				\
 		   -Wold-style-definition	\
 		   -Wswitch-default		\
 
+ifeq ($(AR), ar)
+	ifeq ($(origin AR), default)
+		AR := gcc-ar
+	endif
+endif
+						  
 OPT_FLAGS	 = -O3 -fno-omit-frame-pointer
 DEBUG_FLAGS      =
 RPM_OPT_FLAGS   ?= -fpic
