@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/indexLayout.c#13 $
+ * $Id: //eng/uds-releases/krusty/src/uds/indexLayout.c#14 $
  */
 
 #include "indexLayout.h"
@@ -1864,7 +1864,8 @@ int open_volume_bufio(struct index_layout *layout,
 }
 #else
 /*****************************************************************************/
-int open_volume_region(struct index_layout *layout, IORegion **region_ptr)
+int open_volume_region(struct index_layout *layout,
+		       struct io_region **region_ptr)
 {
 	LayoutRegion *lr = &layout->index.volume;
 	off_t start = lr->startBlock * layout->super.block_size;

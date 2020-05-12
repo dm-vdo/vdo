@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/ioFactory.h#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/ioFactory.h#5 $
  */
 
 #ifndef IO_FACTORY_H
@@ -37,7 +37,7 @@
  * device or within a file.
  *
  * The IO factory holds the open device or file and is responsible for
- * closing it.  The IO factory has methods to make IORegions that are
+ * closing it.  The IO factory has methods to make IO regions that are
  * used to access sections of the index.
  */
 struct io_factory;
@@ -128,19 +128,19 @@ int __must_check make_bufio(struct io_factory *factory,
 			    struct dm_bufio_client **client_ptr);
 #else
 /**
- * Create an IORegion for a region of the index.
+ * Create an IO region for a region of the index.
  *
  * @param factory    The IO factory
  * @param offset     The byte offset to the region within the index
  * @param size       The size in bytes of the region
- * @param region_ptr The IORegion is returned here
+ * @param region_ptr The IO region is returned here
  *
  * @return UDS_SUCCESS or an error code
  **/
 int __must_check make_io_region(struct io_factory *factory,
 				off_t offset,
 				size_t size,
-				IORegion **region_ptr);
+				struct io_region **region_ptr);
 #endif
 
 /**

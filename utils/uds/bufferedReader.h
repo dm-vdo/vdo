@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.h#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.h#5 $
  */
 
 #ifndef BUFFERED_READER_H
@@ -28,11 +28,11 @@
 struct dm_bufio_client;
 struct io_factory;
 #else
-struct ioRegion;
+struct io_region;
 #endif
 
 /**
- * The buffered reader allows efficient IO for IORegions, which may be
+ * The buffered reader allows efficient IO for IO regions, which may be
  * file- or block-based. The internal buffer always reads aligned data
  * from the underlying region.
  **/
@@ -57,13 +57,13 @@ int __must_check make_buffered_reader(struct io_factory *factory,
 /**
  * Make a new buffered reader.
  *
- * @param region      An IORegion to read from.
+ * @param region      An IO region to read from.
  * @param reader_ptr  The pointer to hold the newly allocated buffered reader.
  *
  * @return UDS_SUCCESS or error code.
  **/
 int __must_check
-make_buffered_reader(struct ioRegion *region, BufferedReader **reader_ptr);
+make_buffered_reader(struct io_region *region, BufferedReader **reader_ptr);
 #endif
 
 /**

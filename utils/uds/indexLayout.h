@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/indexLayout.h#8 $
+ * $Id: //eng/uds-releases/krusty/src/uds/indexLayout.h#9 $
  */
 
 #ifndef INDEX_LAYOUT_H
@@ -181,7 +181,7 @@ int __must_check open_volume_bufio(struct index_layout *layout,
 				   struct dm_bufio_client **client_ptr);
 #else
 /**
- * Obtain an IORegion for the specified index volume.
+ * Obtain an IO region for the specified index volume.
  *
  * @param [in]  layout      The index layout.
  * @param [out] region_ptr  Where to put the new region.
@@ -189,7 +189,7 @@ int __must_check open_volume_bufio(struct index_layout *layout,
  * @return UDS_SUCCESS or an error code.
  **/
 int __must_check
-open_volume_region(struct index_layout *layout, struct ioRegion **region_ptr);
+open_volume_region(struct index_layout *layout, struct io_region **region_ptr);
 #endif
 
 /**

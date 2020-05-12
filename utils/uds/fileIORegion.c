@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#3 $
  */
 
 #include "fileIORegion.h"
@@ -28,177 +28,166 @@
 #include "permassert.h"
 
 
-typedef struct fileIORegion {
-  IORegion   common;
-  struct io_factory *factory;
-  int        fd;
-  bool       reading;
-  bool       writing;
-  off_t      offset;
-  size_t     size;
-} FileIORegion;
+struct file_io_region {
+	struct io_region common;
+	struct io_factory *factory;
+	int fd;
+	bool reading;
+	bool writing;
+	off_t offset;
+	size_t size;
+};
 
 /*****************************************************************************/
-static INLINE FileIORegion *asFileIORegion(IORegion *region)
+static INLINE struct file_io_region *as_file_io_region(struct io_region *region)
 {
-  return container_of(region, FileIORegion, common);
+	return container_of(region, struct file_io_region, common);
 }
 
 /*****************************************************************************/
-static int validateIO(FileIORegion *fior,
-                      off_t         offset,
-                      size_t        size,
-                      size_t        length,
-                      bool          willWrite)
+static int validate_io(struct file_io_region *fior,
+		       off_t offset,
+		       size_t size,
+		       size_t length,
+		       bool will_write)
 {
-  if (!(willWrite ? fior->writing : fior->reading)) {
-    return logErrorWithStringError(UDS_BAD_IO_DIRECTION,
-                                   "not open for %s",
-                                   willWrite ? "writing" : "reading");
-  }
+	if (!(will_write ? fior->writing : fior->reading)) {
+		return logErrorWithStringError(UDS_BAD_IO_DIRECTION,
+					       "not open for %s",
+					       will_write ? "writing" :
+							    "reading");
+	}
 
-  if (length > size) {
-    return logErrorWithStringError(UDS_BUFFER_ERROR,
-                                   "length %zd exceeds buffer size %zd",
-                                   length, size);
-  }
+	if (length > size) {
+		return logErrorWithStringError(
+			UDS_BUFFER_ERROR,
+			"length %zd exceeds buffer size %zd",
+			length,
+			size);
+	}
 
-  if (offset + length > fior->size) {
-    return logErrorWithStringError(UDS_OUT_OF_RANGE,
-                                   "range %zd-%zd not in range 0 to %zu",
-                                   offset, offset + length, fior->size);
-  }
+	if (offset + length > fior->size) {
+		return logErrorWithStringError(
+			UDS_OUT_OF_RANGE,
+			"range %zd-%zd not in range 0 to %zu",
+			offset,
+			offset + length,
+			fior->size);
+	}
 
-  return UDS_SUCCESS;
+	return UDS_SUCCESS;
 }
 
 /*****************************************************************************/
-static void fior_free(IORegion *region)
+static void fior_free(struct io_region *region)
 {
-  FileIORegion *fior = asFileIORegion(region);
-  put_io_factory(fior->factory);
-  FREE(fior);
+	struct file_io_region *fior = as_file_io_region(region);
+	put_io_factory(fior->factory);
+	FREE(fior);
 }
 
 /*****************************************************************************/
-static int fior_getLimit(IORegion *region __attribute__((unused)),
-                         off_t    *limit)
+static int fior_write(struct io_region *region,
+		      off_t offset,
+		      const void *data,
+		      size_t size,
+		      size_t length)
 {
-  FileIORegion *fior = asFileIORegion(region);
-  *limit = fior->size;
-  return UDS_SUCCESS;
+	struct file_io_region *fior = as_file_io_region(region);
+
+
+	int result = validate_io(fior, offset, size, length, true);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
+
+	return writeBufferAtOffset(
+		fior->fd, fior->offset + offset, data, length);
 }
 
 /*****************************************************************************/
-static int fior_getDataSize(IORegion *region,
-                            off_t    *extent)
+static int fior_read(struct io_region *region,
+		     off_t offset,
+		     void *buffer,
+		     size_t size,
+		     size_t *length)
 {
-  FileIORegion *fior = asFileIORegion(region);
+	struct file_io_region *fior = as_file_io_region(region);
 
-  return getOpenFileSize(fior->fd, extent);
+	size_t len = (length == NULL) ? size : *length;
+
+	int result = validate_io(fior, offset, size, len, false);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
+
+	size_t data_length = 0;
+	result = readDataAtOffset(
+		fior->fd, fior->offset + offset, buffer, size, &data_length);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
+	if (length == NULL) {
+		if (data_length < size) {
+			byte *buf = buffer;
+			memset(&buf[data_length], 0, size - data_length);
+		}
+		return result;
+	}
+
+	if (data_length < *length) {
+		if (data_length == 0) {
+			return logErrorWithStringError(
+				UDS_END_OF_FILE,
+				"expected at least %zu bytes, got EOF",
+				len);
+		} else {
+			return logErrorWithStringError(
+				UDS_SHORT_READ,
+				"expected at least %zu bytes, got %zu",
+				len,
+				data_length);
+		}
+	}
+	*length = data_length;
+	return UDS_SUCCESS;
 }
 
 /*****************************************************************************/
-static int fior_write(IORegion   *region,
-                      off_t       offset,
-                      const void *data,
-                      size_t      size,
-                      size_t      length)
+static int fior_sync_contents(struct io_region *region)
 {
-  FileIORegion *fior = asFileIORegion(region);
-
-
-  int result = validateIO(fior, offset, size, length, true);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  return writeBufferAtOffset(fior->fd, fior->offset + offset, data, length);
+	struct file_io_region *fior = as_file_io_region(region);
+	return loggingFsync(fior->fd, "cannot sync contents of file IO region");
 }
 
 /*****************************************************************************/
-static int fior_read(IORegion *region,
-                     off_t     offset,
-                     void     *buffer,
-                     size_t    size,
-                     size_t   *length)
+int make_file_region(struct io_factory *factory,
+		     int fd,
+		     FileAccess access,
+		     off_t offset,
+		     size_t size,
+		     struct io_region **region_ptr)
 {
-  FileIORegion *fior = asFileIORegion(region);
+	struct file_io_region *fior;
+	int result = ALLOCATE(1, struct file_io_region, __func__, &fior);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
 
-  size_t len = (length == NULL) ? size : *length;
+	get_io_factory(factory);
 
-  int result = validateIO(fior, offset, size, len, false);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
+	fior->common.free = fior_free;
+	fior->common.read = fior_read;
+	fior->common.sync_contents = fior_sync_contents;
+	fior->common.write = fior_write;
+	fior->factory = factory;
+	fior->fd = fd;
+	fior->reading = (access <= FU_CREATE_READ_WRITE);
+	fior->writing = (access >= FU_READ_WRITE);
+	fior->offset = offset;
+	fior->size = size;
 
-  size_t dataLength = 0;
-  result = readDataAtOffset(fior->fd, fior->offset + offset, buffer, size,
-                            &dataLength);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-  if (length == NULL) {
-    if (dataLength < size) {
-      byte *buf = buffer;
-      memset(&buf[dataLength], 0, size - dataLength);
-    }
-    return result;
-  }
-
-  if (dataLength < *length) {
-    if (dataLength == 0) {
-      return logErrorWithStringError(UDS_END_OF_FILE,
-                                     "expected at least %zu bytes, got EOF",
-                                     len);
-    } else {
-      return logErrorWithStringError(UDS_SHORT_READ,
-                                     "expected at least %zu bytes, got %zu",
-                                     len, dataLength);
-    }
-  }
-  *length = dataLength;
-  return UDS_SUCCESS;
-}
-
-/*****************************************************************************/
-static int fior_syncContents(IORegion *region)
-{
-  FileIORegion *fior = asFileIORegion(region);
-  return loggingFsync(fior->fd, "cannot sync contents of file IORegion");
-}
-
-/*****************************************************************************/
-int makeFileRegion(struct io_factory   *factory,
-                   int          fd,
-                   FileAccess   access,
-                   off_t        offset,
-                   size_t       size,
-                   IORegion   **regionPtr)
-{
-  FileIORegion *fior;
-  int result = ALLOCATE(1, FileIORegion, __func__, &fior);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-
-  get_io_factory(factory);
-
-  fior->common.free         = fior_free;
-  fior->common.getDataSize  = fior_getDataSize;
-  fior->common.getLimit     = fior_getLimit;
-  fior->common.read         = fior_read;
-  fior->common.syncContents = fior_syncContents;
-  fior->common.write        = fior_write;
-
-  fior->factory  = factory;
-  fior->fd       = fd;
-  fior->reading  = (access <= FU_CREATE_READ_WRITE);
-  fior->writing  = (access >= FU_READ_WRITE);
-  fior->offset   = offset;
-  fior->size     = size;
-
-  atomic_set_release(&fior->common.refCount, 1);
-  *regionPtr = &fior->common;
-  return UDS_SUCCESS;
+	atomic_set_release(&fior->common.ref_count, 1);
+	*region_ptr = &fior->common;
+	return UDS_SUCCESS;
 }

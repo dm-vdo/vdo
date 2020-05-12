@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#3 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#4 $
  */
 
 #include "bufferedReader.h"
@@ -51,7 +51,7 @@ struct bufferedReader {
 	sector_t br_block_number;
 #else
 	// Region to read from
-	IORegion *br_region;
+	struct io_region *br_region;
 	// Number of the current block
 	uint64_t br_block_number;
 #endif
@@ -103,7 +103,7 @@ int make_buffered_reader(struct io_factory *factory,
 	return UDS_SUCCESS;
 }
 #else
-int make_buffered_reader(IORegion *region, BufferedReader **reader_ptr)
+int make_buffered_reader(struct io_region *region, BufferedReader **reader_ptr)
 {
 	byte *data;
 	int result = ALLOCATE_IO_ALIGNED(
@@ -126,7 +126,7 @@ int make_buffered_reader(IORegion *region, BufferedReader **reader_ptr)
 		.br_pointer = NULL,
 	};
 
-	getIORegion(region);
+	get_io_region(region);
 	*reader_ptr = reader;
 	return UDS_SUCCESS;
 }
@@ -145,7 +145,7 @@ void free_buffered_reader(BufferedReader *br)
 	dm_bufio_client_destroy(br->br_client);
 	put_io_factory(br->br_factory);
 #else
-	putIORegion(br->br_region);
+	put_io_region(br->br_region);
 	FREE(br->br_start);
 #endif
 	FREE(br);
@@ -176,14 +176,14 @@ position_reader(BufferedReader *br, sector_t block_number, off_t offset)
 			read_ahead(br, block_number + 1);
 		}
 #else
-		int result = readFromRegion(br->br_region,
-					    block_number * UDS_BLOCK_SIZE,
-					    br->br_start,
-					    UDS_BLOCK_SIZE,
-					    NULL);
+		int result = read_from_region(br->br_region,
+					      block_number * UDS_BLOCK_SIZE,
+					      br->br_start,
+					      UDS_BLOCK_SIZE,
+					      NULL);
 		if (result != UDS_SUCCESS) {
 			logWarningWithStringError(result,
-						  "%s got readFromRegion error",
+						  "%s got read_from_region error",
 						  __func__);
 			return result;
 		}

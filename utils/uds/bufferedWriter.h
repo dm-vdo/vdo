@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.h#5 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.h#6 $
  */
 
 #ifndef BUFFERED_WRITER_H
@@ -28,7 +28,7 @@
 struct dm_bufio_client;
 struct io_factory;
 #else
-struct ioRegion;
+struct io_region;
 #endif
 
 typedef struct bufferedWriter BufferedWriter;
@@ -52,13 +52,13 @@ int __must_check make_buffered_writer(struct io_factory *factory,
 /**
  * Make a new buffered writer.
  *
- * @param region        The IOregion to write to.
+ * @param region        The IO region to write to.
  * @param writer_ptr    The new buffered writer goes here.
  *
  * @return UDS_SUCCESS or an error code.
  **/
 int __must_check
-make_buffered_writer(struct ioRegion *region, BufferedWriter **writer_ptr);
+make_buffered_writer(struct io_region *region, BufferedWriter **writer_ptr);
 #endif
 
 /**

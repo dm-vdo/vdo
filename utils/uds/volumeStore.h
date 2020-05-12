@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.h#3 $
+ * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.h#4 $
  */
 
 #ifndef VOLUME_STORE_H
@@ -40,8 +40,8 @@ struct volume_store {
 #ifdef __KERNEL__
   struct dm_bufio_client *vs_client;
 #else
-  IORegion               *vs_region;
-  size_t                  vs_bytesPerPage;
+  struct io_region *vs_region;
+  size_t            vs_bytesPerPage;
 #endif
 };
 

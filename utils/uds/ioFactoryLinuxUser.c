@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#5 $
  */
 
 #include "atomicDefs.h"
@@ -85,14 +85,14 @@ size_t get_writable_size(struct io_factory *factory __attribute__((unused)))
 int make_io_region(struct io_factory *factory,
 		   off_t offset,
 		   size_t size,
-		   IORegion **region_ptr)
+		   struct io_region  **region_ptr)
 {
-	return makeFileRegion(factory,
-                              factory->fd,
-                              FU_READ_WRITE,
-                              offset,
-                              size,
-                              region_ptr);
+	return make_file_region(factory,
+				factory->fd,
+				FU_READ_WRITE,
+				offset,
+				size,
+				region_ptr);
 }
 
 /*****************************************************************************/
@@ -102,18 +102,18 @@ int open_buffered_reader(struct io_factory *factory,
 			 size_t size,
 			 BufferedReader **reader_ptr)
 {
-	IORegion *region;
-	int result = makeFileRegion(factory,
-                                    factory->fd,
-                                    FU_READ_WRITE,
-                                    offset,
-                                    size,
-                                    &region);
+	struct io_region *region;
+	int result = make_file_region(factory,
+				      factory->fd,
+				      FU_READ_WRITE,
+				      offset,
+				      size,
+				      &region);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 	result = make_buffered_reader(region, reader_ptr);
-	putIORegion(region);
+	put_io_region(region);
 	return result;
 }
 
@@ -123,18 +123,18 @@ int open_buffered_writer(struct io_factory *factory,
 			 size_t size,
 			 BufferedWriter **writer_ptr)
 {
-	IORegion *region;
-	int result = makeFileRegion(factory,
-                                    factory->fd,
-                                    FU_READ_WRITE,
-                                    offset,
-                                    size,
-                                    &region);
-		
+	struct io_region *region;
+	int result = make_file_region(factory,
+				      factory->fd,
+				      FU_READ_WRITE,
+				      offset,
+				      size,
+				      &region);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 	result = make_buffered_writer(region, writer_ptr);
-	putIORegion(region);
+	put_io_region(region);
 	return result;
 }

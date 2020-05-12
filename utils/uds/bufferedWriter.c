@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#5 $
  */
 
 #include "bufferedWriter.h"
@@ -43,7 +43,7 @@ struct bufferedWriter {
 	sector_t bw_block_number;
 #else
 	// Region to write to
-	IORegion *bw_region;
+	struct io_region *bw_region;
 	// Number of the current block
 	uint64_t bw_block_number;
 #endif
@@ -129,7 +129,8 @@ int make_buffered_writer(struct io_factory *factory,
 	return UDS_SUCCESS;
 }
 #else
-int make_buffered_writer(IORegion *region, BufferedWriter **writer_ptr)
+int make_buffered_writer(struct io_region *region,
+			 BufferedWriter **writer_ptr)
 {
 	byte *data;
 	int result = ALLOCATE_IO_ALIGNED(UDS_BLOCK_SIZE, byte,
@@ -154,7 +155,7 @@ int make_buffered_writer(IORegion *region, BufferedWriter **writer_ptr)
 		.bw_used = false,
 	};
 
-	getIORegion(region);
+	get_io_region(region);
 	*writer_ptr = writer;
 	return UDS_SUCCESS;
 }
@@ -170,7 +171,7 @@ void free_buffered_writer(BufferedWriter *bw)
 	flush_previous_buffer(bw);
 	int result = -dm_bufio_write_dirty_buffers(bw->bw_client);
 #else
-	int result = syncRegionContents(bw->bw_region);
+	int result = sync_region_contents(bw->bw_region);
 #endif
 	if (result != UDS_SUCCESS) {
 		logWarningWithStringError(result, "%s cannot sync storage",
@@ -180,7 +181,7 @@ void free_buffered_writer(BufferedWriter *bw)
 	dm_bufio_client_destroy(bw->bw_client);
 	put_io_factory(bw->bw_factory);
 #else
-	putIORegion(bw->bw_region);
+	put_io_region(bw->bw_region);
 	FREE(bw->bw_start);
 #endif
 	FREE(bw);
@@ -274,11 +275,12 @@ int flush_buffered_writer(BufferedWriter *bw)
 #else
 	size_t n = space_used_in_buffer(bw);
 	if (n > 0) {
-		int result = writeToRegion(bw->bw_region,
-					   bw->bw_block_number * UDS_BLOCK_SIZE,
-					   bw->bw_start,
-					   UDS_BLOCK_SIZE,
-					   n);
+		int result
+		  = write_to_region(bw->bw_region,
+				    bw->bw_block_number * UDS_BLOCK_SIZE,
+				    bw->bw_start,
+				    UDS_BLOCK_SIZE,
+				    n);
 		if (result != UDS_SUCCESS) {
 			return bw->bw_error = result;
 		} else {

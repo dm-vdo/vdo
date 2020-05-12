@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#3 $
+ * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#4 $
  */
 
 #include "geometry.h"
@@ -36,7 +36,7 @@ void closeVolumeStore(struct volume_store *volumeStore)
   }
 #else
   if (volumeStore->vs_region != NULL) {
-    putIORegion(volumeStore->vs_region);
+    put_io_region(volumeStore->vs_region);
     volumeStore->vs_region = NULL;
   }
 #endif
@@ -131,9 +131,9 @@ int readVolumePage(const struct volume_store *volumeStore,
   }
 #else
   off_t offset = (off_t) physicalPage * volumeStore->vs_bytesPerPage;
-  int result = readFromRegion(volumeStore->vs_region, offset,
-                              getPageData(volumePage),
-                              volumeStore->vs_bytesPerPage, NULL);
+  int result = read_from_region(volumeStore->vs_region, offset,
+                                getPageData(volumePage),
+                                volumeStore->vs_bytesPerPage, NULL);
   if (result != UDS_SUCCESS) {
     return logWarningWithStringError(result,
                                      "error reading physical page %u",
@@ -171,7 +171,7 @@ int syncVolumeStore(const struct volume_store *volumeStore)
 #ifdef __KERNEL__
   int result = -dm_bufio_write_dirty_buffers(volumeStore->vs_client);
 #else
-  int result = syncRegionContents(volumeStore->vs_region);
+  int result = sync_region_contents(volumeStore->vs_region);
 #endif
   if (result != UDS_SUCCESS) {
     return logErrorWithStringError(result, "cannot sync chapter to volume");
@@ -189,8 +189,10 @@ int writeVolumePage(const struct volume_store *volumeStore,
   return UDS_SUCCESS;
 #else
   off_t offset = (off_t) physicalPage * volumeStore->vs_bytesPerPage;
-  return writeToRegion(volumeStore->vs_region, offset, getPageData(volumePage),
-                       volumeStore->vs_bytesPerPage,
-                       volumeStore->vs_bytesPerPage);
+  return write_to_region(volumeStore->vs_region,
+                         offset,
+                         getPageData(volumePage),
+                         volumeStore->vs_bytesPerPage,
+                         volumeStore->vs_bytesPerPage);
 #endif
 }
