@@ -16,11 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/vdo-manager/Makefile#3 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/vdo-manager/Makefile#4 $
 
 SUBDIRS=man statistics utils vdomgmnt
 
-PROGS=vdo vdostats
+PROGS=vdo vdo-by-dev vdostats
 PYTHON_MODULES=__init__.py
 COMPLETIONS=vdo vdostats
 

@@ -16,12 +16,20 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/examples/Makefile#2 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/examples/udev/Makefile#1 $
 
-SUBDIRS = ansible monitor systemd udev
+UDEVFILE=69-vdo-start-by-dev.rules
+
+INSTALL = install
+INSTALLOWNER ?= -o root -g root
+
+UDEVDIR=$(DESTDIR)/etc/udev/rules.d
 
 .PHONY: all clean install
-all clean install:
-	for d in $(SUBDIRS); do         \
-	  $(MAKE) -C $$d $@ || exit 1; \
-	done
+all:;
+
+clean:;
+
+install:
+	$(INSTALL) $(INSTALLOWNER) -d $(UDEVDIR)
+	$(INSTALL) $(INSTALLOWNER) -m 644 $(UDEVFILE) $(UDEVDIR)
