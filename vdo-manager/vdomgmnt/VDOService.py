@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#17 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#18 $
 
 """
 from __future__ import absolute_import
@@ -419,7 +419,7 @@ class VDOService(Service):
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
 
-    self._suspend(False)
+    self._suspend()
     self._resume()
 
     # Get the new logical size
@@ -478,7 +478,7 @@ class VDOService(Service):
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
 
-    self._suspend(False)
+    self._suspend()
     self._resume()
 
     # Get the new physical size
@@ -1905,7 +1905,7 @@ class VDOService(Service):
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
 
-    self._suspend(False)
+    self._suspend()
     self._resume()
 
   ######################################################################
@@ -2127,14 +2127,13 @@ class VDOService(Service):
       runCommand(command, noThrow=True)
 
   ######################################################################
-  def _suspend(self, flush=True):
+  def _suspend(self):
     """Suspends a running VDO."""
     self.log.info(_("Suspending VDO volume {0} with {1}").format(
-      self.getName(), "flush" if flush else "no flush"))
+      self.getName(), "no flush"))
     self._stopFullnessMonitoring(True, None)
     try:
-      runCommand(["dmsetup", "suspend", "" if flush else "--noflush",
-                  self.getName()])
+      runCommand(["dmsetup", "suspend", "--noflush", self.getName()])
     except Exception as ex:
       self.log.error(_("Can't suspend VDO volume {0}; {1!s}").format(
           self.getName(), ex))
