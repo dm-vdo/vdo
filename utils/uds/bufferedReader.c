@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#5 $
  */
 
 #include "bufferedReader.h"
@@ -37,7 +37,7 @@
 #define sector_t uint64_t
 #endif
 
-struct bufferedReader {
+struct buffered_reader {
 #ifdef __KERNEL__
 	// IO factory owning the block device
 	struct io_factory *br_factory;
@@ -63,7 +63,7 @@ struct bufferedReader {
 
 #ifdef __KERNEL__
 /*****************************************************************************/
-static void read_ahead(BufferedReader *br, sector_t block_number)
+static void read_ahead(struct buffered_reader *br, sector_t block_number)
 {
 	if (block_number < br->br_limit) {
 		enum { MAX_READ_AHEAD = 4 };
@@ -79,15 +79,16 @@ static void read_ahead(BufferedReader *br, sector_t block_number)
 int make_buffered_reader(struct io_factory *factory,
 			 struct dm_bufio_client *client,
 			 sector_t block_limit,
-			 BufferedReader **reader_ptr)
+			 struct buffered_reader **reader_ptr)
 {
-	BufferedReader *reader = NULL;
-	int result = ALLOCATE(1, BufferedReader, "buffered reader", &reader);
+	struct buffered_reader *reader = NULL;
+	int result =
+		ALLOCATE(1, struct buffered_reader, "buffered reader", &reader);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
-	*reader = (BufferedReader){
+	*reader = (struct buffered_reader){
 		.br_factory = factory,
 		.br_client = client,
 		.br_buffer = NULL,
@@ -103,7 +104,8 @@ int make_buffered_reader(struct io_factory *factory,
 	return UDS_SUCCESS;
 }
 #else
-int make_buffered_reader(struct io_region *region, BufferedReader **reader_ptr)
+int make_buffered_reader(struct io_region *region,
+			 struct buffered_reader **reader_ptr)
 {
 	byte *data;
 	int result = ALLOCATE_IO_ALIGNED(
@@ -112,14 +114,15 @@ int make_buffered_reader(struct io_region *region, BufferedReader **reader_ptr)
 		return result;
 	}
 
-	BufferedReader *reader = NULL;
-	result = ALLOCATE(1, BufferedReader, "buffered reader", &reader);
+	struct buffered_reader *reader = NULL;
+	result =
+		ALLOCATE(1, struct buffered_reader, "buffered reader", &reader);
 	if (result != UDS_SUCCESS) {
 		FREE(data);
 		return result;
 	}
 
-	*reader = (BufferedReader){
+	*reader = (struct buffered_reader){
 		.br_region = region,
 		.br_block_number = 0,
 		.br_start = data,
@@ -133,7 +136,7 @@ int make_buffered_reader(struct io_region *region, BufferedReader **reader_ptr)
 #endif
 
 /*****************************************************************************/
-void free_buffered_reader(BufferedReader *br)
+void free_buffered_reader(struct buffered_reader *br)
 {
 	if (br == NULL) {
 		return;
@@ -153,7 +156,7 @@ void free_buffered_reader(BufferedReader *br)
 
 /*****************************************************************************/
 static int
-position_reader(BufferedReader *br, sector_t block_number, off_t offset)
+position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
 {
 	if ((br->br_pointer == NULL) || (block_number != br->br_block_number)) {
 #ifdef __KERNEL__
@@ -182,9 +185,10 @@ position_reader(BufferedReader *br, sector_t block_number, off_t offset)
 					      UDS_BLOCK_SIZE,
 					      NULL);
 		if (result != UDS_SUCCESS) {
-			logWarningWithStringError(result,
-						  "%s got read_from_region error",
-						  __func__);
+			logWarningWithStringError(
+				result,
+				"%s got read_from_region error",
+				__func__);
 			return result;
 		}
 #endif
@@ -195,7 +199,7 @@ position_reader(BufferedReader *br, sector_t block_number, off_t offset)
 }
 
 /*****************************************************************************/
-static size_t bytes_remaining_in_read_buffer(BufferedReader *br)
+static size_t bytes_remaining_in_read_buffer(struct buffered_reader *br)
 {
 	return (br->br_pointer == NULL ?
 			0 :
@@ -203,7 +207,9 @@ static size_t bytes_remaining_in_read_buffer(BufferedReader *br)
 }
 
 /*****************************************************************************/
-int read_from_buffered_reader(BufferedReader *br, void *data, size_t length)
+int read_from_buffered_reader(struct buffered_reader *br,
+			      void *data,
+			      size_t length)
 {
 	byte *dp = data;
 	int result = UDS_SUCCESS;
@@ -235,7 +241,9 @@ int read_from_buffered_reader(BufferedReader *br, void *data, size_t length)
 }
 
 /*****************************************************************************/
-int verify_buffered_data(BufferedReader *br, const void *value, size_t length)
+int verify_buffered_data(struct buffered_reader *br,
+			 const void *value,
+			 size_t length)
 {
 	const byte *vp = value;
 	sector_t starting_block_number = br->br_block_number;

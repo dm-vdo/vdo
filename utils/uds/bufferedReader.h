@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.h#5 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.h#6 $
  */
 
 #ifndef BUFFERED_READER_H
@@ -36,7 +36,7 @@ struct io_region;
  * file- or block-based. The internal buffer always reads aligned data
  * from the underlying region.
  **/
-typedef struct bufferedReader BufferedReader;
+struct buffered_reader;
 
 #ifdef __KERNEL__
 /**
@@ -52,7 +52,7 @@ typedef struct bufferedReader BufferedReader;
 int __must_check make_buffered_reader(struct io_factory *factory,
 				      struct dm_bufio_client *client,
 				      sector_t block_limit,
-				      BufferedReader **reader_ptr);
+				      struct buffered_reader **reader_ptr);
 #else
 /**
  * Make a new buffered reader.
@@ -62,8 +62,8 @@ int __must_check make_buffered_reader(struct io_factory *factory,
  *
  * @return UDS_SUCCESS or error code.
  **/
-int __must_check
-make_buffered_reader(struct io_region *region, BufferedReader **reader_ptr);
+int __must_check make_buffered_reader(struct io_region *region,
+				      struct buffered_reader **reader_ptr);
 #endif
 
 /**
@@ -71,7 +71,7 @@ make_buffered_reader(struct io_region *region, BufferedReader **reader_ptr);
  *
  * @param reader        The buffered reader
  **/
-void free_buffered_reader(BufferedReader *reader);
+void free_buffered_reader(struct buffered_reader *reader);
 
 /**
  * Retrieve data from a buffered reader, reading from the region when needed.
@@ -82,8 +82,9 @@ void free_buffered_reader(BufferedReader *reader);
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int __must_check
-read_from_buffered_reader(BufferedReader *reader, void *data, size_t length);
+int __must_check read_from_buffered_reader(struct buffered_reader *reader,
+					   void *data,
+					   size_t length);
 
 /**
  * Verify that the data currently in the buffer matches the required value.
@@ -98,7 +99,8 @@ read_from_buffered_reader(BufferedReader *reader, void *data, size_t length);
  * @note If the value matches, the matching contents are consumed. However,
  *       if the match fails, any buffer contents are left as is.
  **/
-int __must_check
-verify_buffered_data(BufferedReader *reader, const void *value, size_t length);
+int __must_check verify_buffered_data(struct buffered_reader *reader,
+				      const void *value,
+				      size_t length);
 
 #endif // BUFFERED_READER_H
