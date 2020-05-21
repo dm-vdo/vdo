@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#5 $
+ * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#6 $
  */
 
 #include "geometry.h"
@@ -63,7 +63,7 @@ int initialize_volume_page(const struct geometry *geometry,
 #else
 	return ALLOCATE_IO_ALIGNED(geometry->bytesPerPage,
 				   byte, __func__, &volume_page->vp_data);
-		
+
 #endif
 }
 
