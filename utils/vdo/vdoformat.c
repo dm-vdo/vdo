@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#16 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#17 $
  */
 
 #include <err.h>
@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
 
   // Check whether there's a VDO on this device already...
   struct vdo *vdo;
-  result = load_vdo(layer, false, NULL, &vdo);
+  result = load_vdo(layer, false, &vdo);
   if (result == VDO_SUCCESS) {
     if (force) {
       warnx("Formatting device already containing a valid VDO.");
@@ -390,7 +390,7 @@ int main(int argc, char *argv[])
          extraHelp);
   }
 
-  result = load_vdo(layer, true, NULL, &vdo);
+  result = load_vdo(layer, true, &vdo);
   if (result != VDO_SUCCESS) {
     errx(result, "unable to verify configuration after formatting '%s'",
          filename);

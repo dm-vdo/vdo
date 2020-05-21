@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#17 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#18 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -49,7 +49,6 @@ decode_vdo(struct vdo *vdo, bool validate_config)
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-
 	return finish_vdo_decode(vdo);
 }
 
@@ -57,7 +56,6 @@ decode_vdo(struct vdo *vdo, bool validate_config)
 int load_vdo_superblock(PhysicalLayer *layer,
                         struct volume_geometry *geometry,
                         bool validate_config,
-                        VDODecoder *decoder,
                         struct vdo **vdo_ptr)
 {
 	struct vdo *vdo;
@@ -74,9 +72,7 @@ int load_vdo_superblock(PhysicalLayer *layer,
 		return result;
 	}
 
-	result = ((decoder == NULL) ?
-                  decode_vdo(vdo, validate_config) :
-                  decoder(vdo, validate_config));
+	result = decode_vdo(vdo, validate_config);
 	if (result != VDO_SUCCESS) {
 		free_vdo(&vdo);
 		return result;
@@ -89,7 +85,6 @@ int load_vdo_superblock(PhysicalLayer *layer,
 /**********************************************************************/
 int load_vdo(PhysicalLayer *layer,
 	     bool validate_config,
-	     VDODecoder *decoder,
 	     struct vdo **vdo_ptr)
 {
 	struct volume_geometry geometry;
@@ -98,8 +93,7 @@ int load_vdo(PhysicalLayer *layer,
 		return result;
 	}
 
-	return load_vdo_superblock(layer, &geometry, validate_config,
-                                   decoder, vdo_ptr);
+	return load_vdo_superblock(layer, &geometry, validate_config, vdo_ptr);
 }
 
 /**
@@ -108,8 +102,6 @@ int load_vdo(PhysicalLayer *layer,
  * @param [in]  filename        The file name
  * @param [in]  readOnly        Whether the layer should be read-only.
  * @param [in]  validateConfig  Whether the VDO should validate its config
- * @param [in]  decoder         The VDO decoder to use, if NULL, the default
- *                              decoder will be used
  * @param [out] vdoPtr          A pointer to hold the VDO
  *
  * @return VDO_SUCCESS or an error code
@@ -117,7 +109,6 @@ int load_vdo(PhysicalLayer *layer,
 static int __must_check loadVDOFromFile(const char *filename,
 					bool readOnly,
 					bool validateConfig,
-					VDODecoder *decoder,
 					struct vdo **vdoPtr)
 {
   int result = ASSERT(validateConfig || readOnly,
@@ -143,7 +134,7 @@ static int __must_check loadVDOFromFile(const char *filename,
 
   // Create the VDO.
   struct vdo *vdo;
-  result = load_vdo(layer, validateConfig, decoder, &vdo);
+  result = load_vdo(layer, validateConfig, &vdo);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
     char errBuf[ERRBUF_SIZE];
@@ -159,13 +150,13 @@ static int __must_check loadVDOFromFile(const char *filename,
 /**********************************************************************/
 int makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr)
 {
-  return loadVDOFromFile(filename, readOnly, true, NULL, vdoPtr);
+  return loadVDOFromFile(filename, readOnly, true, vdoPtr);
 }
 
 /**********************************************************************/
 int readVDOWithoutValidation(const char *filename, struct vdo **vdoPtr)
 {
-  return loadVDOFromFile(filename, true, false, NULL, vdoPtr);
+  return loadVDOFromFile(filename, true, false, vdoPtr);
 }
 
 /**********************************************************************/
