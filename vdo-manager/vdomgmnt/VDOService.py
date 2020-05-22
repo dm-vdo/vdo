@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#18 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#19 $
 
 """
 from __future__ import absolute_import
@@ -1599,15 +1599,18 @@ class VDOService(Service):
                                   "hash", str(self.hashZoneThreads),
                                   "logical", str(self.logicalThreads),
                                   "physical", str(self.physicalThreads)])
-    vdoConf = " ".join(["0", str(numSectors), Defaults.vdoTargetName,
-                        "V2", self.device,
-                        str(self._getVDOConfigFromVDO()['physicalBlocks']),
-                        str(self.logicalBlockSize),
-                        str(cachePages), str(self.blockMapPeriod),
-                        self.mdRaid5Mode, self.writePolicy,
-                        self._name,
-                        "maxDiscard", str(maxDiscardBlocks),
-                        threadCountConfig])
+    arguments = ["0", str(numSectors), Defaults.vdoTargetName,
+                 "V2", self.device,
+                 str(self._getVDOConfigFromVDO()['physicalBlocks']),
+                 str(self.logicalBlockSize),
+                 str(cachePages), str(self.blockMapPeriod),
+                 self.mdRaid5Mode, self.writePolicy,
+                 self._name,
+                 "maxDiscard", str(maxDiscardBlocks),
+                 threadCountConfig]
+    if not self.enableDeduplication:
+      arguments.extend(["deduplication", "off"])
+    vdoConf = " ".join(arguments)
     return vdoConf
 
   ######################################################################
