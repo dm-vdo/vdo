@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.2.117
+Version: 6.2.3.91
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -71,7 +71,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_bindir}/vdodumpconfig
 %{_bindir}/vdoforcerebuild
 %{_bindir}/vdoformat
-%{_bindir}/vdoreadonly
 %{_bindir}/vdosetuuid
 %dir %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}/__pycache__/*
@@ -139,6 +138,41 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats
 
+%package support
+Summary: Support tools for Virtual Data Optimizer
+License: GPLv2
+Requires: libuuid >= 2.23
+ExclusiveArch: x86_64
+ExcludeArch: s390
+ExcludeArch: s390x
+ExcludeArch: ppc
+ExcludeArch: ppc64
+ExcludeArch: ppc64le
+ExcludeArch: aarch64
+ExcludeArch: i686
+
+%description support
+Virtual Data Optimizer (VDO) is a device mapper target that delivers
+block-level deduplication, compression, and thin provisioning.
+
+This package provides the user-space support tools for VDO.
+
+%files support
+%{_bindir}/vdoaudit
+%{_bindir}/vdodebugmetadata
+%{_bindir}/vdodumpblockmap
+%{_bindir}/vdodumpmetadata
+%{_bindir}/vdolistmetadata
+%{_bindir}/vdoreadonly
+%{_bindir}/vdoregenerategeometry
+%{_mandir}/man8/vdoaudit.8.gz
+%{_mandir}/man8/vdodebugmetadata.8.gz
+%{_mandir}/man8/vdodumpblockmap.8.gz
+%{_mandir}/man8/vdodumpmetadata.8.gz
+%{_mandir}/man8/vdolistmetadata.8.gz
+%{_mandir}/man8/vdoreadonly.8.gz
+%{_mandir}/man8/vdoregenerategeometry.8.gz
+
 %changelog
-* Mon Jan 20 2020 - J. corwin Coburn <corwin@redhat.com> - 6.2.2.117-1
-HASH(0x3470620)
+* Fri May 29 2020 - J. corwin Coburn <corwin@redhat.com> - 6.2.3.91-1
+HASH(0x55e78e7cddf8)

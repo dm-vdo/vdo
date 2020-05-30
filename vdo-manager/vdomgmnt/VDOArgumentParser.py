@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#13 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#14 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -965,10 +965,10 @@ suffix is optional""").format(options
                         metavar = "<threadCount>",
                         help = _("""
       Specifies the number of threads across which to subdivide parts of the
-      VDO processing based on the hash value computed from the block data.
-      The value must be at least {min} and less than or equal to {max}. A
-      logical thread count of {threshold} or more will require explicitly
-      specifying a sufficiently large block map cache size, as well.
+      VDO processing based on the logical address. The value must be at least
+      {min} and less than or equal to {max}. A logical thread count of
+      {threshold} or more will require explicitly specifying a sufficiently
+      large block map cache size.
       vdoHashZonesThreads, vdoLogicalThreads and vdoPhysicalThreads must be
       either all zero or all non-zero. {defaultHelp}
                                  """)

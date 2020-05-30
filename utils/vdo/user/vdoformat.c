@@ -16,9 +16,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoFormat.c#6 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoFormat.c#7 $
  */
 
+#include <blkid/blkid.h>
+#include <dirent.h>
 #include <err.h>
 #include <getopt.h>
 #include <linux/fs.h>
@@ -27,6 +29,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 
 #include "uds.h"
 
@@ -52,6 +55,7 @@ enum {
   DEFAULT_SLAB_BITS    = 19,
 };
 
+  
 static const char usageString[] =
   " [--help] [options...] filename";
 
@@ -187,6 +191,225 @@ static void describeCapacity(const VDO    *vdo,
   }
 }
 
+static const char MSG_FAILED_SIG_OFFSET[] = "Failed to get offset of the %s" \
+  " signature on %s.\n";
+static const char MSG_FAILED_SIG_LENGTH[] = "Failed to get length of the %s" \
+  " signature on %s.\n";
+static const char MSG_FAILED_SIG_INVALID[] = "Found invalid data in the %s" \
+  " signature on %s.\n";
+static const char MSG_SIG_DATA[] = "Found existing signature on %s at" \
+  " offset %s: LABEL=\"%s\" UUID=\"%s\" TYPE=\"%s\" USAGE=\"%s\".\n";
+
+/**********************************************************************
+ * Print info on existing signature found by blkid. If called with
+ * force, print messages to stdout, otherwise print messages to stderr
+ *
+ * @param probe    the current blkid probe location
+ * @param filename the name of the file blkid is probing
+ * @param force    whether we called vdoformat with --force.
+ * 
+ * @return VDO_SUCCESS or error.
+ */
+static int printSignatureInfo(blkid_probe probe,
+		  	      const char *filename,
+			      bool force)			     
+{
+  const char *offset = NULL, *type = NULL, *magic = NULL,
+    *usage = NULL, *label = NULL, *uuid = NULL;
+  size_t len;
+
+  int result = VDO_SUCCESS;
+  result = blkid_probe_lookup_value(probe, "TYPE", &type, NULL);
+  if (result == VDO_SUCCESS) {
+    result = blkid_probe_lookup_value(probe, "SBMAGIC_OFFSET", &offset, NULL);
+    if (result != VDO_SUCCESS) {
+      fprintf(force ? stdout : stderr, MSG_FAILED_SIG_OFFSET, type, filename);
+    }
+    
+    result = blkid_probe_lookup_value(probe, "SBMAGIC", &magic, &len);
+    if (result != VDO_SUCCESS) {
+      fprintf(force ? stdout : stderr, MSG_FAILED_SIG_LENGTH, type, filename);      
+    }
+  } else {
+    result = blkid_probe_lookup_value(probe, "PTTYPE", &type, NULL);
+    if (result != VDO_SUCCESS) {
+      // Unknown type. Ingore.
+      return VDO_SUCCESS;
+    }    
+    
+    result = blkid_probe_lookup_value(probe, "PTMAGIC_OFFSET", &offset, NULL);
+    if (result != VDO_SUCCESS) {
+      fprintf(force ? stdout: stderr, MSG_FAILED_SIG_OFFSET, type, filename);
+    }
+    
+    result = blkid_probe_lookup_value(probe, "PTMAGIC", &magic, &len);
+    if (result != VDO_SUCCESS) {
+      fprintf(force ? stdout : stderr, MSG_FAILED_SIG_LENGTH, type, filename);            
+    }
+    usage = "partition table";    
+  }
+
+  if ((len == 0) || (offset == NULL)) {
+    fprintf(force ? stdout : stderr, MSG_FAILED_SIG_INVALID, type, filename);
+  }
+              
+  if (usage == NULL) {
+    (void) blkid_probe_lookup_value(probe, "USAGE", &usage, NULL);
+  }
+
+  /* Return values ignored here, in the worst case we print NULL */  
+  (void) blkid_probe_lookup_value(probe, "LABEL", &label, NULL);
+  (void) blkid_probe_lookup_value(probe, "UUID", &uuid, NULL);
+
+  fprintf(force ? stdout : stderr, MSG_SIG_DATA, filename, offset, label,
+	  uuid, type, usage);
+    
+  return VDO_SUCCESS;
+}
+
+/**********************************************************************
+ * Check for existing signatures on disk using blkid.
+ *
+ * @param filename the name of the file blkid is probing
+ * @param force    whether we called vdoformat with --force.
+ * 
+ * @return VDO_SUCCESS or error.
+ */
+static int checkForSignaturesUsingBlkid(const char *filename, bool force)
+{
+  int result = VDO_SUCCESS;
+
+  blkid_probe probe = NULL;
+  probe = blkid_new_probe_from_filename(filename);
+  if (probe == NULL) {
+    errx(EIO, "Failed to create a new blkid probe for device %s", filename);
+  }
+
+  blkid_probe_enable_partitions(probe, 1);
+  blkid_probe_set_partitions_flags(probe, BLKID_PARTS_MAGIC);
+
+  blkid_probe_enable_superblocks(probe, 1);
+  blkid_probe_set_superblocks_flags(probe, BLKID_SUBLKS_LABEL |
+				    BLKID_SUBLKS_UUID |
+				    BLKID_SUBLKS_TYPE |
+				    BLKID_SUBLKS_USAGE |
+				    BLKID_SUBLKS_VERSION |
+				    BLKID_SUBLKS_MAGIC |
+				    BLKID_SUBLKS_BADCSUM);
+
+  Buffer *buffer = NULL;
+  result = makeBuffer(0, &buffer);
+  if (result != VDO_SUCCESS) {
+    blkid_free_probe(probe);
+    return ENOMEM;
+  }
+
+  int found = 0;
+  while (blkid_do_probe(probe) == VDO_SUCCESS) {
+    found++;
+    printSignatureInfo(probe, filename, force);
+  }
+  
+  if (found > 0) {
+    if (force) {
+      printf("Formatting device already containing a known signature.\n");
+    } else {
+      fprintf(stderr, "Cannot format device already containing a known signature!\n"
+           "If you are sure you want to format this device again, use the\n"
+           "--force option.\n");
+      result = EPERM;
+    }
+  }
+  
+  blkid_free_probe(probe);
+  
+  return result;
+}
+
+
+/**********************************************************************
+ * Count the number of processes holding access to the device
+ *
+ * @param path   the path to the holders sysfs directory.
+ * @param force  pointer to holder count variable.
+ * 
+ * @return VDO_SUCCESS or error.
+ */
+static int countHolders(char *path, int *holders)
+{
+  struct stat statbuf;
+  int result = loggingStat(path, &statbuf, "Getting holder count");
+  if (result != UDS_SUCCESS) {
+    fprintf(stderr, "Unable to get status of %s.\n", path);
+    return result;
+  }
+
+  struct dirent *dirent;
+  DIR *d = opendir(path);
+  if (d == NULL) {
+    fprintf(stderr, "Unable to open holders directory.\n");
+    return EPERM;
+  }
+
+  while ((dirent = readdir(d))) {
+    if (strcmp(dirent->d_name, ".") && strcmp(dirent->d_name, "..")) {
+      (*holders)++;
+    }
+  }
+  closedir(d);
+  
+  return VDO_SUCCESS;
+}
+
+#define HOLDER_CHECK_RETRIES 25
+#define HOLDER_CHECK_USLEEP_DELAY 200000
+
+/**********************************************************************
+ * Check that the device we are about to format is not in use by
+ * something else.
+ *
+ * @param filename the name of the device we are checking
+ * @param major    the device's major number
+ * @param minor    the device's minor number
+ * 
+ * @return VDO_SUCCESS or error.
+ */
+static int checkDeviceInUse(char *filename, uint32_t major, uint32_t minor)
+{
+  unsigned int retries = HOLDER_CHECK_RETRIES;
+  int holders = 0;
+
+  char *path;
+  int result = allocSprintf(__func__, &path, "/sys/dev/block/%" PRIu32
+			    ":%" PRIu32 "/holders", major, minor);
+  if (result != UDS_SUCCESS) {
+    return result;
+  }
+  
+  result = countHolders(path, &holders);
+  if (result != VDO_SUCCESS) {
+    free(path);
+    return result;
+  }
+  
+  while (holders > 0 && retries--) {
+    if (!retries) {
+      fprintf(stderr, "The device %s is in use.\n", filename);
+      free(path);
+      return EPERM;
+    }
+
+    usleep(HOLDER_CHECK_USLEEP_DELAY);
+    printf("Retrying in use check for %s.\n", filename);
+    int result = countHolders(path, &holders);
+    if (result != VDO_SUCCESS) {
+      free(path);
+      return result;
+    }
+  }
+  return VDO_SUCCESS;
+}
+
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
@@ -275,6 +498,14 @@ int main(int argc, char *argv[])
     errx(1, "%s must be a block device", filename);
   }
 
+  uint32_t major = major(statbuf.st_rdev);
+  uint32_t minor = minor(statbuf.st_rdev);
+
+  result = checkDeviceInUse(filename, major, minor);
+  if (result != VDO_SUCCESS) {
+    errx(result, "checkDeviceInUse failed on %s", filename);
+  }
+  
   int fd;
   result = openFile(filename, FU_READ_WRITE, &fd);
   if (result != UDS_SUCCESS) {
@@ -324,19 +555,11 @@ int main(int argc, char *argv[])
     errx(result, "makeFileLayer failed on '%s'", filename);
   }
 
-  // Check whether there's a VDO on this device already...
-  VDO *vdo;
-  result = loadVDO(layer, false, NULL, &vdo);
-  if (result == VDO_SUCCESS) {
-    if (force) {
-      warnx("Formatting device already containing a valid VDO.");
-    } else {
-      errx(EPERM, "Cannot format device already containing a valid VDO!\n"
-           "If you are sure you want to format this device again, use the\n"
-           "--force option.");
-    }
-    freeVDO(&vdo);
-  }
+  // Check whether there's already something on this device already...
+  result = checkForSignaturesUsingBlkid(filename, force);
+  if (result != VDO_SUCCESS) {
+    errx(result, "checkForSignaturesUsingBlkid failed on '%s'", filename);
+  }  
 
   IndexConfig indexConfig;
   result = parseIndexConfig(&configStrings, &indexConfig);
@@ -383,6 +606,7 @@ int main(int argc, char *argv[])
 	 extraHelp);
   }
 
+  VDO *vdo;
   result = loadVDO(layer, true, NULL, &vdo);
   if (result != VDO_SUCCESS) {
     errx(result, "unable to verify configuration after formatting '%s'",

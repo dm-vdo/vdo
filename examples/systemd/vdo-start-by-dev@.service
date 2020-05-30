@@ -1,0 +1,11 @@
+[Unit]
+Description=Start VDO volume backed by %i
+DefaultDependencies=no
+Before=shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/vdo-by-dev %i start
+ExecStop=/usr/bin/vdo-by-dev %i stop

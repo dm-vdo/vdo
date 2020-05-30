@@ -1,0 +1,24 @@
+.TH VDODUMPBLOCKMAP 8 "2020-05-06" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdodumpblockmap \- dump the LBA->PBA mappings of a VDO device
+.SH SYNOPSIS
+.B vdodumpblockmap
+.RB [ \-\-lba=\fIlba\fP ]
+.I filename
+.SH DESCRIPTION
+.B vdodumpblockmap
+dumps all (or only the specified) LBA->PBA mappings from a cleanly
+shut down VDO device.
+.SH OPTIONS
+.TP
+.B \-\-help
+Print this help message and exit.
+.TP
+.B \-\-lba
+Dump only the mapping for the specified LBA.
+.TP
+.B \-\-version
+Show the version of vdodumpblockmap.
+.
+.SH SEE ALSO
+.BR vdo (8).

@@ -22,38 +22,41 @@
 """
   vdoStats - Report statistics from an Albireo VDO.
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdoStats#5 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdoStats#6 $
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import argparse
 import errno
 import gettext
 import locale
 import os
 import sys
 
-from optparse import OptionParser
-
 from vdo.statistics import *
 from vdo.utils import Command, CommandError, runCommand
 
 gettext.install('vdo')
 
-parser = OptionParser(usage="%prog [options] [device ...]");
-parser.add_option("--all", action="store_true", dest="all",
-                  help=_("Equivalent to --verbose"))
-parser.add_option("--human-readable", action="store_true",
-                  dest="humanReadable",
-                  help=_("Display stats in human-readable form"))
-parser.add_option("--si", action="store_true", dest="si",
-                  help=_("Use SI units, implies --human-readable"))
-parser.add_option("--verbose", action="store_true", dest="verbose",
-                  help=_("Include verbose statistics"))
-parser.add_option("--version", action="store_true", dest="version",
-                  help=_("Print the vdostats version number and exit"))
+parser = argparse.ArgumentParser(
+  description="Get configuration and statistics from a running VDO volume")
+
+parser.add_argument("--all", "-a", action="store_true", dest="all",
+                    help=_("Equivalent to --verbose"))
+parser.add_argument("--human-readable", action="store_true",
+                    dest="humanReadable",
+                    help=_("Display stats in human-readable form"))
+parser.add_argument("--si", action="store_true", dest="si",
+                    help=_("Use SI units, implies --human-readable"))
+parser.add_argument("--verbose", "-v", action="store_true", dest="verbose",
+                    help=_("Include verbose statistics"))
+parser.add_argument("--version", "-V", action="store_true", dest="version",
+                    help=_("Print the vdostats version number and exit"))
+parser.add_argument("devices", metavar="DEVICE", help="a VDO device", nargs="*")
+                    
 
 UNITS = [ 'B', 'K', 'M', 'G', 'T' ]
 
@@ -272,7 +275,7 @@ def main():
   except locale.Error:
     pass
 
-  (options, devices) = parser.parse_args()
+  options = parser.parse_args()
   if options.version:
     print("{0}.{1}".format(CURRENT_RELEASE_VERSION_NUMBER,
                            VDOStatistics.statisticsVersion))
@@ -292,7 +295,7 @@ def main():
 
   exitStatus = 0
   try:
-    (stats, exitStatus) = getDeviceStats(devices, statsTypes)
+    (stats, exitStatus) = getDeviceStats(options.devices, statsTypes)
     if not stats:
       return exitStatus
   except Exception as e:

@@ -47,10 +47,6 @@ class MemoryUsage(StatStruct):
       Uint64Field("bytesUsed"),
       # Maximum tracked bytes allocated.
       Uint64Field("peakBytesUsed"),
-      # Bio structures currently allocated (size not tracked).
-      Uint64Field("biosUsed"),
-      # Maximum number of bios allocated.
-      Uint64Field("peakBioCount"),
     ], procRoot="vdo", **kwargs)
 
 # UDS index statistics
@@ -119,7 +115,7 @@ class KernelStatistics(StatStruct):
       IndexStatistics("index"),
     ], procFile="kernel_stats", procRoot="vdo", **kwargs)
 
-  statisticsVersion = 30
+  statisticsVersion = 31
 
   def sample(self, device):
     sample = super(KernelStatistics, self).sample(device)

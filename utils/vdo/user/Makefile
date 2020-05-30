@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#6 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#13 $
 
-VDO_VERSION = 6.2.2.117
+VDO_VERSION = 6.2.3.91
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -84,11 +84,17 @@ USER_OBJS   = blockMapUtils.o  \
 # To add a new program X, add X to the variable PROGS (and possibly
 # also DIST_PROGS).
 
-PROGS = vdodmeventd        \
-        vdodumpconfig      \
-        vdoforcerebuild    \
-        vdoformat          \
-        vdoreadonly        \
+PROGS = vdoaudit               \
+        vdodebugmetadata       \
+        vdodmeventd            \
+        vdodumpblockmap        \
+        vdodumpconfig          \
+        vdodumpmetadata        \
+        vdoforcerebuild        \
+        vdoformat              \
+        vdolistmetadata        \
+        vdoreadonly            \
+        vdoregenerategeometry  \
         vdosetuuid
 
 DMEVENT_LIB = libdevmapper-event-lvm2vdo.so
@@ -144,6 +150,7 @@ $(PROGS): $$@.o libuser.a $(DEPLIBS)
 	echo "Building $@ from $^"
 	$(CC) $(LDFLAGS) $^ $(LDPRFLAGS) -o $@
 
+vdoformat: LDPRFLAGS += "-lblkid"
 vdodmeventd: LDPRFLAGS += "-ldevmapper-event"
 
 ifneq ($(MAKECMDGOALS),clean)
