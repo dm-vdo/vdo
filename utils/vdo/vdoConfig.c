@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#28 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#29 $
  */
 
 #include <uuid/uuid.h>
@@ -42,6 +42,8 @@
 #include "vdoInternal.h"
 #include "vdoLayout.h"
 #include "volumeGeometry.h"
+
+#include "vdoVolumeUtils.h"
 
 /**********************************************************************/
 int makeVDOLayoutFromConfig(const struct vdo_config  *config,
@@ -283,36 +285,6 @@ int formatVDOWithNonce(const struct vdo_config *config,
 }
 
 /**
- * Load the super block and decode the VDO component.
- *
- * @param vdo  The vdo containing the super block
- *
- * @return VDO_SUCCESS or an error if the super block could not be read
- **/
-static int __must_check prepareSuperBlock(struct vdo *vdo)
-{
-  struct volume_geometry geometry;
-  int result = load_volume_geometry(vdo->layer, &geometry);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  setLoadConfigFromGeometry(&geometry, &vdo->load_config);
-  result = load_super_block(vdo->layer, get_first_block_offset(vdo),
-                            &vdo->super_block);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = validate_vdo_version(vdo);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  return decode_vdo_component(vdo);
-}
-
-/**
  * Change the state of an inactive VDO image.
  *
  * @param layer            A physical layer
@@ -325,14 +297,8 @@ updateVDOSuperBlockState(PhysicalLayer *layer,
 			 VDOState newState)
 {
   struct vdo *vdo;
-  int result = make_vdo(layer, &vdo);
+  int result = load_vdo(layer, false, &vdo);
   if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = prepareSuperBlock(vdo);
-  if (result != VDO_SUCCESS) {
-    free_vdo(&vdo);
     return result;
   }
 
@@ -343,8 +309,7 @@ updateVDOSuperBlockState(PhysicalLayer *layer,
   }
 
   set_vdo_state(vdo, newState);
-
-  result = save_reconfigured_vdo(vdo);
+  result = save_vdo_components(vdo);
   free_vdo(&vdo);
   return result;
 }
