@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#19 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#20 $
 
 """
 from __future__ import absolute_import
@@ -703,6 +703,18 @@ class VDOService(Service):
     """
     self._handlePreviousOperationFailure()
 
+    # Obtain VDO parameters from the disk
+    config = self._getConfigFromVDO()
+    uuid = "VDO-" + config["UUID"]
+    vdoConfig = config["VDOConfig"]
+    sectorsPerBlock = vdoConfig["blockSize"] // Constants.SECTOR_SIZE
+    physicalSize = SizeString("{0}s".format(
+                      vdoConfig["physicalBlocks"] * sectorsPerBlock))
+    logicalSize = SizeString("{0}s".format(
+                      vdoConfig["logicalBlocks"] * sectorsPerBlock))
+    indexConfig = config["IndexConfig"]
+    
+    # Build the status dictionary
     status = {}
     status[_("Storage device")] = self.device
     status[self.vdoBlockMapCacheSizeKey] = str(self.blockMapCacheSize)
@@ -715,9 +727,9 @@ class VDOService(Service):
                                               self.enableCompression)
     status[self.vdoDeduplicationEnabledKey] = Constants.enableString(
                                                 self.enableDeduplication)
-    status[self.vdoLogicalSizeKey] = str(self.logicalSize)
+    status[self.vdoLogicalSizeKey] = str(logicalSize)
     status[self.vdoMaxDiscardSizeKey] = str(self.maxDiscardSize)
-    status[self.vdoPhysicalSizeKey] = str(self.physicalSize)
+    status[self.vdoPhysicalSizeKey] = str(physicalSize)
     status[self.vdoAckThreadsKey] = self.ackThreads
     status[self.vdoBioSubmitThreadsKey] = self.bioThreads
     status[_("Bio rotation interval")] = self.bioRotationInterval
@@ -725,13 +737,15 @@ class VDOService(Service):
     status[self.vdoHashZoneThreadsKey] = self.hashZoneThreads
     status[self.vdoLogicalThreadsKey] = self.logicalThreads
     status[self.vdoPhysicalThreadsKey] = self.physicalThreads
-    status[_("Slab size")] = str(self.slabSize)
+    status[_("Slab size")] = str(vdoConfig["slabSize"])
     status[_("Configured write policy")] = self.writePolicy
-    status[_("UUID")] = self._getUUID()
-    status[_("Index checkpoint frequency")] = self.indexCfreq
-    status[_("Index memory setting")] = self.indexMemory
+    status[_("UUID")] = uuid
+    status[_("Index checkpoint frequency")] = \
+                                  indexConfig["checkpointFrequency"]
+    status[_("Index memory setting")] = indexConfig["memory"]
     status[_("Index parallel factor")] = self.indexThreads
-    status[_("Index sparse")] = Constants.enableString(self.indexSparse)
+    status[_("Index sparse")] = Constants.enableString(
+                                  indexConfig["sparse"])
     status[_("Index status")] = self._getDeduplicationStatus()
 
     if os.getuid() == 0:
