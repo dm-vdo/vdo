@@ -7,9 +7,11 @@
 #ifndef LIST_H
 #define LIST_H
 
+
 #ifdef __KERNEL__
 #include <linux/list.h>
 #else
+
 
 struct list_head {
 	struct list_head *next;
@@ -55,6 +57,7 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
 	WRITE_ONCE(list->next, list);
 	list->prev = list;
 }
+
 
 #define CONFIG_DEBUG_LIST
 #define V(X) (void *) X
