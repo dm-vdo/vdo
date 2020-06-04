@@ -1,0 +1,36 @@
+.TH VDOAUDIT 8 "2020-05-04" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdoaudit \- confirm the reference counts of a VDO device
+.SH SYNOPSIS
+.B vdoaudit
+.RI [ options... ]
+.I filename
+.SH DESCRIPTION
+.B vdoaudit
+adds up the logical block references to all physical blocks of a VDO device
+found in \fIfilename\fP, then compares that sum to the stored number of
+logical blocks. It also confirms all of the actual reference counts on all
+physical blocks against the stored reference counts. Finally, it validates
+that the slab summary approximation of the free blocks in each slab is
+correct.
+.PP
+If \-\-verbose is specified, a line item will be reported for each
+inconsistency; otherwise a summary of the problems will be displayed.
+.SH OPTIONS
+.TP
+.B \-\-help
+Print this help message and exit.
+.TP
+.B \-\-summary
+Display a summary of any problems found on the volume.
+.TP
+.B \-\-verbose
+Display a line item for each inconsistency found on the volume.
+.TP
+.B \-\-version
+Show the version of vdoaudit.
+.
+.\" .SH EXAMPLES
+.\" .SH NOTES
+.SH SEE ALSO
+.BR vdo (8).

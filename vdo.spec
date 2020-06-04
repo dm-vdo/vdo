@@ -67,6 +67,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 #defattr(-,root,root)
 %{_bindir}/vdo
 %{_bindir}/vdostats
+%{_bindir}/vdoaudit
 %{_bindir}/vdodmeventd
 %{_bindir}/vdodumpconfig
 %{_bindir}/vdoforcerebuild
@@ -130,6 +131,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/systemd/VDO.mount.example
 %{_mandir}/man8/vdo.8.gz
 %{_mandir}/man8/vdostats.8.gz
+%{_mandir}/man8/vdoaudit.8.gz
 %{_mandir}/man8/vdodmeventd.8.gz
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
