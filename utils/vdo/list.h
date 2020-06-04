@@ -11,6 +11,8 @@
 #ifdef __KERNEL__
 #include <linux/list.h>
 #else
+#include "atomicDefs.h"
+#include "permassert.h"
 
 
 struct list_head {
