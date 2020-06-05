@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#18 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#19 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -29,6 +29,7 @@
 #include "slabDepotInternals.h"
 #include "slabSummaryInternals.h"
 #include "types.h"
+#include "vdoComponentStates.h"
 #include "vdoDecode.h"
 #include "vdoInternal.h"
 #include "vdoLayout.h"
@@ -39,17 +40,17 @@
 static int __must_check
 decode_vdo(struct vdo *vdo, bool validate_config)
 {
-	int result = start_vdo_decode(vdo, validate_config);
+	struct vdo_component_states states;
+	int result = start_vdo_decode(vdo, validate_config, &states);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	result = decode_vdo_layout(get_component_buffer(vdo->super_block),
-				   &vdo->layout);
+	result = decode_vdo_layout(states.layout, &vdo->layout);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	return finish_vdo_decode(vdo);
+	return finish_vdo_decode(vdo, &states);
 }
 
 /**********************************************************************/

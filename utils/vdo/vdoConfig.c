@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#29 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#30 $
  */
 
 #include <uuid/uuid.h>
@@ -39,6 +39,7 @@
 #include "slabDepot.h"
 #include "slabSummary.h"
 #include "statusCodes.h"
+#include "vdoComponentStates.h"
 #include "vdoInternal.h"
 #include "vdoLayout.h"
 #include "volumeGeometry.h"
@@ -217,6 +218,7 @@ static int makeAndWriteVDO(const struct vdo_config *config,
   vdo->config                      = *config;
   vdo->nonce                       = geometry->nonce;
   vdo->load_config.first_block_offset = get_data_region_offset(*geometry);
+  vdo->load_version = VDO_MASTER_VERSION_67_0;
   result = configureVDO(vdo);
   if (result != VDO_SUCCESS) {
     free_vdo(&vdo);
