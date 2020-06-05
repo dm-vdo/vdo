@@ -69,6 +69,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_bindir}/vdostats
 %{_bindir}/vdoaudit
 %{_bindir}/vdodmeventd
+%{_bindir}/vdodumpblockmap
 %{_bindir}/vdodumpconfig
 %{_bindir}/vdodumpmetadata
 %{_bindir}/vdoforcerebuild
@@ -134,6 +135,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdostats.8.gz
 %{_mandir}/man8/vdoaudit.8.gz
 %{_mandir}/man8/vdodmeventd.8.gz
+%{_mandir}/man8/vdodumpblockmap.8.gz
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdodumpmetadata.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
