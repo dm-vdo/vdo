@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/permassertLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/permassertLinuxUser.c#2 $
  */
 
 #include "permassert.h"
@@ -88,7 +88,7 @@ void handleAssertionFailure(const char *expressionString,
   logEmbeddedMessage(LOG_ERR, "assertion ", format, args,
                      " (%s) failed at %s:%d",
                      expressionString, fileName, lineNumber);
-  logBacktrace(LOG_ERR);
+  log_backtrace(LOG_ERR);
 
   performOnce(&initOnce, initialize);
   lockMutex(&mutex);

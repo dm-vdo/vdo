@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#4 $
  */
 
 #include "logger.h"
@@ -135,12 +135,12 @@ static void formatCurrentTime(char *buffer, size_t bufferSize)
 }
 
 /**********************************************************************/
-void logMessagePack(int         priority,
-                    const char *prefix,
-                    const char *fmt1,
-                    va_list     args1,
-                    const char *fmt2,
-                    va_list     args2)
+void log_message_pack(int         priority,
+                      const char *prefix,
+                      const char *fmt1,
+                      va_list     args1,
+                      const char *fmt2,
+                      va_list     args2)
 {
   openLogger();
   if (priority > getLogLevel()) {
@@ -238,7 +238,7 @@ static void logProcMaps(int priority)
 enum { NUM_STACK_FRAMES = 32 };
 
 /**********************************************************************/
-void logBacktrace(int priority)
+void log_backtrace(int priority)
 {
   logAtLevel(priority, "[backtrace]");
   void *trace[NUM_STACK_FRAMES];
@@ -257,7 +257,7 @@ void logBacktrace(int priority)
 }
 
 /**********************************************************************/
-void pauseForLogger(void)
+void pause_for_logger(void)
 {
   // User-space logger can't be overrun, so this is a no-op.
 }
