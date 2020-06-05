@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#20 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#21 $
 
 """
 from __future__ import absolute_import
@@ -712,41 +712,44 @@ class VDOService(Service):
                       vdoConfig["physicalBlocks"] * sectorsPerBlock))
     logicalSize = SizeString("{0}s".format(
                       vdoConfig["logicalBlocks"] * sectorsPerBlock))
+    slabSize = SizeString("{0}B".format(vdoConfig["slabSize"] 
+                          * Constants.VDO_BLOCK_SIZE))
     indexConfig = config["IndexConfig"]
+    indexMemory = self._getIndexMemory(indexConfig["memory"])
     
     # Build the status dictionary
+    ## Note that the self.indexThreads parameter appears to have been 
+    ## orphaned since uds went into the kernel. Although it is shown in 
+    ## the status output, there doesn't appear to be a way to set it at  
+    ## create or to change it. Leaving it as-is in status output until
+    ## the intended functionality can be evaluated and corrected in a 
+    ## separate BZ.
     status = {}
-    status[_("Storage device")] = self.device
-    status[self.vdoBlockMapCacheSizeKey] = str(self.blockMapCacheSize)
-    status[self.vdoBlockMapPeriodKey] = self.blockMapPeriod
     status[self.vdoBlockSizeKey] = Constants.VDO_BLOCK_SIZE
-    status[_("Emulate 512 byte")] = Constants.enableString(
-                                      self.logicalBlockSize == 512)
     status[_("Activate")] = Constants.enableString(self.activated)
     status[self.vdoCompressionEnabledKey] = Constants.enableString(
-                                              self.enableCompression)
+                                                self.enableCompression)
     status[self.vdoDeduplicationEnabledKey] = Constants.enableString(
-                                                self.enableDeduplication)
+                                               self.enableDeduplication)
     status[self.vdoLogicalSizeKey] = str(logicalSize)
-    status[self.vdoMaxDiscardSizeKey] = str(self.maxDiscardSize)
     status[self.vdoPhysicalSizeKey] = str(physicalSize)
-    status[self.vdoAckThreadsKey] = self.ackThreads
-    status[self.vdoBioSubmitThreadsKey] = self.bioThreads
-    status[_("Bio rotation interval")] = self.bioRotationInterval
-    status[self.vdoCpuThreadsKey] = self.cpuThreads
-    status[self.vdoHashZoneThreadsKey] = self.hashZoneThreads
-    status[self.vdoLogicalThreadsKey] = self.logicalThreads
-    status[self.vdoPhysicalThreadsKey] = self.physicalThreads
-    status[_("Slab size")] = str(vdoConfig["slabSize"])
-    status[_("Configured write policy")] = self.writePolicy
+    status[_("Slab size")] = str(slabSize)
     status[_("UUID")] = uuid
-    status[_("Index checkpoint frequency")] = \
-                                  indexConfig["checkpointFrequency"]
-    status[_("Index memory setting")] = indexConfig["memory"]
+    status[_("Index checkpoint frequency")] = (
+                                    indexConfig["checkpointFrequency"])
+    status[_("Index memory setting")] = indexMemory
     status[_("Index parallel factor")] = self.indexThreads
     status[_("Index sparse")] = Constants.enableString(
-                                  indexConfig["sparse"])
+                                    indexConfig["sparse"])
     status[_("Index status")] = self._getDeduplicationStatus()
+    
+    # Add parameters from dmsetup table if VDO is running. Otherwise,
+    # populate additional parameter statuses from this object, which
+    # match the config file
+    if self.running():
+      self._getStatusFromDmsetupTable(status)
+    else:
+      self._getStatusFromConfig(status)
 
     if os.getuid() == 0:
       status[_("Device mapper status")] = MgmntUtils.statusHelper(
@@ -1837,6 +1840,132 @@ class VDOService(Service):
     else:
       return output
 
+  ######################################################################
+  def _getIndexMemory(self, memVal):
+    """Takes the input indexMemory value from vdodumpconfig and 
+    converts it into a fractional Gigabyte value, if necessary.
+    
+    Returns:
+      The index memory value (in Gigabytes).
+    """
+    
+    # Determine if the index memory value is fractional
+    if not (memVal <= 1024):
+      # Convert index memory to fractional value
+      maxInt32 = 2**32
+      memVal = (memVal - maxInt32)
+      if (memVal == -256):
+        memVal = 0.25
+      elif (memVal == -512):
+        memVal = 0.5
+      else:
+        memVal = 0.75
+    
+    return memVal
+
+  ######################################################################
+  def _getStatusFromDmsetupTable(self, statusDict):
+    """Updates the input status dictionary with parameter values from
+    the dmsetup table for the running device."""
+  
+    # Get current DM table
+    dmTable = self._getCurrentDmTable()
+
+    # Convert appropriate parameters from blocks to bytes
+    cacheBlocksInBytes = SizeString("{0}B".format(dmTable["cacheBlocks"] 
+                                    * Constants.VDO_BLOCK_SIZE))
+    
+    # Initialize optional parameters to "non-existent"
+    statusDict[self.vdoMaxDiscardSizeKey] = _("non-existent") 
+    statusDict[self.vdoAckThreadsKey] = _("non-existent") 
+    statusDict[self.vdoBioSubmitThreadsKey] = _("non-existent") 
+    statusDict[ ("Bio rotation interval")] = _("non-existent") 
+    statusDict[self.vdoCpuThreadsKey] = _("non-existent") 
+    statusDict[self.vdoHashZoneThreadsKey] = _("non-existent") 
+    statusDict[self.vdoLogicalThreadsKey] = _("non-existent") 
+    statusDict[self.vdoPhysicalThreadsKey] = _("non-existent") 
+    
+    # Populate paramater values from dmsetup table
+    statusDict[_("Storage device")] = dmTable["storagePath"]
+    statusDict[_("Emulate 512 byte")] = Constants.enableString(
+                                        dmTable["blockSize"] == 512)
+    statusDict[self.vdoBlockMapCacheSizeKey] = str(cacheBlocksInBytes)
+    statusDict[self.vdoBlockMapPeriodKey] = dmTable["blockMapPeriod"]
+    statusDict[_("Configured write policy")] = dmTable["writePolicy"]
+    if "maxDiscard" in dmTable:
+      discardBlocksInBytes = SizeString("{0}B".format(
+                                        dmTable["maxDiscard"]
+                                        * Constants.VDO_BLOCK_SIZE))
+      statusDict[self.vdoMaxDiscardSizeKey] = str(discardBlocksInBytes)
+    if "ack" in dmTable:
+      statusDict[self.vdoAckThreadsKey] = dmTable["ack"]
+    if "bio" in dmTable:
+      statusDict[self.vdoBioSubmitThreadsKey] = dmTable["bio"]
+    if "bioRotationInterval" in dmTable:
+      statusDict[_("Bio rotation interval")] = dmTable[(
+                                                "bioRotationInterval")]
+    if "cpu" in dmTable:
+      statusDict[self.vdoCpuThreadsKey] = dmTable["cpu"]
+    if "hash" in dmTable:
+      statusDict[self.vdoHashZoneThreadsKey] = dmTable["hash"]
+    if "logical" in dmTable:
+      statusDict[self.vdoLogicalThreadsKey] = dmTable["logical"]
+    if "physical" in dmTable:
+      statusDict[self.vdoPhysicalThreadsKey] = dmTable["physical"]
+
+  ######################################################################
+  def _getStatusFromConfig(self, statusDict):
+    """Updates the input status dictionary with parameter values from
+    the config file for this object."""
+  
+    statusDict[_("Storage device")] = self.device
+    statusDict[_("Emulate 512 byte")] = Constants.enableString(
+                                        self.logicalBlockSize == 512)
+    statusDict[self.vdoBlockMapCacheSizeKey] = str(self.blockMapCacheSize)
+    statusDict[self.vdoBlockMapPeriodKey] = self.blockMapPeriod
+    statusDict[_("Configured write policy")] = self.writePolicy
+    statusDict[self.vdoMaxDiscardSizeKey] = str(self.maxDiscardSize)
+    statusDict[self.vdoAckThreadsKey] = self.ackThreads
+    statusDict[self.vdoBioSubmitThreadsKey] = self.bioThreads
+    statusDict[_("Bio rotation interval")] = self.bioRotationInterval
+    statusDict[self.vdoCpuThreadsKey] = self.cpuThreads
+    statusDict[self.vdoHashZoneThreadsKey] = self.hashZoneThreads
+    statusDict[self.vdoLogicalThreadsKey] = self.logicalThreads
+    statusDict[self.vdoPhysicalThreadsKey] = self.physicalThreads
+
+  ######################################################################
+  def _getCurrentDmTable(self):
+    """Obtains the dmsetup table for the VDO device.
+
+    Raises:
+      CommandError if the current table cannot be obtained.
+
+    Returns:
+      The current dmsetup table.
+    """
+    table = runCommand(["dmsetup", "table", self._name]).rstrip()
+    self.log.info(table)
+
+    # Parse the existing table required and optional parameters
+    tableOrder = ("logicalStart numSectors targetName version"
+                  + " storagePath storageSize blockSize cacheBlocks"
+                  + " blockMapPeriod mdRaid5Mode writePolicy poolName")
+    tableOrder= tableOrder.split(" ")
+    tableItems = table.split(" ")
+    tableOptionalItems = tableItems[len(tableOrder):]
+    tableItems = tableItems[0:len(tableOrder)]
+    
+    # Add optional parameters to tableOrder and tableItems
+    tableOrder.extend(tableOptionalItems[0::2])
+    tableItems.extend(tableOptionalItems[1::2])
+    
+    # Convert appropriate numeric values to integer
+    tableItems = [int(i) if i.isdecimal() else i for i in tableItems]
+    
+    # Create dictionary from dmsetup table output
+    dmTable = dict(zip(tableOrder, tableItems))
+    return dmTable
+    
   ######################################################################
   def _hasHolders(self):
     """Tests whether other devices are holding the VDO device open. This
