@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#6 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#7 $
 
 VDO_VERSION = 8.1.0.0
 
@@ -81,6 +81,7 @@ DEPLIBS  = $(UDS_DIR)/libuds.a
 LIBFLAGS = -pthread -lrt
 
 PROGS = vdoaudit           \
+        vdodebugmetadata   \
         vdodmeventd        \
         vdodumpblockmap    \
         vdodumpconfig      \

@@ -1,0 +1,34 @@
+.TH VDODEBUGMETADATA 8 "2020-05-08" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdodebugmetadata \- load a metadata dump of a VDO device
+.SH SYNOPSIS
+.B vdodebugmetadata
+.RB [ \-\-pbn=\fIpbn\fP
+\&.\|.\|.\&]
+.RB [ \-\-searchLBN=\fIlbn\fP
+\&.\|.\|.\&]
+.I filename
+.SH DESCRIPTION
+.B vdodebugmetadata
+loads the metadata regions dumped by \fBvdodumpmetadata\fP. It should be run
+under GDB, with a breakpoint on the function \%doNothing.
+.PP
+Variables \%vdo, \%slabSummary, \%slabs, and \%recoveryJournal are available,
+providing access to the VDO super block state, the slab summary blocks, all
+slab journal and reference blocks per slab, and all recovery journal blocks.
+.PP
+Please note that this tool does not provide access to block map pages.
+.SH OPTIONS
+.TP
+\-\-pbn
+Print the slab journal entries for the given PBN. This option may be specified
+up to 255 times.
+.TP
+\-\-searchLBN
+Print the recovery journal entries for the given LBN. This includes PBN,
+increment/decrement, mapping state, recovery journal position information, and
+whether the recovery journal block is valid. This option may be specified up
+to 255 times.
+.SH SEE ALSO
+.BR vdo (8),
+.BR vdodumpmetadata(8).
