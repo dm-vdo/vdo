@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#19 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#20 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -65,7 +65,7 @@ int load_vdo_superblock(PhysicalLayer *layer,
 		return result;
 	}
 
-	setLoadConfigFromGeometry(geometry, &vdo->load_config);
+	set_load_config_from_geometry(geometry, &vdo->load_config);
 	result = load_super_block(layer, get_first_block_offset(vdo),
 				  &vdo->super_block);
 	if (result != VDO_SUCCESS) {
