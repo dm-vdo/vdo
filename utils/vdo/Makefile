@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#8 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#9 $
 
 VDO_VERSION = 8.1.0.0
 
@@ -88,6 +88,7 @@ PROGS = vdoaudit               \
         vdodumpmetadata        \
         vdoforcerebuild        \
         vdoformat              \
+        vdolistmetadata        \
         vdoreadonly            \
         vdoregenerategeometry  \
         vdosetuuid

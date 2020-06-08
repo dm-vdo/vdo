@@ -1,0 +1,26 @@
+.TH VDOLISTMETADATA 8 "2020-05-12" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdolistmetadata \- list the metadata regions on a VDO device
+.SH SYNOPSIS
+.B vdolistmetadata
+.I filename
+.SH DESCRIPTION
+.B vdolistmetadata
+lists the metadata regions of a VDO device as ranges of block numbers.
+Each range is on a separate line of the form:
+.EX
+  startBlock .. endBlock: label
+.EE
+Both endpoints are included in the range, and are the zero-based
+indexes of 4KB VDO metadata blocks on the backing device.
+
+.SH OPTIONS
+.TP
+.B \-\-help
+Print this help message and exit.
+.TP
+.B \-\-version
+Show the version of vdolistmetadata.
+.
+.SH SEE ALSO
+.BR vdo (8).
