@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#3 $
  */
 
 #include <err.h>
@@ -45,7 +45,7 @@ static const char helpString[] =
   "vdoRegenerateGeometry - regenerate a VDO whose first few blocks have been wiped\n"
   "\n"
   "SYNOPSIS\n"
-  "  vdoRegenerateGeometry <filename>\n"
+  "  vdoRegenerateGeometry [--offset <offset>] <filename>\n"
   "\n"
   "DESCRIPTION\n"
   "  vdoRegenerateGeometry will attempt to regenerate the geometry block of a\n"

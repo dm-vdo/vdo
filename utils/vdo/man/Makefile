@@ -16,17 +16,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/man/Makefile#4 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/man/Makefile#5 $
 
 INSTALLFILES= \
-        vdoaudit.8         \
-	vdodebugmetadata.8 \
-        vdodmeventd.8      \
-        vdodumpblockmap.8  \
-        vdodumpconfig.8    \
-	vdodumpmetadata.8  \
-	vdoforcerebuild.8  \
-	vdoformat.8        \
+        vdoaudit.8               \
+	vdodebugmetadata.8       \
+        vdodmeventd.8            \
+        vdodumpblockmap.8        \
+        vdodumpconfig.8          \
+	vdodumpmetadata.8        \
+	vdoforcerebuild.8        \
+	vdoformat.8              \
+	vdoregenerategeometry.8  \
         vdosetuuid.8
 
 INSTALL = install
