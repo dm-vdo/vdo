@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.h#2 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.h#3 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -46,6 +46,21 @@ int formatVDO(const VDOConfig *config,
               PhysicalLayer   *layer)
   __attribute__((warn_unused_result));
 
+
+/**
+ * Calculate minimal VDO based on config parameters.
+ *
+ * @param config        The VDOConfig to use for calculations
+ * @param indexConfig   The IndexConfig to use for calculations
+ * @param minVDOBlocks  A pointer to hold the minimum blocks needed
+ * 
+ * @return VDO_SUCCESS or error.
+ **/
+int calculateMinimumVDOFromConfig(const VDOConfig *config,
+				  IndexConfig     *indexConfig,
+				  BlockCount      *minVDOBlocks)
+  __attribute__((warn_unused_result));
+  
 /**
  * Make a VDOLayout according to a VDOConfig. Exposed for testing only.
  *

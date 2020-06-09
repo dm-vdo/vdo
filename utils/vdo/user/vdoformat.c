@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoFormat.c#7 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoFormat.c#8 $
  */
 
 #include <blkid/blkid.h>
@@ -600,6 +600,21 @@ int main(int argc, char *argv[])
     if (result == VDO_TOO_MANY_SLABS) {
       extraHelp = "\nReduce the device size or increase the slab size";
     }
+    if (result == VDO_NO_SPACE) {
+      BlockCount minVDOBlocks = 0;
+      int calcResult = calculateMinimumVDOFromConfig(&config,
+						     &indexConfig,
+						     &minVDOBlocks);
+      if (calcResult != VDO_SUCCESS) {
+	errx(calcResult,
+	     "Unable to calculate minimum required VDO size");
+      } else {
+	uint64_t minimumSize = minVDOBlocks * VDO_BLOCK_SIZE; 	
+	fprintf(stderr,
+		"Minimum required size for VDO volume: %" PRIu64 " bytes\n",
+		minimumSize);	  
+      }
+    }    
     errx(result, "formatVDO failed on '%s': %s%s",
          filename,
 	 stringError(result, errorBuffer, sizeof(errorBuffer)),

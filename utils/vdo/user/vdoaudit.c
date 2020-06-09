@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoAudit.c#11 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoAudit.c#12 $
  */
 
 #include <err.h>
@@ -110,7 +110,7 @@ static char optionString[] = "hsvV";
 
 // Command-line options
 static const char  *filename;
-static bool         verbose          = true;
+static bool         verbose          = false;
 
 // Values loaded from the volume
 static VDO         *vdo              = NULL;
