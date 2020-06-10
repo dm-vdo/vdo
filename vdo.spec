@@ -67,17 +67,10 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 #defattr(-,root,root)
 %{_bindir}/vdo
 %{_bindir}/vdostats
-%{_bindir}/vdoaudit
-%{_bindir}/vdodebugmetadata
 %{_bindir}/vdodmeventd
-%{_bindir}/vdodumpblockmap
 %{_bindir}/vdodumpconfig
-%{_bindir}/vdodumpmetadata
 %{_bindir}/vdoforcerebuild
 %{_bindir}/vdoformat
-%{_bindir}/vdolistmetadata
-%{_bindir}/vdoreadonly
-%{_bindir}/vdoregenerategeometry
 %{_bindir}/vdosetuuid
 %dir %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}/__pycache__/*
@@ -136,21 +129,49 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %doc %{_defaultdocdir}/%{name}/examples/systemd/VDO.mount.example
 %{_mandir}/man8/vdo.8.gz
 %{_mandir}/man8/vdostats.8.gz
-%{_mandir}/man8/vdoaudit.8.gz
-%{_mandir}/man8/vdodebugmetadata.8.gz
 %{_mandir}/man8/vdodmeventd.8.gz
-%{_mandir}/man8/vdodumpblockmap.8.gz
 %{_mandir}/man8/vdodumpconfig.8.gz
-%{_mandir}/man8/vdodumpmetadata.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
-%{_mandir}/man8/vdolistmetadata.8.gz
-%{_mandir}/man8/vdoreadonly.8.gz
-%{_mandir}/man8/vdoregenerategeometry.8.gz
 %{_mandir}/man8/vdosetuuid.8.gz
 %dir %{_sysconfdir}/bash_completion.d
 %{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats
+
+%package support
+Summary: Support tools for Virtual Data Optimizer
+License: GPLv2
+Requires: libuuid >= 2.23
+ExclusiveArch: x86_64
+ExcludeArch: s390
+ExcludeArch: s390x
+ExcludeArch: ppc
+ExcludeArch: ppc64
+ExcludeArch: ppc64le
+ExcludeArch: aarch64
+ExcludeArch: i686
+
+%description support
+Virtual Data Optimizer (VDO) is a device mapper target that delivers
+block-level deduplication, compression, and thin provisioning.
+
+This package provides the user-space support tools for VDO.
+
+%files support
+%{_bindir}/vdoaudit
+%{_bindir}/vdodebugmetadata
+%{_bindir}/vdodumpblockmap
+%{_bindir}/vdodumpmetadata
+%{_bindir}/vdolistmetadata
+%{_bindir}/vdoreadonly
+%{_bindir}/vdoregenerategeometry
+%{_mandir}/man8/vdoaudit.8.gz
+%{_mandir}/man8/vdodebugmetadata.8.gz
+%{_mandir}/man8/vdodumpblockmap.8.gz
+%{_mandir}/man8/vdodumpmetadata.8.gz
+%{_mandir}/man8/vdolistmetadata.8.gz
+%{_mandir}/man8/vdoreadonly.8.gz
+%{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
 * Wed Jun 10 2020 - corwin@bf30-1 - 8.1.0.0-1
