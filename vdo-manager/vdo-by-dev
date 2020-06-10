@@ -1,4 +1,4 @@
-#!/usr/libexec/platform-python
+#!/usr/bin/python3
 
 #
 # Copyright (c) 2020 Red Hat, Inc.
@@ -41,7 +41,9 @@ from vdomgmnt import *
 
 conf = Configuration("/etc/vdoconf.yml")
 
-rdev = os.stat(sys.argv[1]).st_rdev
+# Hard-code /dev/ in front, as the argument passed via udev to systemd will be
+# only the node name from the kernel.
+rdev = os.stat('/dev/' + sys.argv[1]).st_rdev
 
 # Loop through each VDO in the config and determine whether its backing device
 # matches the one provided by the udev trigger (argv[1])
