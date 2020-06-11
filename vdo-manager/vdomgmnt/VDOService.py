@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#21 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#22 $
 
 """
 from __future__ import absolute_import
@@ -300,11 +300,6 @@ class VDOService(Service):
 
     # Validate some parameters.
     self._validateParameters()
-
-    # Perform a verification that the storage device doesn't already
-    # have something on it.
-    if not force:
-      self._createCheckCleanDevice()
 
     # Check to see if any other known VDO volume has the same UUID
     self._checkForExistingUUID(self.uuid)
@@ -1506,55 +1501,6 @@ class VDOService(Service):
     self.logicalSize = SizeString("{0}s".format(logicalSize))
 
   ######################################################################
-  def _createCheckCleanDevice(self):
-    """Performs a verification for create that the storage device doesn't
-    already have something on it.
-
-    Raises:
-      VDOServiceError
-    """
-    # Perform the same checks that LVM does (which doesn't yet include checking
-    # for an already-formatted VDO volume, but vdoformat does that), so we do
-    # it by...actually making LVM do it for us!
-    try:
-      runCommand(['pvcreate', '--config', 'devices/scan_lvs=1',
-                  '-qq', '--test', self.device])
-    except CommandError as e:
-      # Messages from pvcreate aren't localized, so we can look at
-      # the message generated and pick it apart. This will need
-      # fixing if the message format changes or it gets localized.
-      lines = [line.strip() for line in e.getStandardError().splitlines()]
-      lineCount = len(lines)
-      if lineCount > 0:
-        for i in range(lineCount):       
-          if (re.match(r"^TEST MODE", lines[i]) is not None):
-            for line in lines[i+1:]:
-              detectionMatch = re.match(r"WARNING: (.* detected .*)"
-                                        "\.\s+Wipe it\?", line)
-              if detectionMatch is not None:
-                raise VDOServiceError('{0}; use --force to override'
-                                      .format(detectionMatch.group(1)),
-                                      exitStatus = StateExitStatus)
-            break
-        # Use the last line from the test output.
-        # This will be the human-useful description of the problem.
-        e.setMessage(lines[-1])
-      # No TEST MODE message, just keep going.
-      raise e
-
-    # If this is a physical volume that's not in use by any logical
-    # volumes the above check won't trigger an error. So do a second
-    # check that catches that.
-    try:
-      runCommand(['blkid', '-p', self.device])
-    except CommandError as e:
-      if e.getExitCode() == 2:
-        return
-    raise VDOServiceError('device is a physical volume;'
-                          + ' use --force to override',
-                          exitStatus = StateExitStatus)
-
-  ######################################################################
   def _determineInstanceNumber(self):
     """Determine the instance number of a running VDO using sysfs."""
     path = "/sys/kvdo/{0}/instance".format(self.getName())
@@ -1596,9 +1542,24 @@ class VDOService(Service):
     if force:
       commandLine.append("--force")
     commandLine.append(self.device)
-    output = runCommand(commandLine).rstrip()
-    if output:
-      self._announce(textwrap.indent(output, "      "))
+
+    # vdoformat will now check for existing signatures on the device
+    # and print info about them and fail formatting unless the force
+    # flag is set, in which case it will wipe them.
+    try:
+      output = runCommand(commandLine).rstrip()
+      if output:
+        self._announce(textwrap.indent(output, "      "))      
+    except CommandError as e:
+      # Messages from vdoformat aren't localized, so we can look at
+      # the message generated and pick it apart. This will need
+      # fixing if the message format changes or it gets localized.
+      error = e.getStandardError().rstrip()
+      detectionMatch = re.match(r".*Cannot format device", error)
+      if detectionMatch is not None:
+        raise VDOServiceError(error, exitStatus = StateExitStatus)
+      raise e
+    
 
   ######################################################################
   def _generateDeviceMapperTable(self):
