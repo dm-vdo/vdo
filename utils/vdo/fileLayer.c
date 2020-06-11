@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#8 $
  */
 
 #include "fileLayer.h"
@@ -73,7 +73,7 @@ static int bufferAllocator(PhysicalLayer   *header,
     return result;
   }
 
-  return allocateMemory(bytes, statbuf.st_blksize, why, bufferPtr);
+  return allocate_memory(bytes, statbuf.st_blksize, why, bufferPtr);
 }
 
 /**********************************************************************/

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/memoryAlloc.h#2 $
+ * $Id: //eng/uds-releases/krusty/src/uds/memoryAlloc.h#3 $
  */
 
 #ifndef MEMORY_ALLOC_H
@@ -46,14 +46,14 @@
  * @return UDS_SUCCESS or an error code
  **/
 int __must_check
-allocateMemory(size_t size, size_t align, const char *what, void *ptr);
+allocate_memory(size_t size, size_t align, const char *what, void *ptr);
 
 /**
  * Free storage
  *
  * @param ptr  The memory to be freed
  **/
-void freeMemory(void *ptr);
+void free_memory(void *ptr);
 
 /**
  * Allocate storage based on element counts, sizes, and alignment.
@@ -100,7 +100,7 @@ static INLINE int doAllocation(size_t      count,
     totalSize = SIZE_MAX;
   }
 
-  return allocateMemory(totalSize, align, what, ptr);
+  return allocate_memory(totalSize, align, what, ptr);
 }
 
 /**
@@ -115,11 +115,11 @@ static INLINE int doAllocation(size_t      count,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check reallocateMemory(void *ptr,
-				  size_t oldSize,
-				  size_t size,
-				  const char *what,
-				  void *newPtr);
+int __must_check reallocate_memory(void *ptr,
+				   size_t oldSize,
+				   size_t size,
+				   const char *what,
+				   void *newPtr);
 
 /**
  * Allocate one or more elements of the indicated type, logging an
@@ -186,7 +186,7 @@ int __must_check reallocateMemory(void *ptr,
  **/
 static INLINE void FREE(void *ptr)
 {
-  freeMemory(ptr);
+  free_memory(ptr);
 }
 
 /**
@@ -202,7 +202,7 @@ static INLINE void FREE(void *ptr)
 static INLINE int __must_check
 allocateCacheAligned(size_t size, const char *what, void *ptr)
 {
-  return allocateMemory(size, CACHE_LINE_BYTES, what, ptr);
+  return allocate_memory(size, CACHE_LINE_BYTES, what, ptr);
 }
 
 #ifdef __KERNEL__
@@ -216,7 +216,7 @@ allocateCacheAligned(size_t size, const char *what, void *ptr)
  * @return pointer to the allocated memory, or NULL if the required space is
  *         not available.
  **/
-void * __must_check allocateMemoryNowait(size_t size, const char *what);
+void * __must_check allocate_memory_nowait(size_t size, const char *what);
 
 /**
  * Allocate one element of the indicated type immediately, failing if the
@@ -227,7 +227,7 @@ void * __must_check allocateMemoryNowait(size_t size, const char *what);
  *
  * @return pointer to the memory, or NULL if the memory is not available.
  **/
-#define ALLOCATE_NOWAIT(TYPE, WHAT) allocateMemoryNowait(sizeof(TYPE), WHAT)
+#define ALLOCATE_NOWAIT(TYPE, WHAT) allocate_memory_nowait(sizeof(TYPE), WHAT)
 #endif
 
 /**
@@ -287,12 +287,12 @@ static INLINE void freeVolatile(volatile void *pointer)
 /**
  * Perform termination of the memory allocation subsystem.
  **/
-void memoryExit(void);
+void memory_exit(void);
 
 /**
  * Perform initialization of the memory allocation subsystem.
  **/
-void memoryInit(void);
+void memory_init(void);
 
 /**
  * Register the current thread as an allocating thread.
@@ -323,7 +323,7 @@ void unregisterAllocatingThread(void);
  * @param peakBytesUsed A pointer to hold the maximum value bytesUsed has
  *                      attained
  **/
-void getMemoryStats(uint64_t *bytesUsed, uint64_t *peakBytesUsed);
+void get_memory_stats(uint64_t *bytesUsed, uint64_t *peakBytesUsed);
 
 /**
  * Report stats on any allocated memory that we're tracking.
@@ -331,7 +331,7 @@ void getMemoryStats(uint64_t *bytesUsed, uint64_t *peakBytesUsed);
  * Not all allocation types are guaranteed to be tracked in bytes
  * (e.g., bios).
  **/
-void reportMemoryUsage(void);
+void report_memory_usage(void);
 
 #endif
 
