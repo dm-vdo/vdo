@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/numUtils.h#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/numUtils.h#8 $
  *
  * THIS FILE IS A CANDIDATE FOR THE EVENTUAL UTILITY LIBRARY.
  */
@@ -29,13 +29,17 @@
 
 #include "types.h"
 
+#ifndef __KERNEL__
 /**
  * Return true if and only if a number is a power of two.
  **/
-static inline bool is_power_of_two(uint64_t n)
+static inline bool is_power_of_2(uint64_t n)
 {
 	return (n > 0) && ((n & (n - 1)) == 0);
 }
+#else
+#include <linux/log2.h>
+#endif
 
 /**
  * Efficiently calculate the base-2 logarithm of a number truncated to an
