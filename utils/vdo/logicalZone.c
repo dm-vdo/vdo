@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/logicalZone.c#38 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/logicalZone.c#39 $
  */
 
 #include "logicalZone.h"
@@ -351,8 +351,7 @@ void increment_flush_generation(struct logical_zone *zone,
 {
 	assert_on_zone_thread(zone, __func__);
 	ASSERT_LOG_ONLY((zone->flush_generation == expected_generation),
-			"logical zone %u flush generation %" PRIu64
-			" should be %" PRIu64 " before increment",
+			"logical zone %u flush generation %" PRIu64 " should be %" PRIu64 " before increment",
 			zone->zone_number, zone->flush_generation,
 			expected_generation);
 
@@ -440,8 +439,7 @@ void release_flush_generation_lock(struct data_vio *data_vio)
 	data_vio->has_flush_generation_lock = false;
 	ASSERT_LOG_ONLY(zone->oldest_active_generation
 				<= data_vio->flush_generation,
-			"data_vio releasing lock on generation %" PRIu64
-			" is not older than oldest active generation %" PRIu64,
+			"data_vio releasing lock on generation %" PRIu64 " is not older than oldest active generation %" PRIu64,
 			data_vio->flush_generation,
 			zone->oldest_active_generation);
 
@@ -462,10 +460,7 @@ struct allocation_selector *get_allocation_selector(struct logical_zone *zone)
 void dump_logical_zone(const struct logical_zone *zone)
 {
 	logInfo("logical_zone %u", zone->zone_number);
-	logInfo("  flush_generation=%" PRIu64 " oldest_active_generation=%" PRIu64
-		" oldest_locked_generation=%" PRIu64
-		" notification_generation=%" PRIu64
-		" notifying=%s iosInCurrentGeneration=%" PRIu64,
+	logInfo("  flush_generation=%" PRIu64 " oldest_active_generation=%" PRIu64 " oldest_locked_generation=%" PRIu64 " notification_generation=%" PRIu64 " notifying=%s ios_in_flush_generation=%" PRIu64,
 		zone->flush_generation, zone->oldest_active_generation,
 		relaxedLoad64(&zone->oldest_locked_generation),
 		zone->notification_generation, boolToString(zone->notifying),
