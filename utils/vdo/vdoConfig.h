@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#9 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -45,6 +45,21 @@ int __must_check formatVDO(const struct vdo_config *config,
 			   struct index_config *indexConfig,
 			   PhysicalLayer *layer);
 
+
+/**
+ * Calculate minimal VDO based on config parameters.
+ *
+ * @param config        The configuration parameters for the VDO
+ * @param indexConfig   The configuration parameters for the index
+ * @param minVDOBlocks  A pointer to hold the minimum blocks needed
+ * 
+ * @return VDO_SUCCESS or error.
+ **/
+int calculateMinimumVDOFromConfig(const struct vdo_config *config,
+				  struct index_config     *indexConfig,
+				  block_count_t           *minVDOBlocks)
+  __attribute__((warn_unused_result));
+  
 /**
  * Make a vdo_layout according to a vdo_config. Exposed for testing only.
  *

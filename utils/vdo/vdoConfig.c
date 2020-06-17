@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#30 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#31 $
  */
 
 #include <uuid/uuid.h>
@@ -155,6 +155,37 @@ int formatVDO(const struct vdo_config *config,
   uuid_generate(uuid);
 
   return formatVDOWithNonce(config, indexConfig, layer, nowUsec(), uuid);
+}
+
+/**********************************************************************/
+int calculateMinimumVDOFromConfig(const struct vdo_config *config,
+				  struct index_config     *indexConfig,
+				  block_count_t           *minVDOBlocks)
+{
+  // The minimum VDO size is the minimal size of the fixed layout + 
+  // one slab size for the allocator. The minimum fixed layout size
+  // calculated below comes from vdoLayout.c in makeVDOFixedLayout().
+  
+  block_count_t indexSize = 0;
+  if (indexConfig != NULL) {
+    int result = compute_index_blocks(indexConfig, &indexSize);
+    if (result != VDO_SUCCESS) {
+      return result;
+    }
+  }
+
+  block_count_t blockMapBlocks = DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT;
+  block_count_t journalBlocks  = config->recovery_journal_size;
+  block_count_t summaryBlocks  = get_slab_summary_size(VDO_BLOCK_SIZE);
+  block_count_t slabBlocks     = config->slab_size;
+
+  // The +2 takes into account the super block and geometry block.
+  block_count_t fixedLayoutSize
+    = indexSize + 2 + blockMapBlocks + journalBlocks + summaryBlocks;
+  
+  *minVDOBlocks = fixedLayoutSize + slabBlocks;
+
+  return VDO_SUCCESS;
 }
 
 /**
