@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#5 $
  */
 
 #ifndef NUMERIC_H
@@ -39,9 +39,9 @@
  *
  * @return The lesser of a and b
  **/
-static INLINE int __must_check minInt(int a, int b)
+static INLINE int __must_check min_int(int a, int b)
 {
-  return ((a < b) ? a : b);
+	return ((a < b) ? a : b);
 }
 
 /**
@@ -52,9 +52,9 @@ static INLINE int __must_check minInt(int a, int b)
  *
  * @return The greater of a and b
  **/
-static INLINE int __must_check maxInt(int a, int b)
+static INLINE int __must_check max_int(int a, int b)
 {
-  return ((a > b) ? a : b);
+	return ((a > b) ? a : b);
 }
 
 /**
@@ -65,9 +65,10 @@ static INLINE int __must_check maxInt(int a, int b)
  *
  * @return The greater of a and b
  **/
-static INLINE unsigned int __must_check maxUInt(unsigned int a, unsigned int b)
+static INLINE unsigned int __must_check max_uint(unsigned int a,
+						 unsigned int b)
 {
-  return ((a > b) ? a : b);
+	return ((a > b) ? a : b);
 }
 
 /**
@@ -78,9 +79,9 @@ static INLINE unsigned int __must_check maxUInt(unsigned int a, unsigned int b)
  *
  * @return The greater of a and b
  **/
-static INLINE long __must_check maxLong(long a, long b)
+static INLINE long __must_check max_long(long a, long b)
 {
-  return ((a > b) ? a : b);
+	return ((a > b) ? a : b);
 }
 
 /**
@@ -91,10 +92,10 @@ static INLINE long __must_check maxLong(long a, long b)
  *
  * @return The greater of a and b
  **/
-static INLINE unsigned long __must_check
-maxULong(unsigned long a, unsigned long b)
+static INLINE unsigned long __must_check max_ulong(unsigned long a,
+						   unsigned long b)
 {
-  return ((a > b) ? a : b);
+	return ((a > b) ? a : b);
 }
 
 /**
@@ -105,9 +106,9 @@ maxULong(unsigned long a, unsigned long b)
  *
  * @return The lesser of a and b
  **/
-static INLINE size_t __must_check minSizeT(size_t a, size_t b)
+static INLINE size_t __must_check min_size_t(size_t a, size_t b)
 {
-  return ((a < b) ? a : b);
+	return ((a < b) ? a : b);
 }
 
 /**
@@ -118,9 +119,9 @@ static INLINE size_t __must_check minSizeT(size_t a, size_t b)
  *
  * @return The greater of a and b
  **/
-static INLINE size_t __must_check maxSizeT(size_t a, size_t b)
+static INLINE size_t __must_check max_size_t(size_t a, size_t b)
 {
-  return ((a > b) ? a : b);
+	return ((a > b) ? a : b);
 }
 
 /**
@@ -131,9 +132,9 @@ static INLINE size_t __must_check maxSizeT(size_t a, size_t b)
  *
  * @return The lesser of a and b
  **/
-static INLINE uint64_t __must_check minUInt64(uint64_t a, uint64_t b)
+static INLINE uint64_t __must_check max_uint64(uint64_t a, uint64_t b)
 {
-  return ((a < b) ? a : b);
+	return ((a < b) ? a : b);
 }
 
 /**
@@ -145,12 +146,12 @@ static INLINE uint64_t __must_check minUInt64(uint64_t a, uint64_t b)
  * @param offset  A pointer to the offset into the buffer at which to extract
  * @param decoded A pointer to hold the extracted number
  **/
-static INLINE void decodeUInt64BE(const uint8_t *buffer,
-                                  size_t        *offset,
-                                  uint64_t      *decoded)
+static INLINE void decode_uint64_be(const uint8_t *buffer,
+				    size_t *offset,
+				    uint64_t *decoded)
 {
-  *decoded  = get_unaligned_be64(buffer + *offset);
-  *offset  += sizeof(uint64_t);
+	*decoded = get_unaligned_be64(buffer + *offset);
+	*offset += sizeof(uint64_t);
 }
 
 /**
@@ -158,16 +159,16 @@ static INLINE void decodeUInt64BE(const uint8_t *buffer,
  * using a big-endian representation. The offset will be advanced to
  * first byte after the encoded number.
  *
- * @param data     The buffer to encode into
- * @param offset   A pointer to the offset at which to start encoding
- * @param toEncode The number to encode
+ * @param data      The buffer to encode into
+ * @param offset    A pointer to the offset at which to start encoding
+ * @param to_encode The number to encode
  **/
-static INLINE void encodeUInt64BE(uint8_t  *data,
-                                  size_t   *offset,
-                                  uint64_t  toEncode)
+static INLINE void encode_uint64_be(uint8_t *data,
+				    size_t *offset,
+				    uint64_t to_encode)
 {
-  put_unaligned_be64(toEncode, data + *offset);
-  *offset += sizeof(uint64_t);
+	put_unaligned_be64(to_encode, data + *offset);
+	*offset += sizeof(uint64_t);
 }
 
 /**
@@ -179,13 +180,12 @@ static INLINE void encodeUInt64BE(uint8_t  *data,
  * @param offset  A pointer to the offset into the buffer at which to extract
  * @param decoded A pointer to hold the extracted number
  **/
-static INLINE void decodeUInt32BE(const uint8_t *buffer,
-                                  size_t        *offset,
-                                  uint32_t      *decoded)
-
+static INLINE void decode_uint32_be(const uint8_t *buffer,
+				    size_t *offset,
+				    uint32_t *decoded)
 {
-  *decoded = get_unaligned_be32(buffer + *offset);
-  *offset += sizeof(uint32_t);
+	*decoded = get_unaligned_be32(buffer + *offset);
+	*offset += sizeof(uint32_t);
 }
 
 /**
@@ -193,16 +193,16 @@ static INLINE void decodeUInt32BE(const uint8_t *buffer,
  * big-endian representation. The offset will be advanced to first byte
  * after the encoded number.
  *
- * @param data     The buffer to encode into
- * @param offset   A pointer to the offset at which to start encoding
- * @param toEncode The number to encode
+ * @param data      The buffer to encode into
+ * @param offset    A pointer to the offset at which to start encoding
+ * @param to_encode The number to encode
  **/
-static INLINE void encodeUInt32BE(uint8_t  *data,
-                                  size_t   *offset,
-                                  uint32_t  toEncode)
+static INLINE void encode_uint32_be(uint8_t *data,
+				    size_t *offset,
+				    uint32_t to_encode)
 {
-  put_unaligned_be32(toEncode, data + *offset);
-  *offset += sizeof(uint32_t);
+	put_unaligned_be32(to_encode, data + *offset);
+	*offset += sizeof(uint32_t);
 }
 
 /**
@@ -214,12 +214,12 @@ static INLINE void encodeUInt32BE(uint8_t  *data,
  *                extract
  * @param decoded A pointer to hold the extracted number
  **/
-static INLINE void decodeUInt16BE(const uint8_t *buffer,
-                                  size_t        *offset,
-                                  uint16_t      *decoded)
+static INLINE void decode_uint16_be(const uint8_t *buffer,
+				    size_t *offset,
+				    uint16_t *decoded)
 {
-  *decoded = get_unaligned_be16(buffer + *offset);
-  *offset += sizeof(uint16_t);
+	*decoded = get_unaligned_be16(buffer + *offset);
+	*offset += sizeof(uint16_t);
 }
 
 /**
@@ -229,9 +229,9 @@ static INLINE void decodeUInt16BE(const uint8_t *buffer,
  * @param data The buffer in which to store the number
  * @param num  The number to store
  **/
-static INLINE void storeUInt16BE(uint8_t* data, uint16_t num)
+static INLINE void store_uint16_be(uint8_t *data, uint16_t num)
 {
-  put_unaligned_be16(num, data);
+	put_unaligned_be16(num, data);
 }
 
 /**
@@ -239,16 +239,16 @@ static INLINE void storeUInt16BE(uint8_t* data, uint16_t num)
  * big-endian representation. The offset will be advanced to first byte
  * after the encoded number.
  *
- * @param data     The buffer to encode into
- * @param offset   A pointer to the offset at which to start encoding
- * @param toEncode The number to encode
+ * @param data      The buffer to encode into
+ * @param offset    A pointer to the offset at which to start encoding
+ * @param to_encode The number to encode
  **/
-static INLINE void encodeUInt16BE(uint8_t  *data,
-                                  size_t   *offset,
-                                  uint16_t  toEncode)
+static INLINE void encode_uint16_be(uint8_t *data,
+				    size_t *offset,
+				    uint16_t to_encode)
 {
-  put_unaligned_be16(toEncode, data + *offset);
-  *offset += sizeof(uint16_t);
+	put_unaligned_be16(to_encode, data + *offset);
+	*offset += sizeof(uint16_t);
 }
 
 /**
@@ -260,12 +260,12 @@ static INLINE void encodeUInt16BE(uint8_t  *data,
  * @param offset  A pointer to the offset into the buffer at which to extract
  * @param decoded A pointer to hold the extracted number
  **/
-static INLINE void decodeInt64LE(const uint8_t *buffer,
-                                 size_t        *offset,
-                                 int64_t       *decoded)
+static INLINE void decode_int64_le(const uint8_t *buffer,
+				   size_t *offset,
+				   int64_t *decoded)
 {
-  *decoded = get_unaligned_le64(buffer + *offset);
-  *offset += sizeof(int64_t);
+	*decoded = get_unaligned_le64(buffer + *offset);
+	*offset += sizeof(int64_t);
 }
 
 /**
@@ -273,16 +273,16 @@ static INLINE void decodeInt64LE(const uint8_t *buffer,
  * a little-endian representation. The offset will be advanced to
  * first byte after the encoded number.
  *
- * @param data     The buffer to encode into
- * @param offset   A pointer to the offset at which to start encoding
- * @param toEncode The number to encode
+ * @param data      The buffer to encode into
+ * @param offset    A pointer to the offset at which to start encoding
+ * @param to_encode The number to encode
  **/
-static INLINE void encodeInt64LE(uint8_t *data,
-                                 size_t  *offset,
-                                 int64_t  toEncode)
+static INLINE void encode_int64_le(uint8_t *data,
+				   size_t *offset,
+				   int64_t to_encode)
 {
-  put_unaligned_le64(toEncode, data + *offset);
-  *offset += sizeof(int64_t);
+	put_unaligned_le64(to_encode, data + *offset);
+	*offset += sizeof(int64_t);
 }
 
 /**
@@ -294,12 +294,12 @@ static INLINE void encodeInt64LE(uint8_t *data,
  * @param offset  A pointer to the offset into the buffer at which to extract
  * @param decoded A pointer to hold the extracted number
  **/
-static INLINE void decodeUInt64LE(const uint8_t *buffer,
-                                  size_t        *offset,
-                                  uint64_t      *decoded)
+static INLINE void decode_uint64_le(const uint8_t *buffer,
+				    size_t *offset,
+				    uint64_t *decoded)
 {
-  *decoded = get_unaligned_le64(buffer + *offset);
-  *offset += sizeof(uint64_t);
+	*decoded = get_unaligned_le64(buffer + *offset);
+	*offset += sizeof(uint64_t);
 }
 
 /**
@@ -307,16 +307,16 @@ static INLINE void decodeUInt64LE(const uint8_t *buffer,
  * using a little-endian representation. The offset will be advanced
  * to first byte after the encoded number.
  *
- * @param data     The buffer to encode into
- * @param offset   A pointer to the offset at which to start encoding
- * @param toEncode The number to encode
+ * @param data      The buffer to encode into
+ * @param offset    A pointer to the offset at which to start encoding
+ * @param to_encode The number to encode
  **/
-static INLINE void encodeUInt64LE(uint8_t  *data,
-                                  size_t   *offset,
-                                  uint64_t  toEncode)
+static INLINE void encode_uint64_le(uint8_t *data,
+				    size_t *offset,
+				    uint64_t to_encode)
 {
-  put_unaligned_le64(toEncode, data + *offset);
-  *offset += sizeof(uint64_t);
+	put_unaligned_le64(to_encode, data + *offset);
+	*offset += sizeof(uint64_t);
 }
 
 /**
@@ -328,12 +328,12 @@ static INLINE void encodeUInt64LE(uint8_t  *data,
  * @param offset  A pointer to the offset into the buffer at which to extract
  * @param decoded A pointer to hold the extracted number
  **/
-static INLINE void decodeInt32LE(const uint8_t *buffer,
-                                 size_t        *offset,
-                                 int32_t       *decoded)
+static INLINE void decode_int32_le(const uint8_t *buffer,
+				   size_t *offset,
+				   int32_t *decoded)
 {
-  *decoded = get_unaligned_le32(buffer + *offset);
-  *offset += sizeof(int32_t);
+	*decoded = get_unaligned_le32(buffer + *offset);
+	*offset += sizeof(int32_t);
 }
 
 /**
@@ -341,16 +341,16 @@ static INLINE void decodeInt32LE(const uint8_t *buffer,
  * a little-endian representation. The offset will be advanced to
  * first byte after the encoded number.
  *
- * @param data     The buffer to encode into
- * @param offset   A pointer to the offset at which to start encoding
- * @param toEncode The number to encode
+ * @param data      The buffer to encode into
+ * @param offset    A pointer to the offset at which to start encoding
+ * @param to_encode The number to encode
  **/
-static INLINE void encodeInt32LE(uint8_t *data,
-                                 size_t  *offset,
-                                 int32_t  toEncode)
+static INLINE void encode_int32_le(uint8_t *data,
+				   size_t *offset,
+				   int32_t to_encode)
 {
-  put_unaligned_le32(toEncode, data + *offset);
-  *offset += sizeof(int32_t);
+	put_unaligned_le32(to_encode, data + *offset);
+	*offset += sizeof(int32_t);
 }
 
 /**
@@ -362,12 +362,12 @@ static INLINE void encodeInt32LE(uint8_t *data,
  * @param offset  A pointer to the offset into the buffer at which to extract
  * @param decoded A pointer to hold the extracted number
  **/
-static INLINE void decodeUInt32LE(const uint8_t *buffer,
-                                  size_t        *offset,
-                                  uint32_t      *decoded)
+static INLINE void decode_uint32_le(const uint8_t *buffer,
+				    size_t *offset,
+				    uint32_t *decoded)
 {
-  *decoded = get_unaligned_le32(buffer + *offset);
-  *offset += sizeof(uint32_t);
+	*decoded = get_unaligned_le32(buffer + *offset);
+	*offset += sizeof(uint32_t);
 }
 
 /**
@@ -375,16 +375,16 @@ static INLINE void decodeUInt32LE(const uint8_t *buffer,
  * using a little-endian representation. The offset will be advanced
  * to first byte after the encoded number.
  *
- * @param data     The buffer to encode into
- * @param offset   A pointer to the offset at which to start encoding
- * @param toEncode The number to encode
+ * @param data      The buffer to encode into
+ * @param offset    A pointer to the offset at which to start encoding
+ * @param to_encode The number to encode
  **/
-static INLINE void encodeUInt32LE(uint8_t  *data,
-                                  size_t   *offset,
-                                  uint32_t  toEncode)
+static INLINE void encode_uint32_le(uint8_t *data,
+				    size_t *offset,
+				    uint32_t to_encode)
 {
-  put_unaligned_le32(toEncode, data + *offset);
-  *offset += sizeof(uint32_t);
+	put_unaligned_le32(to_encode, data + *offset);
+	*offset += sizeof(uint32_t);
 }
 
 /**
@@ -397,12 +397,12 @@ static INLINE void encodeUInt32LE(uint8_t  *data,
  *                extract
  * @param decoded A pointer to hold the extracted number
  **/
-static INLINE void decodeUInt16LE(const uint8_t *buffer,
-                                  size_t        *offset,
-                                  uint16_t      *decoded)
+static INLINE void decode_uint16_le(const uint8_t *buffer,
+				    size_t *offset,
+				    uint16_t *decoded)
 {
-  *decoded = get_unaligned_le16(buffer + *offset);
-  *offset += sizeof(uint16_t);
+	*decoded = get_unaligned_le16(buffer + *offset);
+	*offset += sizeof(uint16_t);
 }
 
 /**
@@ -410,16 +410,16 @@ static INLINE void decodeUInt16LE(const uint8_t *buffer,
  * using a little-endian representation. The offset will be advanced
  * to first byte after the encoded number.
  *
- * @param data     The buffer to encode into
- * @param offset   A pointer to the offset at which to start encoding
- * @param toEncode The number to encode
+ * @param data      The buffer to encode into
+ * @param offset    A pointer to the offset at which to start encoding
+ * @param to_encode The number to encode
  **/
-static INLINE void encodeUInt16LE(uint8_t  *data,
-                                  size_t   *offset,
-                                  uint16_t  toEncode)
+static INLINE void encode_uint16_le(uint8_t *data,
+				    size_t *offset,
+				    uint16_t to_encode)
 {
-  put_unaligned_le16(toEncode, data + *offset);
-  *offset += sizeof(uint16_t);
+	put_unaligned_le16(to_encode, data + *offset);
+	*offset += sizeof(uint16_t);
 }
 
 /**
@@ -427,6 +427,6 @@ static INLINE void encodeUInt16LE(uint8_t  *data,
  * function will fail to compile if any of the uint*_t types are not of the
  * size we expect. This function should never be called.
  **/
-void numericCompileTimeAssertions(void);
+void numeric_compile_time_assertions(void);
 
 #endif /* NUMERIC_H */
