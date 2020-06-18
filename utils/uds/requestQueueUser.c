@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#4 $
  */
 
 #include "requestQueue.h"
@@ -81,8 +81,8 @@ enum {
 };
 
 struct requestQueue {
-  const char            *name;       // name of queue
-  RequestQueueProcessor *processOne; // function to process 1 request
+  const char                *name;       // name of queue
+  request_queue_processor_t *processOne; // function to process 1 request
 
   struct funnel_queue *mainQueue; // new incoming requests
   struct funnel_queue *retryQueue; // old requests to retry first
@@ -271,9 +271,9 @@ static void requestQueueWorker(void *arg)
 }
 
 /**********************************************************************/
-int makeRequestQueue(const char             *queueName,
-                     RequestQueueProcessor  *processOne,
-                     RequestQueue          **queuePtr)
+int makeRequestQueue(const char                 *queueName,
+                     request_queue_processor_t  *processOne,
+                     RequestQueue              **queuePtr)
 {
   RequestQueue *queue;
   int result = ALLOCATE(1, RequestQueue, __func__, &queue);
