@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#31 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#32 $
  */
 
 #include <uuid/uuid.h>
@@ -144,9 +144,9 @@ static int __must_check configureVDO(struct vdo *vdo)
 }
 
 /**********************************************************************/
-int formatVDO(const struct vdo_config *config,
-              struct index_config     *indexConfig,
-              PhysicalLayer           *layer)
+int formatVDO(const struct vdo_config   *config,
+              const struct index_config *indexConfig,
+              PhysicalLayer             *layer)
 {
   STATIC_ASSERT(sizeof(uuid_t) == sizeof(UUID));
 
@@ -158,9 +158,9 @@ int formatVDO(const struct vdo_config *config,
 }
 
 /**********************************************************************/
-int calculateMinimumVDOFromConfig(const struct vdo_config *config,
-				  struct index_config     *indexConfig,
-				  block_count_t           *minVDOBlocks)
+int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
+				  const struct index_config *indexConfig,
+				  block_count_t             *minVDOBlocks)
 {
   // The minimum VDO size is the minimal size of the fixed layout + 
   // one slab size for the allocator. The minimum fixed layout size
@@ -281,11 +281,11 @@ static int makeAndWriteVDO(const struct vdo_config *config,
 }
 
 /**********************************************************************/
-int formatVDOWithNonce(const struct vdo_config *config,
-                       struct index_config     *indexConfig,
-                       PhysicalLayer           *layer,
-                       nonce_t                  nonce,
-                       UUID                     uuid)
+int formatVDOWithNonce(const struct vdo_config   *config,
+                       const struct index_config *indexConfig,
+                       PhysicalLayer             *layer,
+                       nonce_t                    nonce,
+                       UUID                       uuid)
 {
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#10 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -42,9 +42,8 @@
  * @return VDO_SUCCESS or an error
  **/
 int __must_check formatVDO(const struct vdo_config *config,
-			   struct index_config *indexConfig,
+			   const struct index_config *indexConfig,
 			   PhysicalLayer *layer);
-
 
 /**
  * Calculate minimal VDO based on config parameters.
@@ -56,8 +55,8 @@ int __must_check formatVDO(const struct vdo_config *config,
  * @return VDO_SUCCESS or error.
  **/
 int calculateMinimumVDOFromConfig(const struct vdo_config *config,
-				  struct index_config     *indexConfig,
-				  block_count_t           *minVDOBlocks)
+				  const struct index_config *indexConfig,
+				  block_count_t *minVDOBlocks)
   __attribute__((warn_unused_result));
   
 /**
@@ -90,7 +89,7 @@ makeVDOLayoutFromConfig(const struct vdo_config *config,
  * @return VDO_SUCCESS or an error
  **/
 int __must_check formatVDOWithNonce(const struct vdo_config *config,
-				    struct index_config *indexConfig,
+				    const struct index_config *indexConfig,
 				    PhysicalLayer *layer,
 				    nonce_t nonce,
 				    UUID uuid);
