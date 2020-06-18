@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#37 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#38 $
  */
 
 #include <err.h>
@@ -459,7 +459,7 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
 
   block_count_t     offset          = pbn - depot->first_block;
   slab_count_t      slabNumber      = offset >> depot->slab_size_shift;
-  uint64_t          slabOffsetMask  = (1 << depot->slab_size_shift) - 1;
+  uint64_t          slabOffsetMask  = (1ULL << depot->slab_size_shift) - 1;
   slab_block_number slabOffset      = offset & slabOffsetMask;
 
   printf("PBN %" PRIu64 " is offset %d in slab %d\n",

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#34 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#35 $
  */
 
 #include <err.h>
@@ -179,7 +179,8 @@ static void printSlabErrorHistogram(const SlabAudit *audit)
       continue;
     }
     // Round up any fraction of a dot to a full dot.
-    int width = compute_bucket_count(count * scale, audit->badRefCounts);
+    int width = compute_bucket_count(count * (uint64_t) scale,
+				     audit->badRefCounts);
     printf("  %5d  %8u   %.*s\n", delta, count, width, HISTOGRAM_BAR);
   }
 
@@ -317,7 +318,7 @@ static int getSlabBlockNumberForPBN(physical_block_number_t  pbn,
                                     slab_block_number       *slabBlockNumberPtr)
 {
   struct slab_depot *depot = vdo->depot;
-  uint64_t slabOffsetMask = (1 << depot->slab_size_shift) - 1;
+  uint64_t slabOffsetMask = (1ULL << depot->slab_size_shift) - 1;
   uint64_t slabBlockNumber = ((pbn - depot->first_block) & slabOffsetMask);
   if (slabBlockNumber >= slabDataBlocks) {
     return VDO_OUT_OF_RANGE;
@@ -572,7 +573,7 @@ static void verifySummaryHint(slab_count_t slabNumber, block_count_t freeBlocks)
   block_count_t freeBlockHint
     = get_summarized_free_block_count(get_summary_for_zone(summary, 0),
                                       slabNumber);
-  block_count_t hintError = (1 << summary->hint_shift);
+  block_count_t hintError = (1ULL << summary->hint_shift);
   if ((freeBlocks < max_block(freeBlockHint, hintError) - hintError)
       || (freeBlocks >= (freeBlockHint + hintError))) {
     badSummaryHints++;
