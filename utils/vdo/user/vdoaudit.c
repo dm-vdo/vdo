@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoAudit.c#12 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoAudit.c#13 $
  */
 
 #include <err.h>
@@ -178,7 +178,8 @@ static void printSlabErrorHistogram(const SlabAudit *audit)
       continue;
     }
     // Round up any fraction of a dot to a full dot.
-    int width = computeBucketCount(count * scale, audit->badRefCounts);
+    int width = computeBucketCount(scale * (uint64_t) count,
+                                   audit->badRefCounts);
     printf("  %5d  %8u   %.*s\n", delta, count, width, HISTOGRAM_BAR);
   }
 
@@ -316,7 +317,7 @@ static int getSlabBlockNumberForPBN(PhysicalBlockNumber  pbn,
                                     SlabBlockNumber     *slabBlockNumberPtr)
 {
   SlabDepot *depot = vdo->depot;
-  uint64_t slabOffsetMask = (1 << depot->slabSizeShift) - 1;
+  uint64_t slabOffsetMask = (1ULL << depot->slabSizeShift) - 1;
   uint64_t slabBlockNumber = ((pbn - depot->firstBlock) & slabOffsetMask);
   if (slabBlockNumber >= slabDataBlocks) {
     return VDO_OUT_OF_RANGE;
@@ -567,7 +568,7 @@ static void verifySummaryHint(SlabCount slabNumber, BlockCount freeBlocks)
 {
   BlockCount freeBlockHint
     = getSummarizedFreeBlockCount(getSummaryForZone(summary, 0), slabNumber);
-  BlockCount hintError = (1 << summary->hintShift);
+  BlockCount hintError = (1ULL << summary->hintShift);
   if ((freeBlocks < maxBlock(freeBlockHint, hintError) - hintError)
       || (freeBlocks >= (freeBlockHint + hintError))) {
     badSummaryHints++;

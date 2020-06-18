@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoRegenerateGeometry.c#2 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoRegenerateGeometry.c#3 $
  */
 
 #include <err.h>
@@ -282,7 +282,7 @@ static void findSuperBlocks(void)
     UDS_MEMORY_CONFIG_768MB,
   };
 
-  bool trySparse;
+  bool trySparse = true;
   for (unsigned int i = 0; i < UDS_MEMORY_CONFIG_MAX; i++) {
     const UdsMemoryConfigSize memory = ((i < 3) ? smallSizes[i] : i - 2);
     Candidate *candidate = &candidates[candidateCount];
