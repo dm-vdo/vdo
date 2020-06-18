@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#22 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#23 $
  */
 
 #include "blockMapUtils.h"
@@ -204,7 +204,9 @@ int findLBNPage(struct vdo              *vdo,
 
   // It's in the tree section of the block map.
   slot_number_t slots[BLOCK_MAP_TREE_HEIGHT];
+  slots[0] = lbn % BLOCK_MAP_ENTRIES_PER_PAGE;
   root_count_t rootIndex = pageNumber % map->root_count;
+  pageNumber = pageNumber / map->root_count;
   for (int i = 1; i < BLOCK_MAP_TREE_HEIGHT; i++) {
     slots[i] = pageNumber % BLOCK_MAP_ENTRIES_PER_PAGE;
     pageNumber /= BLOCK_MAP_ENTRIES_PER_PAGE;
