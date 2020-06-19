@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/permassertLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/permassertLinuxUser.c#3 $
  */
 
 #include "permassert.h"
@@ -46,8 +46,8 @@ static bool exitOnAssertionFailure = true;
 static const char *EXIT_ON_ASSERTION_FAILURE_VARIABLE
   = "UDS_EXIT_ON_ASSERTION_FAILURE";
 
-static OnceState initOnce = ONCE_STATE_INITIALIZER;
-static Mutex     mutex    = MUTEX_INITIALIZER;
+static once_state_t initOnce = ONCE_STATE_INITIALIZER;
+static Mutex        mutex    = MUTEX_INITIALIZER;
 
 typedef void (*assertFailFunc)(const char *  assertion,
                                const char   *file,

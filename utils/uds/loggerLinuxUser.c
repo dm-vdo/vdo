@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#5 $
  */
 
 #include "logger.h"
@@ -35,7 +35,7 @@ const char IDS_ENVIRONMENT_VARIABLE[]        = "UDS_LOG_IDS";
 
 static const char IDENTITY[]       = "UDS";
 
-static OnceState loggerOnce = ONCE_STATE_INITIALIZER;
+static once_state_t loggerOnce = ONCE_STATE_INITIALIZER;
 
 static unsigned int  opened      = 0;
 static FILE         *fp          = NULL;

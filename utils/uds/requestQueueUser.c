@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#5 $
  */
 
 #include "requestQueue.h"
@@ -170,7 +170,7 @@ static Request *removeHead(struct funnel_queue *queue)
   if (entry == NULL) {
     return NULL;
   }
-  return container_of(entry, Request, requestQueueLink);
+  return container_of(entry, Request, request_queue_link);
 }
 
 /**
@@ -327,7 +327,7 @@ void requestQueueEnqueue(RequestQueue *queue, Request *request)
 {
   bool unbatched = request->unbatched;
   funnel_queue_put(request->requeued ? queue->retryQueue : queue->mainQueue,
-                 &request->requestQueueLink);
+                   &request->request_queue_link);
 
   /*
    * We must wake the worker thread when it is dormant (waiting with no
