@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#32 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#33 $
  */
 
 #include <uuid/uuid.h>
@@ -74,20 +74,22 @@ int makeVDOLayoutFromConfig(const struct vdo_config  *config,
  **/
 static int __must_check configureVDO(struct vdo *vdo)
 {
+  struct vdo_config *config = &vdo->states.vdo.config;
+
   // The layout starts 1 block past the beginning of the data region, as the
   // data region contains the super block but the layout does not.
-  int result = makeVDOLayoutFromConfig(&vdo->config,
+  int result = makeVDOLayoutFromConfig(config,
                                        get_first_block_offset(vdo) + 1,
                                        &vdo->layout);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  result = make_recovery_journal(vdo->nonce, vdo->layer,
+  result = make_recovery_journal(vdo->states.vdo.nonce, vdo->layer,
                                  get_vdo_partition(vdo->layout,
                                                    RECOVERY_JOURNAL_PARTITION),
-                                 vdo->complete_recoveries,
-                                 vdo->config.recovery_journal_size,
+                                 vdo->states.vdo.complete_recoveries,
+                                 config->recovery_journal_size,
                                  RECOVERY_JOURNAL_TAIL_BUFFER_SIZE,
                                  vdo->read_only_notifier, get_thread_config(vdo),
                                  &vdo->recovery_journal);
@@ -96,8 +98,8 @@ static int __must_check configureVDO(struct vdo *vdo)
   }
 
   struct slab_config slabConfig;
-  result = configure_slab(vdo->config.slab_size,
-                          vdo->config.slab_journal_blocks,
+  result = configure_slab(config->slab_size,
+                          config->slab_journal_blocks,
                           &slabConfig);
   if (result != VDO_SUCCESS) {
     return result;
@@ -109,24 +111,24 @@ static int __must_check configureVDO(struct vdo *vdo)
   physical_block_number_t origin
     = get_fixed_layout_partition_offset(depotPartition);
   result = make_slab_depot(depotSize, origin, slabConfig, get_thread_config(vdo),
-                           vdo->nonce, 1, vdo->layer, NULL,
+                           vdo->states.vdo.nonce, 1, vdo->layer, NULL,
                            vdo->read_only_notifier, vdo->recovery_journal,
                            &vdo->state, &vdo->depot);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  if (vdo->config.logical_blocks == 0) {
+  if (config->logical_blocks == 0) {
     block_count_t dataBlocks
       = slabConfig.data_blocks * calculate_slab_count(vdo->depot);
-    vdo->config.logical_blocks
+    config->logical_blocks
       = dataBlocks - compute_forest_size(dataBlocks,
                                          DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
   }
 
   struct partition *blockMapPartition
     = get_vdo_partition(vdo->layout, BLOCK_MAP_PARTITION);
-  result = make_block_map(vdo->config.logical_blocks, get_thread_config(vdo),
+  result = make_block_map(config->logical_blocks, get_thread_config(vdo),
                           get_fixed_layout_partition_offset(blockMapPartition),
                           get_fixed_layout_partition_size(blockMapPartition),
                           &vdo->block_map);
@@ -162,10 +164,10 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 				  const struct index_config *indexConfig,
 				  block_count_t             *minVDOBlocks)
 {
-  // The minimum VDO size is the minimal size of the fixed layout + 
+  // The minimum VDO size is the minimal size of the fixed layout +
   // one slab size for the allocator. The minimum fixed layout size
   // calculated below comes from vdoLayout.c in makeVDOFixedLayout().
-  
+
   block_count_t indexSize = 0;
   if (indexConfig != NULL) {
     int result = compute_index_blocks(indexConfig, &indexSize);
@@ -182,7 +184,7 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
   // The +2 takes into account the super block and geometry block.
   block_count_t fixedLayoutSize
     = indexSize + 2 + blockMapBlocks + journalBlocks + summaryBlocks;
-  
+
   *minVDOBlocks = fixedLayoutSize + slabBlocks;
 
   return VDO_SUCCESS;
@@ -246,10 +248,10 @@ static int makeAndWriteVDO(const struct vdo_config *config,
     return result;
   }
 
-  vdo->config                      = *config;
-  vdo->nonce                       = geometry->nonce;
+  vdo->states.vdo.config              = *config;
+  vdo->states.vdo.nonce               = geometry->nonce;
   vdo->load_config.first_block_offset = get_data_region_offset(*geometry);
-  vdo->load_version = VDO_MASTER_VERSION_67_0;
+  vdo->states.master_version          = VDO_MASTER_VERSION_67_0;
   result = configureVDO(vdo);
   if (result != VDO_SUCCESS) {
     free_vdo(&vdo);

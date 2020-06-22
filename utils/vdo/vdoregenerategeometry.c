@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#5 $
  */
 
 #include <err.h>
@@ -242,8 +242,8 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     return false;
   }
 
-  if (validate_vdo_config(&candidate->vdo->config, physicalSize, true)
-      != VDO_SUCCESS) {
+  if (validate_vdo_config(&candidate->vdo->states.vdo.config, physicalSize,
+                          true) != VDO_SUCCESS) {
     free_vdo(&candidate->vdo);
     return false;
   }
@@ -260,7 +260,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
 
     block_map_page_validity validity
       = validate_block_map_page((struct block_map_page *) blockBuffer,
-                                candidate->vdo->nonce,
+                                candidate->vdo->states.vdo.nonce,
                                 map->root_origin + root);
     if (validity == BLOCK_MAP_PAGE_VALID) {
       printf("Found candidate super block at block %" PRIu64
@@ -310,7 +310,7 @@ static void findSuperBlocks(void)
  **/
 static void rewriteGeometry(Candidate *candidate)
 {
-  candidate->geometry.nonce = candidate->vdo->nonce;
+  candidate->geometry.nonce = candidate->vdo->states.vdo.nonce;
   free_vdo(&candidate->vdo);
 
   int result = write_volume_geometry(fileLayer, &candidate->geometry);

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#23 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#24 $
  */
 
 #include <err.h>
@@ -307,7 +307,7 @@ static void dumpSlabs(void)
   block_count_t refCountBlocks = slabConfig->reference_count_blocks;
   for (slab_count_t i = 0; i < slabCount; i++) {
     physical_block_number_t slabStart
-      = vdo->depot->first_block + (i * vdo->config.slab_size);
+      = vdo->depot->first_block + (i * vdo->states.vdo.config.slab_size);
     physical_block_number_t origin = slabStart + slabConfig->data_blocks;
     int result = copyBlocks(origin, refCountBlocks + journalBlocks);
     if (result != VDO_SUCCESS) {
@@ -323,7 +323,7 @@ static void dumpRecoveryJournal(void)
   const struct partition *partition
     = get_vdo_partition(vdo->layout, RECOVERY_JOURNAL_PARTITION);
   int result = copyBlocks(get_fixed_layout_partition_offset(partition),
-                          vdo->config.recovery_journal_size);
+                          vdo->states.vdo.config.recovery_journal_size);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy recovery journal");
   }

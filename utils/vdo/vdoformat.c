@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#20 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#21 $
  */
 
 #include <blkid/blkid.h>
@@ -161,7 +161,7 @@ static void describeCapacity(const struct vdo *vdo,
 {
   if (logicalSize == 0) {
     printf("Logical blocks defaulted to %" PRIu64 " blocks.\n",
-           vdo->config.logical_blocks);
+           vdo->states.vdo.config.logical_blocks);
   }
 
   slab_count_t slabCount = calculate_slab_count(vdo->depot);
@@ -568,7 +568,7 @@ int main(int argc, char *argv[])
   if (result != VDO_SUCCESS) {
     errx(result, "checkForSignaturesUsingBlkid failed on '%s'", filename);
   }
-  
+
   struct index_config indexConfig;
   result = parseIndexConfig(&configStrings, &indexConfig);
   if (result != UDS_SUCCESS) {

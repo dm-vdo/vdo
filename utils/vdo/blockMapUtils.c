@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#23 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#24 $
  */
 
 #include "blockMapUtils.h"
@@ -70,7 +70,7 @@ static int readAndExaminePage(struct vdo              *vdo,
     return result;
   }
 
-  result = readBlockMapPage(vdo->layer, pagePBN, vdo->nonce, page);
+  result = readBlockMapPage(vdo->layer, pagePBN, vdo->states.vdo.nonce, page);
   if (result != VDO_SUCCESS) {
     FREE(page);
     return result;
@@ -165,7 +165,7 @@ static int readSlotFromPage(struct vdo              *vdo,
     return result;
   }
 
-  result = readBlockMapPage(vdo->layer, pbn, vdo->nonce, page);
+  result = readBlockMapPage(vdo->layer, pbn, vdo->states.vdo.nonce, page);
   if (result != VDO_SUCCESS) {
     FREE(page);
     return result;
@@ -193,9 +193,9 @@ int findLBNPage(struct vdo              *vdo,
                 logical_block_number_t   lbn,
                 physical_block_number_t *pbnPtr)
 {
-  if (lbn >= vdo->config.logical_blocks) {
+  if (lbn >= vdo->states.vdo.config.logical_blocks) {
     warnx("VDO has only %" PRIu64 " logical blocks, cannot dump mapping for"
-          " LBA %" PRIu64, vdo->config.logical_blocks, lbn);
+          " LBA %" PRIu64, vdo->states.vdo.config.logical_blocks, lbn);
     return VDO_OUT_OF_RANGE;
   }
 

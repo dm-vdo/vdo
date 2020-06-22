@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#11 $
  */
 
 #include <err.h>
@@ -121,7 +121,7 @@ static void readVDOConfig(const char             *vdoBacking,
     errx(1, "Could not load VDO from '%s'", vdoBacking);
   }
 
-  *configPtr = vdo->config;
+  *configPtr = vdo->states.vdo.config;
 
   result = load_volume_geometry(vdo->layer, geometryPtr);
   if (result != VDO_SUCCESS) {

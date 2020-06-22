@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#20 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#21 $
  */
 
 #include <err.h>
@@ -156,7 +156,7 @@ static void listSlab(slab_count_t              slab,
                      const struct slab_config *slabConfig)
 {
   physical_block_number_t slabOrigin
-    = vdo->depot->first_block + (slab * vdo->config.slab_size);
+    = vdo->depot->first_block + (slab * vdo->states.vdo.config.slab_size);
 
   // List the slab's reference count blocks.
   char buffer[64];
@@ -187,7 +187,7 @@ static void listRecoveryJournal(void)
   const struct partition *partition
     = get_vdo_partition(vdo->layout, RECOVERY_JOURNAL_PARTITION);
   listBlocks("recovery journal", get_fixed_layout_partition_offset(partition),
-             vdo->config.recovery_journal_size);
+             vdo->states.vdo.config.recovery_journal_size);
 }
 
 /**********************************************************************/

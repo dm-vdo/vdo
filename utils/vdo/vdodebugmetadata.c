@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#38 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#39 $
  */
 
 #include <err.h>
@@ -319,7 +319,8 @@ static int allocateMetadataSpace(void)
   }
 
   PhysicalLayer *layer = vdo->layer;
-  size_t journalBytes = vdo->config.recovery_journal_size * VDO_BLOCK_SIZE;
+  struct vdo_config *config = &vdo->states.vdo.config;
+  size_t journalBytes = config->recovery_journal_size * VDO_BLOCK_SIZE;
   result = layer->allocateIOBuffer(layer, journalBytes,
                                    "recovery journal", &rawJournalBytes);
   if (result != VDO_SUCCESS) {
@@ -327,11 +328,11 @@ static int allocateMetadataSpace(void)
          journalBytes);
   }
 
-  result = ALLOCATE(vdo->config.recovery_journal_size, UnpackedJournalBlock,
+  result = ALLOCATE(config->recovery_journal_size, UnpackedJournalBlock,
                     __func__, &recoveryJournal);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %" PRIu64 " journal block structures",
-         vdo->config.recovery_journal_size);
+         config->recovery_journal_size);
   }
 
   result = ALLOCATE(get_slab_summary_size(VDO_BLOCK_SIZE),
@@ -399,9 +400,10 @@ static void readMetadata(void)
    **/
   block_count_t metadataBlocksPerSlab
     = (slabConfig->reference_count_blocks + slabConfig->slab_journal_blocks);
+  struct vdo_config *config = &vdo->states.vdo.config;
   block_count_t totalNonBlockMapMetadataBlocks
     = ((metadataBlocksPerSlab * slabCount)
-       + vdo->config.recovery_journal_size
+       + config->recovery_journal_size
        + get_slab_summary_size(VDO_BLOCK_SIZE));
 
   nextBlock
@@ -426,12 +428,12 @@ static void readMetadata(void)
     }
   }
 
-  int result = readBlocks(vdo->config.recovery_journal_size, rawJournalBytes);
+  int result = readBlocks(config->recovery_journal_size, rawJournalBytes);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not read recovery journal");
   }
 
-  for (block_count_t i = 0; i < vdo->config.recovery_journal_size; i++) {
+  for (block_count_t i = 0; i < config->recovery_journal_size; i++) {
     UnpackedJournalBlock *block = &recoveryJournal[i];
     union packed_journal_header *packedHeader
       = (union packed_journal_header *) &rawJournalBytes[i * VDO_BLOCK_SIZE];
@@ -531,7 +533,9 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
     .pbn  = compute_page_number(lbn),
     .slot = compute_slot(lbn),
   };
-  for (block_count_t i = 0; i < vdo->config.recovery_journal_size; i++) {
+  for (block_count_t i = 0;
+       i < vdo->states.vdo.config.recovery_journal_size;
+       i++) {
     UnpackedJournalBlock block = recoveryJournal[i];
 
     for (sector_count_t j = 1; j < SECTORS_PER_BLOCK; j++) {
@@ -654,7 +658,7 @@ int main(int argc, char *argv[])
   readMetadata();
 
   // Print the nonce for this dump.
-  printf("Nonce value: %" PRIu64 "\n", vdo->nonce);
+  printf("Nonce value: %" PRIu64 "\n", vdo->states.vdo.nonce);
 
   // For any PBNs specified, process them.
   for (uint8_t i = 0; i < pbnCount; i++) {
