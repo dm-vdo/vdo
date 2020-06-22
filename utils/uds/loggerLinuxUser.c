@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#5 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#6 $
  */
 
 #include "logger.h"
@@ -47,9 +47,9 @@ static void initLogger(void)
 {
   const char *udsLogLevel = getenv("UDS_LOG_LEVEL");
   if (udsLogLevel != NULL) {
-    setLogLevel(stringToPriority(udsLogLevel));
+    set_log_level(string_to_priority(udsLogLevel));
   } else {
-    setLogLevel(LOG_INFO);
+    set_log_level(LOG_INFO);
   }
 
   char *timestampsString = getenv(TIMESTAMPS_ENVIRONMENT_VARIABLE);
@@ -143,7 +143,7 @@ void log_message_pack(int         priority,
                       va_list     args2)
 {
   openLogger();
-  if (priority > getLogLevel()) {
+  if (priority > get_log_level()) {
     return;
   }
 
@@ -170,7 +170,7 @@ void log_message_pack(int         priority,
       fprintf(fp, "[%u]", getpid());
     }
 
-    fprintf(fp, ": %-6s (%s", priorityToString(priority), tname);
+    fprintf(fp, ": %-6s (%s", priority_to_string(priority), tname);
 
     if (ids) {
       fprintf(fp, "/%d", get_thread_id());
@@ -203,7 +203,7 @@ static void logAtLevel(int priority, const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  vLogMessage(priority, format, args);
+  v_log_message(priority, format, args);
   va_end(args);
 }
 

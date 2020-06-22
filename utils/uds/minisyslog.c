@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#4 $
  */
 
 #include <fcntl.h>
@@ -126,7 +126,7 @@ static void logIt(int         priority,
                   const char *format2,
                   va_list     args2)
 {
-  const char *priorityStr = priorityToString(priority);
+  const char *priorityStr = priority_to_string(priority);
   char        buffer[1024];
   char       *bufEnd = buffer + sizeof(buffer);
   char       *bufp = buffer;
