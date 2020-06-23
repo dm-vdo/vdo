@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#3 $
  */
 
 #include <errno.h>
@@ -64,7 +64,7 @@ static enum MutexKind getMutexKind(void)
 {
   static once_state_t onceState = ONCE_STATE_INITIALIZER;
 
-  performOnce(&onceState, initializeMutexKind);
+  perform_once(&onceState, initializeMutexKind);
 
   return hiddenMutexKind;
 }

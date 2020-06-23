@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/permassertLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/permassertLinuxUser.c#5 $
  */
 
 #include "permassert.h"
@@ -69,7 +69,7 @@ static void initialize(void)
 /**********************************************************************/
 bool setExitOnAssertionFailure(bool shouldExit)
 {
-  performOnce(&initOnce, initialize);
+  perform_once(&initOnce, initialize);
   lockMutex(&mutex);
   bool previousSetting = exitOnAssertionFailure;
   exitOnAssertionFailure = shouldExit;
@@ -90,7 +90,7 @@ void handleAssertionFailure(const char *expressionString,
                        expressionString, fileName, lineNumber);
   log_backtrace(LOG_ERR);
 
-  performOnce(&initOnce, initialize);
+  perform_once(&initOnce, initialize);
   lockMutex(&mutex);
   if (exitOnAssertionFailure) {
     __assert_fail(expressionString, fileName, lineNumber, __ASSERT_FUNCTION);

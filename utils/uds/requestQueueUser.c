@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#5 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#6 $
  */
 
 #include "requestQueue.h"
@@ -56,19 +56,19 @@
  * Time constants, all in units of nanoseconds.
  **/
 enum {
-  ONE_NANOSECOND    =    1,
-  ONE_MICROSECOND   = 1000 * ONE_NANOSECOND,
-  ONE_MILLISECOND   = 1000 * ONE_MICROSECOND,
-  ONE_SECOND        = 1000 * ONE_MILLISECOND,
+	ONE_NANOSECOND = 1,
+	ONE_MICROSECOND = 1000 * ONE_NANOSECOND,
+	ONE_MILLISECOND = 1000 * ONE_MICROSECOND,
+	ONE_SECOND = 1000 * ONE_MILLISECOND,
 
-  /** The initial time to wait after waiting with no timeout */
-  DEFAULT_WAIT_TIME = 10 * ONE_MICROSECOND,
+	/** The initial time to wait after waiting with no timeout */
+	DEFAULT_WAIT_TIME = 10 * ONE_MICROSECOND,
 
-  /** The minimum time to wait when waiting with a timeout */
-  MINIMUM_WAIT_TIME = DEFAULT_WAIT_TIME / 2,
+	/** The minimum time to wait when waiting with a timeout */
+	MINIMUM_WAIT_TIME = DEFAULT_WAIT_TIME / 2,
 
-  /** The maximimum time to wait when waiting with a timeout */
-  MAXIMUM_WAIT_TIME = ONE_MILLISECOND
+	/** The maximimum time to wait when waiting with a timeout */
+	MAXIMUM_WAIT_TIME = ONE_MILLISECOND
 };
 
 /**
@@ -76,37 +76,39 @@ enum {
  * that have been processed since the worker thread last woke up.
  **/
 enum {
-  MINIMUM_BATCH = 32,  // wait time increases if batches are smaller than this
-  MAXIMUM_BATCH = 64   // wait time decreases if batches are larger than this
+	MINIMUM_BATCH = 32, // wait time increases if batch smaller than this
+	MAXIMUM_BATCH = 64  // wait time decreases if batch larger than this
 };
 
-struct requestQueue {
-  const char                *name;       // name of queue
-  request_queue_processor_t *processOne; // function to process 1 request
+struct request_queue {
+	const char *name; // name of queue
+	request_queue_processor_t *process_one; // function to process 1
+						// request
 
-  struct funnel_queue *mainQueue; // new incoming requests
-  struct funnel_queue *retryQueue; // old requests to retry first
-  struct event_count  *workEvent; // signal to wake the worker thread
+	struct funnel_queue *main_queue;  // new incoming requests
+	struct funnel_queue *retry_queue; // old requests to retry first
+	struct event_count *work_event;   // signal to wake the worker thread
 
-  Thread thread;                // thread id of the worker thread
-  bool   started;               // true if the worker was started
+	Thread thread; // thread id of the worker thread
+	bool started;  // true if the worker was started
 
-  bool alive;                   // when true, requests can be enqueued
+	bool alive;    // when true, requests can be enqueued
 
-  /** A flag set when the worker is waiting without a timeout */
-  atomic_t dormant;
+	/** A flag set when the worker is waiting without a timeout */
+	atomic_t dormant;
 
-  // The following fields are mutable state private to the worker thread. The
-  // first field is aligned to avoid cache line sharing with preceding fields.
+	// The following fields are mutable state private to the worker thread.
+	// The first field is aligned to avoid cache line sharing with
+	// preceding fields.
 
-  /** requests processed since last wait */
-  uint64_t currentBatch __attribute__((aligned(CACHE_LINE_BYTES)));
+	/** requests processed since last wait */
+	uint64_t current_batch __attribute__((aligned(CACHE_LINE_BYTES)));
 
-  /** the amount of time to wait to accumulate a batch of requests */
-  uint64_t waitNanoseconds;
+	/** the amount of time to wait to accumulate a batch of requests */
+	uint64_t wait_nanoseconds;
 
-  /** the relative time at which to wake when waiting with a timeout */
-  RelTime wakeRelTime;
+	/** the relative time at which to wake when waiting with a timeout */
+	RelTime wake_rel_time;
 };
 
 /**
@@ -115,62 +117,64 @@ struct requestQueue {
  *
  * @param queue  the request queue
  **/
-static void adjustWaitTime(RequestQueue *queue)
+static void adjust_wait_time(RequestQueue *queue)
 {
-  // Adjust the wait time by about 25%.
-  uint64_t delta = queue->waitNanoseconds / 4;
+	// Adjust the wait time by about 25%.
+	uint64_t delta = queue->wait_nanoseconds / 4;
 
-  if (queue->currentBatch < MINIMUM_BATCH) {
-    // Batch too small, so increase the wait a little.
-    queue->waitNanoseconds += delta;
-  } else if (queue->currentBatch > MAXIMUM_BATCH) {
-    // Batch too large, so decrease the wait a little.
-    queue->waitNanoseconds -= delta;
-  }
+	if (queue->current_batch < MINIMUM_BATCH) {
+		// Batch too small, so increase the wait a little.
+		queue->wait_nanoseconds += delta;
+	} else if (queue->current_batch > MAXIMUM_BATCH) {
+		// Batch too large, so decrease the wait a little.
+		queue->wait_nanoseconds -= delta;
+	}
 }
 
 /**
  * Decide if the queue should wait with a timeout or enter the dormant mode
  * of waiting without a timeout. If timing out, returns an relative wake
- * time to pass to the wait call, otherwise returns NULL. (wakeRelTime is a
+ * time to pass to the wait call, otherwise returns NULL. (wake_rel_time is a
  * queue field to make it easy for this function to return NULL).
  *
  * @param queue  the request queue
  *
  * @return a pointer the relative wake time, or NULL if there is no timeout
  **/
-static RelTime *getWakeTime(RequestQueue *queue)
+static RelTime *get_wake_time(RequestQueue *queue)
 {
-  if (queue->waitNanoseconds >= MAXIMUM_WAIT_TIME) {
-    if (atomic_read(&queue->dormant)) {
-      // The dormant flag was set on the last timeout cycle and nothing
-      // changed, so wait with no timeout and reset the wait time.
-      queue->waitNanoseconds = DEFAULT_WAIT_TIME;
-      return NULL;
-    }
-    // Wait one time with the dormant flag set, ensuring that enqueuers will
-    // have a chance to see that the flag is set.
-    queue->waitNanoseconds = MAXIMUM_WAIT_TIME;
-    atomic_set_release(&queue->dormant, true);
-  } else if (queue->waitNanoseconds < MINIMUM_WAIT_TIME) {
-    // If the producer is very fast or the scheduler just doesn't wake us
-    // promptly, waiting for very short times won't make the batches smaller.
-    queue->waitNanoseconds = MINIMUM_WAIT_TIME;
-  }
+	if (queue->wait_nanoseconds >= MAXIMUM_WAIT_TIME) {
+		if (atomic_read(&queue->dormant)) {
+			// The dormant flag was set on the last timeout cycle
+			// and nothing changed, so wait with no timeout and
+			// reset the wait time.
+			queue->wait_nanoseconds = DEFAULT_WAIT_TIME;
+			return NULL;
+		}
+		// Wait one time with the dormant flag set, ensuring that
+		// enqueuers will have a chance to see that the flag is set.
+		queue->wait_nanoseconds = MAXIMUM_WAIT_TIME;
+		atomic_set_release(&queue->dormant, true);
+	} else if (queue->wait_nanoseconds < MINIMUM_WAIT_TIME) {
+		// If the producer is very fast or the scheduler just doesn't
+		// wake us promptly, waiting for very short times won't make
+		// the batches smaller.
+		queue->wait_nanoseconds = MINIMUM_WAIT_TIME;
+	}
 
-  RelTime *wake = &queue->wakeRelTime;
-  *wake = nanosecondsToRelTime(queue->waitNanoseconds);
-  return wake;
+	RelTime *wake = &queue->wake_rel_time;
+	*wake = nanosecondsToRelTime(queue->wait_nanoseconds);
+	return wake;
 }
 
 /**********************************************************************/
-static Request *removeHead(struct funnel_queue *queue)
+static Request *remove_head(struct funnel_queue *queue)
 {
-  struct funnel_queue_entry *entry = funnel_queue_poll(queue);
-  if (entry == NULL) {
-    return NULL;
-  }
-  return container_of(entry, Request, request_queue_link);
+	struct funnel_queue_entry *entry = funnel_queue_poll(queue);
+	if (entry == NULL) {
+		return NULL;
+	}
+	return container_of(entry, Request, request_queue_link);
 }
 
 /**
@@ -181,13 +185,13 @@ static Request *removeHead(struct funnel_queue *queue)
  *
  * @return a dequeued request, or NULL if no request was available
  **/
-static Request *pollQueues(RequestQueue *queue)
+static Request *poll_queues(RequestQueue *queue)
 {
-  Request *request = removeHead(queue->retryQueue);
-  if (request == NULL) {
-    request = removeHead(queue->mainQueue);
-  }
-  return request;
+	Request *request = remove_head(queue->retry_queue);
+	if (request == NULL) {
+		request = remove_head(queue->main_queue);
+	}
+	return request;
 }
 
 /**
@@ -199,179 +203,191 @@ static Request *pollQueues(RequestQueue *queue)
  * @return the next request in the queue, or NULL if the queue has been
  *         shut down and the worker thread should exit
  **/
-static Request *dequeueRequest(RequestQueue *queue)
+static Request *dequeue_request(RequestQueue *queue)
 {
-  for (;;) {
-    // Assume we'll find a request to return; if not, it'll be zeroed later.
-    queue->currentBatch += 1;
+	for (;;) {
+		// Assume we'll find a request to return; if not, it'll be
+		// zeroed later.
+		queue->current_batch += 1;
 
-    // Fast path: pull an item off a non-blocking queue and return it.
-    Request *request = pollQueues(queue);
-    if (request != NULL) {
-      return request;
-    }
+		// Fast path: pull an item off a non-blocking queue and return
+		// it.
+		Request *request = poll_queues(queue);
+		if (request != NULL) {
+			return request;
+		}
 
-    // Looks like there's no work. Prepare to wait for more work. If the
-    // event count is signalled after this returns, we won't wait later on.
-    event_token_t waitToken = event_count_prepare(queue->workEvent);
+		// Looks like there's no work. Prepare to wait for more work.
+		// If the event count is signalled after this returns, we won't
+		// wait later on.
+		event_token_t wait_token =
+			event_count_prepare(queue->work_event);
 
-    // First poll for shutdown to ensure we don't miss work that was enqueued
-    // immediately before a shutdown request.
-    bool shuttingDown = !READ_ONCE(queue->alive);
-    if (shuttingDown) {
-      /*
-       * Ensure that we see any requests that were guaranteed to have been
-       * fully enqueued before shutdown was flagged.  The corresponding write
-       * barrier is in requestQueueFinish.
-       */
-      smp_rmb();
-    }
+		// First poll for shutdown to ensure we don't miss work that
+		// was enqueued immediately before a shutdown request.
+		bool shutting_down = !READ_ONCE(queue->alive);
+		if (shutting_down) {
+			/*
+			 * Ensure that we see any requests that were guaranteed
+			 * to have been fully enqueued before shutdown was
+			 * flagged.  The corresponding write barrier is in
+			 * request_queue_finish.
+			 */
+			smp_rmb();
+		}
 
-    // Poll again before waiting--a request may have been enqueued just before
-    // we got the event key.
-    request = pollQueues(queue);
-    if ((request != NULL) || shuttingDown) {
-      event_count_cancel(queue->workEvent, waitToken);
-      return request;
-    }
+		// Poll again before waiting--a request may have been enqueued
+		// just before we got the event key.
+		request = poll_queues(queue);
+		if ((request != NULL) || shutting_down) {
+			event_count_cancel(queue->work_event, wait_token);
+			return request;
+		}
 
-    // We're about to wait again, so update the wait time to reflect the batch
-    // of requests we processed since the last wait.
-    adjustWaitTime(queue);
+		// We're about to wait again, so update the wait time to
+		// reflect the batch of requests we processed since the last
+		// wait.
+		adjust_wait_time(queue);
 
-    // If the event count hasn't been signalled since we got the waitToken,
-    // wait until it is signalled or until the wait times out.
-    RelTime *wakeTime = getWakeTime(queue);
-    event_count_wait(queue->workEvent, waitToken, wakeTime);
+		// If the event count hasn't been signalled since we got the
+		// wait_token, wait until it is signalled or until the wait
+		// times out.
+		RelTime *wake_time = get_wake_time(queue);
+		event_count_wait(queue->work_event, wait_token, wake_time);
 
-    if (wakeTime == NULL) {
-      // We've been roused from dormancy. Clear the flag so enqueuers can stop
-      // broadcasting (no fence needed for this transition).
-      atomic_set(&queue->dormant, false);
-      // Reset the timeout back to the default since we don't know how long
-      // we've been asleep and we also want to be responsive to a new burst.
-      queue->waitNanoseconds = DEFAULT_WAIT_TIME;
-    }
+		if (wake_time == NULL) {
+			// We've been roused from dormancy. Clear the flag so
+			// enqueuers can stop broadcasting (no fence needed for
+			// this transition).
+			atomic_set(&queue->dormant, false);
+			// Reset the timeout back to the default since we don't
+			// know how long we've been asleep and we also want to
+			// be responsive to a new burst.
+			queue->wait_nanoseconds = DEFAULT_WAIT_TIME;
+		}
 
-    // Just finished waiting, so start counting a new batch.
-    queue->currentBatch = 0;
-  }
+		// Just finished waiting, so start counting a new batch.
+		queue->current_batch = 0;
+	}
 }
 
 /**********************************************************************/
-static void requestQueueWorker(void *arg)
+static void request_queue_worker(void *arg)
 {
-  RequestQueue *queue = (RequestQueue *) arg;
-  logDebug("%s queue starting", queue->name);
-  Request *request;
-  while ((request = dequeueRequest(queue)) != NULL) {
-    queue->processOne(request);
-  }
-  logDebug("%s queue done", queue->name);
+	RequestQueue *queue = (RequestQueue *) arg;
+	logDebug("%s queue starting", queue->name);
+	Request *request;
+	while ((request = dequeue_request(queue)) != NULL) {
+		queue->process_one(request);
+	}
+	logDebug("%s queue done", queue->name);
 }
 
 /**********************************************************************/
-int makeRequestQueue(const char                 *queueName,
-                     request_queue_processor_t  *processOne,
-                     RequestQueue              **queuePtr)
+int make_request_queue(const char *queue_name,
+		       request_queue_processor_t *process_one,
+		       RequestQueue **queue_ptr)
 {
-  RequestQueue *queue;
-  int result = ALLOCATE(1, RequestQueue, __func__, &queue);
-  if (result != UDS_SUCCESS) {
-    return result;
-  }
-  queue->name            = queueName;
-  queue->processOne      = processOne;
-  queue->alive           = true;
-  queue->currentBatch    = 0;
-  queue->waitNanoseconds = DEFAULT_WAIT_TIME;
+	RequestQueue *queue;
+	int result = ALLOCATE(1, RequestQueue, __func__, &queue);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
+	queue->name = queue_name;
+	queue->process_one = process_one;
+	queue->alive = true;
+	queue->current_batch = 0;
+	queue->wait_nanoseconds = DEFAULT_WAIT_TIME;
 
-  result = make_funnel_queue(&queue->mainQueue);
-  if (result != UDS_SUCCESS) {
-    requestQueueFinish(queue);
-    return result;
-  }
+	result = make_funnel_queue(&queue->main_queue);
+	if (result != UDS_SUCCESS) {
+		request_queue_finish(queue);
+		return result;
+	}
 
-  result = make_funnel_queue(&queue->retryQueue);
-  if (result != UDS_SUCCESS) {
-    requestQueueFinish(queue);
-    return result;
-  }
+	result = make_funnel_queue(&queue->retry_queue);
+	if (result != UDS_SUCCESS) {
+		request_queue_finish(queue);
+		return result;
+	}
 
-  result = make_event_count(&queue->workEvent);
-  if (result != UDS_SUCCESS) {
-    requestQueueFinish(queue);
-    return result;
-  }
+	result = make_event_count(&queue->work_event);
+	if (result != UDS_SUCCESS) {
+		request_queue_finish(queue);
+		return result;
+	}
 
-  result = createThread(requestQueueWorker, queue, queueName, &queue->thread);
-  if (result != UDS_SUCCESS) {
-    requestQueueFinish(queue);
-    return result;
-  }
+	result = createThread(request_queue_worker, queue, queue_name,
+			      &queue->thread);
+	if (result != UDS_SUCCESS) {
+		request_queue_finish(queue);
+		return result;
+	}
 
-  queue->started = true;
-  smp_mb();
-  *queuePtr = queue;
-  return UDS_SUCCESS;
+	queue->started = true;
+	smp_mb();
+	*queue_ptr = queue;
+	return UDS_SUCCESS;
 }
 
 /**********************************************************************/
-static INLINE void wakeUpWorker(RequestQueue *queue)
+static INLINE void wake_up_worker(RequestQueue *queue)
 {
-  event_count_broadcast(queue->workEvent);
+	event_count_broadcast(queue->work_event);
 }
 
 /**********************************************************************/
-void requestQueueEnqueue(RequestQueue *queue, Request *request)
+void request_queue_enqueue(RequestQueue *queue, Request *request)
 {
-  bool unbatched = request->unbatched;
-  funnel_queue_put(request->requeued ? queue->retryQueue : queue->mainQueue,
-                   &request->request_queue_link);
+	bool unbatched = request->unbatched;
+	funnel_queue_put(request->requeued ? queue->retry_queue :
+					     queue->main_queue,
+			 &request->request_queue_link);
 
-  /*
-   * We must wake the worker thread when it is dormant (waiting with no
-   * timeout). An atomic load (read fence) isn't needed here since we know the
-   * queue operation acts as one.
-   */
-  if (atomic_read(&queue->dormant) || unbatched) {
-    wakeUpWorker(queue);
-  }
+	/*
+	 * We must wake the worker thread when it is dormant (waiting with no
+	 * timeout). An atomic load (read fence) isn't needed here since we
+	 * know the queue operation acts as one.
+	 */
+	if (atomic_read(&queue->dormant) || unbatched) {
+		wake_up_worker(queue);
+	}
 }
 
 /**********************************************************************/
-void requestQueueFinish(RequestQueue *queue)
+void request_queue_finish(RequestQueue *queue)
 {
-  if (queue == NULL) {
-    return;
-  }
+	if (queue == NULL) {
+		return;
+	}
 
-  /*
-   * This memory barrier ensures that any requests we queued will be seen.  The
-   * point is that when dequeueRequest sees the following update to the alive
-   * flag, it will also be able to see any change we made to a next field in
-   * the funnel queue entry.  The corresponding read barrier is in
-   * dequeueRequest.
-   */
-  smp_wmb();
+	/*
+	 * This memory barrier ensures that any requests we queued will be
+	 * seen.  The point is that when dequeue_request sees the following
+	 * update to the alive flag, it will also be able to see any change we
+	 * made to a next field in the funnel queue entry.  The corresponding
+	 * read barrier is in dequeue_request.
+	 */
+	smp_wmb();
 
-  // Mark the queue as dead.
-  WRITE_ONCE(queue->alive, false);
+	// Mark the queue as dead.
+	WRITE_ONCE(queue->alive, false);
 
-  if (queue->started) {
-    // Wake the worker so it notices that it should exit.
-    wakeUpWorker(queue);
+	if (queue->started) {
+		// Wake the worker so it notices that it should exit.
+		wake_up_worker(queue);
 
-    // Wait for the worker thread to finish processing any additional pending
-    // work and exit.
-    int result = joinThreads(queue->thread);
-    if (result != UDS_SUCCESS) {
-      logWarningWithStringError(result, "Failed to join worker thread");
-    }
-  }
+		// Wait for the worker thread to finish processing any
+		// additional pending work and exit.
+		int result = joinThreads(queue->thread);
+		if (result != UDS_SUCCESS) {
+			logWarningWithStringError(result,
+						  "Failed to join worker thread");
+		}
+	}
 
-  free_event_count(queue->workEvent);
-  free_funnel_queue(queue->mainQueue);
-  free_funnel_queue(queue->retryQueue);
-  FREE(queue);
+	free_event_count(queue->work_event);
+	free_funnel_queue(queue->main_queue);
+	free_funnel_queue(queue->retry_queue);
+	FREE(queue);
 }
