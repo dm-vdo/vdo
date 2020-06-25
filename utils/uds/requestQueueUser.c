@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#6 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#7 $
  */
 
 #include "requestQueue.h"
@@ -108,7 +108,7 @@ struct request_queue {
 	uint64_t wait_nanoseconds;
 
 	/** the relative time at which to wake when waiting with a timeout */
-	RelTime wake_rel_time;
+	rel_time_t wake_rel_time;
 };
 
 /**
@@ -141,7 +141,7 @@ static void adjust_wait_time(RequestQueue *queue)
  *
  * @return a pointer the relative wake time, or NULL if there is no timeout
  **/
-static RelTime *get_wake_time(RequestQueue *queue)
+static rel_time_t *get_wake_time(RequestQueue *queue)
 {
 	if (queue->wait_nanoseconds >= MAXIMUM_WAIT_TIME) {
 		if (atomic_read(&queue->dormant)) {
@@ -162,7 +162,7 @@ static RelTime *get_wake_time(RequestQueue *queue)
 		queue->wait_nanoseconds = MINIMUM_WAIT_TIME;
 	}
 
-	RelTime *wake = &queue->wake_rel_time;
+	rel_time_t *wake = &queue->wake_rel_time;
 	*wake = nanosecondsToRelTime(queue->wait_nanoseconds);
 	return wake;
 }
@@ -249,10 +249,9 @@ static Request *dequeue_request(RequestQueue *queue)
 		// wait.
 		adjust_wait_time(queue);
 
-		// If the event count hasn't been signalled since we got the
-		// wait_token, wait until it is signalled or until the wait
-		// times out.
-		RelTime *wake_time = get_wake_time(queue);
+		// If the event count hasn't been signalled since we got the waitToken,
+		// wait until it is signalled or until the wait times out.
+		rel_time_t *wake_time = get_wake_time(queue);
 		event_count_wait(queue->work_event, wait_token, wake_time);
 
 		if (wake_time == NULL) {

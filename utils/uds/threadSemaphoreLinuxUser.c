@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadSemaphoreLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadSemaphoreLinuxUser.c#2 $
  */
 
 #include <errno.h>
@@ -54,7 +54,7 @@ void acquireSemaphore(Semaphore  *semaphore)
 }
 
 /**********************************************************************/
-bool attemptSemaphore(Semaphore *semaphore, RelTime timeout)
+bool attemptSemaphore(Semaphore *semaphore, rel_time_t timeout)
 {
   if (timeout > 0) {
     struct timespec ts = asTimeSpec(futureTime(CLOCK_REALTIME, timeout));

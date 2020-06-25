@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadCondVarLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadCondVarLinuxUser.c#2 $
  */
 
 #include "permassert.h"
@@ -55,7 +55,7 @@ int waitCond(CondVar *cond, Mutex *mutex)
 }
 
 /**********************************************************************/
-int timedWaitCond(CondVar *cond, Mutex *mutex, RelTime timeout)
+int timedWaitCond(CondVar *cond, Mutex *mutex, rel_time_t timeout)
 {
   struct timespec ts = asTimeSpec(futureTime(CLOCK_REALTIME, timeout));
   return pthread_cond_timedwait(cond, mutex, &ts);
