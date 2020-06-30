@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadSemaphoreLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadSemaphoreLinuxUser.c#3 $
  */
 
 #include <errno.h>
@@ -27,25 +27,25 @@
 #include "timeUtils.h"
 
 /**********************************************************************/
-int initializeSemaphore(Semaphore *semaphore, unsigned int value)
+int initializeSemaphore(struct semaphore *semaphore, unsigned int value)
 {
-  int result = sem_init(semaphore, false, value);
+  int result = sem_init(&semaphore->semaphore, false, value);
   return ASSERT_WITH_ERROR_CODE((result == 0), result, "sem_init error");
 }
 
 /**********************************************************************/
-int destroySemaphore(Semaphore *semaphore)
+int destroySemaphore(struct semaphore *semaphore)
 {
-  int result = sem_destroy(semaphore);
+  int result = sem_destroy(&semaphore->semaphore);
   return ASSERT_WITH_ERROR_CODE((result == 0), result, "sem_destroy error");
 }
 
 /**********************************************************************/
-void acquireSemaphore(Semaphore  *semaphore)
+void acquireSemaphore(struct semaphore  *semaphore)
 {
   int result;
   do {
-    result = sem_wait(semaphore);
+    result = sem_wait(&semaphore->semaphore);
   } while ((result == -1) && (errno == EINTR));
 
 #ifndef NDEBUG
@@ -54,12 +54,12 @@ void acquireSemaphore(Semaphore  *semaphore)
 }
 
 /**********************************************************************/
-bool attemptSemaphore(Semaphore *semaphore, rel_time_t timeout)
+bool attemptSemaphore(struct semaphore *semaphore, rel_time_t timeout)
 {
   if (timeout > 0) {
     struct timespec ts = asTimeSpec(futureTime(CLOCK_REALTIME, timeout));
     do {
-      if (sem_timedwait(semaphore, &ts) == 0) {
+      if (sem_timedwait(&semaphore->semaphore, &ts) == 0) {
         return true;
       }
     } while (errno == EINTR);
@@ -68,7 +68,7 @@ bool attemptSemaphore(Semaphore *semaphore, rel_time_t timeout)
 #endif
   } else {
     do {
-      if (sem_trywait(semaphore) == 0) {
+      if (sem_trywait(&semaphore->semaphore) == 0) {
         return true;
       }
     } while (errno == EINTR);
@@ -80,9 +80,9 @@ bool attemptSemaphore(Semaphore *semaphore, rel_time_t timeout)
 }
 
 /**********************************************************************/
-void releaseSemaphore(Semaphore  *semaphore)
+void releaseSemaphore(struct semaphore  *semaphore)
 {
-  int result __attribute__((unused)) = sem_post(semaphore);
+  int result __attribute__((unused)) = sem_post(&semaphore->semaphore);
 #ifndef NDEBUG
   ASSERT_LOG_ONLY((result == 0), "sem_post error %d", errno);
 #endif

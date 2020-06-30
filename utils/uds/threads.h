@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/threads.h#7 $
+ * $Id: //eng/uds-releases/krusty/src/uds/threads.h#8 $
  */
 
 #ifndef THREADS_H
@@ -40,23 +40,35 @@
 #endif
 
 #ifdef __KERNEL__
-typedef struct { struct event_count *eventCount; } CondVar;
-typedef struct mutex                       Mutex;
-typedef struct semaphore                   Semaphore;
-typedef struct kernelThread               *Thread;
+struct cond_var { struct event_count *eventCount; };
+struct thread;
 
-typedef struct {
-  Semaphore mutex;       // Mutex for this barrier object
-  Semaphore wait;        // Semaphore for threads waiting at the barrier
-  int       arrived;     // Number of threads which have arrived
-  int       threadCount; // Total number of threads using this barrier
-} Barrier;
+struct barrier {
+  struct semaphore mutex;       // Mutex for this barrier object
+  struct semaphore wait;        // Semaphore for threads waiting at the barrier
+  int              arrived;     // Number of threads which have arrived
+  int              threadCount; // Total number of threads using this barrier
+};
 #else
-typedef pthread_barrier_t Barrier;
-typedef pthread_cond_t    CondVar;
-typedef pthread_mutex_t   Mutex;
-typedef sem_t             Semaphore;
-typedef pthread_t         Thread;
+struct cond_var {
+  pthread_cond_t condition;
+};
+
+struct mutex {
+  pthread_mutex_t mutex;
+};
+
+struct semaphore {
+  sem_t semaphore;
+};
+
+struct thread {
+  pthread_t thread;
+};
+
+struct barrier {
+  pthread_barrier_t barrier;
+};
 
 #ifndef NDEBUG
 #define MUTEX_INITIALIZER PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
@@ -89,10 +101,10 @@ void applyToThreads(void applyFunc(void *, struct task_struct *),
  *
  * @return       success or failure indication
  **/
-int __must_check createThread(void       (*threadFunc)(void *),
-                              void        *threadData,
-                              const char  *name,
-                              Thread      *newThread);
+int __must_check createThread(void          (*threadFunc)(void *),
+                              void           *threadData,
+                              const char     *name,
+                              struct thread **newThread);
 
 /**
  * Retrieve the current numbers of cores.
@@ -128,7 +140,7 @@ void getThreadName(char *name);
  *
  * @return               UDS_SUCCESS or error code
  **/
-int joinThreads(Thread th);
+int joinThreads(struct thread *th);
 
 #ifdef __KERNEL__
 /**
@@ -148,7 +160,8 @@ void exitThread(void);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check initializeBarrier(Barrier *barrier, unsigned int threadCount);
+int __must_check initializeBarrier(struct barrier *barrier,
+                                   unsigned int threadCount);
 
 /**
  * Destroy a thread synchronization barrier.
@@ -157,7 +170,7 @@ int __must_check initializeBarrier(Barrier *barrier, unsigned int threadCount);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int destroyBarrier(Barrier *barrier);
+int destroyBarrier(struct barrier *barrier);
 
 /**
  * Enter a thread synchronization barrier, waiting for the configured number
@@ -170,7 +183,7 @@ int destroyBarrier(Barrier *barrier);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int enterBarrier(Barrier *barrier, bool *winner);
+int enterBarrier(struct barrier *barrier, bool *winner);
 
 /**
  * Initialize a condition variable with default attributes.
@@ -179,7 +192,7 @@ int enterBarrier(Barrier *barrier, bool *winner);
  *
  * @return           UDS_SUCCESS or error code
  **/
-int __must_check initCond(CondVar *cond);
+int __must_check initCond(struct cond_var *cond);
 
 /**
  * Signal a condition variable.
@@ -188,7 +201,7 @@ int __must_check initCond(CondVar *cond);
  *
  * @return      UDS_SUCCESS or error code
  **/
-int signalCond(CondVar *cond);
+int signalCond(struct cond_var *cond);
 
 /**
  * Broadcast a condition variable.
@@ -197,7 +210,7 @@ int signalCond(CondVar *cond);
  *
  * @return      UDS_SUCCESS or error code
  **/
-int broadcastCond(CondVar *cond);
+int broadcastCond(struct cond_var *cond);
 
 /**
  * Wait on a condition variable.
@@ -207,7 +220,7 @@ int broadcastCond(CondVar *cond);
  *
  * @return        UDS_SUCCESS or error code
  **/
-int waitCond(CondVar *cond, Mutex *mutex);
+int waitCond(struct cond_var *cond, struct mutex *mutex);
 
 /**
  * Wait on a condition variable with a timeout.
@@ -218,7 +231,8 @@ int waitCond(CondVar *cond, Mutex *mutex);
  *
  * @return error code (ETIMEDOUT if the deadline is hit)
  **/
-int timedWaitCond(CondVar *cond, Mutex *mutex, rel_time_t timeout);
+int timedWaitCond(struct cond_var *cond, struct mutex *mutex,
+                  rel_time_t timeout);
 
 /**
  * Destroy a condition variable.
@@ -227,7 +241,7 @@ int timedWaitCond(CondVar *cond, Mutex *mutex, rel_time_t timeout);
  *
  * @return      UDS_SUCCESS or error code
  **/
-int destroyCond(CondVar *cond);
+int destroyCond(struct cond_var *cond);
 
 #ifndef __KERNEL__
 /**
@@ -241,7 +255,7 @@ int destroyCond(CondVar *cond);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int initializeMutex(Mutex *mutex, bool assertOnError);
+int initializeMutex(struct mutex *mutex, bool assertOnError);
 #endif
 
 /**
@@ -252,13 +266,13 @@ int initializeMutex(Mutex *mutex, bool assertOnError);
  * @return UDS_SUCCESS or an error code
  **/
 #ifdef __KERNEL__
-static INLINE int __must_check initMutex(Mutex *mutex)
+static INLINE int __must_check initMutex(struct mutex *mutex)
 {
   mutex_init(mutex);
   return UDS_SUCCESS;
 }
 #else
-int __must_check initMutex(Mutex *mutex);
+int __must_check initMutex(struct mutex *mutex);
 #endif
 
 /**
@@ -269,12 +283,12 @@ int __must_check initMutex(Mutex *mutex);
  * @return UDS_SUCCESS or error code
  **/
 #ifdef __KERNEL__
-static INLINE int destroyMutex(Mutex *mutex)
+static INLINE int destroyMutex(struct mutex *mutex)
 {
   return UDS_SUCCESS;
 }
 #else
-int destroyMutex(Mutex *mutex);
+int destroyMutex(struct mutex *mutex);
 #endif
 
 /**
@@ -283,12 +297,12 @@ int destroyMutex(Mutex *mutex);
  * @param mutex mutex to lock
  **/
 #ifdef __KERNEL__
-static INLINE void lockMutex(Mutex *mutex)
+static INLINE void lockMutex(struct mutex *mutex)
 {
   mutex_lock(mutex);
 }
 #else
-void lockMutex(Mutex *mutex);
+void lockMutex(struct mutex *mutex);
 #endif
 
 /**
@@ -297,12 +311,12 @@ void lockMutex(Mutex *mutex);
  * @param mutex mutex to unlock
  **/
 #ifdef __KERNEL__
-static INLINE void unlockMutex(Mutex *mutex)
+static INLINE void unlockMutex(struct mutex *mutex)
 {
   mutex_unlock(mutex);
 }
 #else
-void unlockMutex(Mutex *mutex);
+void unlockMutex(struct mutex *mutex);
 #endif
 
 /**
@@ -315,13 +329,14 @@ void unlockMutex(Mutex *mutex);
  **/
 #ifdef __KERNEL__
 static INLINE int __must_check
-initializeSemaphore(Semaphore *semaphore, unsigned int value)
+initializeSemaphore(struct semaphore *semaphore, unsigned int value)
 {
   sema_init(semaphore, value);
   return UDS_SUCCESS;
 }
 #else
-int __must_check initializeSemaphore(Semaphore *semaphore, unsigned int value);
+int __must_check initializeSemaphore(struct semaphore *semaphore,
+                                     unsigned int value);
 #endif
 
 /**
@@ -332,12 +347,12 @@ int __must_check initializeSemaphore(Semaphore *semaphore, unsigned int value);
  * @return UDS_SUCCESS or an error code
  **/
 #ifdef __KERNEL__
-static INLINE int destroySemaphore(Semaphore *semaphore)
+static INLINE int destroySemaphore(struct semaphore *semaphore)
 {
   return UDS_SUCCESS;
 }
 #else
-int destroySemaphore(Semaphore *semaphore);
+int destroySemaphore(struct semaphore *semaphore);
 #endif
 
 /**
@@ -346,7 +361,7 @@ int destroySemaphore(Semaphore *semaphore);
  * @param semaphore the semaphore to acquire
  **/
 #ifdef __KERNEL__
-static INLINE void acquireSemaphore(Semaphore *semaphore)
+static INLINE void acquireSemaphore(struct semaphore *semaphore)
 {
   // Do not use down(semaphore).  Instead use down_interruptible so that we do
   // not get 120 second stall messages in kern.log.
@@ -364,7 +379,7 @@ static INLINE void acquireSemaphore(Semaphore *semaphore)
   }
 }
 #else
-void acquireSemaphore(Semaphore *semaphore);
+void acquireSemaphore(struct semaphore *semaphore);
 #endif
 
 /**
@@ -383,7 +398,7 @@ void acquireSemaphore(Semaphore *semaphore);
  **/
 #ifdef __KERNEL__
 static INLINE bool __must_check
-attemptSemaphore(Semaphore *semaphore, rel_time_t timeout)
+attemptSemaphore(struct semaphore *semaphore, rel_time_t timeout)
 {
   if (timeout <= 0) {
     // No timeout, just try to grab the semaphore.
@@ -394,7 +409,8 @@ attemptSemaphore(Semaphore *semaphore, rel_time_t timeout)
   }
 }
 #else
-bool __must_check attemptSemaphore(Semaphore *semaphore, rel_time_t timeout);
+bool __must_check attemptSemaphore(struct semaphore *semaphore,
+                                   rel_time_t timeout);
 #endif
 
 /**
@@ -403,12 +419,12 @@ bool __must_check attemptSemaphore(Semaphore *semaphore, rel_time_t timeout);
  * @param semaphore the semaphore to increment
  **/
 #ifdef __KERNEL__
-static INLINE void releaseSemaphore(Semaphore *semaphore)
+static INLINE void releaseSemaphore(struct semaphore *semaphore)
 {
   up(semaphore);
 }
 #else
-void releaseSemaphore(Semaphore *semaphore);
+void releaseSemaphore(struct semaphore *semaphore);
 #endif
 
 /**

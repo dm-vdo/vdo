@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#4 $
  */
 
 #include <errno.h>
@@ -70,7 +70,7 @@ static enum MutexKind getMutexKind(void)
 }
 
 /**********************************************************************/
-int initializeMutex(Mutex *mutex, bool assertOnError)
+int initializeMutex(struct mutex *mutex, bool assertOnError)
 {
   pthread_mutexattr_t attr;
   int result = pthread_mutexattr_init(&attr);
@@ -81,7 +81,7 @@ int initializeMutex(Mutex *mutex, bool assertOnError)
   if (getMutexKind() == ErrorChecking) {
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   }
-  result = pthread_mutex_init(mutex, &attr);
+  result = pthread_mutex_init(&mutex->mutex, &attr);
   if ((result != 0) && assertOnError) {
     result = ASSERT_WITH_ERROR_CODE((result == 0), result,
                                     "pthread_mutex_init error");
@@ -97,15 +97,15 @@ int initializeMutex(Mutex *mutex, bool assertOnError)
 }
 
 /**********************************************************************/
-int initMutex(Mutex *mutex)
+int initMutex(struct mutex *mutex)
 {
   return initializeMutex(mutex, DO_ASSERTIONS);
 }
 
 /**********************************************************************/
-int destroyMutex(Mutex *mutex)
+int destroyMutex(struct mutex *mutex)
 {
-  int result = pthread_mutex_destroy(mutex);
+  int result = pthread_mutex_destroy(&mutex->mutex);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
                                 "pthread_mutex_destroy error");
 }
@@ -117,18 +117,18 @@ int destroyMutex(Mutex *mutex)
  */
 
 /**********************************************************************/
-void lockMutex(Mutex *mutex)
+void lockMutex(struct mutex *mutex)
 {
-  int result __attribute__((unused)) = pthread_mutex_lock(mutex);
+  int result __attribute__((unused)) = pthread_mutex_lock(&mutex->mutex);
 #ifndef NDEBUG
   ASSERT_LOG_ONLY((result == 0), "pthread_mutex_lock error %d", result);
 #endif
 }
 
 /**********************************************************************/
-void unlockMutex(Mutex *mutex)
+void unlockMutex(struct mutex *mutex)
 {
-  int result  __attribute__((unused)) = pthread_mutex_unlock(mutex);
+  int result  __attribute__((unused)) = pthread_mutex_unlock(&mutex->mutex);
 #ifndef NDEBUG
   ASSERT_LOG_ONLY((result == 0), "pthread_mutex_unlock error %d", result);
 #endif

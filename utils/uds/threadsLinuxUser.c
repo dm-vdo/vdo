@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#3 $
  */
 
 #include "threads.h"
@@ -85,10 +85,10 @@ static void *threadStarter(void *arg)
 }
 
 /**********************************************************************/
-int createThread(void      (*threadFunc)(void *),
-                 void       *threadData,
-                 const char *name,
-                 pthread_t  *newThread)
+int createThread(void          (*threadFunc)(void *),
+                 void           *threadData,
+                 const char     *name,
+                 struct thread **newThread)
 {
   ThreadStartInfo *tsi;
   int result = ALLOCATE(1, ThreadStartInfo, __func__, &tsi);
@@ -99,20 +99,32 @@ int createThread(void      (*threadFunc)(void *),
   tsi->threadData = threadData;
   tsi->name       = name;
 
-  result = pthread_create(newThread, NULL, threadStarter, tsi);
+  struct thread *thread;
+  result = ALLOCATE(1, struct thread, __func__, &thread);
+  if (result != UDS_SUCCESS) {
+    logWarning("Error allocating memory for %s", name);
+    FREE(tsi);
+    return result;
+  }
+
+  result = pthread_create(&thread->thread, NULL, threadStarter, tsi);
   if (result != 0) {
     logErrorWithStringError(errno, "could not create %s thread", name);
+    FREE(thread);
     FREE(tsi);
     return UDS_ENOTHREADS;
   }
+  *newThread = thread;
   return UDS_SUCCESS;
 }
 
 /**********************************************************************/
-int joinThreads(pthread_t th)
+int joinThreads(struct thread *th)
 {
-  int result = pthread_join(th, NULL);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result, "th: %zu", th);
+  int result = pthread_join(th->thread, NULL);
+  pthread_t pthread = th->thread;
+  FREE(th);
+  return ASSERT_WITH_ERROR_CODE((result == 0), result, "th: %zu", pthread);
 }
 
 /**********************************************************************/
@@ -147,25 +159,25 @@ void *getThreadSpecific(pthread_key_t key)
 }
 
 /**********************************************************************/
-int initializeBarrier(Barrier *barrier, unsigned int threadCount)
+int initializeBarrier(struct barrier *barrier, unsigned int threadCount)
 {
-  int result = pthread_barrier_init(barrier, NULL, threadCount);
+  int result = pthread_barrier_init(&barrier->barrier, NULL, threadCount);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
                                 "pthread_barrier_init error");
 }
 
 /**********************************************************************/
-int destroyBarrier(Barrier *barrier)
+int destroyBarrier(struct barrier *barrier)
 {
-  int result = pthread_barrier_destroy(barrier);
+  int result = pthread_barrier_destroy(&barrier->barrier);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
                                 "pthread_barrier_destroy error");
 }
 
 /**********************************************************************/
-int enterBarrier(Barrier *barrier, bool *winner)
+int enterBarrier(struct barrier *barrier, bool *winner)
 {
-  int result = pthread_barrier_wait(barrier);
+  int result = pthread_barrier_wait(&barrier->barrier);
 
   // Check if this thread is the arbitrary winner and pass that result back as
   // an optional flag instead of overloading the return value.

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#5 $
  */
 
 #include <fcntl.h>
@@ -33,7 +33,7 @@
 #include "threads.h"
 #include "timeUtils.h"
 
-static Mutex mutex = MUTEX_INITIALIZER;
+static struct mutex mutex = { .mutex = MUTEX_INITIALIZER };
 
 static int logSocket = -1;
 

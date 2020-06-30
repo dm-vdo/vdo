@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#7 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#8 $
  */
 
 #include "requestQueue.h"
@@ -89,8 +89,8 @@ struct request_queue {
 	struct funnel_queue *retry_queue; // old requests to retry first
 	struct event_count *work_event;   // signal to wake the worker thread
 
-	Thread thread; // thread id of the worker thread
-	bool started;  // true if the worker was started
+	struct thread *thread; // thread id of the worker thread
+	bool started;          // true if the worker was started
 
 	bool alive;    // when true, requests can be enqueued
 
