@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#5 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#6 $
  */
 
 #include <fcntl.h>
@@ -81,7 +81,7 @@ static void openSocketLocked(void)
 /**********************************************************************/
 void miniOpenlog(const char *ident, int option, int facility)
 {
-  lockMutex(&mutex);
+  lock_mutex(&mutex);
   closeLocked();
   FREE(logIdent);
   if (duplicateString(ident, NULL, &logIdent) != UDS_SUCCESS) {
@@ -93,7 +93,7 @@ void miniOpenlog(const char *ident, int option, int facility)
   if (logOption & LOG_NDELAY) {
     openSocketLocked();
   }
-  unlockMutex(&mutex);
+  unlock_mutex(&mutex);
 }
 
 /**********************************************************************/
@@ -149,7 +149,7 @@ static void logIt(int         priority,
 
   if (logOption & LOG_PID) {
     char tname[16];
-    getThreadName(tname);
+    get_thread_name(tname);
     bufp = appendToBuffer(bufp, bufEnd, "[%u]: %-6s (%s/%d) ",
                           getpid(), priorityStr, tname, get_thread_id());
   } else {
@@ -207,27 +207,27 @@ void miniSyslogPack(int         priority,
                     const char *fmt2,
                     va_list     args2)
 {
-  lockMutex(&mutex);
+  lock_mutex(&mutex);
   logIt(priority, prefix, fmt1, args1, fmt2, args2);
-  unlockMutex(&mutex);
+  unlock_mutex(&mutex);
 }
 
 void miniVsyslog(int priority, const char *format, va_list ap)
 {
   va_list dummy;
   memset(&dummy, 0, sizeof(dummy));
-  lockMutex(&mutex);
+  lock_mutex(&mutex);
   logIt(priority, NULL, format, ap, NULL, dummy);
-  unlockMutex(&mutex);
+  unlock_mutex(&mutex);
 }
 
 void miniCloselog(void)
 {
-  lockMutex(&mutex);
+  lock_mutex(&mutex);
   closeLocked();
   FREE(logIdent);
   logIdent        = NULL;
   logOption       = 0;
   defaultFacility = LOG_USER;
-  unlockMutex(&mutex);
+  unlock_mutex(&mutex);
 }

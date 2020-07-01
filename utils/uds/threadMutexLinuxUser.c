@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#5 $
  */
 
 #include <errno.h>
@@ -27,50 +27,50 @@
 #include "threadOnce.h"
 #include "threads.h"
 
-static enum MutexKind {
-  FastAdaptive,
-  ErrorChecking
-} hiddenMutexKind = ErrorChecking;
+static enum mutex_kind {
+  fast_adaptive,
+  error_checking
+} hidden_mutex_kind = error_checking;
 
 const bool DO_ASSERTIONS = true;
 
 /**********************************************************************/
-static void initializeMutexKind(void)
+static void initialize_mutex_kind(void)
 {
   static const char UDS_MUTEX_KIND_ENV[] = "UDS_MUTEX_KIND";
 
   // Enabling error checking on mutexes enables a great performance loss, so
   // we only enable it in certain circumstances.
 #ifdef NDEBUG
-  hiddenMutexKind = FastAdaptive;
+  hidden_mutex_kind = fast_adaptive;
 #endif
 
-  const char *mutexKindString = getenv(UDS_MUTEX_KIND_ENV);
-  if (mutexKindString != NULL) {
-    if (strcmp(mutexKindString, "error-checking") == 0) {
-      hiddenMutexKind = ErrorChecking;
-    } else if (strcmp(mutexKindString, "fast-adaptive") == 0) {
-      hiddenMutexKind = FastAdaptive;
+  const char *mutex_kind_string = getenv(UDS_MUTEX_KIND_ENV);
+  if (mutex_kind_string != NULL) {
+    if (strcmp(mutex_kind_string, "error-checking") == 0) {
+      hidden_mutex_kind = error_checking;
+    } else if (strcmp(mutex_kind_string, "fast-adaptive") == 0) {
+      hidden_mutex_kind = fast_adaptive;
     } else {
       ASSERT_LOG_ONLY(false,
                       "environment variable %s had unexpected value '%s'",
-                      UDS_MUTEX_KIND_ENV, mutexKindString);
+                      UDS_MUTEX_KIND_ENV, mutex_kind_string);
     }
   }
 }
 
 /**********************************************************************/
-static enum MutexKind getMutexKind(void)
+static enum mutex_kind get_mutex_kind(void)
 {
-  static once_state_t onceState = ONCE_STATE_INITIALIZER;
+  static once_state_t once_state = ONCE_STATE_INITIALIZER;
 
-  perform_once(&onceState, initializeMutexKind);
+  perform_once(&once_state, initialize_mutex_kind);
 
-  return hiddenMutexKind;
+  return hidden_mutex_kind;
 }
 
 /**********************************************************************/
-int initializeMutex(struct mutex *mutex, bool assertOnError)
+int initialize_mutex(struct mutex *mutex, bool assert_on_error)
 {
   pthread_mutexattr_t attr;
   int result = pthread_mutexattr_init(&attr);
@@ -78,11 +78,11 @@ int initializeMutex(struct mutex *mutex, bool assertOnError)
     return ASSERT_WITH_ERROR_CODE((result == 0), result,
                                   "pthread_mutexattr_init error");
   }
-  if (getMutexKind() == ErrorChecking) {
+  if (get_mutex_kind() == error_checking) {
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   }
   result = pthread_mutex_init(&mutex->mutex, &attr);
-  if ((result != 0) && assertOnError) {
+  if ((result != 0) && assert_on_error) {
     result = ASSERT_WITH_ERROR_CODE((result == 0), result,
                                     "pthread_mutex_init error");
   }
@@ -97,13 +97,13 @@ int initializeMutex(struct mutex *mutex, bool assertOnError)
 }
 
 /**********************************************************************/
-int initMutex(struct mutex *mutex)
+int init_mutex(struct mutex *mutex)
 {
-  return initializeMutex(mutex, DO_ASSERTIONS);
+  return initialize_mutex(mutex, DO_ASSERTIONS);
 }
 
 /**********************************************************************/
-int destroyMutex(struct mutex *mutex)
+int destroy_mutex(struct mutex *mutex)
 {
   int result = pthread_mutex_destroy(&mutex->mutex);
   return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -117,7 +117,7 @@ int destroyMutex(struct mutex *mutex)
  */
 
 /**********************************************************************/
-void lockMutex(struct mutex *mutex)
+void lock_mutex(struct mutex *mutex)
 {
   int result __attribute__((unused)) = pthread_mutex_lock(&mutex->mutex);
 #ifndef NDEBUG
@@ -126,7 +126,7 @@ void lockMutex(struct mutex *mutex)
 }
 
 /**********************************************************************/
-void unlockMutex(struct mutex *mutex)
+void unlock_mutex(struct mutex *mutex)
 {
   int result  __attribute__((unused)) = pthread_mutex_unlock(&mutex->mutex);
 #ifndef NDEBUG

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#8 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#9 $
  */
 
 #include "logger.h"
@@ -155,7 +155,7 @@ void log_message_pack(int         priority,
     miniSyslogPack(priority, prefix, fmt1, args1, fmt2, args2);
   } else {
     char tname[16];
-    getThreadName(tname);
+    get_thread_name(tname);
     flockfile(fp);
 
     if (timestamps) {

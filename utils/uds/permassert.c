@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#2 $
+ * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#3 $
  */
 
 #include "permassert.h"
@@ -55,7 +55,7 @@ static struct mutex mutex    = { .mutex = MUTEX_INITIALIZER };
 /**********************************************************************/
 static void initialize(void)
 {
-  initializeMutex(&mutex, !DO_ASSERTIONS);
+  initialize_mutex(&mutex, !DO_ASSERTIONS);
   char *exitOnAssertionFailureString
     = getenv(EXIT_ON_ASSERTION_FAILURE_VARIABLE);
   if (exitOnAssertionFailureString != NULL) {
@@ -68,10 +68,10 @@ static void initialize(void)
 bool setExitOnAssertionFailure(bool shouldExit)
 {
   perform_once(&initOnce, initialize);
-  lockMutex(&mutex);
+  lock_mutex(&mutex);
   bool previousSetting = exitOnAssertionFailure;
   exitOnAssertionFailure = shouldExit;
-  unlockMutex(&mutex);
+  unlock_mutex(&mutex);
   return previousSetting;
 }
 
@@ -93,11 +93,11 @@ void handleAssertionFailure(const char *expressionString,
 
 #ifndef __KERNEL__
   perform_once(&initOnce, initialize);
-  lockMutex(&mutex);
+  lock_mutex(&mutex);
   if (exitOnAssertionFailure) {
     __assert_fail(expressionString, fileName, lineNumber, __ASSERT_FUNCTION);
   }
-  unlockMutex(&mutex);
+  unlock_mutex(&mutex);
 #endif // !__KERNEL__
 }
 
