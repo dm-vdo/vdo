@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#9 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#10 $
  */
 
 #include "logger.h"
@@ -240,7 +240,7 @@ enum { NUM_STACK_FRAMES = 32 };
 /**********************************************************************/
 void log_backtrace(int priority)
 {
-  logAtLevel(priority, "[backtrace]");
+  logAtLevel(priority, "[Call Trace:]");
   void *trace[NUM_STACK_FRAMES];
   int traceSize = backtrace(trace, NUM_STACK_FRAMES);
   char **messages = backtrace_symbols(trace, traceSize);
