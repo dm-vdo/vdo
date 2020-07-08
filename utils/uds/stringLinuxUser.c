@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/stringLinuxUser.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/stringLinuxUser.c#2 $
  */
 
 #include <limits.h>
@@ -29,57 +29,58 @@
 #include "uds.h"
 
 /**********************************************************************/
-int stringToSignedLong(const char *nptr, long *num)
+int string_to_signed_long(const char *nptr, long *num)
 {
-  if (nptr == NULL || *nptr == '\0') {
-    return UDS_INVALID_ARGUMENT;
-  }
-  errno = 0;
-  char *endptr;
-  *num = strtol(nptr, &endptr, 10);
-  if (*endptr != '\0') {
-    return UDS_INVALID_ARGUMENT;
-  }
-  return errno;
+	if (nptr == NULL || *nptr == '\0') {
+		return UDS_INVALID_ARGUMENT;
+	}
+	errno = 0;
+	char *endptr;
+	*num = strtol(nptr, &endptr, 10);
+	if (*endptr != '\0') {
+		return UDS_INVALID_ARGUMENT;
+	}
+	return errno;
 }
 
 /**********************************************************************/
-int stringToUnsignedLong(const char *nptr, unsigned long *num)
+int string_to_unsigned_long(const char *nptr, unsigned long *num)
 {
-  if (nptr == NULL || *nptr == '\0') {
-    return UDS_INVALID_ARGUMENT;
-  }
-  errno = 0;
-  char *endptr;
-  *num = strtoul(nptr, &endptr, 10);
-  if (*endptr != '\0') {
-    return UDS_INVALID_ARGUMENT;
-  }
-  return errno;
+	if (nptr == NULL || *nptr == '\0') {
+		return UDS_INVALID_ARGUMENT;
+	}
+	errno = 0;
+	char *endptr;
+	*num = strtoul(nptr, &endptr, 10);
+	if (*endptr != '\0') {
+		return UDS_INVALID_ARGUMENT;
+	}
+	return errno;
 }
 
 /*****************************************************************************/
-char *nextToken(char *str, const char *delims, char **state)
+char *next_token(char *str, const char *delims, char **state)
 {
-  return strtok_r(str, delims, state);
+	return strtok_r(str, delims, state);
 }
 
 /*****************************************************************************/
-int parseUint64(const char *str, uint64_t *num)
+int parse_uint64(const char *str, uint64_t *num)
 {
-  char *end;
-  errno = 0;
-  unsigned long long temp = strtoull(str, &end, 10);
-  // strtoull will always set end. On error, it could set errno to ERANGE or
-  // EINVAL.  (It also returns ULLONG_MAX when setting errno to ERANGE.)
-  if ((errno == ERANGE) || (errno == EINVAL) || (*end != '\0')) {
-    return UDS_INVALID_ARGUMENT;
-  }
-  uint64_t n = temp;
-  if (temp != (unsigned long long) n) {
-    return UDS_INVALID_ARGUMENT;
-  }
+	char *end;
+	errno = 0;
+	unsigned long long temp = strtoull(str, &end, 10);
+	// strtoull will always set end. On error, it could set errno to ERANGE
+	// or EINVAL.  (It also returns ULLONG_MAX when setting errno to
+	// ERANGE.)
+	if ((errno == ERANGE) || (errno == EINVAL) || (*end != '\0')) {
+		return UDS_INVALID_ARGUMENT;
+	}
+	uint64_t n = temp;
+	if (temp != (unsigned long long) n) {
+		return UDS_INVALID_ARGUMENT;
+	}
 
-  *num = n;
-  return UDS_SUCCESS;
+	*num = n;
+	return UDS_SUCCESS;
 }

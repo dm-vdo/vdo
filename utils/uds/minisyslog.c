@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#6 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#7 $
  */
 
 #include <fcntl.h>
@@ -143,23 +143,24 @@ static void logIt(int         priority,
     priority |= defaultFacility;
   }
 
-  bufp = appendToBuffer(bufp, bufEnd, "<%d>%s", priority, timestamp);
+  bufp = append_to_buffer(bufp, bufEnd, "<%d>%s", priority, timestamp);
   const char *stderrMsg = bufp;
-  bufp = appendToBuffer(bufp, bufEnd, " %s", logIdent == NULL ? "" : logIdent);
+  bufp = append_to_buffer(bufp, bufEnd, " %s",
+                          logIdent == NULL ? "" : logIdent);
 
   if (logOption & LOG_PID) {
     char tname[16];
     get_thread_name(tname);
-    bufp = appendToBuffer(bufp, bufEnd, "[%u]: %-6s (%s/%d) ",
-                          getpid(), priorityStr, tname, get_thread_id());
+    bufp = append_to_buffer(bufp, bufEnd, "[%u]: %-6s (%s/%d) ",
+                            getpid(), priorityStr, tname, get_thread_id());
   } else {
-    bufp = appendToBuffer(bufp, bufEnd, ": ");
+    bufp = append_to_buffer(bufp, bufEnd, ": ");
   }
   if ((bufp + sizeof("...")) >= bufEnd) {
     return;
   }
   if (prefix != NULL) {
-    bufp = appendToBuffer(bufp, bufEnd, "%s", prefix);
+    bufp = append_to_buffer(bufp, bufEnd, "%s", prefix);
   }
   if (format1 != NULL) {
     int ret = vsnprintf(bufp, bufEnd - bufp, format1, args1);

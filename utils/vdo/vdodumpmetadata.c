@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#24 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#25 $
  */
 
 #include <err.h>
@@ -147,7 +147,7 @@ static void processArgs(int argc, char *argv[])
       }
 
       noBlockMap = true;
-      int result = parseUint64(optarg, &lbns[lbnCount++]);
+      int result = parse_uint64(optarg, &lbns[lbnCount++]);
       if (result != VDO_SUCCESS) {
         warnx("Cannot parse LBN as a number");
         usage(argv[0]);

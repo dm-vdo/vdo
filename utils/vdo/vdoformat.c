@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#21 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#22 $
  */
 
 #include <blkid/blkid.h>
@@ -383,7 +383,7 @@ static int checkDeviceInUse(char *filename, uint32_t major, uint32_t minor)
   int holders = 0;
 
   char *path;
-  int result = allocSprintf(__func__, &path, "/sys/dev/block/%" PRIu32
+  int result = alloc_sprintf(__func__, &path, "/sys/dev/block/%" PRIu32
 			    ":%" PRIu32 "/holders", major, minor);
   if (result != UDS_SUCCESS) {
     return result;
