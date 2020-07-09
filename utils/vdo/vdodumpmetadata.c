@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#25 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#26 $
  */
 
 #include <err.h>
@@ -113,7 +113,7 @@ static void usage(const char *progname)
 static void freeAllocations(void)
 {
   freeVDOFromFile(&vdo);
-  trySyncAndCloseFile(outputFD);
+  try_sync_and_close_file(outputFD);
   FREE(buffer);
   FREE(lbns);
   buffer = NULL;
@@ -190,7 +190,7 @@ static int copyBlocks(physical_block_number_t startBlock, block_count_t count)
     if (result != VDO_SUCCESS) {
       return result;
     }
-    result = writeBuffer(outputFD, buffer, blocksToWrite * VDO_BLOCK_SIZE);
+    result = write_buffer(outputFD, buffer, blocksToWrite * VDO_BLOCK_SIZE);
     if (result != VDO_SUCCESS) {
       return result;
     }
@@ -208,7 +208,7 @@ static int copyBlocks(physical_block_number_t startBlock, block_count_t count)
 static int zeroBlock(void)
 {
   memset(buffer, 0, VDO_BLOCK_SIZE);
-  return writeBuffer(outputFD, buffer, VDO_BLOCK_SIZE);
+  return write_buffer(outputFD, buffer, VDO_BLOCK_SIZE);
 }
 
 /**
@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
   }
 
   // Open the dump output file.
-  result = openFile(outputFilename, FU_CREATE_WRITE_ONLY, &outputFD);
+  result = open_file(outputFilename, FU_CREATE_WRITE_ONLY, &outputFD);
   if (result != UDS_SUCCESS) {
     errx(1, "Could not open output file '%s'", outputFilename);
   }

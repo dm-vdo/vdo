@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/ioFactory.h#7 $
+ * $Id: //eng/uds-releases/krusty/src/uds/ioFactory.h#8 $
  */
 
 #ifndef IO_FACTORY_H
@@ -79,7 +79,7 @@ int __must_check make_io_factory(const char *path,
  * @return UDS_SUCCESS or an error code
  **/
 int __must_check make_io_factory(const char *path,
-				 FileAccess access,
+				 enum file_access access,
 				 struct io_factory **factory_ptr);
 #endif
 

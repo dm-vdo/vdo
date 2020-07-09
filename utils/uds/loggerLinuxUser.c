@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#11 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#13 $
  */
 
 #include "logger.h"
@@ -31,180 +31,189 @@
 #include "threads.h"
 
 const char TIMESTAMPS_ENVIRONMENT_VARIABLE[] = "UDS_LOG_TIMESTAMPS";
-const char IDS_ENVIRONMENT_VARIABLE[]        = "UDS_LOG_IDS";
+const char IDS_ENVIRONMENT_VARIABLE[] = "UDS_LOG_IDS";
 
-static const char IDENTITY[]       = "UDS";
+static const char IDENTITY[] = "UDS";
 
-static once_state_t loggerOnce = ONCE_STATE_INITIALIZER;
+static once_state_t logger_once = ONCE_STATE_INITIALIZER;
 
-static unsigned int  opened      = 0;
-static FILE         *fp          = NULL;
-static bool          timestamps  = true;
-static bool          ids         = true;
+static unsigned int opened = 0;
+static FILE *fp = NULL;
+static bool timestamps = true;
+static bool ids = true;
 
 /**********************************************************************/
-static void initLogger(void)
+static void init_logger(void)
 {
-  const char *udsLogLevel = getenv("UDS_LOG_LEVEL");
-  if (udsLogLevel != NULL) {
-    set_log_level(string_to_priority(udsLogLevel));
-  } else {
-    set_log_level(LOG_INFO);
-  }
+	const char *uds_log_level = getenv("UDS_LOG_LEVEL");
+	if (uds_log_level != NULL) {
+		set_log_level(string_to_priority(uds_log_level));
+	} else {
+		set_log_level(LOG_INFO);
+	}
 
-  char *timestampsString = getenv(TIMESTAMPS_ENVIRONMENT_VARIABLE);
-  if (timestampsString != NULL && strcmp(timestampsString, "0") == 0) {
-    timestamps = false;
-  }
+	char *timestamps_string = getenv(TIMESTAMPS_ENVIRONMENT_VARIABLE);
+	if (timestamps_string != NULL && strcmp(timestamps_string, "0") == 0) {
+		timestamps = false;
+	}
 
-  char *idsString = getenv(IDS_ENVIRONMENT_VARIABLE);
-  if (idsString != NULL && strcmp(idsString, "0") == 0) {
-    ids = false;
-  }
+	char *ids_string = getenv(IDS_ENVIRONMENT_VARIABLE);
+	if (ids_string != NULL && strcmp(ids_string, "0") == 0) {
+		ids = false;
+	}
 
-  int error = 0;
-  char *logFile = getenv("UDS_LOGFILE");
-  bool isAbsPath = false;
-  if (logFile != NULL) {
-    isAbsPath = (makeAbsPath(logFile, &logFile) == UDS_SUCCESS);
-    errno = 0;
-    fp = fopen(logFile, "a");
-    if (fp != NULL) {
-      if (isAbsPath) {
-        FREE(logFile);
-      }
-      opened = 1;
-      return;
-    }
-    error = errno;
-  }
+	int error = 0;
+	char *log_file = getenv("UDS_LOGFILE");
+	bool is_abs_path = false;
+	if (log_file != NULL) {
+		is_abs_path =
+			(make_abs_path(log_file, &log_file) == UDS_SUCCESS);
+		errno = 0;
+		fp = fopen(log_file, "a");
+		if (fp != NULL) {
+			if (is_abs_path) {
+				FREE(log_file);
+			}
+			opened = 1;
+			return;
+		}
+		error = errno;
+	}
 
-  char *identity;
-  if (alloc_sprintf(NULL, &identity, "%s/%s", IDENTITY,
-                    program_invocation_short_name)
-      == UDS_SUCCESS) {
-    miniOpenlog(identity, LOG_PID | LOG_NDELAY | LOG_CONS, LOG_USER);
-    FREE(identity);
-  } else {
-    miniOpenlog(IDENTITY, LOG_PID | LOG_NDELAY | LOG_CONS, LOG_USER);
-    logError("Could not include program name in log");
-  }
+	char *identity;
+	if (alloc_sprintf(NULL,
+			  &identity,
+			  "%s/%s",
+			  IDENTITY,
+			  program_invocation_short_name) == UDS_SUCCESS) {
+		miniOpenlog(identity, LOG_PID | LOG_NDELAY | LOG_CONS,
+			    LOG_USER);
+		FREE(identity);
+	} else {
+		miniOpenlog(IDENTITY, LOG_PID | LOG_NDELAY | LOG_CONS,
+			    LOG_USER);
+		logError("Could not include program name in log");
+	}
 
-  if (error != 0) {
-    logErrorWithStringError(error, "Couldn't open log file %s", logFile);
-  }
+	if (error != 0) {
+		logErrorWithStringError(error, "Couldn't open log file %s",
+					log_file);
+	}
 
-  if (isAbsPath) {
-    FREE(logFile);
-  }
-  opened = 1;
+	if (is_abs_path) {
+		FREE(log_file);
+	}
+	opened = 1;
 }
 
 /**********************************************************************/
-void openLogger(void)
+void open_logger(void)
 {
-  perform_once(&loggerOnce, initLogger);
+	perform_once(&logger_once, init_logger);
 }
 
 /**********************************************************************/
-static void formatCurrentTime(char *buffer, size_t bufferSize)
+static void format_current_time(char *buffer, size_t buffer_size)
 {
-  *buffer = 0;
+	*buffer = 0;
 
-  abs_time_t now = currentTime(CLOCK_REALTIME);
+	abs_time_t now = currentTime(CLOCK_REALTIME);
 
-  struct timeval tv = asTimeVal(now);
+	struct timeval tv = asTimeVal(now);
 
-  struct tm tmp;
-  if (localtime_r(&tv.tv_sec, &tmp) == NULL) {
-    return;
-  }
+	struct tm tmp;
+	if (localtime_r(&tv.tv_sec, &tmp) == NULL) {
+		return;
+	}
 
-  if (strftime(buffer, bufferSize, "%Y-%m-%d %H:%M:%S", &tmp) == 0) {
-    *buffer = 0;
-    return;
-  }
+	if (strftime(buffer, buffer_size, "%Y-%m-%d %H:%M:%S", &tmp) == 0) {
+		*buffer = 0;
+		return;
+	}
 
-  size_t currentLength = strlen(buffer);
-  if (currentLength > (bufferSize - 5)) {
-    // Not enough room to add milliseconds but we do have a time string.
-    return;
-  }
-  snprintf(buffer + currentLength, bufferSize - currentLength,
-           ".%03d", (int) (tv.tv_usec / 1000));
+	size_t current_length = strlen(buffer);
+	if (current_length > (buffer_size - 5)) {
+		// Not enough room to add milliseconds but we do have a time
+		// string.
+		return;
+	}
+	snprintf(buffer + current_length,
+		 buffer_size - current_length,
+		 ".%03d",
+		 (int) (tv.tv_usec / 1000));
 }
 
 /**********************************************************************/
-void log_message_pack(int         priority,
-                      const char *prefix,
-                      const char *fmt1,
-                      va_list     args1,
-                      const char *fmt2,
-                      va_list     args2)
+void log_message_pack(int priority,
+		      const char *prefix,
+		      const char *fmt1,
+		      va_list args1,
+		      const char *fmt2,
+		      va_list args2)
 {
-  openLogger();
-  if (priority > get_log_level()) {
-    return;
-  }
+	open_logger();
+	if (priority > get_log_level()) {
+		return;
+	}
 
-  // Preserve errno since the caller cares more about their own error state
-  // than about errors in the logging code.
-  int error = errno;
+	// Preserve errno since the caller cares more about their own error
+	// state than about errors in the logging code.
+	int error = errno;
 
-  if (fp == NULL) {
-    miniSyslogPack(priority, prefix, fmt1, args1, fmt2, args2);
-  } else {
-    char tname[16];
-    get_thread_name(tname);
-    flockfile(fp);
+	if (fp == NULL) {
+		miniSyslogPack(priority, prefix, fmt1, args1, fmt2, args2);
+	} else {
+		char tname[16];
+		get_thread_name(tname);
+		flockfile(fp);
 
-    if (timestamps) {
-      char timeBuffer[32];
-      formatCurrentTime(timeBuffer, sizeof(timeBuffer));
-      fprintf(fp, "%s ", timeBuffer);
-    }
+		if (timestamps) {
+			char time_buffer[32];
+			format_current_time(time_buffer, sizeof(time_buffer));
+			fprintf(fp, "%s ", time_buffer);
+		}
 
-    fputs(program_invocation_short_name, fp);
+		fputs(program_invocation_short_name, fp);
 
-    if (ids) {
-      fprintf(fp, "[%u]", getpid());
-    }
+		if (ids) {
+			fprintf(fp, "[%u]", getpid());
+		}
 
-    fprintf(fp, ": %-6s (%s", priority_to_string(priority), tname);
+		fprintf(fp, ": %-6s (%s", priority_to_string(priority), tname);
 
-    if (ids) {
-      fprintf(fp, "/%d", get_thread_id());
-    }
+		if (ids) {
+			fprintf(fp, "/%d", get_thread_id());
+		}
 
-    fputs(") ", fp);
+		fputs(") ", fp);
 
-    if (prefix != NULL) {
-      fputs(prefix, fp);
-    }
-    if (fmt1 != NULL) {
-      vfprintf(fp, fmt1, args1);
-    }
-    if (fmt2 != NULL) {
-      vfprintf(fp, fmt2, args2);
-    }
-    fputs("\n", fp);
-    fflush(fp);
-    funlockfile(fp);
-  }
+		if (prefix != NULL) {
+			fputs(prefix, fp);
+		}
+		if (fmt1 != NULL) {
+			vfprintf(fp, fmt1, args1);
+		}
+		if (fmt2 != NULL) {
+			vfprintf(fp, fmt2, args2);
+		}
+		fputs("\n", fp);
+		fflush(fp);
+		funlockfile(fp);
+	}
 
-  // Reset errno
-  errno = error;
+	// Reset errno
+	errno = error;
 }
 
 /**********************************************************************/
-__attribute__((format(printf, 2, 3)))
-static void logAtLevel(int priority, const char *format, ...)
+__attribute__((format(printf, 2, 3))) static void
+log_at_level(int priority, const char *format, ...)
 {
-  va_list args;
+	va_list args;
 
-  va_start(args, format);
-  v_log_message(priority, format, args);
-  va_end(args);
+	va_start(args, format);
+	v_log_message(priority, format, args);
+	va_end(args);
 }
 
 /**
@@ -213,26 +222,26 @@ static void logAtLevel(int priority, const char *format, ...)
  *
  * @param priority The priority at which to log
  **/
-static void logProcMaps(int priority)
+static void log_proc_maps(int priority)
 {
-  FILE *mapsFile = fopen("/proc/self/maps", "r");
-  if (mapsFile == NULL) {
-    return;
-  }
+	FILE *maps_file = fopen("/proc/self/maps", "r");
+	if (maps_file == NULL) {
+		return;
+	}
 
-  logAtLevel(priority, "maps file");
-  char buffer[1024];
-  char *mapLine;
-  while ((mapLine = fgets(buffer, 1024, mapsFile)) != NULL) {
-    char *newline = strchr(mapLine, '\n');
-    if (newline != NULL) {
-      *newline = '\0';
-    }
-    logAtLevel(priority, "  %s", mapLine);
-  }
-  logAtLevel(priority, "end of maps file");
+	log_at_level(priority, "maps file");
+	char buffer[1024];
+	char *map_line;
+	while ((map_line = fgets(buffer, 1024, maps_file)) != NULL) {
+		char *newline = strchr(map_line, '\n');
+		if (newline != NULL) {
+			*newline = '\0';
+		}
+		log_at_level(priority, "  %s", map_line);
+	}
+	log_at_level(priority, "end of maps file");
 
-  fclose(mapsFile);
+	fclose(maps_file);
 }
 
 enum { NUM_STACK_FRAMES = 32 };
@@ -240,25 +249,25 @@ enum { NUM_STACK_FRAMES = 32 };
 /**********************************************************************/
 void log_backtrace(int priority)
 {
-  logAtLevel(priority, "[Call Trace:]");
-  void *trace[NUM_STACK_FRAMES];
-  int traceSize = backtrace(trace, NUM_STACK_FRAMES);
-  char **messages = backtrace_symbols(trace, traceSize);
-  if (messages == NULL) {
-    logAtLevel(priority, "backtrace failed");
-  } else {
-    for (int i = 0; i < traceSize; ++i) {
-      logAtLevel(priority, "  %s", messages[i]);
-    }
-    // "messages" is malloc'ed indirectly by backtrace_symbols
-    free(messages);
-    logProcMaps(priority);
-  }
+	log_at_level(priority, "[Call Trace:]");
+	void *trace[NUM_STACK_FRAMES];
+	int trace_size = backtrace(trace, NUM_STACK_FRAMES);
+	char **messages = backtrace_symbols(trace, trace_size);
+	if (messages == NULL) {
+		log_at_level(priority, "backtrace failed");
+	} else {
+		for (int i = 0; i < trace_size; ++i) {
+			log_at_level(priority, "  %s", messages[i]);
+		}
+		// "messages" is malloc'ed indirectly by backtrace_symbols
+		free(messages);
+		log_proc_maps(priority);
+	}
 }
 
 /**********************************************************************/
 void pause_for_logger(void)
 {
-  // User-space logger can't be overrun, so this is a no-op.
+	// User-space logger can't be overrun, so this is a no-op.
 }
 

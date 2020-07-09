@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#6 $
  */
 
 #include "fileIORegion.h"
@@ -101,8 +101,8 @@ static int fior_write(struct io_region *region,
 		return result;
 	}
 
-	return writeBufferAtOffset(
-		fior->fd, fior->offset + offset, data, length);
+	return write_buffer_at_offset(fior->fd, fior->offset + offset, data,
+				      length);
 }
 
 /*****************************************************************************/
@@ -122,8 +122,8 @@ static int fior_read(struct io_region *region,
 	}
 
 	size_t data_length = 0;
-	result = readDataAtOffset(
-		fior->fd, fior->offset + offset, buffer, size, &data_length);
+	result = read_data_at_offset(fior->fd, fior->offset + offset, buffer,
+				     size, &data_length);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -157,13 +157,14 @@ static int fior_read(struct io_region *region,
 static int fior_sync_contents(struct io_region *region)
 {
 	struct file_io_region *fior = as_file_io_region(region);
-	return loggingFsync(fior->fd, "cannot sync contents of file IO region");
+	return logging_fsync(fior->fd,
+			     "cannot sync contents of file IO region");
 }
 
 /*****************************************************************************/
 int make_file_region(struct io_factory *factory,
 		     int fd,
-		     FileAccess access,
+		     enum file_access access,
 		     off_t offset,
 		     size_t size,
 		     struct io_region **region_ptr)

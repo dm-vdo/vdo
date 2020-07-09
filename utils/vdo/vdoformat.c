@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#22 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#23 $
  */
 
 #include <blkid/blkid.h>
@@ -341,7 +341,7 @@ static int checkForSignaturesUsingBlkid(const char *filename, bool force)
 static int countHolders(char *path, int *holders)
 {
   struct stat statbuf;
-  int result = loggingStat(path, &statbuf, "Getting holder count");
+  int result = logging_stat(path, &statbuf, "Getting holder count");
   if (result != UDS_SUCCESS) {
     fprintf(stderr, "Unable to get status of %s.\n", path);
     return result;
@@ -497,7 +497,7 @@ int main(int argc, char *argv[])
   char *filename = argv[optind];
 
   struct stat statbuf;
-  result = loggingStatMissingOk(filename, &statbuf, "Getting status");
+  result = logging_stat_missing_ok(filename, &statbuf, "Getting status");
   if (result != UDS_SUCCESS && result != ENOENT) {
     errx(result, "unable to get status of %s", filename);
   }
@@ -515,7 +515,7 @@ int main(int argc, char *argv[])
   }
 
   int fd;
-  result = openFile(filename, FU_READ_WRITE, &fd);
+  result = open_file(filename, FU_READ_WRITE, &fd);
   if (result != UDS_SUCCESS) {
     errx(result, "unable to open %s", filename);
   }
@@ -530,7 +530,7 @@ int main(int argc, char *argv[])
         MAXIMUM_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE);
   }
 
-  result = closeFile(fd, "cannot close file");
+  result = close_file(fd, "cannot close file");
   if (result != UDS_SUCCESS) {
     errx(1, "cannot close %s", filename);
   }
