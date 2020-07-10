@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.c#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.c#2 $
  */
 
 #include "syscalls.h"
@@ -27,107 +27,123 @@
 #include "permassert.h"
 
 /**********************************************************************/
-int loggingRead(int         fd,
-                void       *buf,
-                size_t      count,
-                const char *context,
-                ssize_t    *bytesReadPtr)
+int logging_read(int fd,
+		 void *buf,
+		 size_t count,
+		 const char *context,
+		 ssize_t *bytes_read_ptr)
 {
-  int result;
-  do {
-    result = checkIOErrors(read(fd, buf, count), __func__, context,
-                           bytesReadPtr);
-  } while (result == EINTR);
-  return result;
+	int result;
+	do {
+		result = check_io_errors(read(fd, buf, count),
+					 __func__,
+					 context,
+					 bytes_read_ptr);
+	} while (result == EINTR);
+	return result;
 }
 
 /**********************************************************************/
-static int loggingPreadInterruptible(int         fd,
-                                     void       *buf,
-                                     size_t      count,
-                                     off_t       offset,
-                                     const char *context,
-                                     ssize_t    *bytesReadPtr)
+static int logging_pread_interruptible(int fd,
+				       void *buf,
+				       size_t count,
+				       off_t offset,
+				       const char *context,
+				       ssize_t *bytes_read_ptr)
 {
-  return checkIOErrors(pread(fd, buf, count, offset), __func__, context,
-                       bytesReadPtr);
+	return check_io_errors(pread(fd, buf, count, offset),
+			       __func__,
+			       context,
+			       bytes_read_ptr);
 }
 
 /**********************************************************************/
-int loggingPread(int         fd,
-                 void       *buf,
-                 size_t      count,
-                 off_t       offset,
-                 const char *context,
-                 ssize_t    *bytesReadPtr)
+int logging_pread(int fd,
+		  void *buf,
+		  size_t count,
+		  off_t offset,
+		  const char *context,
+		  ssize_t *bytes_read_ptr)
 {
-  int result;
-  do {
-    result = loggingPreadInterruptible(fd, buf, count, offset, context,
-                                       bytesReadPtr);
-  } while (result == EINTR);
+	int result;
+	do {
+		result = logging_pread_interruptible(fd, buf, count, offset,
+						     context, bytes_read_ptr);
+	} while (result == EINTR);
 
-  return result;
+	return result;
 }
 
 /**********************************************************************/
-int loggingWrite(int         fd,
-                 const void *buf,
-                 size_t      count,
-                 const char *context,
-                 ssize_t    *bytesWrittenPtr)
+int logging_write(int fd,
+		  const void *buf,
+		  size_t count,
+		  const char *context,
+		  ssize_t *bytes_written_ptr)
 {
-  int result;
-  do {
-    result = checkIOErrors(write(fd, buf, count), __func__, context,
-                           bytesWrittenPtr);
-  } while (result == EINTR);
+	int result;
+	do {
+		result = check_io_errors(write(fd, buf, count),
+					 __func__,
+					 context,
+					 bytes_written_ptr);
+	} while (result == EINTR);
 
-  return result;
+	return result;
 }
 
 /**********************************************************************/
-static int loggingPwriteInterruptible(int         fd,
-                                      const void *buf,
-                                      size_t      count,
-                                      off_t       offset,
-                                      const char *context,
-                                      ssize_t    *bytesWrittenPtr)
+static int logging_pwrite_interruptible(int fd,
+					const void *buf,
+					size_t count,
+					off_t offset,
+					const char *context,
+					ssize_t *bytes_written_ptr)
 {
-  return checkIOErrors(pwrite(fd, buf, count, offset), __func__, context,
-                       bytesWrittenPtr);
+	return check_io_errors(pwrite(fd, buf, count, offset),
+			       __func__,
+			       context,
+			       bytes_written_ptr);
 }
 
 /**********************************************************************/
-int loggingPwrite(int         fd,
-                  const void *buf,
-                  size_t      count,
-                  off_t       offset,
-                  const char *context,
-                  ssize_t    *bytesWrittenPtr)
+int logging_pwrite(int fd,
+		   const void *buf,
+		   size_t count,
+		   off_t offset,
+		   const char *context,
+		   ssize_t *bytes_written_ptr)
 {
-  int result;
-  do {
-    result = loggingPwriteInterruptible(fd, buf, count, offset, context,
-                                        bytesWrittenPtr);
-  } while (result == EINTR);
+	int result;
+	do {
+		result = logging_pwrite_interruptible(fd, buf, count, offset,
+						      context,
+						      bytes_written_ptr);
+	} while (result == EINTR);
 
-  return result;
+	return result;
 }
 
 /**********************************************************************/
-int loggingClose(int fd, const char *context)
+int logging_close(int fd, const char *context)
 {
-  return checkSystemCall(close(fd), __func__, context);
+	return check_system_call(close(fd), __func__, context);
 }
 
 /**********************************************************************/
-int processControl(int option, unsigned long arg2, unsigned long arg3,
-                   unsigned long arg4, unsigned long arg5)
+int process_control(int option,
+		    unsigned long arg2,
+		    unsigned long arg3,
+		    unsigned long arg4,
+		    unsigned long arg5)
 {
-  int result = prctl(option, arg2, arg3, arg4, arg5);
-  return ASSERT_WITH_ERROR_CODE(result >= 0, errno,
-                                "option: %d, arg2: %lu, arg3: %lu, "
-                                "arg4: %lu, arg5: %lu",
-                                option, arg2, arg3, arg4, arg5);
+	int result = prctl(option, arg2, arg3, arg4, arg5);
+	return ASSERT_WITH_ERROR_CODE(result >= 0,
+				      errno,
+				      "option: %d, arg2: %lu, arg3: %lu, arg4: %lu, arg5: %lu",
+				      option,
+				      arg2,
+				      arg3,
+				      arg4,
+				      arg5);
 }

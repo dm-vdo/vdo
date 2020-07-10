@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#5 $
  */
 
 #include "fileUtils.h"
@@ -113,7 +113,7 @@ int open_file(const char *path, enum file_access access, int *fd)
 /**********************************************************************/
 int close_file(int fd, const char *error_message)
 {
-	return loggingClose(fd, error_message);
+	return logging_close(fd, error_message);
 }
 
 /**********************************************************************/
@@ -156,8 +156,8 @@ int read_buffer(int fd, void *buffer, unsigned int length)
 
 	while (bytes_to_read > 0) {
 		ssize_t bytes_read;
-		int result = loggingRead(fd, ptr, bytes_to_read, __func__,
-					 &bytes_read);
+		int result = logging_read(fd, ptr, bytes_to_read, __func__,
+					  &bytes_read);
 		if (result != UDS_SUCCESS) {
 			return result;
 		}
@@ -187,12 +187,12 @@ int read_data_at_offset(int fd,
 
 	while (bytes_to_read > 0) {
 		ssize_t bytes_read;
-		int result = loggingPread(fd,
-					  ptr,
-					  bytes_to_read,
-					  current_offset,
-					  __func__,
-					  &bytes_read);
+		int result = logging_pread(fd,
+					   ptr,
+					   bytes_to_read,
+					   current_offset,
+					   __func__,
+					   &bytes_read);
 		if (result != UDS_SUCCESS) {
 			return result;
 		}
@@ -217,8 +217,8 @@ int write_buffer(int fd, const void *buffer, unsigned int length)
 	const byte *ptr = buffer;
 	while (bytes_to_write > 0) {
 		ssize_t written;
-		int result = loggingWrite(fd, ptr, bytes_to_write, __func__,
-					  &written);
+		int result = logging_write(fd, ptr, bytes_to_write, __func__,
+					   &written);
 		if (result != UDS_SUCCESS) {
 			return result;
 		}
@@ -247,12 +247,12 @@ int write_buffer_at_offset(int fd,
 
 	while (bytes_to_write > 0) {
 		ssize_t written;
-		int result = loggingPwrite(fd,
-					   ptr,
-					   bytes_to_write,
-					   current_offset,
-					   __func__,
-					   &written);
+		int result = logging_pwrite(fd,
+					    ptr,
+					    bytes_to_write,
+					    current_offset,
+					    __func__,
+					    &written);
 		if (result != UDS_SUCCESS) {
 			return result;
 		}
@@ -357,11 +357,11 @@ int logging_stat_missing_ok(const char *path,
 /**********************************************************************/
 int logging_fstat(int fd, struct stat *buf, const char *context)
 {
-	return checkSystemCall(fstat(fd, buf), __func__, context);
+	return check_system_call(fstat(fd, buf), __func__, context);
 }
 
 /**********************************************************************/
 int logging_fsync(int fd, const char *context)
 {
-	return checkSystemCall(fsync(fd), __func__, context);
+	return check_system_call(fsync(fd), __func__, context);
 }

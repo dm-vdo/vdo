@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#5 $
  */
 
 #include "threads.h"
@@ -51,7 +51,7 @@ unsigned int get_num_cores(void)
 /**********************************************************************/
 void get_thread_name(char *name)
 {
-	processControl(PR_GET_NAME, (unsigned long) name, 0, 0, 0);
+	process_control(PR_GET_NAME, (unsigned long) name, 0, 0, 0);
 }
 
 /**********************************************************************/
@@ -77,7 +77,7 @@ static void *thread_starter(void *arg)
 	 * The name is just advisory for humans examining it, so we don't
 	 * care much if this fails.
 	 */
-	processControl(PR_SET_NAME, (unsigned long) tsi->name, 0, 0, 0);
+	process_control(PR_SET_NAME, (unsigned long) tsi->name, 0, 0, 0);
 	FREE(tsi);
 	thread_func(thread_data);
 	return NULL;

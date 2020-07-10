@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#3 $
  */
 
 #ifndef SYSCALLS_H
@@ -32,76 +32,76 @@
 /**
  * Wrap the read(2) system call, looping as long as errno is EINTR.
  *
- * @param fd           The descriptor from which to read
- * @param buf          The buffer to read into
- * @param count        The maximum number of bytes to read
- * @param context      The calling context (for logging)
- * @param bytesReadPtr A pointer to hold the number of bytes read
+ * @param fd             The descriptor from which to read
+ * @param buf            The buffer to read into
+ * @param count          The maximum number of bytes to read
+ * @param context        The calling context (for logging)
+ * @param bytes_read_ptr A pointer to hold the number of bytes read
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check loggingRead(int fd,
-			     void *buf,
-			     size_t count,
-			     const char *context,
-			     ssize_t *bytesReadPtr);
+int __must_check logging_read(int fd,
+			      void *buf,
+			      size_t count,
+			      const char *context,
+			      ssize_t *bytes_read_ptr);
 
 /**
  * Wrap the pread(2) system call, looping as long as errno is EINTR.
  *
- * @param fd           The descriptor from which to read
- * @param buf          The buffer to read into
- * @param count        The maximum number of bytes to read
- * @param offset       The offset into the file at which to read
- * @param context      The calling context (for logging)
- * @param bytesReadPtr A pointer to hold the number of bytes read
+ * @param fd             The descriptor from which to read
+ * @param buf            The buffer to read into
+ * @param count          The maximum number of bytes to read
+ * @param offset         The offset into the file at which to read
+ * @param context        The calling context (for logging)
+ * @param bytes_read_ptr A pointer to hold the number of bytes read
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check loggingPread(int fd,
-			      void *buf,
-			      size_t count,
-			      off_t offset,
-			      const char *context,
-			      ssize_t *bytesReadPtr);
+int __must_check logging_pread(int fd,
+			       void *buf,
+			       size_t count,
+			       off_t offset,
+			       const char *context,
+			       ssize_t *bytes_read_ptr);
 
 /**
  * Wrap the write(2) system call, looping as long as errno is EINTR.
  *
- * @param fd              The descriptor from which to write
- * @param buf             The buffer to write from
- * @param count           The maximum number of bytes to write
- * @param context         The calling context (for logging)
- * @param bytesWrittenPtr A pointer to hold the number of bytes written;
- *                        on error, -1 is returned
+ * @param fd                The descriptor from which to write
+ * @param buf               The buffer to write from
+ * @param count             The maximum number of bytes to write
+ * @param context           The calling context (for logging)
+ * @param bytes_written_ptr A pointer to hold the number of bytes written;
+ *                          on error, -1 is returned
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check loggingWrite(int fd,
-			      const void *buf,
-			      size_t count,
-			      const char *context,
-			      ssize_t *bytesWrittenPtr);
+int __must_check logging_write(int fd,
+			       const void *buf,
+			       size_t count,
+			       const char *context,
+			       ssize_t *bytes_written_ptr);
 
 /**
  * Wrap the pwrite(2) system call, looping as long as errno is EINTR.
  *
- * @param fd              The descriptor from which to write
- * @param buf             The buffer to write into
- * @param count           The maximum number of bytes to write
- * @param offset          The offset into the file at which to write
- * @param context         The calling context (for logging)
- * @param bytesWrittenPtr A pointer to hold the number of bytes written;
- *                        on error, -1 is returned
+ * @param fd                The descriptor from which to write
+ * @param buf               The buffer to write into
+ * @param count             The maximum number of bytes to write
+ * @param offset            The offset into the file at which to write
+ * @param context           The calling context (for logging)
+ * @param bytes_written_ptr A pointer to hold the number of bytes written;
+ *                          on error, -1 is returned
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check loggingPwrite(int fd,
-			       const void *buf,
-			       size_t count,
-			       off_t offset,
-			       const char *context,
-			       ssize_t *bytesWrittenPtr);
+int __must_check logging_pwrite(int fd,
+				const void *buf,
+				size_t count,
+				off_t offset,
+				const char *context,
+				ssize_t *bytes_written_ptr);
 
 /**
  * Wrap the close(2) system call.
@@ -111,7 +111,7 @@ int __must_check loggingPwrite(int fd,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check loggingClose(int fd, const char *context);
+int __must_check logging_close(int fd, const char *context);
 
 /**
  * Perform operations on a process.
@@ -125,37 +125,44 @@ int __must_check loggingClose(int fd, const char *context);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int processControl(int option, unsigned long arg2, unsigned long arg3,
-                   unsigned long arg4, unsigned long arg5);
+int process_control(int option,
+		    unsigned long arg2,
+		    unsigned long arg3,
+		    unsigned long arg4,
+		    unsigned long arg5);
 
 /**********************************************************************/
-static INLINE int logSystemCallErrno(const char *function, const char *context)
+static INLINE int log_system_call_errno(const char *function,
+					const char *context)
 {
-  return logWithStringError(((errno == EINTR) ? LOG_DEBUG : LOG_ERR),
-                            errno, "%s failed in %s", function, context);
+	return logWithStringError(((errno == EINTR) ? LOG_DEBUG : LOG_ERR),
+				  errno,
+				  "%s failed in %s",
+				  function,
+				  context);
 }
 
 /**********************************************************************/
-static INLINE int checkSystemCall(int         result,
-                                  const char *function,
-                                  const char *context)
+static INLINE int
+check_system_call(int result, const char *function, const char *context)
 {
-  return ((result == 0) ? UDS_SUCCESS : logSystemCallErrno(function, context));
+	return ((result == 0) ? UDS_SUCCESS :
+				log_system_call_errno(function, context));
 }
 
 /**********************************************************************/
-static INLINE int checkIOErrors(ssize_t bytes,
-                                const char *function,
-                                const char *context,
-                                ssize_t *bytesPtr)
+static INLINE int check_io_errors(ssize_t bytes,
+				  const char *function,
+				  const char *context,
+				  ssize_t *bytes_ptr)
 {
-  if (bytesPtr != NULL) {
-    *bytesPtr = bytes;
-  }
-  if (bytes < 0) {
-    return logSystemCallErrno(function, context);
-  }
-  return UDS_SUCCESS;
+	if (bytes_ptr != NULL) {
+		*bytes_ptr = bytes;
+	}
+	if (bytes < 0) {
+		return log_system_call_errno(function, context);
+	}
+	return UDS_SUCCESS;
 }
 
 #endif /* SYSCALLS_H */
