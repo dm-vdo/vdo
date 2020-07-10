@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#3 $
  */
 
 #include <errno.h>
@@ -28,61 +28,65 @@
 /**********************************************************************/
 int allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 {
-  if (ptr == NULL) {
-    return UDS_INVALID_ARGUMENT;
-  }
-  if (size == 0) {
-    // We can skip the malloc call altogether.
-    *((void **) ptr) = NULL;
-    return UDS_SUCCESS;
-  }
-  void *p;
-  enum {DEFAULT_MALLOC_ALIGNMENT = 2 * sizeof(size_t)}; // glibc malloc
-  if (align > DEFAULT_MALLOC_ALIGNMENT) {
-    int result = posix_memalign(&p, align, size);
-    if (result != 0) {
-      if (what != NULL) {
-        logErrorWithStringError(result,
-                                "failed to posix_memalign %s (%zu bytes)",
-                                what, size);
-      }
-      return result;
-    }
-  } else {
-    p = malloc(size);
-    if (p == NULL) {
-      int result = errno;
-      if (what != NULL) {
-        logErrorWithStringError(result, "failed to allocate %s (%zu bytes)",
-                                what, size);
-      }
-      return result;
-    }
-  }
-  memset(p, 0, size);
-  *((void **) ptr) = p;
-  return UDS_SUCCESS;
+	if (ptr == NULL) {
+		return UDS_INVALID_ARGUMENT;
+	}
+	if (size == 0) {
+		// We can skip the malloc call altogether.
+		*((void **) ptr) = NULL;
+		return UDS_SUCCESS;
+	}
+	void *p;
+	enum { DEFAULT_MALLOC_ALIGNMENT = 2 * sizeof(size_t) }; // glibc malloc
+	if (align > DEFAULT_MALLOC_ALIGNMENT) {
+		int result = posix_memalign(&p, align, size);
+		if (result != 0) {
+			if (what != NULL) {
+				logErrorWithStringError(result,
+							"failed to posix_memalign %s (%zu bytes)",
+							what,
+							size);
+			}
+			return result;
+		}
+	} else {
+		p = malloc(size);
+		if (p == NULL) {
+			int result = errno;
+			if (what != NULL) {
+				logErrorWithStringError(result,
+							"failed to allocate %s (%zu bytes)",
+							what,
+							size);
+			}
+			return result;
+		}
+	}
+	memset(p, 0, size);
+	*((void **) ptr) = p;
+	return UDS_SUCCESS;
 }
 
 /**********************************************************************/
 void free_memory(void *ptr)
 {
-  free(ptr);
+	free(ptr);
 }
 
 /**********************************************************************/
-int reallocate_memory(void       *ptr,
-		      size_t      oldSize __attribute__((unused)),
-		      size_t      size,
+int reallocate_memory(void *ptr,
+		      size_t old_size __attribute__((unused)),
+		      size_t size,
 		      const char *what,
-		      void       *newPtr)
+		      void *new_ptr)
 {
-  void *new = realloc(ptr, size);
-  if ((new == NULL) && (size != 0)) {
-    return logErrorWithStringError(errno,
-                                   "failed to reallocate %s (%zu bytes)",
-                                   what, size);
-  }
-  *((void **) newPtr) = new;
-  return UDS_SUCCESS;
+	void *new = realloc(ptr, size);
+	if ((new == NULL) && (size != 0)) {
+		return logErrorWithStringError(errno,
+					       "failed to reallocate %s (%zu bytes)",
+					       what,
+					       size);
+	}
+	*((void **) new_ptr) = new;
+	return UDS_SUCCESS;
 }
