@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#8 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#9 $
  */
 
 #include <fcntl.h>
@@ -35,200 +35,209 @@
 
 static struct mutex mutex = { .mutex = MUTEX_INITIALIZER };
 
-static int logSocket = -1;
+static int log_socket = -1;
 
-static char *logIdent;
+static char *log_ident;
 
-static int logOption;
+static int log_option;
 
-static int defaultFacility = LOG_USER;
-
-/**********************************************************************/
-static void closeLocked(void)
-{
-  if (logSocket != -1) {
-    close(logSocket);
-    logSocket = -1;
-  }
-}
+static int default_facility = LOG_USER;
 
 /**********************************************************************/
-static void openSocketLocked(void)
+static void close_locked(void)
 {
-  if (logSocket != -1) {
-    return;
-  }
-
-  struct sockaddr_un sun;
-  memset(&sun, 0, sizeof(sun));
-  sun.sun_family = AF_UNIX;
-  strncpy(sun.sun_path, _PATH_LOG, sizeof(sun.sun_path));
-
-  /*
-   * We can't log from here, we'll deadlock, so we can't use loggingSocket(),
-   * loggingConnect(), or tryCloseFile().
-   */
-  logSocket = socket(PF_UNIX, SOCK_DGRAM, 0);
-  if (logSocket < 0) {
-    return;
-  }
-
-  if (connect(logSocket, (const struct sockaddr *) &sun, sizeof(sun)) != 0) {
-    closeLocked();
-  }
+	if (log_socket != -1) {
+		close(log_socket);
+		log_socket = -1;
+	}
 }
 
 /**********************************************************************/
-void miniOpenlog(const char *ident, int option, int facility)
+static void open_socket_locked(void)
 {
-  lock_mutex(&mutex);
-  closeLocked();
-  FREE(logIdent);
-  if (duplicate_string(ident, NULL, &logIdent) != UDS_SUCCESS) {
-    // on failure, NULL is okay
-    logIdent = NULL;
-  }
-  logOption       = option;
-  defaultFacility = facility;
-  if (logOption & LOG_NDELAY) {
-    openSocketLocked();
-  }
-  unlock_mutex(&mutex);
+	if (log_socket != -1) {
+		return;
+	}
+
+	struct sockaddr_un sun;
+	memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_UNIX;
+	strncpy(sun.sun_path, _PATH_LOG, sizeof(sun.sun_path));
+
+	/*
+	 * We can't log from here, we'll deadlock, so we can't use
+	 * loggingSocket(), loggingConnect(), or tryCloseFile().
+	 */
+	log_socket = socket(PF_UNIX, SOCK_DGRAM, 0);
+	if (log_socket < 0) {
+		return;
+	}
+
+	if (connect(log_socket, (const struct sockaddr *) &sun, sizeof(sun)) !=
+	    0) {
+		close_locked();
+	}
 }
 
 /**********************************************************************/
-void miniSyslog(int priority, const char *format, ...)
+void mini_openlog(const char *ident, int option, int facility)
 {
-  va_list args;
-  va_start(args, format);
-  miniVsyslog(priority, format, args);
-  va_end(args);
+	lock_mutex(&mutex);
+	close_locked();
+	FREE(log_ident);
+	if (duplicate_string(ident, NULL, &log_ident) != UDS_SUCCESS) {
+		// on failure, NULL is okay
+		log_ident = NULL;
+	}
+	log_option = option;
+	default_facility = facility;
+	if (log_option & LOG_NDELAY) {
+		open_socket_locked();
+	}
+	unlock_mutex(&mutex);
 }
 
 /**********************************************************************/
-static bool __must_check writeMsg(int fd, const char *msg)
+void mini_syslog(int priority, const char *format, ...)
 {
-  size_t bytesToWrite = strlen(msg);
-  ssize_t bytesWritten = write(fd, msg, bytesToWrite);
-  if (bytesWritten == (ssize_t)bytesToWrite) {
-    bytesToWrite += 1;
-    bytesWritten += write(fd, "\n", 1);
-  }
-  return (bytesWritten != (ssize_t)bytesToWrite);
+	va_list args;
+	va_start(args, format);
+	mini_vsyslog(priority, format, args);
+	va_end(args);
 }
 
 /**********************************************************************/
-__attribute__((format(printf, 3, 0)))
-static void logIt(int         priority,
-                  const char *prefix,
-                  const char *format1,
-                  va_list     args1,
-                  const char *format2,
-                  va_list     args2)
+static bool __must_check write_msg(int fd, const char *msg)
 {
-  const char *priorityStr = priority_to_string(priority);
-  char        buffer[1024];
-  char       *bufEnd = buffer + sizeof(buffer);
-  char       *bufp = buffer;
-  time_t      t = asTimeT(currentTime(CLOCK_REALTIME));
-  struct tm   tm;
-  char        timestamp[64];
-  timestamp[0] = '\0';
-  if (localtime_r(&t, &tm) != NULL) {
-    if (strftime(timestamp, sizeof(timestamp), "%b %e %H:%M:%S", &tm) == 0) {
-      timestamp[0] = '\0';
-    }
-  }
-  if (LOG_FAC(priority) == 0) {
-    priority |= defaultFacility;
-  }
-
-  bufp = append_to_buffer(bufp, bufEnd, "<%d>%s", priority, timestamp);
-  const char *stderrMsg = bufp;
-  bufp = append_to_buffer(bufp, bufEnd, " %s",
-                          logIdent == NULL ? "" : logIdent);
-
-  if (logOption & LOG_PID) {
-    char tname[16];
-    get_thread_name(tname);
-    bufp = append_to_buffer(bufp, bufEnd, "[%u]: %-6s (%s/%d) ",
-                            getpid(), priorityStr, tname, get_thread_id());
-  } else {
-    bufp = append_to_buffer(bufp, bufEnd, ": ");
-  }
-  if ((bufp + sizeof("...")) >= bufEnd) {
-    return;
-  }
-  if (prefix != NULL) {
-    bufp = append_to_buffer(bufp, bufEnd, "%s", prefix);
-  }
-  if (format1 != NULL) {
-    int ret = vsnprintf(bufp, bufEnd - bufp, format1, args1);
-    if (ret < (bufEnd - bufp)) {
-      bufp += ret;
-    } else {
-      bufp = bufEnd;
-    }
-  }
-  if (format2 != NULL) {
-    int ret = vsnprintf(bufp, bufEnd - bufp, format2, args2);
-    if (ret < (bufEnd - bufp)) {
-      bufp += ret;
-    } else {
-      bufp = bufEnd;
-    }
-  }
-  if (bufp == bufEnd) {
-    strcpy(bufEnd - sizeof("..."), "...");
-  }
-  bool failure = false;
-  if (logOption & LOG_PERROR) {
-    failure |= writeMsg(STDERR_FILENO, stderrMsg);
-  }
-  openSocketLocked();
-  failure |= (logSocket == -1);
-  if (logSocket != -1) {
-    size_t bytesToWrite = bufp - buffer;
-    ssize_t bytesWritten = send(logSocket, buffer, bytesToWrite, MSG_NOSIGNAL);
-    failure |= (bytesWritten != (ssize_t)bytesToWrite);
-  }
-  if (failure && (logOption & LOG_CONS)) {
-    int console = open(_PATH_CONSOLE, O_WRONLY);
-    failure |= (console == -1) || writeMsg(console, stderrMsg);
-    if (console != -1) {
-      failure |= (close(console) != 0);
-    }
-  }
+	size_t bytes_to_write = strlen(msg);
+	ssize_t bytes_written = write(fd, msg, bytes_to_write);
+	if (bytes_written == (ssize_t) bytes_to_write) {
+		bytes_to_write += 1;
+		bytes_written += write(fd, "\n", 1);
+	}
+	return (bytes_written != (ssize_t) bytes_to_write);
 }
 
-void miniSyslogPack(int         priority,
-                    const char *prefix,
-                    const char *fmt1,
-                    va_list     args1,
-                    const char *fmt2,
-                    va_list     args2)
+/**********************************************************************/
+__attribute__((format(printf, 3, 0))) static void log_it(int priority,
+							 const char *prefix,
+							 const char *format1,
+							 va_list args1,
+							 const char *format2,
+							 va_list args2)
 {
-  lock_mutex(&mutex);
-  logIt(priority, prefix, fmt1, args1, fmt2, args2);
-  unlock_mutex(&mutex);
+	const char *priority_str = priority_to_string(priority);
+	char buffer[1024];
+	char *buf_end = buffer + sizeof(buffer);
+	char *bufp = buffer;
+	time_t t = asTimeT(currentTime(CLOCK_REALTIME));
+	struct tm tm;
+	char timestamp[64];
+	timestamp[0] = '\0';
+	if (localtime_r(&t, &tm) != NULL) {
+		if (strftime(timestamp,
+			     sizeof(timestamp),
+			     "%b %e %H:%M:%S",
+			     &tm) == 0) {
+			timestamp[0] = '\0';
+		}
+	}
+	if (LOG_FAC(priority) == 0) {
+		priority |= default_facility;
+	}
+
+	bufp = append_to_buffer(bufp, buf_end, "<%d>%s", priority, timestamp);
+	const char *stderr_msg = bufp;
+	bufp = append_to_buffer(bufp, buf_end, " %s",
+				log_ident == NULL ? "" : log_ident);
+
+	if (log_option & LOG_PID) {
+		char tname[16];
+		get_thread_name(tname);
+		bufp = append_to_buffer(bufp,
+					buf_end,
+					"[%u]: %-6s (%s/%d) ",
+					getpid(),
+					priority_str,
+					tname,
+					get_thread_id());
+	} else {
+		bufp = append_to_buffer(bufp, buf_end, ": ");
+	}
+	if ((bufp + sizeof("...")) >= buf_end) {
+		return;
+	}
+	if (prefix != NULL) {
+		bufp = append_to_buffer(bufp, buf_end, "%s", prefix);
+	}
+	if (format1 != NULL) {
+		int ret = vsnprintf(bufp, buf_end - bufp, format1, args1);
+		if (ret < (buf_end - bufp)) {
+			bufp += ret;
+		} else {
+			bufp = buf_end;
+		}
+	}
+	if (format2 != NULL) {
+		int ret = vsnprintf(bufp, buf_end - bufp, format2, args2);
+		if (ret < (buf_end - bufp)) {
+			bufp += ret;
+		} else {
+			bufp = buf_end;
+		}
+	}
+	if (bufp == buf_end) {
+		strcpy(buf_end - sizeof("..."), "...");
+	}
+	bool failure = false;
+	if (log_option & LOG_PERROR) {
+		failure |= write_msg(STDERR_FILENO, stderr_msg);
+	}
+	open_socket_locked();
+	failure |= (log_socket == -1);
+	if (log_socket != -1) {
+		size_t bytes_to_write = bufp - buffer;
+		ssize_t bytes_written =
+			send(log_socket, buffer, bytes_to_write, MSG_NOSIGNAL);
+		failure |= (bytes_written != (ssize_t) bytes_to_write);
+	}
+	if (failure && (log_option & LOG_CONS)) {
+		int console = open(_PATH_CONSOLE, O_WRONLY);
+		failure |= (console == -1) || write_msg(console, stderr_msg);
+		if (console != -1) {
+			failure |= (close(console) != 0);
+		}
+	}
 }
 
-void miniVsyslog(int priority, const char *format, va_list ap)
+void mini_syslog_pack(int priority,
+		      const char *prefix,
+		      const char *fmt1,
+		      va_list args1,
+		      const char *fmt2,
+		      va_list args2)
 {
-  va_list dummy;
-  memset(&dummy, 0, sizeof(dummy));
-  lock_mutex(&mutex);
-  logIt(priority, NULL, format, ap, NULL, dummy);
-  unlock_mutex(&mutex);
+	lock_mutex(&mutex);
+	log_it(priority, prefix, fmt1, args1, fmt2, args2);
+	unlock_mutex(&mutex);
 }
 
-void miniCloselog(void)
+void mini_vsyslog(int priority, const char *format, va_list ap)
 {
-  lock_mutex(&mutex);
-  closeLocked();
-  FREE(logIdent);
-  logIdent        = NULL;
-  logOption       = 0;
-  defaultFacility = LOG_USER;
-  unlock_mutex(&mutex);
+	va_list dummy;
+	memset(&dummy, 0, sizeof(dummy));
+	lock_mutex(&mutex);
+	log_it(priority, NULL, format, ap, NULL, dummy);
+	unlock_mutex(&mutex);
+}
+
+void mini_closelog(void)
+{
+	lock_mutex(&mutex);
+	close_locked();
+	FREE(log_ident);
+	log_ident = NULL;
+	log_option = 0;
+	default_facility = LOG_USER;
+	unlock_mutex(&mutex);
 }

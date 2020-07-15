@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#13 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#14 $
  */
 
 #include "logger.h"
@@ -81,17 +81,14 @@ static void init_logger(void)
 	}
 
 	char *identity;
-	if (alloc_sprintf(NULL,
-			  &identity,
-			  "%s/%s",
-			  IDENTITY,
+	if (alloc_sprintf(NULL, &identity, "%s/%s", IDENTITY,
 			  program_invocation_short_name) == UDS_SUCCESS) {
-		miniOpenlog(identity, LOG_PID | LOG_NDELAY | LOG_CONS,
-			    LOG_USER);
+		mini_openlog(identity, LOG_PID | LOG_NDELAY | LOG_CONS,
+			     LOG_USER);
 		FREE(identity);
 	} else {
-		miniOpenlog(IDENTITY, LOG_PID | LOG_NDELAY | LOG_CONS,
-			    LOG_USER);
+		mini_openlog(IDENTITY, LOG_PID | LOG_NDELAY | LOG_CONS,
+			     LOG_USER);
 		logError("Could not include program name in log");
 	}
 
@@ -161,7 +158,7 @@ void log_message_pack(int priority,
 	int error = errno;
 
 	if (fp == NULL) {
-		miniSyslogPack(priority, prefix, fmt1, args1, fmt2, args2);
+		mini_syslog_pack(priority, prefix, fmt1, args1, fmt2, args2);
 	} else {
 		char tname[16];
 		get_thread_name(tname);

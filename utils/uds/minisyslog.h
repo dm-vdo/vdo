@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.h#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.h#2 $
  */
 
 #ifndef MINISYSLOG_H
@@ -39,7 +39,7 @@
  * @param option   The logger options (see the openlog(3) man page).
  * @param facility The type of program logging the message.
  **/
-void miniOpenlog(const char *ident, int option, int facility);
+void mini_openlog(const char *ident, int option, int facility);
 
 /**
  * Log a message. This function mimics the syslog() c-library function.
@@ -47,8 +47,8 @@ void miniOpenlog(const char *ident, int option, int facility);
  * @param priority The priority level of the message
  * @param format   A printf style message format
  **/
-void miniSyslog(int priority, const char *format, ...)
-  __attribute__((format(printf, 2, 3)));
+void mini_syslog(int priority, const char *format, ...)
+	__attribute__((format(printf, 2, 3)));
 
 /**
  * Log a message. This function mimics the vsyslog() c-library function.
@@ -57,8 +57,8 @@ void miniSyslog(int priority, const char *format, ...)
  * @param format   A printf style message format
  * @param ap       An argument list obtained from stdarg()
  **/
-void miniVsyslog(int priority, const char *format, va_list ap)
-  __attribute__((format(printf, 2, 0)));
+void mini_vsyslog(int priority, const char *format, va_list ap)
+	__attribute__((format(printf, 2, 0)));
 
 /**
  * Log a message pack consisting of multiple variable sections.
@@ -70,17 +70,17 @@ void miniVsyslog(int priority, const char *format, va_list ap)
  * @param fmt2          format of message second part, may be NULL
  * @param args2         arguments for message second part
  **/
-void miniSyslogPack(int         priority,
-                    const char *prefix,
-                    const char *fmt1,
-                    va_list     args1,
-                    const char *fmt2,
-                    va_list     args2)
-  __attribute__((format(printf, 3, 0), format(printf, 5, 0)));
+void mini_syslog_pack(int priority,
+		      const char *prefix,
+		      const char *fmt1,
+		      va_list args1,
+		      const char *fmt2,
+		      va_list args2)
+	__attribute__((format(printf, 3, 0), format(printf, 5, 0)));
 
 /**
  * Close a logger. This function mimics the closelog() c-library function.
  **/
-void miniCloselog(void);
+void mini_closelog(void);
 
 #endif /* MINI_SYSLOG_H */

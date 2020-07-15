@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#7 $
  */
 
 #ifndef VDO_VOLUME_UTILS_H
@@ -84,16 +84,5 @@ readVDOWithoutValidation(const char *filename, struct vdo **vdoPtr);
  * @param vdoPtr  The pointer to the VDO to free
  **/
 void freeVDOFromFile(struct vdo **vdoPtr);
-
-/**
- * Set up a slab summary and read the on-disk slab summary to populate it.
- *
- * @param [in]  vdo         The VDO, loaded synchronously
- * @param [out] summaryPtr  A pointer to return the loaded slab summary
- *
- * @return VDO_SUCCESS or an error code
- **/
-int __must_check
-loadSlabSummarySync(struct vdo *vdo, struct slab_summary **summaryPtr);
 
 #endif // VDO_VOLUME_UTILS_H

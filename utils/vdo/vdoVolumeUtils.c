@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#21 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#22 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -171,46 +171,4 @@ void freeVDOFromFile(struct vdo **vdoPtr)
   PhysicalLayer *layer = (*vdoPtr)->layer;
   free_vdo(vdoPtr);
   layer->destroy(&layer);
-}
-
-/**********************************************************************/
-int loadSlabSummarySync(struct vdo *vdo, struct slab_summary **summaryPtr)
-{
-  struct partition *slabSummaryPartition
-    = get_vdo_partition(vdo->layout, SLAB_SUMMARY_PARTITION);
-  struct slab_depot *depot = vdo->depot;
-  struct thread_config *threadConfig;
-  int result = make_one_thread_config(&threadConfig);
-  if (result != VDO_SUCCESS) {
-    warnx("Could not create thread config");
-    return result;
-  }
-
-  struct slab_summary *summary = NULL;
-  result = make_slab_summary(vdo->layer, slabSummaryPartition, threadConfig,
-                             depot->slab_size_shift,
-                             depot->slab_config.data_blocks,
-                             NULL, &summary);
-  if (result != VDO_SUCCESS) {
-    warnx("Could not create in-memory slab summary");
-  }
-  free_thread_config(&threadConfig);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  physical_block_number_t origin
-    = get_fixed_layout_partition_offset(slabSummaryPartition);
-  result = vdo->layer->reader(vdo->layer, origin,
-                              get_slab_summary_size(VDO_BLOCK_SIZE),
-                              (char *) summary->entries, NULL);
-  if (result != VDO_SUCCESS) {
-    warnx("Could not read summary data");
-    return result;
-  }
-
-  summary->zones_to_combine = depot->old_zone_count;
-  combine_zones(summary);
-  *summaryPtr = summary;
-  return VDO_SUCCESS;
 }

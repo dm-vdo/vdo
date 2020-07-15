@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#35 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#36 $
  */
 
 #include <err.h>
@@ -49,6 +49,7 @@
 #include "vdoState.h"
 
 #include "blockMapUtils.h"
+#include "slabSummaryReader.h"
 #include "vdoVolumeUtils.h"
 
 // Reference counts are one byte, so the error delta range of possible
@@ -114,9 +115,12 @@ static const char  *filename;
 static bool         verbose          = false;
 
 // Values loaded from the volume
-static struct vdo          *vdo            = NULL;
-static struct slab_summary *summary        = NULL;
-static block_count_t        slabDataBlocks = 0;
+static struct vdo                *vdo                = NULL;
+static struct slab_summary_entry *slabSummaryEntries = NULL;
+static block_count_t              slabDataBlocks     = 0;
+
+/** Values derived from the volume */
+static unsigned int hintShift;
 
 /** Total number of mapped entries found in block map leaf pages */
 static block_count_t lbnCount = 0;
@@ -233,7 +237,7 @@ static void printErrorSummary(void)
  **/
 static void freeAuditAllocations(void)
 {
-  free_slab_summary(&summary);
+  FREE(slabSummaryEntries);
   for (slab_count_t i = 0; i < vdo->depot->slab_count; i++) {
     FREE(slabs[i].refCounts);
   }
@@ -568,12 +572,13 @@ verifyRefCountBlock(SlabAudit                     *audit,
  * @param slabNumber  The number of the slab to check
  * @param freeBlocks  The actual number of free blocks in the slab
  **/
-static void verifySummaryHint(slab_count_t slabNumber, block_count_t freeBlocks)
+static void verifySummaryHint(slab_count_t  slabNumber,
+                              block_count_t freeBlocks)
 {
   block_count_t freeBlockHint
-    = get_summarized_free_block_count(get_summary_for_zone(summary, 0),
-                                      slabNumber);
-  block_count_t hintError = (1ULL << summary->hint_shift);
+    = slabSummaryEntries[slabNumber].fullness_hint << hintShift;
+
+  block_count_t hintError = (1ULL << hintShift);
   if ((freeBlocks < max_block(freeBlockHint, hintError) - hintError)
       || (freeBlocks >= (freeBlockHint + hintError))) {
     badSummaryHints++;
@@ -596,7 +601,7 @@ static int verifySlab(slab_count_t slabNumber, char *buffer)
 {
   SlabAudit *audit = &slabs[slabNumber];
 
-  if (!must_load_ref_counts(summary->zones[0], slabNumber)) {
+  if (!slabSummaryEntries[slabNumber].load_ref_counts) {
     // Confirm that all reference counts for this pristine slab are 0.
     for (slab_block_number sbn = 0; sbn < slabDataBlocks; sbn++) {
       if (audit->refCounts[sbn] != 0) {
@@ -662,6 +667,7 @@ static int verifyPBNRefCounts(void)
     return result;
   }
 
+  hintShift = get_slab_summary_hint_shift(depot->slab_size_shift);
   for (slab_count_t slabNumber = 0; slabNumber < depot->slab_count;
        slabNumber++) {
     result = verifySlab(slabNumber, buffer);
@@ -699,7 +705,7 @@ static bool auditVDO(void)
   }
 
   // Load the slab summary data.
-  result = loadSlabSummarySync(vdo, &summary);
+  result = readSlabSummary(vdo, &slabSummaryEntries);
   if (result != VDO_SUCCESS) {
     return false;
   }
