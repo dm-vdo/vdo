@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#36 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#37 $
  */
 
 #include <err.h>
@@ -50,6 +50,7 @@
 
 #include "blockMapUtils.h"
 #include "slabSummaryReader.h"
+#include "userVDO.h"
 #include "vdoVolumeUtils.h"
 
 // Reference counts are one byte, so the error delta range of possible
@@ -115,7 +116,7 @@ static const char  *filename;
 static bool         verbose          = false;
 
 // Values loaded from the volume
-static struct vdo                *vdo                = NULL;
+static UserVDO                   *vdo                = NULL;
 static struct slab_summary_entry *slabSummaryEntries = NULL;
 static block_count_t              slabDataBlocks     = 0;
 
@@ -226,7 +227,7 @@ static void printErrorSummary(void)
   printErrorCount(badRefCounts, "reference count error");
   printErrorCount(badSlabs, "error-containing slab");
 
-  for (slab_count_t i = 0; i < vdo->depot->slab_count; i++) {
+  for (slab_count_t i = 0; i < vdo->vdo->depot->slab_count; i++) {
     printSlabErrorSummary(&slabs[i]);
     printSlabErrorHistogram(&slabs[i]);
   }
@@ -238,10 +239,11 @@ static void printErrorSummary(void)
 static void freeAuditAllocations(void)
 {
   FREE(slabSummaryEntries);
-  for (slab_count_t i = 0; i < vdo->depot->slab_count; i++) {
+  for (slab_count_t i = 0; i < vdo->vdo->depot->slab_count; i++) {
     FREE(slabs[i].refCounts);
   }
-  freeVDOFromFile(&vdo);
+  freeVDOFromFile(&vdo->vdo);
+  freeUserVDO(&vdo);
 }
 
 /**
@@ -321,7 +323,7 @@ static int readFromLayer(physical_block_number_t  startBlock,
 static int getSlabBlockNumberForPBN(physical_block_number_t  pbn,
                                     slab_block_number       *slabBlockNumberPtr)
 {
-  struct slab_depot *depot = vdo->depot;
+  struct slab_depot *depot = vdo->vdo->depot;
   uint64_t slabOffsetMask = (1ULL << depot->slab_size_shift) - 1;
   uint64_t slabBlockNumber = ((pbn - depot->first_block) & slabOffsetMask);
   if (slabBlockNumber >= slabDataBlocks) {
@@ -390,7 +392,7 @@ static int examineBlockMapEntry(struct block_map_slot   slot,
   }
 
   slab_count_t slabNumber = 0;
-  int result = get_slab_number(vdo->depot, pbn, &slabNumber);
+  int result = get_slab_number(vdo->vdo->depot, pbn, &slabNumber);
   if (result != VDO_SUCCESS) {
     reportBlockMapEntry("refers to out-of-range physical block",
                         slot, height, pbn, state);
@@ -616,7 +618,7 @@ static int verifySlab(slab_count_t slabNumber, char *buffer)
 
   // Get the refCounts stored on this used slab.
   int result = readFromLayer(audit->slabOrigin + slabDataBlocks,
-                             get_slab_config(vdo->depot)->reference_count_blocks,
+                             get_slab_config(vdo->vdo->depot)->reference_count_blocks,
                              buffer);
   if (result != VDO_SUCCESS) {
     warnx("Could not read reference count buffer for slab number %u\n",
@@ -653,7 +655,7 @@ static int verifySlab(slab_count_t slabNumber, char *buffer)
  **/
 static int verifyPBNRefCounts(void)
 {
-  const struct slab_depot  *depot          = vdo->depot;
+  const struct slab_depot  *depot          = vdo->vdo->depot;
   const struct slab_config *slabConfig     = get_slab_config(depot);
   block_count_t             refCountBlocks = slabConfig->reference_count_blocks;
   size_t                    refCountBytes  = refCountBlocks * VDO_BLOCK_SIZE;
@@ -688,18 +690,18 @@ static int verifyPBNRefCounts(void)
  **/
 static bool auditVDO(void)
 {
-  if (vdo->load_state == VDO_NEW) {
+  if (vdo->states.vdo.state == VDO_NEW) {
     warnx("The VDO volume is newly formatted and has no auditable state");
     return false;
   }
 
-  if (vdo->load_state != VDO_CLEAN) {
+  if (vdo->states.vdo.state != VDO_CLEAN) {
     warnx("WARNING: The VDO was not cleanly shut down (it has state '%s')",
-          get_vdo_state_name(vdo->load_state));
+          get_vdo_state_name(vdo->states.vdo.state));
   }
 
   // Get logical block count and populate observed slab reference counts.
-  int result = examineBlockMapEntries(vdo, examineBlockMapEntry);
+  int result = examineBlockMapEntries(vdo->vdo, examineBlockMapEntry);
   if (result != VDO_SUCCESS) {
     return false;
   }
@@ -712,7 +714,7 @@ static bool auditVDO(void)
 
   // Audit stored versus counted mapped logical blocks.
   block_count_t savedLBNCount
-    = get_journal_logical_blocks_used(vdo->recovery_journal);
+    = get_journal_logical_blocks_used(vdo->vdo->recovery_journal);
   if (lbnCount == savedLBNCount) {
     warnx("Logical block count matched at %" PRIu64, savedLBNCount);
   } else {
@@ -747,13 +749,23 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  result = makeVDOFromFile(filename, true, &vdo);
+  struct vdo *baseVDO;
+  result = makeVDOFromFile(filename, true, &baseVDO);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s",
          filename, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
-  struct slab_depot *depot = vdo->depot;
+  result = makeUserVDO(baseVDO->layer, &vdo);
+  if (result != VDO_SUCCESS) {
+    errx(1, "failed to create UserVDO: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  vdo->vdo    = baseVDO;
+  vdo->states = baseVDO->states;
+
+  struct slab_depot *depot = vdo->vdo->depot;
   physical_block_number_t slabOrigin = depot->first_block;
   const struct slab_config *slabConfig = get_slab_config(depot);
   slabDataBlocks = slabConfig->data_blocks;

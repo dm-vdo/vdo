@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.h#1 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.h#2 $
  */
 
 #ifndef SLAB_SUMMARY_READER_H
@@ -24,6 +24,8 @@
 
 #include "slabSummaryFormat.h"
 #include "types.h"
+
+#include "userVDO.h"
 
 /**
  * Read the contents of the slab summary into a single set of summary entries.
@@ -34,6 +36,6 @@
  * @return VDO_SUCCESS or an error code
  **/
 int __must_check
-readSlabSummary(struct vdo *vdo, struct slab_summary_entry **entriesPtr);
+readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr);
 
 #endif // SLAB_SUMMARY_UTILS_H
