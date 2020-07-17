@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#37 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#38 $
  */
 
 #include <err.h>
@@ -34,14 +34,11 @@
 #include "memoryAlloc.h"
 #include "syscalls.h"
 
-#include "blockMapInternals.h"
 #include "numUtils.h"
 #include "recoveryJournal.h"
-#include "refCounts.h"
 #include "referenceBlock.h"
-#include "slabDepotInternals.h"
-#include "slabJournalInternals.h"
-#include "slabSummaryInternals.h"
+#include "slabDepotFormat.h"
+#include "slabSummaryFormat.h"
 #include "statusCodes.h"
 #include "types.h"
 #include "vdo.h"
@@ -227,7 +224,7 @@ static void printErrorSummary(void)
   printErrorCount(badRefCounts, "reference count error");
   printErrorCount(badSlabs, "error-containing slab");
 
-  for (slab_count_t i = 0; i < vdo->vdo->depot->slab_count; i++) {
+  for (slab_count_t i = 0; i < vdo->slabCount; i++) {
     printSlabErrorSummary(&slabs[i]);
     printSlabErrorHistogram(&slabs[i]);
   }
@@ -239,7 +236,7 @@ static void printErrorSummary(void)
 static void freeAuditAllocations(void)
 {
   FREE(slabSummaryEntries);
-  for (slab_count_t i = 0; i < vdo->vdo->depot->slab_count; i++) {
+  for (slab_count_t i = 0; i < vdo->slabCount; i++) {
     FREE(slabs[i].refCounts);
   }
   freeVDOFromFile(&vdo->vdo);
@@ -323,9 +320,9 @@ static int readFromLayer(physical_block_number_t  startBlock,
 static int getSlabBlockNumberForPBN(physical_block_number_t  pbn,
                                     slab_block_number       *slabBlockNumberPtr)
 {
-  struct slab_depot *depot = vdo->vdo->depot;
-  uint64_t slabOffsetMask = (1ULL << depot->slab_size_shift) - 1;
-  uint64_t slabBlockNumber = ((pbn - depot->first_block) & slabOffsetMask);
+  uint64_t slabOffsetMask = (1ULL << vdo->slabSizeShift) - 1;
+  uint64_t slabBlockNumber = ((pbn - vdo->states.slab_depot.first_block)
+                              & slabOffsetMask);
   if (slabBlockNumber >= slabDataBlocks) {
     return VDO_OUT_OF_RANGE;
   }
@@ -392,7 +389,7 @@ static int examineBlockMapEntry(struct block_map_slot   slot,
   }
 
   slab_count_t slabNumber = 0;
-  int result = get_slab_number(vdo->vdo->depot, pbn, &slabNumber);
+  int result = getSlabNumber(vdo, pbn, &slabNumber);
   if (result != VDO_SUCCESS) {
     reportBlockMapEntry("refers to out-of-range physical block",
                         slot, height, pbn, state);
@@ -617,8 +614,9 @@ static int verifySlab(slab_count_t slabNumber, char *buffer)
   }
 
   // Get the refCounts stored on this used slab.
+  struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
   int result = readFromLayer(audit->slabOrigin + slabDataBlocks,
-                             get_slab_config(vdo->vdo->depot)->reference_count_blocks,
+                             depot.slab_config.reference_count_blocks,
                              buffer);
   if (result != VDO_SUCCESS) {
     warnx("Could not read reference count buffer for slab number %u\n",
@@ -655,10 +653,8 @@ static int verifySlab(slab_count_t slabNumber, char *buffer)
  **/
 static int verifyPBNRefCounts(void)
 {
-  const struct slab_depot  *depot          = vdo->vdo->depot;
-  const struct slab_config *slabConfig     = get_slab_config(depot);
-  block_count_t             refCountBlocks = slabConfig->reference_count_blocks;
-  size_t                    refCountBytes  = refCountBlocks * VDO_BLOCK_SIZE;
+  struct slab_config slabConfig = vdo->states.slab_depot.slab_config;
+  size_t refCountBytes = (slabConfig.reference_count_blocks * VDO_BLOCK_SIZE);
 
   char *buffer;
   int result = vdo->layer->allocateIOBuffer(vdo->layer, refCountBytes,
@@ -669,8 +665,8 @@ static int verifyPBNRefCounts(void)
     return result;
   }
 
-  hintShift = get_slab_summary_hint_shift(depot->slab_size_shift);
-  for (slab_count_t slabNumber = 0; slabNumber < depot->slab_count;
+  hintShift = get_slab_summary_hint_shift(vdo->slabSizeShift);
+  for (slab_count_t slabNumber = 0; slabNumber < vdo->slabCount;
        slabNumber++) {
     result = verifySlab(slabNumber, buffer);
     if (result != VDO_SUCCESS) {
@@ -764,18 +760,19 @@ int main(int argc, char *argv[])
 
   vdo->vdo    = baseVDO;
   vdo->states = baseVDO->states;
+  setDerivedSlabParameters(vdo);
 
-  struct slab_depot *depot = vdo->vdo->depot;
-  physical_block_number_t slabOrigin = depot->first_block;
-  const struct slab_config *slabConfig = get_slab_config(depot);
-  slabDataBlocks = slabConfig->data_blocks;
-  depot->slab_count = calculate_slab_count(depot);
-
-  for (slab_count_t i = 0; i < depot->slab_count; i++) {
+  struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
+  physical_block_number_t slabOrigin = depot.first_block;
+  slabDataBlocks = depot.slab_config.data_blocks;
+  slab_count_t slabCount = compute_slab_count(depot.first_block,
+                                              depot.last_block,
+                                              vdo->slabSizeShift);
+  for (slab_count_t i = 0; i < slabCount; i++) {
     SlabAudit *audit = &slabs[i];
     audit->slabNumber = i;
     audit->slabOrigin = slabOrigin;
-    slabOrigin       += slabConfig->slab_blocks;
+    slabOrigin       += depot.slab_config.slab_blocks;
     // So firstError = min(firstError, x) will always do the right thing.
     audit->firstError = (slab_block_number) -1;
 

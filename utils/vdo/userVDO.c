@@ -1,0 +1,78 @@
+/*
+ * Copyright (c) 2020 Red Hat, Inc.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA. 
+ *
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#2 $
+ */
+
+#include "userVDO.h"
+
+#include "memoryAlloc.h"
+
+#include "numUtils.h"
+#include "physicalLayer.h"
+#include "types.h"
+#include "vdoComponentStates.h"
+
+/**********************************************************************/
+int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
+{
+  UserVDO *vdo;
+  int result = ALLOCATE(1, UserVDO, __func__, &vdo);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  vdo->layer = layer;
+  *vdoPtr = vdo;
+  return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+void freeUserVDO(UserVDO **vdoPtr)
+{
+  UserVDO *vdo = *vdoPtr;
+  if (vdo == NULL) {
+    return;
+  }
+
+  FREE(vdo);
+  *vdoPtr = NULL;
+}
+
+/**********************************************************************/
+void setDerivedSlabParameters(UserVDO *vdo)
+{
+  vdo->slabSizeShift = log_base_two(vdo->states.vdo.config.slab_size);
+  vdo->slabCount = compute_slab_count(vdo->states.slab_depot.first_block,
+                                      vdo->states.slab_depot.last_block,
+                                      vdo->slabSizeShift);
+}
+
+/**********************************************************************/
+int getSlabNumber(const UserVDO           *vdo,
+                  physical_block_number_t  pbn,
+                  slab_count_t            *slabPtr)
+{
+  const struct slab_depot_state_2_0 *depot = &vdo->states.slab_depot;
+  if ((pbn < depot->first_block) || (pbn >= depot->last_block)) {
+    return VDO_OUT_OF_RANGE;
+  }
+
+  *slabPtr = ((pbn - depot->first_block) >> vdo->slabSizeShift);
+  return VDO_SUCCESS;
+}

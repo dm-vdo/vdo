@@ -174,4 +174,4 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Thu Jul 16 2020 - corwin@bf30-1 - 8.1.0.0-1
+* Fri Jul 17 2020 - corwin@bf30-1 - 8.1.0.0-1
