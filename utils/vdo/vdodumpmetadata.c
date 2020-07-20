@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#27 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#28 $
  */
 
 #include <err.h>
@@ -32,7 +32,7 @@
 #include "fixedLayout.h"
 #include "numUtils.h"
 #include "physicalLayer.h"
-#include "slabDepotInternals.h"
+#include "slabDepotFormat.h"
 #include "slabSummaryFormat.h"
 #include "statusCodes.h"
 #include "types.h"
@@ -42,6 +42,7 @@
 
 #include "blockMapUtils.h"
 #include "fileLayer.h"
+#include "userVDO.h"
 #include "vdoVolumeUtils.h"
 
 enum {
@@ -86,7 +87,7 @@ static struct option options[] = {
 };
 
 static char                    *vdoBacking     = NULL;
-static struct vdo              *vdo            = NULL;
+static UserVDO                 *vdo            = NULL;
 
 static char                    *outputFilename = NULL;
 static int                      outputFD       = -1;
@@ -112,7 +113,8 @@ static void usage(const char *progname)
  **/
 static void freeAllocations(void)
 {
-  freeVDOFromFile(&vdo);
+  freeVDOFromFile(&vdo->vdo);
+  freeUserVDO(&vdo);
   try_sync_and_close_file(outputFD);
   FREE(buffer);
   FREE(lbns);
@@ -221,7 +223,7 @@ static int copyPage(struct block_map_slot   slot __attribute__((unused)),
                     physical_block_number_t pbn,
                     BlockMappingState       state)
 {
-  if ((height == 0) || !isValidDataBlock(vdo->depot, pbn)
+  if ((height == 0) || !isValidDataBlock(vdo, pbn)
       || (state == MAPPING_STATE_UNMAPPED)) {
     // Nothing to add to the dump.
     return VDO_SUCCESS;
@@ -265,7 +267,7 @@ static void dumpBlockMap(void)
 {
   if (!noBlockMap) {
     // Copy the block map.
-    struct block_map *map = get_block_map(vdo);
+    struct block_map_state_2_0 *map = &vdo->states.block_map;
     int result = copyBlocks(map->root_origin, map->root_count);
     if (result != VDO_SUCCESS) {
       errx(1, "Could not copy tree root block map pages");
@@ -299,16 +301,15 @@ static void dumpBlockMap(void)
 /**********************************************************************/
 static void dumpSlabs(void)
 {
-  slab_count_t slabCount = calculate_slab_count(vdo->depot);
-
   // Copy the slab metadata.
-  const struct slab_config *slabConfig = get_slab_config(vdo->depot);
-  block_count_t journalBlocks  = slabConfig->slab_journal_blocks;
-  block_count_t refCountBlocks = slabConfig->reference_count_blocks;
-  for (slab_count_t i = 0; i < slabCount; i++) {
+  const struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
+  const struct slab_config slabConfig = depot.slab_config;
+  block_count_t journalBlocks  = slabConfig.slab_journal_blocks;
+  block_count_t refCountBlocks = slabConfig.reference_count_blocks;
+  for (slab_count_t i = 0; i < vdo->slabCount; i++) {
     physical_block_number_t slabStart
-      = vdo->depot->first_block + (i * vdo->states.vdo.config.slab_size);
-    physical_block_number_t origin = slabStart + slabConfig->data_blocks;
+      = depot.first_block + (i * vdo->states.vdo.config.slab_size);
+    physical_block_number_t origin = slabStart + slabConfig.data_blocks;
     int result = copyBlocks(origin, refCountBlocks + journalBlocks);
     if (result != VDO_SUCCESS) {
       errx(1, "Could not copy slab metadata");
@@ -321,7 +322,8 @@ static void dumpRecoveryJournal(void)
 {
   // Copy the recovery journal.
   const struct partition *partition
-    = get_vdo_partition(vdo->layout, RECOVERY_JOURNAL_PARTITION);
+    = getPartition(vdo, RECOVERY_JOURNAL_PARTITION,
+                   "Could not copy recovery journal, no partition");
   int result = copyBlocks(get_fixed_layout_partition_offset(partition),
                           vdo->states.vdo.config.recovery_journal_size);
   if (result != VDO_SUCCESS) {
@@ -334,7 +336,8 @@ static void dumpSlabSummary(void)
 {
   // Copy the slab summary.
   const struct partition *partition
-    = get_vdo_partition(vdo->layout, SLAB_SUMMARY_PARTITION);
+    = getPartition(vdo, SLAB_SUMMARY_PARTITION,
+                   "Could not copy slab summary, no partition");
   int result = copyBlocks(get_fixed_layout_partition_offset(partition),
                           get_slab_summary_size(VDO_BLOCK_SIZE));
   if (result != VDO_SUCCESS) {
@@ -362,10 +365,21 @@ int main(int argc, char *argv[])
   processArgs(argc, argv);
 
   // Read input VDO.
-  result = makeVDOFromFile(vdoBacking, true, &vdo);
+  struct vdo *baseVDO;
+  result = makeVDOFromFile(vdoBacking, true, &baseVDO);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s'", vdoBacking);
   }
+
+  result = makeUserVDO(baseVDO->layer, &vdo);
+  if (result != VDO_SUCCESS) {
+    errx(1, "failed to create UserVDO: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  vdo->vdo    = baseVDO;
+  vdo->states = baseVDO->states;
+  setDerivedSlabParameters(vdo);
 
   // Allocate buffer for copies.
   size_t copyBufferBytes = STRIDE_LENGTH * VDO_BLOCK_SIZE;

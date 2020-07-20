@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#3 $
  */
 
 #ifndef USER_VDO_H
@@ -79,5 +79,43 @@ void setDerivedSlabParameters(UserVDO *vdo);
 int __must_check getSlabNumber(const UserVDO           *vdo,
                                physical_block_number_t  pbn,
                                slab_count_t            *slabPtr);
+
+
+/**
+ * Get the slab block number for a pbn.
+ *
+ * @param vdo      The vdo
+ * @param pbn      The pbn in question
+ * @param sbn_ptr  A pointer to hold the slab block number
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int __must_check getSlabBlockNumber(const UserVDO           *vdo,
+                                    physical_block_number_t  pbn,
+                                    slab_block_number       *sbnPtr);
+
+/**
+ * Check whether a given PBN is a valid PBN for a data block. This
+ * recapitulates is_physical_data_block().
+ *
+ * @param vdo  The vdo
+ * @param pbn  The PBN to check
+ *
+ * @return true if the PBN can be used for a data block
+ **/
+bool __must_check
+isValidDataBlock(const UserVDO *vdo, physical_block_number_t pbn);
+
+/**
+ * Get a partition from the VDO or fail with an error.
+ *
+ * @param vdo  The VDO
+ * @param partitionID  The ID of the desired partition
+ * @param errorMessage The error message if the partition does not exist
+ **/
+const struct partition * __must_check
+getPartition(const UserVDO *vdo,
+             partition_id   id,
+             const char    *errorMessage);
 
 #endif /* USER_VDO_H */

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#38 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#39 $
  */
 
 #include <err.h>
@@ -310,28 +310,6 @@ static int readFromLayer(physical_block_number_t  startBlock,
 }
 
 /**
- * Get the offset in the slab for a given PBN.
- *
- * @param [in]  pbn                 The pbn in question.
- * @param [out] slabBlockNumberPtr  A poiter to the offset.
- *
- * @return VDO_SUCCESS, or VDO_OUT_OF_RANGE if this is a slab metadata block
- **/
-static int getSlabBlockNumberForPBN(physical_block_number_t  pbn,
-                                    slab_block_number       *slabBlockNumberPtr)
-{
-  uint64_t slabOffsetMask = (1ULL << vdo->slabSizeShift) - 1;
-  uint64_t slabBlockNumber = ((pbn - vdo->states.slab_depot.first_block)
-                              & slabOffsetMask);
-  if (slabBlockNumber >= slabDataBlocks) {
-    return VDO_OUT_OF_RANGE;
-  }
-
-  *slabBlockNumberPtr = slabBlockNumber;
-  return VDO_SUCCESS;
-}
-
-/**
  * Report a problem with a block map entry.
  **/
 static void reportBlockMapEntry(const char              *message,
@@ -397,7 +375,7 @@ static int examineBlockMapEntry(struct block_map_slot   slot,
   }
 
   slab_block_number offset = 0;
-  result = getSlabBlockNumberForPBN(pbn, &offset);
+  result = getSlabBlockNumber(vdo, pbn, &offset);
   if (result != VDO_SUCCESS) {
     reportBlockMapEntry("refers to slab metadata block",
                         slot, height, pbn, state);
@@ -697,7 +675,7 @@ static bool auditVDO(void)
   }
 
   // Get logical block count and populate observed slab reference counts.
-  int result = examineBlockMapEntries(vdo->vdo, examineBlockMapEntry);
+  int result = examineBlockMapEntries(vdo, examineBlockMapEntry);
   if (result != VDO_SUCCESS) {
     return false;
   }

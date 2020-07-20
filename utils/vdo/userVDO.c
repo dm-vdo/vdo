@@ -16,10 +16,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#3 $
  */
 
 #include "userVDO.h"
+
+#include <err.h>
 
 #include "memoryAlloc.h"
 
@@ -75,4 +77,47 @@ int getSlabNumber(const UserVDO           *vdo,
 
   *slabPtr = ((pbn - depot->first_block) >> vdo->slabSizeShift);
   return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+int getSlabBlockNumber(const UserVDO           *vdo,
+                       physical_block_number_t  pbn,
+                       slab_block_number       *sbn_ptr)
+{
+  const struct slab_depot_state_2_0 *depot = &vdo->states.slab_depot;
+  if ((pbn < depot->first_block) || (pbn >= depot->last_block)) {
+    return VDO_OUT_OF_RANGE;
+  }
+
+  slab_block_number sbn = ((pbn - depot->first_block)
+                           & (vdo->slabSizeShift - 1));
+
+  if (sbn >= depot->slab_config.data_blocks) {
+    return VDO_OUT_OF_RANGE;
+  }
+
+  *sbn_ptr = sbn;
+  return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+bool isValidDataBlock(const UserVDO *vdo, physical_block_number_t pbn)
+{
+  slab_block_number sbn;
+  return (getSlabBlockNumber(vdo, pbn, &sbn) == VDO_SUCCESS);
+}
+
+/**********************************************************************/
+const struct partition *
+getPartition(const UserVDO *vdo,
+             partition_id   id,
+             const char    *errorMessage)
+{
+  struct partition *partition;
+  int result = get_partition(vdo->states.layout, id, &partition);
+  if (result != VDO_SUCCESS) {
+    errx(1, "%s", errorMessage);
+  }
+
+  return partition;
 }

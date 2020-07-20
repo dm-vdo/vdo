@@ -16,15 +16,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#10 $
  */
 
 #ifndef BLOCK_MAP_UTILS_H
 #define BLOCK_MAP_UTILS_H
 
-#include "blockMapInternals.h"
 #include "blockMapPage.h"
 #include "physicalLayer.h"
+
+#include "userVDO.h"
 
 /**
  * A function which examines a block map page entry. Functions of this type are
@@ -45,18 +46,6 @@ MappingExaminer(struct block_map_slot slot,
 		BlockMappingState state);
 
 /**
- * Check whether a given PBN is a valid PBN for a data block. This
- * recapitulates isPhysicalDataBlock(), without needing a depot with slabs.
- *
- * @param depot  The slab depot
- * @param pbn    The PBN to check
- *
- * @return true if the PBN can be used for a data block
- **/
-bool __must_check
-isValidDataBlock(const struct slab_depot *depot, physical_block_number_t pbn);
-
-/**
  * Apply a mapping examiner to each mapped block map entry in a VDO.
  *
  * @param vdo       The VDO containing the block map to be examined
@@ -65,7 +54,7 @@ isValidDataBlock(const struct slab_depot *depot, physical_block_number_t pbn);
  * @return VDO_SUCCESS or an error code
  **/
 int __must_check
-examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner);
+examineBlockMapEntries(UserVDO *vdo, MappingExaminer *examiner);
 
 /**
  * Find the PBN for the block map page encoding a particular LBN mapping.
@@ -77,7 +66,7 @@ examineBlockMapEntries(struct vdo *vdo, MappingExaminer *examiner);
  *
  * @return VDO_SUCCESS or an error code
  **/
-int __must_check findLBNPage(struct vdo *vdo,
+int __must_check findLBNPage(UserVDO *vdo,
 			     logical_block_number_t lbn,
 			     physical_block_number_t *pbnPtr);
 
@@ -91,7 +80,7 @@ int __must_check findLBNPage(struct vdo *vdo,
  *
  * @return VDO_SUCCESS or an error code
  **/
-int __must_check findLBNMapping(struct vdo *vdo,
+int __must_check findLBNMapping(UserVDO *vdo,
 				logical_block_number_t lbn,
 				physical_block_number_t *pbnPtr,
 				BlockMappingState *statePtr);

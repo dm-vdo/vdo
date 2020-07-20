@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#11 $
  */
 
 #include <err.h>
@@ -56,7 +56,7 @@ static struct option options[] = {
 
 static logical_block_number_t lbn = 0xFFFFFFFFFFFFFFFF;
 
-static struct vdo *vdo;
+static UserVDO *vdo;
 
 /**
  * Explain how this command-line function is used.
@@ -180,15 +180,26 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  result = makeVDOFromFile(filename, true, &vdo);
+  struct vdo *baseVDO;
+  result = makeVDOFromFile(filename, true, &baseVDO);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s",
          filename, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
+  result = makeUserVDO(baseVDO->layer, &vdo);
+  if (result != VDO_SUCCESS) {
+    errx(1, "failed to create UserVDO: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  vdo->vdo    = baseVDO;
+  vdo->states = baseVDO->states;
+  setDerivedSlabParameters(vdo);
   result = ((lbn != 0xFFFFFFFFFFFFFFFF)
             ? dumpLBN() : examineBlockMapEntries(vdo, dumpBlockMapEntry));
-  freeVDOFromFile(&vdo);
+  freeVDOFromFile(&vdo->vdo);
+  freeUserVDO(&vdo);
 
   exit((result == VDO_SUCCESS) ? 0 : 1);
 }
