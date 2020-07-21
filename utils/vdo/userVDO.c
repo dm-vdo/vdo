@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#4 $
  */
 
 #include "userVDO.h"
@@ -63,6 +63,7 @@ void setDerivedSlabParameters(UserVDO *vdo)
   vdo->slabCount = compute_slab_count(vdo->states.slab_depot.first_block,
                                       vdo->states.slab_depot.last_block,
                                       vdo->slabSizeShift);
+  vdo->slabOffsetMask = (1ULL << vdo->slabSizeShift) - 1;
 }
 
 /**********************************************************************/
@@ -82,21 +83,19 @@ int getSlabNumber(const UserVDO           *vdo,
 /**********************************************************************/
 int getSlabBlockNumber(const UserVDO           *vdo,
                        physical_block_number_t  pbn,
-                       slab_block_number       *sbn_ptr)
+                       slab_block_number       *sbnPtr)
 {
   const struct slab_depot_state_2_0 *depot = &vdo->states.slab_depot;
   if ((pbn < depot->first_block) || (pbn >= depot->last_block)) {
     return VDO_OUT_OF_RANGE;
   }
 
-  slab_block_number sbn = ((pbn - depot->first_block)
-                           & (vdo->slabSizeShift - 1));
-
+  slab_block_number sbn = ((pbn - depot->first_block) & vdo->slabOffsetMask);
   if (sbn >= depot->slab_config.data_blocks) {
     return VDO_OUT_OF_RANGE;
   }
 
-  *sbn_ptr = sbn;
+  *sbnPtr = sbn;
   return VDO_SUCCESS;
 }
 

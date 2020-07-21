@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#4 $
  */
 
 #ifndef USER_VDO_H
@@ -38,6 +38,7 @@ typedef struct user_vdo {
 
   unsigned int                slabSizeShift;
   slab_count_t                slabCount;
+  uint64_t                    slabOffsetMask;
   /* The base vdo structure, will go away once no user tools need it */
   struct vdo                  *vdo;
 } UserVDO;
