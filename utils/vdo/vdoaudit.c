@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#39 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#40 $
  */
 
 #include <err.h>
@@ -35,14 +35,12 @@
 #include "syscalls.h"
 
 #include "numUtils.h"
-#include "recoveryJournal.h"
+#include "recoveryJournalFormat.h"
 #include "referenceBlock.h"
 #include "slabDepotFormat.h"
 #include "slabSummaryFormat.h"
 #include "statusCodes.h"
 #include "types.h"
-#include "vdo.h"
-#include "vdoInternal.h"
 #include "vdoState.h"
 
 #include "blockMapUtils.h"
@@ -688,7 +686,7 @@ static bool auditVDO(void)
 
   // Audit stored versus counted mapped logical blocks.
   block_count_t savedLBNCount
-    = get_journal_logical_blocks_used(vdo->vdo->recovery_journal);
+    = vdo->states.recovery_journal.logical_blocks_used;
   if (lbnCount == savedLBNCount) {
     warnx("Logical block count matched at %" PRIu64, savedLBNCount);
   } else {
