@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#6 $
  */
 
 #include <err.h>
@@ -32,8 +32,10 @@
 #include "types.h"
 #include "statusCodes.h"
 #include "vdoInternal.h"
-#include "vdoVolumeUtils.h"
 #include "volumeGeometry.h"
+
+#include "userVDO.h"
+#include "vdoVolumeUtils.h"
 
 static const char usageString[] = " [options...] vdoBacking";
 
@@ -137,7 +139,7 @@ int main(int argc, char *argv[])
 
   const char *vdoBacking = processArgs(argc, argv);
 
-  struct vdo *vdo;
+  UserVDO *vdo;
   result = makeVDOFromFile(vdoBacking, false, &vdo);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s'", vdoBacking);

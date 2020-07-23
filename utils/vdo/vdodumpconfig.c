@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#11 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#12 $
  */
 
 #include <err.h>
@@ -34,6 +34,7 @@
 #include "vdoInternal.h"
 #include "volumeGeometry.h"
 
+#include "userVDO.h"
 #include "vdoVolumeUtils.h"
 
 static const char usageString[] = "[--help] vdoBacking";
@@ -115,7 +116,7 @@ static void readVDOConfig(const char             *vdoBacking,
                           struct vdo_config      *configPtr,
                           struct volume_geometry *geometryPtr)
 {
-  struct vdo *vdo;
+  UserVDO *vdo;
   int result = makeVDOFromFile(vdoBacking, true, &vdo);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s'", vdoBacking);

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#22 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#23 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -35,6 +35,8 @@
 #include "vdoLayout.h"
 
 #include "fileLayer.h"
+
+static char errBuf[ERRBUF_SIZE];
 
 /**********************************************************************/
 static int __must_check
@@ -111,7 +113,7 @@ int load_vdo(PhysicalLayer *layer,
 static int __must_check loadVDOFromFile(const char *filename,
 					bool readOnly,
 					bool validateConfig,
-					struct vdo **vdoPtr)
+					UserVDO **vdoPtr)
 {
   int result = ASSERT(validateConfig || readOnly,
                       "Cannot make a writable VDO"
@@ -128,47 +130,58 @@ static int __must_check loadVDOFromFile(const char *filename,
   }
 
   if (result != VDO_SUCCESS) {
-    char errBuf[ERRBUF_SIZE];
     warnx("Failed to make FileLayer from '%s' with %s",
           filename, stringError(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 
   // Create the VDO.
-  struct vdo *vdo;
-  result = load_vdo(layer, validateConfig, &vdo);
+  UserVDO *vdo;
+  result = makeUserVDO(layer, &vdo);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
-    char errBuf[ERRBUF_SIZE];
+    warnx("makeUserVDO failed with %s",
+          stringError(result, errBuf, ERRBUF_SIZE));
+    return result;
+  }
+
+  result = load_vdo(layer, validateConfig, &vdo->vdo);
+  if (result != VDO_SUCCESS) {
+    layer->destroy(&layer);
     warnx("allocateVDO failed for '%s' with %s",
           filename, stringError(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 
+  vdo->states = vdo->vdo->states;
+  setDerivedSlabParameters(vdo);
   *vdoPtr = vdo;
   return VDO_SUCCESS;
 }
 
 /**********************************************************************/
-int makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr)
+int makeVDOFromFile(const char *filename, bool readOnly, UserVDO **vdoPtr)
 {
   return loadVDOFromFile(filename, readOnly, true, vdoPtr);
 }
 
 /**********************************************************************/
-int readVDOWithoutValidation(const char *filename, struct vdo **vdoPtr)
+int readVDOWithoutValidation(const char *filename, UserVDO **vdoPtr)
 {
   return loadVDOFromFile(filename, true, false, vdoPtr);
 }
 
 /**********************************************************************/
-void freeVDOFromFile(struct vdo **vdoPtr)
+void freeVDOFromFile(UserVDO **vdoPtr)
 {
-  if (*vdoPtr == NULL) {
+  UserVDO *vdo = *vdoPtr;
+  if (vdo == NULL) {
     return;
   }
 
-  PhysicalLayer *layer = (*vdoPtr)->layer;
-  free_vdo(vdoPtr);
-  layer->destroy(&layer);
+  free_vdo(&vdo->vdo);
+  vdo->layer->destroy(&vdo->layer);
+  freeUserVDO(&vdo);
+
+  *vdoPtr = NULL;
 }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#11 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#12 $
  */
 
 #include <err.h>
@@ -180,26 +180,14 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  struct vdo *baseVDO;
-  result = makeVDOFromFile(filename, true, &baseVDO);
+  result = makeVDOFromFile(filename, true, &vdo);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s",
          filename, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
-  result = makeUserVDO(baseVDO->layer, &vdo);
-  if (result != VDO_SUCCESS) {
-    errx(1, "failed to create UserVDO: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
-  }
-
-  vdo->vdo    = baseVDO;
-  vdo->states = baseVDO->states;
-  setDerivedSlabParameters(vdo);
   result = ((lbn != 0xFFFFFFFFFFFFFFFF)
             ? dumpLBN() : examineBlockMapEntries(vdo, dumpBlockMapEntry));
-  freeVDOFromFile(&vdo->vdo);
-  freeUserVDO(&vdo);
-
+  freeVDOFromFile(&vdo);
   exit((result == VDO_SUCCESS) ? 0 : 1);
 }

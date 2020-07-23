@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#8 $
  */
 
 #ifndef VDO_VOLUME_UTILS_H
@@ -25,6 +25,8 @@
 #include "fixedLayout.h"
 #include "types.h"
 #include "volumeGeometry.h"
+
+#include "userVDO.h"
 
 /**
  * Load a vdo from a specified super block location.
@@ -65,7 +67,7 @@ int __must_check load_vdo(PhysicalLayer *layer,
  * @return VDO_SUCCESS or an error code
  **/
 int __must_check
-makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr);
+makeVDOFromFile(const char *filename, bool readOnly, UserVDO **vdoPtr);
 
 /**
  * Load a VDO from a file without validating the config.
@@ -76,13 +78,13 @@ makeVDOFromFile(const char *filename, bool readOnly, struct vdo **vdoPtr);
  * @return VDO_SUCCESS or an error code
  **/
 int __must_check
-readVDOWithoutValidation(const char *filename, struct vdo **vdoPtr);
+readVDOWithoutValidation(const char *filename, UserVDO **vdoPtr);
 
 /**
  * Free the VDO made with makeVDOFromFile().
  *
  * @param vdoPtr  The pointer to the VDO to free
  **/
-void freeVDOFromFile(struct vdo **vdoPtr);
+void freeVDOFromFile(UserVDO **vdoPtr);
 
 #endif // VDO_VOLUME_UTILS_H

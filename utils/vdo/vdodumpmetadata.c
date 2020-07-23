@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#28 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#29 $
  */
 
 #include <err.h>
@@ -113,8 +113,7 @@ static void usage(const char *progname)
  **/
 static void freeAllocations(void)
 {
-  freeVDOFromFile(&vdo->vdo);
-  freeUserVDO(&vdo);
+  freeVDOFromFile(&vdo);
   try_sync_and_close_file(outputFD);
   FREE(buffer);
   FREE(lbns);
@@ -365,21 +364,10 @@ int main(int argc, char *argv[])
   processArgs(argc, argv);
 
   // Read input VDO.
-  struct vdo *baseVDO;
-  result = makeVDOFromFile(vdoBacking, true, &baseVDO);
+  result = makeVDOFromFile(vdoBacking, true, &vdo);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s'", vdoBacking);
   }
-
-  result = makeUserVDO(baseVDO->layer, &vdo);
-  if (result != VDO_SUCCESS) {
-    errx(1, "failed to create UserVDO: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
-  }
-
-  vdo->vdo    = baseVDO;
-  vdo->states = baseVDO->states;
-  setDerivedSlabParameters(vdo);
 
   // Allocate buffer for copies.
   size_t copyBufferBytes = STRIDE_LENGTH * VDO_BLOCK_SIZE;
