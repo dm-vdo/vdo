@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#6 $
  */
 
 #include <err.h>
@@ -28,7 +28,7 @@
 #include "timeUtils.h"
 
 #include "constants.h"
-#include "blockMapInternals.h"
+#include "blockMapFormat.h"
 #include "blockMapPage.h"
 #include "statusCodes.h"
 #include "vdoInternal.h"
@@ -248,20 +248,20 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     return false;
   }
 
-  struct block_map *map = get_block_map(candidate->vdo);
-  for (block_count_t root = 0; root < map->root_count; root++) {
-    int result = fileLayer->reader(fileLayer, map->root_origin + root, 1,
+  struct block_map_state_2_0 map = candidate->vdo->states.block_map;
+  for (block_count_t root = 0; root < map.root_count; root++) {
+    int result = fileLayer->reader(fileLayer, map.root_origin + root, 1,
                                    blockBuffer, NULL);
     if (result != VDO_SUCCESS) {
       warnx("candidate block map root at %" PRIu64 " unreadable: %s",
-            map->root_origin + root, resultString(result));
+            map.root_origin + root, resultString(result));
       return false;
     }
 
     block_map_page_validity validity
       = validate_block_map_page((struct block_map_page *) blockBuffer,
                                 candidate->vdo->states.vdo.nonce,
-                                map->root_origin + root);
+                                map.root_origin + root);
     if (validity == BLOCK_MAP_PAGE_VALID) {
       printf("Found candidate super block at block %" PRIu64
              " (index memory %sGB%s)\n",

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#23 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#24 $
  */
 
 #include <err.h>
@@ -25,7 +25,7 @@
 #include "errors.h"
 #include "syscalls.h"
 
-#include "blockMapInternals.h"
+#include "blockMapFormat.h"
 #include "fixedLayout.h"
 #include "slabDepotInternals.h"
 #include "slabJournalFormat.h"
@@ -147,9 +147,9 @@ static void listSuperBlock(void)
 /**********************************************************************/
 static void listBlockMap(void)
 {
-  struct block_map *map = get_block_map(vdo->vdo);
-  if (map->root_count > 0) {
-    listBlocks("block map tree roots", map->root_origin, map->root_count);
+  struct block_map_state_2_0 map = vdo->states.block_map;
+  if (map.root_count > 0) {
+    listBlocks("block map tree roots", map.root_origin, map.root_count);
   }
 }
 

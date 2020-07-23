@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#13 $
  */
 
 #include <err.h>
@@ -26,7 +26,7 @@
 #include "errors.h"
 #include "logger.h"
 
-#include "blockMapInternals.h"
+#include "blockMapFormat.h"
 #include "statusCodes.h"
 #include "types.h"
 #include "vdoInternal.h"
