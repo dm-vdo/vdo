@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#7 $
  */
 
 #include <err.h>
@@ -31,7 +31,6 @@
 #include "constants.h"
 #include "types.h"
 #include "statusCodes.h"
-#include "vdoInternal.h"
 #include "volumeGeometry.h"
 
 #include "userVDO.h"

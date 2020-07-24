@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#24 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#25 $
  */
 
 #include <err.h>
@@ -32,8 +32,6 @@
 #include "slabSummary.h"
 #include "statusCodes.h"
 #include "types.h"
-#include "vdoInternal.h"
-#include "vdoLayout.h"
 
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#7 $
  */
 
 #include <err.h>
@@ -31,7 +31,6 @@
 #include "blockMapFormat.h"
 #include "blockMapPage.h"
 #include "statusCodes.h"
-#include "vdoInternal.h"
 #include "volumeGeometry.h"
 
 #include "fileLayer.h"
