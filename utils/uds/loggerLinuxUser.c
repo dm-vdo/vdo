@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#14 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#15 $
  */
 
 #include "logger.h"
@@ -114,8 +114,7 @@ static void format_current_time(char *buffer, size_t buffer_size)
 {
 	*buffer = 0;
 
-	abs_time_t now = currentTime(CLOCK_REALTIME);
-
+	ktime_t now = currentTime(CLOCK_REALTIME);
 	struct timeval tv = asTimeVal(now);
 
 	struct tm tmp;

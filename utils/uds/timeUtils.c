@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.c#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.c#5 $
  */
 
 #include "permassert.h"
@@ -32,7 +32,7 @@
 
 #ifndef __KERNEL__
 /*****************************************************************************/
-abs_time_t currentTime(clockid_t clock)
+ktime_t currentTime(clockid_t clock)
 {
   struct timespec ts;
   if (clock_gettime(clock, &ts) != 0) {
@@ -44,7 +44,7 @@ abs_time_t currentTime(clockid_t clock)
 
 #ifndef __KERNEL__
 /*****************************************************************************/
-abs_time_t futureTime(clockid_t clock, rel_time_t reltime)
+ktime_t futureTime(clockid_t clock, rel_time_t reltime)
 {
   return currentTime(clock) + reltime;
 }

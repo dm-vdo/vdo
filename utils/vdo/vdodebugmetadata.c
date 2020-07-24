@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#42 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#43 $
  */
 
 #include <err.h>
@@ -35,18 +35,15 @@
 #include "packedRecoveryJournalBlock.h"
 #include "packedReferenceBlock.h"
 #include "recoveryJournalEntry.h"
-#include "recoveryJournalInternals.h"
-#include "recoveryUtils.h"
-#include "slabDepotInternals.h"
-#include "slabJournalInternals.h"
-#include "slabSummaryInternals.h"
+#include "recoveryJournalFormat.h"
+#include "slabJournalFormat.h"
+
 #include "statusCodes.h"
 #include "types.h"
-#include "vdo.h"
-#include "vdoInternal.h"
 #include "volumeGeometry.h"
 
 #include "fileLayer.h"
+#include "userVDO.h"
 #include "vdoVolumeUtils.h"
 
 static const char usageString[]
@@ -97,7 +94,7 @@ typedef struct {
   struct packed_journal_sector *sectors[SECTORS_PER_BLOCK];
 } UnpackedJournalBlock;
 
-static struct vdo                     *vdo             = NULL;
+static UserVDO                        *vdo             = NULL;
 static struct slab_summary_entry     **slabSummary     = NULL;
 static slab_count_t                    slabCount       = 0;
 static SlabState                      *slabs           = NULL;
@@ -300,16 +297,13 @@ static int allocateState(SlabState *state)
  **/
 static int allocateMetadataSpace(void)
 {
-  struct slab_depot *depot          = vdo->depot;
-  slab_count_t       totalSlabCount = calculate_slab_count(depot);
-  slabConfig                        = get_slab_config(depot);
-
-  int result = ALLOCATE(totalSlabCount, SlabState, __func__, &slabs);
+  slabConfig = &vdo->states.slab_depot.slab_config;
+  int result = ALLOCATE(vdo->slabCount, SlabState, __func__, &slabs);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %u slab state pointers", slabCount);
   }
 
-  while (slabCount < totalSlabCount) {
+  while (slabCount < vdo->slabCount) {
     result = allocateState(&slabs[slabCount]);
     if (result != VDO_SUCCESS) {
       errx(1, "Could not allocate slab state for slab %u", slabCount);
@@ -453,20 +447,19 @@ static void readMetadata(void)
  **/
 static void findSlabJournalEntries(physical_block_number_t pbn)
 {
-  struct slab_depot *depot = vdo->depot;
-  if ((pbn < depot->first_block) || (pbn > depot->last_block)) {
+  struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
+  if ((pbn < depot.first_block) || (pbn > depot.last_block)) {
     printf("PBN %" PRIu64 " out of range; skipping.\n", pbn);
     return;
   }
 
-  block_count_t     offset          = pbn - depot->first_block;
-  slab_count_t      slabNumber      = offset >> depot->slab_size_shift;
-  uint64_t          slabOffsetMask  = (1ULL << depot->slab_size_shift) - 1;
-  slab_block_number slabOffset      = offset & slabOffsetMask;
+  block_count_t     offset     = pbn - depot.first_block;
+  slab_count_t      slabNumber = offset >> vdo->slabSizeShift;
+  slab_block_number slabOffset = offset & vdo->slabOffsetMask;
 
   printf("PBN %" PRIu64 " is offset %d in slab %d\n",
          pbn, slabOffset, slabNumber);
-  for (block_count_t i = 0; i < depot->slab_config.slab_journal_blocks; i++) {
+  for (block_count_t i = 0; i < depot.slab_config.slab_journal_blocks; i++) {
     struct packed_slab_journal_block *block
       = slabs[slabNumber].slabJournalBlocks[i];
     JournalEntryCount entryCount
@@ -501,7 +494,7 @@ static inline bool __must_check
 isBlockFromJournal(const struct recovery_block_header *header)
 {
   return ((header->metadata_type == VDO_METADATA_RECOVERY_JOURNAL)
-          && (header->nonce == vdo->recovery_journal->nonce));
+          && (header->nonce == vdo->states.vdo.nonce));
 }
 
 /**
@@ -518,9 +511,10 @@ static inline bool __must_check
 isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 				  physical_block_number_t             offset)
 {
+  block_count_t journal_size = vdo->states.vdo.config.recovery_journal_size;
   physical_block_number_t expectedOffset
-    = get_recovery_journal_block_number(vdo->recovery_journal,
-                                        header->sequence_number);
+    = compute_recovery_journal_block_number(journal_size,
+                                            header->sequence_number);
   return (expectedOffset == offset);
 }
 
@@ -647,11 +641,22 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  result = readVDOFromDump(filename, &vdo);
+  struct vdo *baseVDO;
+  result = readVDOFromDump(filename, &baseVDO);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s",
          filename, stringError(result, errBuf, ERRBUF_SIZE));
   }
+
+  result = makeUserVDO(baseVDO->layer, &vdo);
+  if (result != VDO_SUCCESS) {
+    errx(1, "failed to create UserVDO: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  vdo->vdo    = baseVDO;
+  vdo->states = baseVDO->states;
+  setDerivedSlabParameters(vdo);
 
   allocateMetadataSpace();
 
@@ -680,7 +685,8 @@ int main(int argc, char *argv[])
 
   freeMetadataSpace();
   PhysicalLayer *layer = vdo->layer;
-  free_vdo(&vdo);
+  free_vdo(&vdo->vdo);
+  freeUserVDO(&vdo);
   layer->destroy(&layer);
   exit(result);
 }

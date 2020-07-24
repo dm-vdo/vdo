@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#5 $
  */
 
 #ifndef TIME_UTILS_H
@@ -38,10 +38,8 @@
 #define NSEC_PER_SEC  1000000000L
 #define NSEC_PER_MSEC 1000000L
 #define NSEC_PER_USEC 1000L
+typedef int64_t ktime_t;
 #endif
-
-// Absolute time.
-typedef int64_t abs_time_t;
 
 // Relative time, the length of a time interval, or the difference between
 // two times.  A signed 64-bit number of nanoseconds.
@@ -57,13 +55,13 @@ typedef int64_t rel_time_t;
  * @note the precision of the clock is system specific
  **/
 #ifdef __KERNEL__
-static INLINE abs_time_t currentTime(clockid_t clock)
+static INLINE ktime_t currentTime(clockid_t clock)
 {
   // clock is always a constant, so gcc reduces this to a single call
   return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
 }
 #else
-abs_time_t currentTime(clockid_t clock);
+ktime_t currentTime(clockid_t clock);
 #endif
 
 #ifndef __KERNEL__
@@ -76,7 +74,7 @@ abs_time_t currentTime(clockid_t clock);
  * @return the timestamp for that time (potentially rounded to the next
  *         representable instant for the system in question)
  **/
-abs_time_t futureTime(clockid_t clock, rel_time_t reltime);
+ktime_t futureTime(clockid_t clock, rel_time_t reltime);
 #endif
 
 /**
@@ -87,7 +85,7 @@ abs_time_t futureTime(clockid_t clock, rel_time_t reltime);
  *
  * @return the relative time between the two timestamps
  **/
-static INLINE rel_time_t timeDifference(abs_time_t a, abs_time_t b)
+static INLINE rel_time_t timeDifference(ktime_t a, ktime_t b)
 {
   return a - b;
 }
@@ -95,13 +93,13 @@ static INLINE rel_time_t timeDifference(abs_time_t a, abs_time_t b)
 
 
 /**
- * Convert an abs_time_t value to milliseconds
+ * Convert a ktime_t value to milliseconds
  *
  * @param abstime  The absolute time
  *
  * @return the equivalent number of milliseconds since the epoch
  **/
-static INLINE int64_t absTimeToMilliseconds(abs_time_t abstime)
+static INLINE int64_t absTimeToMilliseconds(ktime_t abstime)
 {
   return abstime / NSEC_PER_MSEC;
 }
@@ -213,74 +211,74 @@ static INLINE int64_t relTimeToNanoseconds(rel_time_t reltime)
 uint64_t __must_check nowUsec(void);
 
 /**
- * Convert from an abs_time_t to seconds truncating
+ * Convert from a ktime_t to seconds truncating
  *
- * @param time  an abs_time_t time
+ * @param time  a ktime_t time
  *
  * @return a 64 bit signed number of seconds
  **/
-static INLINE int64_t absTimeToSeconds(abs_time_t time)
+static INLINE int64_t absTimeToSeconds(ktime_t time)
 {
   return time / NSEC_PER_SEC;
 }
 
 /**
- * Convert from seconds to an abs_time_t,
+ * Convert from seconds to a ktime_t,
  *
  * @param time  a 64 bit signed number of seconds
  *
- * @return an abs_time_t time
+ * @return a ktime_t time
  **/
-static INLINE abs_time_t fromSeconds(int64_t time)
+static INLINE ktime_t fromSeconds(int64_t time)
 {
   return time * NSEC_PER_SEC;
 }
 
 #ifndef __KERNEL__
 /**
- * Convert from an abs_time_t to a time_t
+ * Convert from a ktime_t to a time_t
  *
- * @param time  an abs_time_t time
+ * @param time  a ktime_t time
  *
  * @return a time_t time
  **/
-static INLINE time_t asTimeT(abs_time_t time)
+static INLINE time_t asTimeT(ktime_t time)
 {
   return time / NSEC_PER_SEC;
 }
 
 /**
- * Convert from an abs_time_t to a struct timespec
+ * Convert from a ktime_t to a struct timespec
  *
- * @param time  an abs_time_t time
+ * @param time  a ktime_t time
  *
  * @return a timespec time
  **/
-static INLINE struct timespec asTimeSpec(abs_time_t time)
+static INLINE struct timespec asTimeSpec(ktime_t time)
 {
   return (struct timespec) { time / NSEC_PER_SEC, time % NSEC_PER_SEC };
 }
 
 /**
- * Convert from struct timespec to abs_time_t
+ * Convert from struct timespec to ktime_t
  *
  * @param ts the struct timespec to be converted
  *
- * @return an abs_time_t equivalent of ts.
+ * @return a ktime_t equivalent of ts.
  **/
-static INLINE abs_time_t fromTimeSpec(struct timespec ts)
+static INLINE ktime_t fromTimeSpec(struct timespec ts)
 {
   return ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
 }
 
 /**
- * Convert from an abs_time_t to a struct timeval
+ * Convert from a ktime_t to a struct timeval
  *
- * @param time  an abs_time_t time
+ * @param time  a ktime_t time
  *
  * @return a struct timeval time
  **/
-static INLINE struct timeval asTimeVal(abs_time_t time)
+static INLINE struct timeval asTimeVal(ktime_t time)
 {
   struct timespec ts = asTimeSpec(time);
   return (struct timeval) { ts.tv_sec, ts.tv_nsec / NSEC_PER_USEC };
