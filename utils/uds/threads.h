@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/threads.h#9 $
+ * $Id: //eng/uds-releases/krusty/src/uds/threads.h#10 $
  */
 
 #ifndef THREADS_H
@@ -234,7 +234,7 @@ int wait_cond(struct cond_var *cond, struct mutex *mutex);
  **/
 int timed_wait_cond(struct cond_var *cond,
 		    struct mutex *mutex,
-		    rel_time_t timeout);
+		    ktime_t timeout);
 
 /**
  * Destroy a condition variable.
@@ -401,7 +401,7 @@ void acquire_semaphore(struct semaphore *semaphore);
  **/
 #ifdef __KERNEL__
 static INLINE bool __must_check attempt_semaphore(struct semaphore *semaphore,
-						  rel_time_t timeout)
+						  ktime_t timeout)
 {
 	if (timeout <= 0) {
 		// No timeout, just try to grab the semaphore.
@@ -414,7 +414,7 @@ static INLINE bool __must_check attempt_semaphore(struct semaphore *semaphore,
 }
 #else
 bool __must_check attempt_semaphore(struct semaphore *semaphore,
-				    rel_time_t timeout);
+				    ktime_t timeout);
 #endif
 
 /**
