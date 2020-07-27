@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#3 $
  */
 
 #include "slabSummaryReader.h"
@@ -30,7 +30,6 @@
 #include "slabSummaryFormat.h"
 #include "types.h"
 #include "vdoComponentStates.h"
-#include "vdoInternal.h"
 
 /**********************************************************************/
 int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
