@@ -1,4 +1,5 @@
 /*
+
  * Copyright (c) 2020 Red Hat, Inc.
  *
  * This program is free software; you can redistribute it and/or
@@ -16,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#5 $
  */
 
 #ifndef USER_VDO_H
@@ -26,19 +27,22 @@
 #include "types.h"
 #include "vdoComponentStates.h"
 #include "vdoInternal.h"
+#include "volumeGeometry.h"
 
 /**
  * A representation of a VDO for use by user space tools.
  **/
 typedef struct user_vdo {
-  /* The full state of all components */
-  struct vdo_component_states  states;
   /* The physical storage below the VDO */
   PhysicalLayer               *layer;
+  /* The geometry of the VDO */
+  struct volume_geometry       geometry;
+  /* The full state of all components */
+  struct vdo_component_states  states;
 
-  unsigned int                slabSizeShift;
-  slab_count_t                slabCount;
-  uint64_t                    slabOffsetMask;
+  unsigned int                 slabSizeShift;
+  slab_count_t                 slabCount;
+  uint64_t                     slabOffsetMask;
   /* The base vdo structure, will go away once no user tools need it */
   struct vdo                  *vdo;
 } UserVDO;

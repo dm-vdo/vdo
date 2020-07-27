@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#8 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#9 $
  */
 
 #ifndef TIME_UTILS_H
@@ -62,15 +62,14 @@ ktime_t currentTime(clockid_t clock);
 
 #ifndef __KERNEL__
 /**
- * Return the timestamp a certain number of nanoseconds in the future.
+ * Return a timespec representing a time in the future for timeouts
  *
- * @param clock    Either CLOCK_REALTIME or CLOCK_MONOTONIC
- * @param reltime  The relative time to the clock value
+ * @param offset Nanosecond offset to be added to the current
+ *               CLOCK_REALTIME time to compute a future time
  *
- * @return the timestamp for that time (potentially rounded to the next
- *         representable instant for the system in question)
+ * @return a timespec representing a future time
  **/
-ktime_t futureTime(clockid_t clock, ktime_t reltime);
+struct timespec futureTime(ktime_t offset);
 #endif
 
 #ifndef __KERNEL__
@@ -219,43 +218,6 @@ static INLINE ktime_t fromSeconds(int64_t time)
 static INLINE time_t asTimeT(ktime_t time)
 {
   return time / NSEC_PER_SEC;
-}
-
-/**
- * Convert from a ktime_t to a struct timespec
- *
- * @param time  a ktime_t time
- *
- * @return a timespec time
- **/
-static INLINE struct timespec asTimeSpec(ktime_t time)
-{
-  return (struct timespec) { time / NSEC_PER_SEC, time % NSEC_PER_SEC };
-}
-
-/**
- * Convert from struct timespec to ktime_t
- *
- * @param ts the struct timespec to be converted
- *
- * @return a ktime_t equivalent of ts.
- **/
-static INLINE ktime_t fromTimeSpec(struct timespec ts)
-{
-  return ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
-}
-
-/**
- * Convert from a ktime_t to a struct timeval
- *
- * @param time  a ktime_t time
- *
- * @return a struct timeval time
- **/
-static INLINE struct timeval asTimeVal(ktime_t time)
-{
-  struct timespec ts = asTimeSpec(time);
-  return (struct timeval) { ts.tv_sec, ts.tv_nsec / NSEC_PER_USEC };
 }
 
 #endif /* __KERNEL__ */

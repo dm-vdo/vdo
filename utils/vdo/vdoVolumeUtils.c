@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#23 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#24 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -145,7 +145,16 @@ static int __must_check loadVDOFromFile(const char *filename,
     return result;
   }
 
-  result = load_vdo(layer, validateConfig, &vdo->vdo);
+  result = load_volume_geometry(layer, &vdo->geometry);
+  if (result != VDO_SUCCESS) {
+    layer->destroy(&layer);
+    warnx("load_volume_geometry failed with %s",
+          stringError(result, errBuf, ERRBUF_SIZE));
+    return result;
+  }
+
+  result = load_vdo_superblock(layer, &vdo->geometry, validateConfig,
+                               &vdo->vdo);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
     warnx("allocateVDO failed for '%s' with %s",

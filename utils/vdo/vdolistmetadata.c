@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#25 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#26 $
  */
 
 #include <err.h>
@@ -27,9 +27,8 @@
 
 #include "blockMapFormat.h"
 #include "fixedLayout.h"
-#include "slabDepotInternals.h"
+#include "slabDepotFormat.h"
 #include "slabJournalFormat.h"
-#include "slabSummary.h"
 #include "statusCodes.h"
 #include "types.h"
 
@@ -132,14 +131,14 @@ static void listIndex(void)
 {
   // The index is all blocks from the geometry block to the super block,
   // exclusive.
-  listBlocks("index", 1, get_first_block_offset(vdo->vdo) - 1);
+  listBlocks("index", 1, get_data_region_offset(vdo->geometry) - 1);
 }
 
 /**********************************************************************/
 static void listSuperBlock(void)
 {
   // The SuperBlock is a single block at the start of the data region.
-  listBlocks("super block", get_first_block_offset(vdo->vdo), 1);
+  listBlocks("super block", get_data_region_offset(vdo->geometry), 1);
 }
 
 /**********************************************************************/
@@ -152,32 +151,24 @@ static void listBlockMap(void)
 }
 
 /**********************************************************************/
-static void listSlab(slab_count_t              slab,
-                     const struct slab_config *slabConfig)
-{
-  physical_block_number_t slabOrigin
-    = vdo->vdo->depot->first_block + (slab * vdo->states.vdo.config.slab_size);
-
-  // List the slab's reference count blocks.
-  char buffer[64];
-  sprintf(buffer, "slab %u reference blocks", slab);
-  listBlocks(buffer, slabOrigin + slabConfig->data_blocks,
-             slabConfig->reference_count_blocks);
-
-  // List the slab's journal blocks.
-  sprintf(buffer, "slab %u journal", slab);
-  listBlocks(buffer, get_slab_journal_start_block(slabConfig, slabOrigin),
-             slabConfig->slab_journal_blocks);
-}
-
-/**********************************************************************/
 static void listSlabs(void)
 {
-  struct slab_depot        *depot      = vdo->vdo->depot;
-  slab_count_t              slabCount  = calculate_slab_count(depot);
-  const struct slab_config *slabConfig = get_slab_config(depot);
-  for (slab_count_t slab = 0; slab < slabCount; slab++) {
-    listSlab(slab, slabConfig);
+  struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
+  physical_block_number_t slabOrigin = depot.first_block;
+  for (slab_count_t slab = 0; slab < vdo->slabCount; slab++) {
+    // List the slab's reference count blocks.
+    char buffer[64];
+    sprintf(buffer, "slab %u reference blocks", slab);
+    listBlocks(buffer, slabOrigin + depot.slab_config.data_blocks,
+               depot.slab_config.reference_count_blocks);
+
+    // List the slab's journal blocks.
+    sprintf(buffer, "slab %u journal", slab);
+    listBlocks(buffer, get_slab_journal_start_block(&depot.slab_config,
+                                                    slabOrigin),
+               depot.slab_config.slab_journal_blocks);
+
+    slabOrigin += vdo->states.vdo.config.slab_size;
   }
 }
 
@@ -185,7 +176,8 @@ static void listSlabs(void)
 static void listRecoveryJournal(void)
 {
   const struct partition *partition
-    = get_vdo_partition(vdo->vdo->layout, RECOVERY_JOURNAL_PARTITION);
+    = getPartition(vdo, RECOVERY_JOURNAL_PARTITION,
+                   "no recovery journal partition");
   listBlocks("recovery journal", get_fixed_layout_partition_offset(partition),
              vdo->states.vdo.config.recovery_journal_size);
 }
@@ -194,7 +186,7 @@ static void listRecoveryJournal(void)
 static void listSlabSummary(void)
 {
   const struct partition *partition
-    = get_vdo_partition(vdo->vdo->layout, SLAB_SUMMARY_PARTITION);
+    = getPartition(vdo, SLAB_SUMMARY_PARTITION, "no slab summary partition");
   listBlocks("slab summary", get_fixed_layout_partition_offset(partition),
              get_slab_summary_size(VDO_BLOCK_SIZE));
 }

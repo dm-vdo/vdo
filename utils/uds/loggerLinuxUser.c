@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#15 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#16 $
  */
 
 #include "logger.h"
@@ -115,10 +115,9 @@ static void format_current_time(char *buffer, size_t buffer_size)
 	*buffer = 0;
 
 	ktime_t now = currentTime(CLOCK_REALTIME);
-	struct timeval tv = asTimeVal(now);
-
 	struct tm tmp;
-	if (localtime_r(&tv.tv_sec, &tmp) == NULL) {
+	const time_t seconds = now / NSEC_PER_SEC;
+	if (localtime_r(&seconds, &tmp) == NULL) {
 		return;
 	}
 
@@ -136,7 +135,7 @@ static void format_current_time(char *buffer, size_t buffer_size)
 	snprintf(buffer + current_length,
 		 buffer_size - current_length,
 		 ".%03d",
-		 (int) (tv.tv_usec / 1000));
+		 (int) ((now % NSEC_PER_SEC) / NSEC_PER_MSEC));
 }
 
 /**********************************************************************/
