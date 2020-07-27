@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#7 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#8 $
  */
 
 #ifndef TIME_UTILS_H
@@ -73,6 +73,7 @@ ktime_t currentTime(clockid_t clock);
 ktime_t futureTime(clockid_t clock, ktime_t reltime);
 #endif
 
+#ifndef __KERNEL__
 /**
  * Return the difference between two timestamps.
  *
@@ -81,10 +82,11 @@ ktime_t futureTime(clockid_t clock, ktime_t reltime);
  *
  * @return the relative time between the two timestamps
  **/
-static INLINE ktime_t timeDifference(ktime_t a, ktime_t b)
+static INLINE ktime_t ktime_sub(ktime_t a, ktime_t b)
 {
   return a - b;
 }
+#endif /* __KERNEL__ */
 
 
 
