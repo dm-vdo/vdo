@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#11 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#12 $
  */
 
 #include "requestQueue.h"
@@ -80,7 +80,7 @@ enum {
 	MAXIMUM_BATCH = 64  // wait time decreases if batch larger than this
 };
 
-struct request_queue {
+struct uds_request_queue {
 	const char *name; // name of queue
 	request_queue_processor_t *process_one; // function to process 1
 						// request
