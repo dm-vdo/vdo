@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#34 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#35 $
  */
 
 #include <uuid/uuid.h>
@@ -29,9 +29,9 @@
 #include "timeUtils.h"
 
 #include "blockMap.h"
+#include "blockMapFormat.h"
 #include "blockMapInternals.h"
 #include "constants.h"
-#include "forest.h"
 #include "numUtils.h"
 #include "recoveryJournal.h"
 #include "releaseVersions.h"
@@ -63,6 +63,41 @@ int makeVDOLayoutFromConfig(const struct vdo_config  *config,
 
   *vdoLayoutPtr = vdoLayout;
   return VDO_SUCCESS;
+}
+
+/**
+ * Compute the approximate number of pages which the forest will allocate in
+ * order to map the specified number of logical blocks. This method assumes
+ * that the block map is entirely arboreal.
+ *
+ * @param logicalBlocks  The number of blocks to map
+ * @param rootCount      The number of trees in the forest
+ *
+ * @return A (slight) over-estimate of the total number of possible forest
+ *         pages including the leaves
+ **/
+static block_count_t __must_check
+computeForestSize(block_count_t logicalBlocks,
+                  root_count_t  rootCount)
+{
+  struct boundary newSizes;
+  block_count_t approximateNonLeaves = compute_new_forest_pages(rootCount,
+                                                                NULL,
+                                                                logicalBlocks,
+                                                                &newSizes);
+
+  // Exclude the tree roots since those aren't allocated from slabs,
+  // and also exclude the super-roots, which only exist in memory.
+  approximateNonLeaves -=
+    rootCount * (newSizes.levels[BLOCK_MAP_TREE_HEIGHT - 2] +
+                 newSizes.levels[BLOCK_MAP_TREE_HEIGHT - 1]);
+
+  block_count_t approximateLeaves =
+    compute_block_map_page_count(logicalBlocks - approximateNonLeaves);
+
+  // This can be a slight over-estimate since the tree will never have to
+  // address these blocks, so it might be a tiny bit smaller.
+  return (approximateNonLeaves + approximateLeaves);
 }
 
 /**
@@ -122,8 +157,8 @@ static int __must_check configureVDO(struct vdo *vdo)
     block_count_t dataBlocks
       = slabConfig.data_blocks * calculate_slab_count(vdo->depot);
     config->logical_blocks
-      = dataBlocks - compute_forest_size(dataBlocks,
-                                         DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
+      = dataBlocks - computeForestSize(dataBlocks,
+                                       DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
   }
 
   struct partition *blockMapPartition
