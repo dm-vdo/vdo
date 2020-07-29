@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#9 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#10 $
  */
 
 #ifndef TIME_UTILS_H
@@ -70,18 +70,18 @@ ktime_t currentTime(clockid_t clock);
  * @return a timespec representing a future time
  **/
 struct timespec futureTime(ktime_t offset);
-#endif
+#endif /* __KERNEL__ */
 
 #ifndef __KERNEL__
 /**
- * Return the difference between two timestamps.
+ * Return the difference between two times, as in ktime.h
  *
  * @param a  A time
- * @param b  Another time, based on the same clock as a.
+ * @param b  Another time, based on the same clock as a
  *
- * @return the relative time between the two timestamps
+ * @return the difference between times a and b
  **/
-static INLINE ktime_t ktime_sub(ktime_t a, ktime_t b)
+static INLINE int64_t ktime_sub(ktime_t a, ktime_t b)
 {
   return a - b;
 }
@@ -89,17 +89,19 @@ static INLINE ktime_t ktime_sub(ktime_t a, ktime_t b)
 
 
 
+#ifndef __KERNEL__ 
 /**
- * Convert a ktime_t value to milliseconds
+ * Convert a ktime_t value to milliseconds as in ktime.h
  *
  * @param abstime  The absolute time
  *
  * @return the equivalent number of milliseconds since the epoch
  **/
-static INLINE int64_t absTimeToMilliseconds(ktime_t abstime)
+static INLINE int64_t ktime_to_ms(ktime_t abstime)
 {
   return abstime / NSEC_PER_MSEC;
 }
+#endif /* __KERNEL__ */
 
 /**
  * Convert seconds to a ktime_t value
@@ -108,22 +110,24 @@ static INLINE int64_t absTimeToMilliseconds(ktime_t abstime)
  *
  * @return the equivalent number of seconds as a ktime_t
  **/
-static INLINE ktime_t secondsToRelTime(int64_t seconds)
+static INLINE ktime_t seconds_to_ktime(int64_t seconds)
 {
-  return (ktime_t) seconds * (1000 * 1000 * 1000);
+  return (ktime_t) seconds * NSEC_PER_SEC;
 }
 
+#ifndef __KERNEL__
 /**
- * Convert milliseconds to a ktime_t value
+ * Convert milliseconds to a ktime_t value as in ktime.h
  *
  * @param milliseconds  A number of milliseconds
  *
  * @return the equivalent number of milliseconds as a ktime_t
  **/
-static INLINE ktime_t millisecondsToRelTime(int64_t milliseconds)
+static INLINE ktime_t ms_to_ktime(uint64_t milliseconds)
 {
-  return (ktime_t) milliseconds * (1000 * 1000);
+  return (ktime_t) milliseconds * NSEC_PER_MSEC;
 }
+#endif /* __KERNEL__ */
 
 /**
  * Convert microseconds to a ktime_t value
@@ -132,46 +136,36 @@ static INLINE ktime_t millisecondsToRelTime(int64_t milliseconds)
  *
  * @return the equivalent number of microseconds as a ktime_t
  **/
-static INLINE ktime_t microsecondsToRelTime(int64_t microseconds)
+static INLINE ktime_t us_to_ktime(int64_t microseconds)
 {
-  return (ktime_t) microseconds * 1000;
+  return (ktime_t) microseconds * NSEC_PER_USEC;
 }
 
 /**
- * Convert a rel_time_t value to milliseconds
+ * Convert a ktime_t value to seconds
  *
- * @param reltime  The relative time
+ * @param reltime  The time value
  *
- * @return the equivalent number of milliseconds
+ * @return the equivalent number of seconds, truncated
  **/
-static INLINE int64_t relTimeToSeconds(ktime_t reltime)
+static INLINE int64_t ktime_to_seconds(ktime_t reltime)
 {
-  return reltime / (1000 * 1000 * 1000);
+  return reltime / NSEC_PER_SEC;
 }
 
+#ifndef __KERNEL__
 /**
- * Convert a ktime_t value to milliseconds
+ * Convert a ktime_t value to microseconds as in ktime.h
  *
- * @param reltime  The relative time
- *
- * @return the equivalent number of milliseconds
- **/
-static INLINE int64_t relTimeToMilliseconds(ktime_t reltime)
-{
-  return reltime / (1000 * 1000);
-}
-
-/**
- * Convert a ktime_t value to microseconds
- *
- * @param reltime  The relative time
+ * @param reltime  The time value
  *
  * @return the equivalent number of microseconds
  **/
-static INLINE int64_t relTimeToMicroseconds(ktime_t reltime)
+static INLINE int64_t ktime_to_us(ktime_t reltime)
 {
-  return reltime / 1000;
+  return reltime / NSEC_PER_USEC;
 }
+#endif /* __KERNEL__ */
 
 /**
  * Return the wall clock time in microseconds. The actual value is time
@@ -183,43 +177,7 @@ static INLINE int64_t relTimeToMicroseconds(ktime_t reltime)
  **/
 uint64_t __must_check nowUsec(void);
 
-/**
- * Convert from a ktime_t to seconds truncating
- *
- * @param time  a ktime_t time
- *
- * @return a 64 bit signed number of seconds
- **/
-static INLINE int64_t absTimeToSeconds(ktime_t time)
-{
-  return time / NSEC_PER_SEC;
-}
-
-/**
- * Convert from seconds to a ktime_t,
- *
- * @param time  a 64 bit signed number of seconds
- *
- * @return a ktime_t time
- **/
-static INLINE ktime_t fromSeconds(int64_t time)
-{
-  return time * NSEC_PER_SEC;
-}
-
 #ifndef __KERNEL__
-/**
- * Convert from a ktime_t to a time_t
- *
- * @param time  a ktime_t time
- *
- * @return a time_t time
- **/
-static INLINE time_t asTimeT(ktime_t time)
-{
-  return time / NSEC_PER_SEC;
-}
-
 #endif /* __KERNEL__ */
 
 #endif /* TIME_UTILS_H */

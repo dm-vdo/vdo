@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#8 $
  */
 
 #include <err.h>
@@ -35,6 +35,7 @@
 
 #include "fileLayer.h"
 #include "parseUtils.h"
+#include "userVDO.h"
 #include "vdoVolumeUtils.h"
 
 static const char usageString[]
@@ -76,7 +77,7 @@ typedef struct {
   char                    memoryString[8];
   bool                    sparse;
   struct volume_geometry  geometry;
-  struct vdo             *vdo;
+  UserVDO                *vdo;
 } Candidate;
 
 static char          *blockBuffer;
@@ -236,14 +237,14 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     return false;
   }
 
-  if (load_vdo_superblock(fileLayer, &candidate->geometry, false,
+  if (loadVDOWithGeometry(fileLayer, &candidate->geometry, false,
                           &candidate->vdo) != VDO_SUCCESS) {
     return false;
   }
 
   if (validate_vdo_config(&candidate->vdo->states.vdo.config, physicalSize,
                           true) != VDO_SUCCESS) {
-    free_vdo(&candidate->vdo);
+    freeUserVDO(&candidate->vdo);
     return false;
   }
 
@@ -310,7 +311,7 @@ static void findSuperBlocks(void)
 static void rewriteGeometry(Candidate *candidate)
 {
   candidate->geometry.nonce = candidate->vdo->states.vdo.nonce;
-  free_vdo(&candidate->vdo);
+  freeUserVDO(&candidate->vdo);
 
   int result = write_volume_geometry(fileLayer, &candidate->geometry);
   if (result != VDO_SUCCESS) {
@@ -361,7 +362,7 @@ int main(int argc, char *argv[])
       printf("offset: %" PRIu64 ", index memory %s%s\n",
              get_data_region_offset(candidate->geometry) * VDO_BLOCK_SIZE,
              candidate->memoryString, (candidate->sparse ?  ", sparse" : ""));
-      free_vdo(&candidate->vdo);
+      freeUserVDO(&candidate->vdo);
     }
 
     printf("\n"

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#43 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#44 $
  */
 
 #include <err.h>
@@ -94,21 +94,21 @@ typedef struct {
   struct packed_journal_sector *sectors[SECTORS_PER_BLOCK];
 } UnpackedJournalBlock;
 
-static UserVDO                        *vdo             = NULL;
-static struct slab_summary_entry     **slabSummary     = NULL;
-static slab_count_t                    slabCount       = 0;
-static SlabState                      *slabs           = NULL;
-static UnpackedJournalBlock           *recoveryJournal = NULL;
-static char                           *rawJournalBytes = NULL;
+static UserVDO                    *vdo             = NULL;
+static struct slab_summary_entry **slabSummary     = NULL;
+static slab_count_t                slabCount       = 0;
+static SlabState                  *slabs           = NULL;
+static UnpackedJournalBlock       *recoveryJournal = NULL;
+static char                       *rawJournalBytes = NULL;
 
-static physical_block_number_t         nextBlock;
-static const struct slab_config       *slabConfig      = NULL;
+static physical_block_number_t     nextBlock;
+static const struct slab_config   *slabConfig      = NULL;
 
-static physical_block_number_t        *pbns            = NULL;
-static uint8_t                         pbnCount        = 0;
+static physical_block_number_t    *pbns            = NULL;
+static uint8_t                     pbnCount        = 0;
 
-static logical_block_number_t         *searchLBNs      = NULL;
-static uint8_t                         searchLBNCount  = 0;
+static logical_block_number_t     *searchLBNs      = NULL;
+static uint8_t                     searchLBNCount  = 0;
 
 enum {
   MAX_PBNS        = 255,
@@ -566,13 +566,12 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
 /**
  * Load from a dump file.
  *
- * @param [in]  filename  The file name
- * @param [out] vdoPtr    A pointer to hold the VDO
+ * @param filename  The file name
  *
  * @return VDO_SUCCESS or an error code
  **/
 static int __must_check
-readVDOFromDump(const char *filename, struct vdo **vdoPtr)
+readVDOFromDump(const char *filename)
 {
   PhysicalLayer *layer;
   int result = makeReadOnlyFileLayer(filename, &layer);
@@ -597,18 +596,7 @@ readVDOFromDump(const char *filename, struct vdo **vdoPtr)
   geometry.regions[DATA_REGION].start_block = 1;
 
   // Create the VDO.
-  struct vdo *vdo;
-  result = load_vdo_superblock(layer, &geometry, false, &vdo);
-  if (result != VDO_SUCCESS) {
-    layer->destroy(&layer);
-    char errBuf[ERRBUF_SIZE];
-    warnx("VDO load failed for '%s' with %s",
-          filename, stringError(result, errBuf, ERRBUF_SIZE));
-    return result;
-  }
-
-  *vdoPtr = vdo;
-  return VDO_SUCCESS;
+  return loadVDOWithGeometry(layer, &geometry, false, &vdo);
 }
 
 /**********************************************************************/
@@ -641,22 +629,11 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  struct vdo *baseVDO;
-  result = readVDOFromDump(filename, &baseVDO);
+  result = readVDOFromDump(filename);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s",
          filename, stringError(result, errBuf, ERRBUF_SIZE));
   }
-
-  result = makeUserVDO(baseVDO->layer, &vdo);
-  if (result != VDO_SUCCESS) {
-    errx(1, "failed to create UserVDO: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
-  }
-
-  vdo->vdo    = baseVDO;
-  vdo->states = baseVDO->states;
-  setDerivedSlabParameters(vdo);
 
   allocateMetadataSpace();
 
@@ -685,7 +662,6 @@ int main(int argc, char *argv[])
 
   freeMetadataSpace();
   PhysicalLayer *layer = vdo->layer;
-  free_vdo(&vdo->vdo);
   freeUserVDO(&vdo);
   layer->destroy(&layer);
   exit(result);

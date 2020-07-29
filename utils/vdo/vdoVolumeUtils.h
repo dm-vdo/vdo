@@ -16,46 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.h#9 $
  */
 
 #ifndef VDO_VOLUME_UTILS_H
 #define VDO_VOLUME_UTILS_H
 
-#include "fixedLayout.h"
 #include "types.h"
-#include "volumeGeometry.h"
 
 #include "userVDO.h"
-
-/**
- * Load a vdo from a specified super block location.
- *
- * @param [in]  layer            The physical layer the vdo sits on
- * @param [in]  geometry         A pointer to the geometry for the volume
- * @param [in]  validate_config  Whether to validate the vdo against the layer
- * @param [out] vdo_ptr          A pointer to hold the decoded vdo
- *
- * @return VDO_SUCCESS or an error
- **/
-int load_vdo_superblock(PhysicalLayer *layer,
-                        struct volume_geometry *geometry,
-                        bool validate_config,
-                        struct vdo **vdo_ptr)
-	__attribute__((warn_unused_result));
-
-/**
- * Load a vdo volume.
- *
- * @param [in]  layer            The physical layer the vdo sits on
- * @param [in]  validate_config  Whether to validate the vdo against the layer
- * @param [out] vdo_ptr          A pointer to hold the decoded vdo
- *
- * @return VDO_SUCCESS or an error
- **/
-int __must_check load_vdo(PhysicalLayer *layer,
-                          bool validate_config,
-                          struct vdo **vdo_ptr);
 
 /**
  * Load a VDO from a file.

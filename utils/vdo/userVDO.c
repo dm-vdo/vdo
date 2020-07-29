@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#5 $
  */
 
 #include "userVDO.h"
@@ -28,6 +28,7 @@
 #include "numUtils.h"
 #include "physicalLayer.h"
 #include "types.h"
+#include "superBlockCodec.h"
 #include "vdoComponentStates.h"
 
 /**********************************************************************/
@@ -36,6 +37,12 @@ int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
   UserVDO *vdo;
   int result = ALLOCATE(1, UserVDO, __func__, &vdo);
   if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  result = initialize_super_block_codec(layer, &vdo->superBlockCodec);
+  if (result != VDO_SUCCESS) {
+    freeUserVDO(&vdo);
     return result;
   }
 
@@ -52,8 +59,113 @@ void freeUserVDO(UserVDO **vdoPtr)
     return;
   }
 
+  destroy_super_block_codec(&vdo->superBlockCodec);
   FREE(vdo);
   *vdoPtr = NULL;
+}
+
+/**********************************************************************/
+int __must_check loadSuperBlock(UserVDO *vdo)
+{
+  int result
+    = vdo->layer->reader(vdo->layer,
+                         get_data_region_offset(vdo->geometry), 1,
+                         (char *) vdo->superBlockCodec.encoded_super_block,
+                         NULL);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  return decode_super_block(&vdo->superBlockCodec);
+}
+
+/**********************************************************************/
+int loadVDOWithGeometry(PhysicalLayer           *layer,
+                        struct volume_geometry  *geometry,
+                        bool                     validateConfig,
+                        UserVDO                **vdoPtr)
+{
+  UserVDO *vdo;
+  int result = makeUserVDO(layer, &vdo);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  vdo->geometry = *geometry;
+//  set_load_config_from_geometry(geometry, &vdo->load_config);
+  result = loadSuperBlock(vdo);
+  if (result != VDO_SUCCESS) {
+    freeUserVDO(&vdo);
+    return result;
+  }
+
+  result = decode_component_states(vdo->superBlockCodec.component_buffer,
+                                   geometry->release_version, &vdo->states);
+  if (result != VDO_SUCCESS) {
+    freeUserVDO(&vdo);
+    return result;
+  }
+
+  if (validateConfig) {
+    result = validate_component_states(&vdo->states, geometry->nonce,
+                                       layer->getBlockCount(layer));
+    if (result != VDO_SUCCESS) {
+      freeUserVDO(&vdo);
+      return result;
+    }
+  }
+
+  setDerivedSlabParameters(vdo);
+
+  *vdoPtr = vdo;
+  return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+int loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr)
+{
+  struct volume_geometry geometry;
+  int result = load_volume_geometry(layer, &geometry);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  return loadVDOWithGeometry(layer, &geometry, validateConfig, vdoPtr);
+}
+
+/**********************************************************************/
+int saveSuperBlock(UserVDO *vdo)
+{
+  int result = encode_super_block(&vdo->superBlockCodec);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  return vdo->layer->writer(vdo->layer, get_data_region_offset(vdo->geometry),
+                            1,
+                            (char *) vdo->superBlockCodec.encoded_super_block,
+                            NULL);
+}
+
+/**********************************************************************/
+int saveVDO(UserVDO *vdo, bool saveGeometry)
+{
+  int result = encode_component_states(vdo->superBlockCodec.component_buffer,
+                                       &vdo->states);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  result = saveSuperBlock(vdo);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  if (!saveGeometry) {
+    return VDO_SUCCESS;
+  }
+
+  return write_volume_geometry(vdo->layer, &vdo->geometry);
 }
 
 /**********************************************************************/

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#11 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -24,6 +24,7 @@
 
 #include "uds.h"
 
+#include "fixedLayout.h"
 #include "types.h"
 #include "volumeGeometry.h"
 
@@ -51,27 +52,27 @@ int __must_check formatVDO(const struct vdo_config *config,
  * @param config        The configuration parameters for the VDO
  * @param indexConfig   The configuration parameters for the index
  * @param minVDOBlocks  A pointer to hold the minimum blocks needed
- * 
+ *
  * @return VDO_SUCCESS or error.
  **/
 int calculateMinimumVDOFromConfig(const struct vdo_config *config,
 				  const struct index_config *indexConfig,
 				  block_count_t *minVDOBlocks)
   __attribute__((warn_unused_result));
-  
+
 /**
- * Make a vdo_layout according to a vdo_config. Exposed for testing only.
+ * Make a fixed_layout according to a vdo_config. Exposed for testing only.
  *
  * @param [in]  config          The vdo_config to generate a vdo_layout from
  * @param [in]  startingOffset  The start of the layouts
- * @param [out] vdoLayoutPtr    A pointer to hold the new vdo_layout
+ * @param [out] layoutPtr       A pointer to hold the new vdo_layout
  *
  * @return VDO_SUCCESS or an error
  **/
 int __must_check
-makeVDOLayoutFromConfig(const struct vdo_config *config,
-			physical_block_number_t startingOffset,
-			struct vdo_layout **vdoLayoutPtr);
+makeFixedLayoutFromConfig(const struct vdo_config  *config,
+                          physical_block_number_t   startingOffset,
+                          struct fixed_layout     **layoutPtr);
 
 /**
  * This is a version of formatVDO() which allows the caller to supply the

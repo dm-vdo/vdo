@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#9 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#10 $
  */
 
 #include <fcntl.h>
@@ -130,7 +130,7 @@ __attribute__((format(printf, 3, 0))) static void log_it(int priority,
 	char buffer[1024];
 	char *buf_end = buffer + sizeof(buffer);
 	char *bufp = buffer;
-	time_t t = asTimeT(currentTime(CLOCK_REALTIME));
+	time_t t = ktime_to_seconds(currentTime(CLOCK_REALTIME));
 	struct tm tm;
 	char timestamp[64];
 	timestamp[0] = '\0';

@@ -17,16 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#6 $
  */
 
 #ifndef USER_VDO_H
 #define USER_VDO_H
 
+#include "physicalLayer.h"
 #include "slabSummaryFormat.h"
+#include "superBlockCodec.h"
 #include "types.h"
 #include "vdoComponentStates.h"
-#include "vdoInternal.h"
 #include "volumeGeometry.h"
 
 /**
@@ -37,14 +38,14 @@ typedef struct user_vdo {
   PhysicalLayer               *layer;
   /* The geometry of the VDO */
   struct volume_geometry       geometry;
+  /* The codec for the super block */
+  struct super_block_codec     superBlockCodec;
   /* The full state of all components */
   struct vdo_component_states  states;
 
   unsigned int                 slabSizeShift;
   slab_count_t                 slabCount;
   uint64_t                     slabOffsetMask;
-  /* The base vdo structure, will go away once no user tools need it */
-  struct vdo                  *vdo;
 } UserVDO;
 
 /**
@@ -63,6 +64,61 @@ int __must_check makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr);
  * @param vdoPtr  A poitner to the VDO to free
  **/
 void freeUserVDO(UserVDO **vdoPtr);
+
+/**
+ * Read the super block from the location indicated by the geometry.
+ *
+ * @param vdo  The VDO whose super block is to be read
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int __must_check loadSuperBlock(UserVDO *vdo);
+
+/**
+ * Load a vdo from a specified super block location.
+ *
+ * @param [in]  layer           The physical layer the vdo sits on
+ * @param [in]  geometry        A pointer to the geometry for the volume
+ * @param [in]  validateConfig  Whether to validate the vdo against the layer
+ * @param [out] vdoPtr          A pointer to hold the decoded vdo
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int __must_check loadVDOWithGeometry(PhysicalLayer           *layer,
+                                     struct volume_geometry  *geometry,
+                                     bool                     validateConfig,
+                                     UserVDO                **vdoPtr);
+
+/**
+ * Load a vdo volume.
+ *
+ * @param [in]  layer           The physical layer the vdo sits on
+ * @param [in]  validateConfig  Whether to validate the vdo against the layer
+ * @param [out] vdoPtr          A pointer to hold the decoded vdo
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int __must_check
+loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr);
+
+/**
+ * Encode and write out the super block (assuming the components have already
+ * been encoded). Thist method is broken out for unit testing.
+ *
+ * @param vdo  The vdo whose super block is to be saved
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int __must_check saveSuperBlock(UserVDO *vdo);
+
+/**
+ * Encode and save the super block and optionally the geometry block of a VDO.
+ *
+ * @param vdo           The VDO to save
+ * @param saveGeometry  If <code>true</code>, write the geometry after writing
+ *                      the super block
+ **/
+int __must_check saveVDO(UserVDO *vdo, bool saveGeometry);
 
 /**
  * Set the slab parameters which are derived from the vdo config and the

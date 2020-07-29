@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#23 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#24 $
  */
 
 #include <blkid/blkid.h>
@@ -44,12 +44,11 @@
 #include "slabDepot.h"
 #include "statusCodes.h"
 #include "types.h"
-#include "vdo.h"
-#include "vdoInternal.h"
 #include "vdoConfig.h"
 
 #include "fileLayer.h"
 #include "parseUtils.h"
+#include "userVDO.h"
 #include "vdoVolumeUtils.h"
 
 enum {
@@ -155,30 +154,30 @@ static void printReadableSize(size_t size)
 }
 
 /**********************************************************************/
-static void describeCapacity(const struct vdo *vdo,
-                             uint64_t          logicalSize,
-                             unsigned int      slabBits)
+static void describeCapacity(const UserVDO *vdo,
+                             uint64_t       logicalSize,
+                             unsigned int   slabBits)
 {
   if (logicalSize == 0) {
     printf("Logical blocks defaulted to %" PRIu64 " blocks.\n",
            vdo->states.vdo.config.logical_blocks);
   }
 
-  slab_count_t slabCount = calculate_slab_count(vdo->depot);
-  const struct slab_config *slabConfig = get_slab_config(vdo->depot);
-  size_t totalSize = slabCount * slabConfig->slab_blocks * VDO_BLOCK_SIZE;
-  size_t maxTotalSize = MAX_SLABS * slabConfig->slab_blocks * VDO_BLOCK_SIZE;
+  struct slab_config slabConfig = vdo->states.slab_depot.slab_config;
+  size_t totalSize = vdo->slabCount * slabConfig.slab_blocks * VDO_BLOCK_SIZE;
+  size_t maxTotalSize = MAX_SLABS * slabConfig.slab_blocks * VDO_BLOCK_SIZE;
 
   printf("The VDO volume can address ");
   printReadableSize(totalSize);
-  printf(" in %u data slab%s", slabCount, (slabCount != 1) ? "s" : "");
-  if (slabCount > 1) {
+  printf(" in %u data slab%s", vdo->slabCount,
+         ((vdo->slabCount != 1) ? "s" : ""));
+  if (vdo->slabCount > 1) {
     printf(", each ");
-    printReadableSize(slabConfig->slab_blocks * VDO_BLOCK_SIZE);
+    printReadableSize(slabConfig.slab_blocks * VDO_BLOCK_SIZE);
   }
   printf(".\n");
 
-  if (slabCount < MAX_SLABS) {
+  if (vdo->slabCount < MAX_SLABS) {
     printf("It can grow to address at most ");
     printReadableSize(maxTotalSize);
     printf(" of physical storage in %u slabs.\n", MAX_SLABS);
@@ -629,8 +628,8 @@ int main(int argc, char *argv[])
          extraHelp);
   }
 
-  struct vdo *vdo;
-  result = load_vdo(layer, true, &vdo);
+  UserVDO *vdo;
+  result = loadVDO(layer, true, &vdo);
   if (result != VDO_SUCCESS) {
     errx(result, "unable to verify configuration after formatting '%s'",
          filename);
@@ -639,7 +638,7 @@ int main(int argc, char *argv[])
   // Display default logical size, max capacity, etc.
   describeCapacity(vdo, logicalSize, slabBits);
 
-  free_vdo(&vdo);
+  freeUserVDO(&vdo);
 
   // Close and sync the underlying file.
   layer->destroy(&layer);

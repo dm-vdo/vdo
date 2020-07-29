@@ -16,89 +16,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#24 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#25 $
  */
 
 #include "vdoVolumeUtils.h"
 
 #include <err.h>
 
-#include "constants.h"
-#include "fixedLayout.h"
-#include "slab.h"
-#include "slabDepotInternals.h"
-#include "slabSummaryInternals.h"
-#include "types.h"
-#include "vdoComponentStates.h"
-#include "vdoDecode.h"
-#include "vdoInternal.h"
-#include "vdoLayout.h"
+#include "permassert.h"
 
 #include "fileLayer.h"
+#include "userVDO.h"
 
 static char errBuf[ERRBUF_SIZE];
-
-/**********************************************************************/
-static int __must_check
-decode_vdo(struct vdo *vdo, bool validate_config)
-{
-	int result = start_vdo_decode(vdo, validate_config);
-	if (result != VDO_SUCCESS) {
-		destroy_component_states(&vdo->states);
-		return result;
-	}
-
-	result = decode_vdo_layout(vdo->states.layout, &vdo->layout);
-	if (result != VDO_SUCCESS) {
-		destroy_component_states(&vdo->states);
-		return result;
-	}
-	return finish_vdo_decode(vdo);
-}
-
-/**********************************************************************/
-int load_vdo_superblock(PhysicalLayer *layer,
-                        struct volume_geometry *geometry,
-                        bool validate_config,
-                        struct vdo **vdo_ptr)
-{
-	struct vdo *vdo;
-	int result = make_vdo(layer, &vdo);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	set_load_config_from_geometry(geometry, &vdo->load_config);
-	result = load_super_block(layer, get_first_block_offset(vdo),
-				  &vdo->super_block);
-	if (result != VDO_SUCCESS) {
-		free_vdo(&vdo);
-		return result;
-	}
-
-	result = decode_vdo(vdo, validate_config);
-	if (result != VDO_SUCCESS) {
-		free_vdo(&vdo);
-		return result;
-	}
-
-	*vdo_ptr = vdo;
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
-int load_vdo(PhysicalLayer *layer,
-	     bool validate_config,
-	     struct vdo **vdo_ptr)
-{
-	struct volume_geometry geometry;
-	int result = load_volume_geometry(layer, &geometry);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	return load_vdo_superblock(layer, &geometry, validate_config, vdo_ptr);
-}
 
 /**
  * Load a VDO from a file.
@@ -137,33 +67,14 @@ static int __must_check loadVDOFromFile(const char *filename,
 
   // Create the VDO.
   UserVDO *vdo;
-  result = makeUserVDO(layer, &vdo);
+  result = loadVDO(layer, validateConfig, &vdo);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
-    warnx("makeUserVDO failed with %s",
+    warnx("loading VDO failed with: %s",
           stringError(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 
-  result = load_volume_geometry(layer, &vdo->geometry);
-  if (result != VDO_SUCCESS) {
-    layer->destroy(&layer);
-    warnx("load_volume_geometry failed with %s",
-          stringError(result, errBuf, ERRBUF_SIZE));
-    return result;
-  }
-
-  result = load_vdo_superblock(layer, &vdo->geometry, validateConfig,
-                               &vdo->vdo);
-  if (result != VDO_SUCCESS) {
-    layer->destroy(&layer);
-    warnx("allocateVDO failed for '%s' with %s",
-          filename, stringError(result, errBuf, ERRBUF_SIZE));
-    return result;
-  }
-
-  vdo->states = vdo->vdo->states;
-  setDerivedSlabParameters(vdo);
   *vdoPtr = vdo;
   return VDO_SUCCESS;
 }
@@ -188,9 +99,8 @@ void freeVDOFromFile(UserVDO **vdoPtr)
     return;
   }
 
-  free_vdo(&vdo->vdo);
-  vdo->layer->destroy(&vdo->layer);
+  PhysicalLayer *layer = vdo->layer;
   freeUserVDO(&vdo);
-
+  layer->destroy(&layer);
   *vdoPtr = NULL;
 }
