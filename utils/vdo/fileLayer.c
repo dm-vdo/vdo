@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#10 $
  */
 
 #include "fileLayer.h"
@@ -89,8 +89,8 @@ static int fileReader(PhysicalLayer           *header,
     return VDO_OUT_OF_RANGE;
   }
 
-  logDebug("FL: Reading %zu blocks from block %" PRIu64,
-           blockCount, startBlock);
+  log_debug("FL: Reading %zu blocks from block %" PRIu64,
+	    blockCount, startBlock);
 
   // Make sure we cast so we get a proper 64 bit value on the calculation
   off_t  offset = (off_t) startBlock * VDO_BLOCK_SIZE;
@@ -128,8 +128,8 @@ static int fileWriter(PhysicalLayer           *header,
     return VDO_OUT_OF_RANGE;
   }
 
-  logDebug("FL: Writing %zu blocks from block %" PRIu64,
-           blockCount, startBlock);
+  log_debug("FL: Writing %zu blocks from block %" PRIu64,
+	    blockCount, startBlock);
 
   // Make sure we cast so we get a proper 64 bit value on the calculation
   off_t  offset = (off_t) startBlock * VDO_BLOCK_SIZE;

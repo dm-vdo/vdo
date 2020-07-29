@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#12 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#13 $
  */
 
 #include "requestQueue.h"
@@ -274,12 +274,12 @@ static Request *dequeue_request(RequestQueue *queue)
 static void request_queue_worker(void *arg)
 {
 	RequestQueue *queue = (RequestQueue *) arg;
-	logDebug("%s queue starting", queue->name);
+	log_debug("%s queue starting", queue->name);
 	Request *request;
 	while ((request = dequeue_request(queue)) != NULL) {
 		queue->process_one(request);
 	}
-	logDebug("%s queue done", queue->name);
+	log_debug("%s queue done", queue->name);
 }
 
 /**********************************************************************/
