@@ -28,15 +28,15 @@
 #
 # Options:
 #
-# -c <warn_pct>: critical threshold equal to or greater than
+# -c <crit_pct>: critical threshold equal to or greater than
 #                <warn_pct> percent.
 #
-# -w <crit_pct>: warning threshold equal to or greater than
+# -w <warn_pct>: warning threshold equal to or less than
 #                <crit_pct> percent.
 #
 # The "vdostats" program must be in the path used by "sudo".
 #
-# $Id: //eng/linux-vdo/src/tools/monitor/monitor_check_vdostats_logicalSpace.pl#1 $
+# $Id: //eng/linux-vdo/src/tools/monitor/monitor_check_vdostats_logicalSpace.pl#2 $
 #
 ##
 
