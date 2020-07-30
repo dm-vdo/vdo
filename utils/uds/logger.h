@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/logger.h#7 $
+ * $Id: //eng/uds-releases/krusty/src/uds/logger.h#9 $
  */
 
 #ifndef LOGGER_H
@@ -31,14 +31,14 @@
 #endif
 
 #ifdef __KERNEL__
-#define LOG_EMERG 0   /* system is unusable */
-#define LOG_ALERT 1   /* action must be taken immediately */
-#define LOG_CRIT 2    /* critical conditions */
-#define LOG_ERR 3     /* error conditions */
+#define LOG_EMERG 0 /* system is unusable */
+#define LOG_ALERT 1 /* action must be taken immediately */
+#define LOG_CRIT 2 /* critical conditions */
+#define LOG_ERR 3 /* error conditions */
 #define LOG_WARNING 4 /* warning conditions */
-#define LOG_NOTICE 5  /* normal but significant condition */
-#define LOG_INFO 6    /* informational */
-#define LOG_DEBUG 7   /* debug-level messages */
+#define LOG_NOTICE 5 /* normal but significant condition */
+#define LOG_INFO 6 /* informational */
+#define LOG_DEBUG 7 /* debug-level messages */
 #endif
 
 #ifdef __KERNEL__
@@ -150,7 +150,8 @@ void log_notice(const char *format, ...) __attribute__((format(printf, 1, 2)));
  *
  * @param  format The format of the message (a printf style format)
  **/
-void log_warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
+void log_warning(const char *format, ...)
+	__attribute__((format(printf, 1, 2)));
 
 /**
  * Log an error.
@@ -210,7 +211,7 @@ void log_backtrace(int priority);
  *
  * @return errnum
  **/
-int logWithStringError(int priority, int errnum, const char *format, ...)
+int log_strerror(int priority, int errnum, const char *format, ...)
 	__attribute__((format(printf, 3, 4)));
 
 /**
@@ -223,10 +224,8 @@ int logWithStringError(int priority, int errnum, const char *format, ...)
  *
  * @return errnum
  **/
-int vLogWithStringError(int priority,
-			int errnum,
-			const char *format,
-			va_list args) __attribute__((format(printf, 3, 0)));
+int vlog_strerror(int priority, int errnum, const char *format, va_list args)
+	__attribute__((format(printf, 3, 0)));
 
 /**
  * Log an error prefixed with the string associated with the errnum.
@@ -236,27 +235,27 @@ int vLogWithStringError(int priority,
  *
  * @return errnum
  **/
-int logErrorWithStringError(int errnum, const char *format, ...)
+int log_error_strerror(int errnum, const char *format, ...)
 	__attribute__((format(printf, 2, 3)));
 
 /**********************************************************************/
-int logDebugWithStringError(int errnum, const char *format, ...)
+int log_debug_strerror(int errnum, const char *format, ...)
 	__attribute__((format(printf, 2, 3)));
 
 /**********************************************************************/
-int logInfoWithStringError(int errnum, const char *format, ...)
+int log_info_strerror(int errnum, const char *format, ...)
 	__attribute__((format(printf, 2, 3)));
 
 /**********************************************************************/
-int logNoticeWithStringError(int errnum, const char *format, ...)
+int log_notice_strerror(int errnum, const char *format, ...)
 	__attribute__((format(printf, 2, 3)));
 
 /**********************************************************************/
-int logWarningWithStringError(int errnum, const char *format, ...)
+int log_warning_strerror(int errnum, const char *format, ...)
 	__attribute__((format(printf, 2, 3)));
 
 /**********************************************************************/
-int logFatalWithStringError(int errnum, const char *format, ...)
+int log_fatal_strerror(int errnum, const char *format, ...)
 	__attribute__((format(printf, 2, 3)));
 
 /**
@@ -267,7 +266,7 @@ int logFatalWithStringError(int errnum, const char *format, ...)
  * @param errnum  int value of errno or a UDS_* value.
  * @param format  The format of the message (a printf style format)
  *
- * @return makeUnrecoverable(errnum) or UDS_SUCCESS or UDS_QUEUED
+ * @return make_unrecoverable(errnum) or UDS_SUCCESS or UDS_QUEUED
  **/
 int log_unrecoverable(int errnum, const char *format, ...)
 	__attribute__((format(printf, 2, 3)));

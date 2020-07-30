@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#6 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#7 $
  */
 
 #include "bufferedReader.h"
@@ -185,7 +185,7 @@ position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
 					      UDS_BLOCK_SIZE,
 					      NULL);
 		if (result != UDS_SUCCESS) {
-			logWarningWithStringError(
+			log_warning_strerror(
 				result,
 				"%s got read_from_region error",
 				__func__);

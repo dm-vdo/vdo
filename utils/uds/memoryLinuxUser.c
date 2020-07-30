@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#4 $
  */
 
 #include <errno.h>
@@ -42,10 +42,10 @@ int allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 		int result = posix_memalign(&p, align, size);
 		if (result != 0) {
 			if (what != NULL) {
-				logErrorWithStringError(result,
-							"failed to posix_memalign %s (%zu bytes)",
-							what,
-							size);
+				log_error_strerror(result,
+						   "failed to posix_memalign %s (%zu bytes)",
+						   what,
+						   size);
 			}
 			return result;
 		}
@@ -54,10 +54,10 @@ int allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 		if (p == NULL) {
 			int result = errno;
 			if (what != NULL) {
-				logErrorWithStringError(result,
-							"failed to allocate %s (%zu bytes)",
-							what,
-							size);
+				log_error_strerror(result,
+						   "failed to allocate %s (%zu bytes)",
+						   what,
+						   size);
 			}
 			return result;
 		}
@@ -82,10 +82,10 @@ int reallocate_memory(void *ptr,
 {
 	void *new = realloc(ptr, size);
 	if ((new == NULL) && (size != 0)) {
-		return logErrorWithStringError(errno,
-					       "failed to reallocate %s (%zu bytes)",
-					       what,
-					       size);
+		return log_error_strerror(errno,
+					  "failed to reallocate %s (%zu bytes)",
+					  what,
+					  size);
 	}
 	*((void **) new_ptr) = new;
 	return UDS_SUCCESS;

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#6 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#7 $
  */
 
 #include "fileIORegion.h"
@@ -52,27 +52,25 @@ static int validate_io(struct file_io_region *fior,
 		       bool will_write)
 {
 	if (!(will_write ? fior->writing : fior->reading)) {
-		return logErrorWithStringError(UDS_BAD_IO_DIRECTION,
-					       "not open for %s",
-					       will_write ? "writing" :
-							    "reading");
+		return log_error_strerror(UDS_BAD_IO_DIRECTION,
+					  "not open for %s",
+					  will_write ? "writing" :
+					  "reading");
 	}
 
 	if (length > size) {
-		return logErrorWithStringError(
-			UDS_BUFFER_ERROR,
-			"length %zd exceeds buffer size %zd",
-			length,
-			size);
+		return log_error_strerror(UDS_BUFFER_ERROR,
+					  "length %zd exceeds buffer size %zd",
+					  length,
+					  size);
 	}
 
 	if (offset + length > fior->size) {
-		return logErrorWithStringError(
-			UDS_OUT_OF_RANGE,
-			"range %zd-%zd not in range 0 to %zu",
-			offset,
-			offset + length,
-			fior->size);
+		return log_error_strerror(UDS_OUT_OF_RANGE,
+					  "range %zd-%zd not in range 0 to %zu",
+					  offset,
+					  offset + length,
+					  fior->size);
 	}
 
 	return UDS_SUCCESS;
@@ -137,16 +135,14 @@ static int fior_read(struct io_region *region,
 
 	if (data_length < *length) {
 		if (data_length == 0) {
-			return logErrorWithStringError(
-				UDS_END_OF_FILE,
-				"expected at least %zu bytes, got EOF",
-				len);
+			return log_error_strerror(UDS_END_OF_FILE,
+						  "expected at least %zu bytes, got EOF",
+						  len);
 		} else {
-			return logErrorWithStringError(
-				UDS_SHORT_READ,
-				"expected at least %zu bytes, got %zu",
-				len,
-				data_length);
+			return log_error_strerror(UDS_SHORT_READ,
+						  "expected at least %zu bytes, got %zu",
+						  len,
+						  data_length);
 		}
 	}
 	*length = data_length;

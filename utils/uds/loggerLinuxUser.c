@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#17 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#18 $
  */
 
 #include "logger.h"
@@ -93,8 +93,8 @@ static void init_logger(void)
 	}
 
 	if (error != 0) {
-		logErrorWithStringError(error, "Couldn't open log file %s",
-					log_file);
+		log_error_strerror(error, "Couldn't open log file %s",
+				   log_file);
 	}
 
 	if (is_abs_path) {

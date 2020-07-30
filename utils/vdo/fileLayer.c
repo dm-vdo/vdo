@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#11 $
  */
 
 #include "fileLayer.h"
@@ -62,8 +62,8 @@ static int bufferAllocator(PhysicalLayer   *header,
                            char           **bufferPtr)
 {
   if ((bytes % VDO_BLOCK_SIZE) != 0) {
-    return logErrorWithStringError(UDS_INVALID_ARGUMENT, "IO buffers must be"
-                                   " a multiple of the VDO block size");
+    return log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
+			      " a multiple of the VDO block size");
   }
 
   FileLayer *layer = asFileLayer(header);
@@ -102,7 +102,7 @@ static int fileReader(PhysicalLayer           *header,
       if (n == 0) {
         errno = VDO_UNEXPECTED_EOF;
       }
-      return logErrorWithStringError(errno, "pread %s", layer->name);
+      return log_error_strerror(errno, "pread %s", layer->name);
     }
     offset += n;
     buffer += n;
@@ -138,7 +138,7 @@ static int fileWriter(PhysicalLayer           *header,
   while (remain > 0) {
     ssize_t n = pwrite(layer->fd, buffer, remain, offset);
     if (n < 0) {
-      return logErrorWithStringError(errno, "pwrite %s", layer->name);
+      return log_error_strerror(errno, "pwrite %s", layer->name);
     }
     offset += n;
     buffer += n;
@@ -264,7 +264,7 @@ static int setupFileLayer(const char     *name,
   if (blockDevice) {
     uint64_t bytes;
     if (ioctl(layer->fd, BLKGETSIZE64, &bytes) < 0) {
-      result = logErrorWithStringError(errno, "get size of %s", layer->name);
+      result = log_error_strerror(errno, "get size of %s", layer->name);
       try_close_file(layer->fd);
       FREE(layer);
       return result;
@@ -284,11 +284,11 @@ static int setupFileLayer(const char     *name,
   if (layer->blockCount == 0) {
     layer->blockCount = deviceBlocks;
   } else if (layer->blockCount != deviceBlocks) {
-    result = logErrorWithStringError(VDO_PARAMETER_MISMATCH,
-                                     "physical size %ld 4k blocks must match"
-                                     " physical size %ld 4k blocks of %s",
-                                     layer->blockCount, deviceBlocks,
-                                     layer->name);
+    result = log_error_strerror(VDO_PARAMETER_MISMATCH,
+				"physical size %ld 4k blocks must match"
+				" physical size %ld 4k blocks of %s",
+				layer->blockCount, deviceBlocks,
+				layer->name);
     try_close_file(layer->fd);
     FREE(layer);
     return result;

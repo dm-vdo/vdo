@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#8 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#9 $
  */
 
 #include "bufferedWriter.h"
@@ -176,8 +176,9 @@ void free_buffered_writer(struct buffered_writer *bw)
 	int result = sync_region_contents(bw->bw_region);
 #endif
 	if (result != UDS_SUCCESS) {
-		logWarningWithStringError(
-			result, "%s cannot sync storage", __func__);
+		log_warning_strerror(result,
+				     "%s cannot sync storage", __func__);
+			
 	}
 #ifdef __KERNEL__
 	dm_bufio_client_destroy(bw->bw_client);

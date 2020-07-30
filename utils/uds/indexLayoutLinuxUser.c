@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#8 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#9 $
  */
 
 #include "errors.h"
@@ -61,8 +61,8 @@ int make_index_layout(const char *name,
 
 	if (!file) {
 		FREE(params);
-		return logErrorWithStringError(UDS_INDEX_NAME_REQUIRED,
-					       "no index specified");
+		return log_error_strerror(UDS_INDEX_NAME_REQUIRED,
+					  "no index specified");
 	}
 
 	struct io_factory *factory = NULL;
