@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#6 $
  */
 
 #include "userVDO.h"
@@ -59,6 +59,7 @@ void freeUserVDO(UserVDO **vdoPtr)
     return;
   }
 
+  destroy_component_states(&vdo->states);
   destroy_super_block_codec(&vdo->superBlockCodec);
   FREE(vdo);
   *vdoPtr = NULL;
