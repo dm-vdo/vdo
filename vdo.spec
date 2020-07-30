@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.3.107
+Version: 6.2.3.114
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -174,5 +174,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Thu Jun 18 2020 - J. corwin Coburn <corwin@redhat.com> - 6.2.3.107-1
-HASH(0x558fd68d65a8)
+* Thu Jul 30 2020 - J. corwin Coburn <corwin@redhat.com> - 6.2.3.114-1
+HASH(0x14d09e8)
