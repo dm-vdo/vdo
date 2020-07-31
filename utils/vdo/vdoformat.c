@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#24 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#25 $
  */
 
 #include <blkid/blkid.h>
@@ -41,7 +41,6 @@
 #include "timeUtils.h"
 
 #include "constants.h"
-#include "slabDepot.h"
 #include "statusCodes.h"
 #include "types.h"
 #include "vdoConfig.h"
