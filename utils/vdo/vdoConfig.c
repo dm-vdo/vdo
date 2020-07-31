@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#37 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#38 $
  */
 
 #include <uuid/uuid.h>
@@ -177,13 +177,14 @@ int formatVDO(const struct vdo_config   *config,
   uuid_t uuid;
   uuid_generate(uuid);
 
-  return formatVDOWithNonce(config, indexConfig, layer, nowUsec(), uuid);
+  return formatVDOWithNonce(config, indexConfig, layer, current_time_us(),
+                            uuid);
 }
 
 /**********************************************************************/
 int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
-				  const struct index_config *indexConfig,
-				  block_count_t             *minVDOBlocks)
+                                  const struct index_config *indexConfig,
+                                  block_count_t             *minVDOBlocks)
 {
   // The minimum VDO size is the minimal size of the fixed layout +
   // one slab size for the allocator. The minimum fixed layout size
@@ -298,7 +299,7 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
   result = clearPartition(vdo, RECOVERY_JOURNAL_PARTITION);
   if (result != VDO_SUCCESS) {
     return log_error_strerror(result,
-			      "cannot clear recovery journal partition");
+                              "cannot clear recovery journal partition");
   }
 
   return saveVDO(vdo, true);
@@ -341,8 +342,8 @@ int formatVDOWithNonce(const struct vdo_config   *config,
  **/
 static int __must_check
 updateVDOSuperBlockState(PhysicalLayer *layer,
-			 bool requireReadOnly,
-			 VDOState newState)
+                         bool requireReadOnly,
+                         VDOState newState)
 {
   UserVDO *vdo;
   int result = loadVDO(layer, false, &vdo);
@@ -367,7 +368,7 @@ int forceVDORebuild(PhysicalLayer *layer)
   int result = updateVDOSuperBlockState(layer, true, VDO_FORCE_REBUILD);
   if (result == VDO_NOT_READ_ONLY) {
     return log_error_strerror(VDO_NOT_READ_ONLY,
-			      "Can't force rebuild on a normal VDO");
+                              "Can't force rebuild on a normal VDO");
   }
 
   return result;

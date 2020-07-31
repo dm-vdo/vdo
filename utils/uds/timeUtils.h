@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#10 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#12 $
  */
 
 #ifndef TIME_UTILS_H
@@ -35,29 +35,28 @@
 
 // Some constants that are defined in kernel headers.
 #ifndef __KERNEL__
-#define NSEC_PER_SEC  1000000000L
+#define NSEC_PER_SEC 1000000000L
 #define NSEC_PER_MSEC 1000000L
 #define NSEC_PER_USEC 1000L
 typedef int64_t ktime_t;
 #endif
 
 /**
- * Return the current time according to the specified clock type.
+ * Return the current nanosecond time according to the specified clock
+ * type.
  *
  * @param clock         Either CLOCK_REALTIME or CLOCK_MONOTONIC
  *
  * @return the current time according to the clock in question
- *
- * @note the precision of the clock is system specific
  **/
 #ifdef __KERNEL__
-static INLINE ktime_t currentTime(clockid_t clock)
+static INLINE ktime_t current_time_ns(clockid_t clock)
 {
-  // clock is always a constant, so gcc reduces this to a single call
-  return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
+	// clock is always a constant, so gcc reduces this to a single call
+	return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
 }
 #else
-ktime_t currentTime(clockid_t clock);
+ktime_t current_time_ns(clockid_t clock);
 #endif
 
 #ifndef __KERNEL__
@@ -69,7 +68,7 @@ ktime_t currentTime(clockid_t clock);
  *
  * @return a timespec representing a future time
  **/
-struct timespec futureTime(ktime_t offset);
+struct timespec future_time(ktime_t offset);
 #endif /* __KERNEL__ */
 
 #ifndef __KERNEL__
@@ -83,13 +82,13 @@ struct timespec futureTime(ktime_t offset);
  **/
 static INLINE int64_t ktime_sub(ktime_t a, ktime_t b)
 {
-  return a - b;
+	return a - b;
 }
 #endif /* __KERNEL__ */
 
 
 
-#ifndef __KERNEL__ 
+#ifndef __KERNEL__
 /**
  * Convert a ktime_t value to milliseconds as in ktime.h
  *
@@ -99,7 +98,7 @@ static INLINE int64_t ktime_sub(ktime_t a, ktime_t b)
  **/
 static INLINE int64_t ktime_to_ms(ktime_t abstime)
 {
-  return abstime / NSEC_PER_MSEC;
+	return abstime / NSEC_PER_MSEC;
 }
 #endif /* __KERNEL__ */
 
@@ -112,7 +111,7 @@ static INLINE int64_t ktime_to_ms(ktime_t abstime)
  **/
 static INLINE ktime_t seconds_to_ktime(int64_t seconds)
 {
-  return (ktime_t) seconds * NSEC_PER_SEC;
+	return (ktime_t) seconds * NSEC_PER_SEC;
 }
 
 #ifndef __KERNEL__
@@ -125,7 +124,7 @@ static INLINE ktime_t seconds_to_ktime(int64_t seconds)
  **/
 static INLINE ktime_t ms_to_ktime(uint64_t milliseconds)
 {
-  return (ktime_t) milliseconds * NSEC_PER_MSEC;
+	return (ktime_t) milliseconds * NSEC_PER_MSEC;
 }
 #endif /* __KERNEL__ */
 
@@ -138,7 +137,7 @@ static INLINE ktime_t ms_to_ktime(uint64_t milliseconds)
  **/
 static INLINE ktime_t us_to_ktime(int64_t microseconds)
 {
-  return (ktime_t) microseconds * NSEC_PER_USEC;
+	return (ktime_t) microseconds * NSEC_PER_USEC;
 }
 
 /**
@@ -150,7 +149,7 @@ static INLINE ktime_t us_to_ktime(int64_t microseconds)
  **/
 static INLINE int64_t ktime_to_seconds(ktime_t reltime)
 {
-  return reltime / NSEC_PER_SEC;
+	return reltime / NSEC_PER_SEC;
 }
 
 #ifndef __KERNEL__
@@ -163,7 +162,7 @@ static INLINE int64_t ktime_to_seconds(ktime_t reltime)
  **/
 static INLINE int64_t ktime_to_us(ktime_t reltime)
 {
-  return reltime / NSEC_PER_USEC;
+	return reltime / NSEC_PER_USEC;
 }
 #endif /* __KERNEL__ */
 
@@ -175,7 +174,7 @@ static INLINE int64_t ktime_to_us(ktime_t reltime)
  *
  * @return the time in microseconds
  **/
-uint64_t __must_check nowUsec(void);
+uint64_t __must_check current_time_us(void);
 
 #ifndef __KERNEL__
 #endif /* __KERNEL__ */
