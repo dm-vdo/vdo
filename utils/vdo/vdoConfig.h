@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#11 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#12 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -25,10 +25,18 @@
 #include "uds.h"
 
 #include "fixedLayout.h"
+#include "recoveryJournalFormat.h"
 #include "types.h"
 #include "volumeGeometry.h"
 
 // The vdo_config structure is fully declared in types.h
+
+/**
+ * Initialize the recovery journal state for a new VDO.
+ *
+ * @return An intialized recovery journal state
+ **/
+struct recovery_journal_state_7_0 __must_check configureRecoveryJournal(void);
 
 /**
  * Format a physical layer to function as a new VDO. This function must be
