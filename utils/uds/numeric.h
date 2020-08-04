@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#6 $
+ * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#7 $
  */
 
 #ifndef NUMERIC_H
@@ -26,90 +26,40 @@
 
 #ifdef __KERNEL__
 #include <asm/unaligned.h>
+#include <linux/kernel.h>
 #else
 #include "numericDefs.h"
 #include "typeDefs.h"
 #endif
 
-/**
- * Find the minimum of two ints.
- *
- * @param a The first int
- * @param b The second int
- *
- * @return The lesser of a and b
- **/
-static INLINE int __must_check min_int(int a, int b)
-{
-	return ((a < b) ? a : b);
-}
+#ifndef __KERNEL__
+/*
+ * Type safe comparison macros, similar to the ones in linux/kernel.h.
+*/
+/* If pointers to types are comparable (without dereferencing them and
+ * potentially causing side effects) then types are the same.
+ */
+#define TYPECHECK(x, y) (!!(sizeof((typeof(x) *)1 == (typeof(y) *)1)))
+#define CONSTCHECK(x, y) (__builtin_constant_p(x) && __builtin_constant_p(y))
 
-/**
- * Find the maximum of two ints.
- *
- * @param a The first int
- * @param b The second int
- *
- * @return The greater of a and b
- **/
-static INLINE int __must_check max_int(int a, int b)
-{
-	return ((a > b) ? a : b);
-}
+// It takes two levels of macro expansion to compose the unique temp names.
+#define CONCAT_(a, b) a##b
+#define CONCAT(a, b) CONCAT_(a, b)
+#define UNIQUE_ID(a) CONCAT(_UNIQUE_, CONCAT(a, __COUNTER__))
 
-/**
- * Find the maximum of two unsigned ints.
- *
- * @param a The first value
- * @param b The second value
- *
- * @return The greater of a and b
- **/
-static INLINE unsigned int __must_check max_uint(unsigned int a,
-						 unsigned int b)
-{
-	return ((a > b) ? a : b);
-}
+#define SAFE_COMPARE(x, y, unique_x, unique_y, op) ({		\
+      typeof(x) unique_x = (x);					\
+      typeof(y) unique_y = (y);					\
+      unique_x op unique_y ? unique_x : unique_y;})
 
-/**
- * Find the maximum of two signed longs.
- *
- * @param a The first int
- * @param b The second int
- *
- * @return The greater of a and b
- **/
-static INLINE long __must_check max_long(long a, long b)
-{
-	return ((a > b) ? a : b);
-}
+#define COMPARE(x, y, op)						\
+  __builtin_choose_expr((TYPECHECK(x, y) && CONSTCHECK(x, y)),		\
+			(((x) op (y)) ? (x) : (y)),			\
+			SAFE_COMPARE(x, y, UNIQUE_ID(x_), UNIQUE_ID(y_), op))
 
-/**
- * Find the maximum of two unsigned longs.
- *
- * @param a The first int
- * @param b The second int
- *
- * @return The greater of a and b
- **/
-static INLINE unsigned long __must_check max_ulong(unsigned long a,
-						   unsigned long b)
-{
-	return ((a > b) ? a : b);
-}
-
-/**
- * Find the minimum of two size_ts.
- *
- * @param a The first size_t
- * @param b The second size_t
- *
- * @return The lesser of a and b
- **/
-static INLINE size_t __must_check min_size_t(size_t a, size_t b)
-{
-	return ((a < b) ? a : b);
-}
+#define min(x, y) COMPARE(x, y, <)
+#define max(x, y) COMPARE(x, y, >)
+#endif
 
 /**
  * Extract a 64 bit unsigned big-endian number from a buffer at a

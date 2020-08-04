@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#10 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#11 $
 
 VDO_VERSION = 8.1.0.0
 
@@ -53,13 +53,13 @@ ifeq ($(AR), ar)
 		AR := gcc-ar
 	endif
 endif
-						  
+
 OPT_FLAGS	 = -O3 -fno-omit-frame-pointer
 DEBUG_FLAGS      =
 RPM_OPT_FLAGS   ?= -fpic
 GLOBAL_FLAGS     = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS) $(WARNS) \
 		   $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)
-GLOBAL_CFLAGS	 = $(GLOBAL_FLAGS) -std=c99 $(C_WARNS) -pedantic	\
+GLOBAL_CFLAGS	 = $(GLOBAL_FLAGS) -std=gnu99 $(C_WARNS)		\
 		   $(EXTRA_CFLAGS)
 EXTRA_FLAGS      =
 EXTRA_CFLAGS	 = $(EXTRA_FLAGS)
