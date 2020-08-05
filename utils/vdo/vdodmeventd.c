@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#5 $
  */
 
 #include <dlfcn.h>
@@ -93,20 +93,20 @@ static struct dm_event_handler *createEventHandler(const char *devName,
 
   struct dm_event_handler *dmevh = dm_event_handler_create();
   if (dmevh == NULL) {
-    log_error("Failure to create event hander");
+    uds_log_error("Failure to create event hander");
     return NULL;
   }
 
   result = (dso != NULL) && dm_event_handler_set_dso(dmevh, dso);
   if (result != 0) {
-    log_error("Failure to set plugin name for %s", devName);
+    uds_log_error("Failure to set plugin name for %s", devName);
     dm_event_handler_destroy(dmevh);
     return NULL;
   }
 
   result = dm_event_handler_set_dev_name(dmevh, devName);
   if (result != 0) {
-    log_error("Failure to set VDO device name for %s", devName);
+    uds_log_error("Failure to set VDO device name for %s", devName);
     dm_event_handler_destroy(dmevh);
     return NULL;
   }
@@ -171,7 +171,7 @@ static int processEvents(enum registerType type, char *devName, char *dso)
 
   struct dm_event_handler *dmevh = createEventHandler(devName, dso);
   if (dmevh == NULL) {
-    log_error("Failed to create event handler for %s", devName);
+    uds_log_error("Failed to create event handler for %s", devName);
     return 1;
   }
 
@@ -179,7 +179,7 @@ static int processEvents(enum registerType type, char *devName, char *dso)
   result = (type == EVENTS_REGISTER) ? dm_event_register_handler(dmevh)
                                      : dm_event_unregister_handler(dmevh);
   if (result == 0) {
-    log_error("Failure to process events for %s", devName);
+    uds_log_error("Failure to process events for %s", devName);
   }
 
   dm_event_handler_destroy(dmevh);
@@ -200,21 +200,21 @@ static int registerVDO(char * devName) {
 
   result = getRegistrationState(devName, PLUGIN_NAME, &pending);
   if (result < 0) {
-    log_error("Failed to get registration info for VDO device %s",
-              devName);
+    uds_log_error("Failed to get registration info for VDO device %s",
+                  devName);
     return 1;
   }
 
   if (result > 0) {
-    log_error("VDO device %s %s", devName,
-              pending ? "has a registration event pending"
-              : "is already being monitored");
+    uds_log_error("VDO device %s %s", devName,
+                  pending ? "has a registration event pending"
+                  : "is already being monitored");
     return 1;
   }
 
   result = processEvents(EVENTS_REGISTER, devName, PLUGIN_NAME);
   if (result != 0) {
-    log_error("Unable to register events for VDO device %s", devName);
+    uds_log_error("Unable to register events for VDO device %s", devName);
     return result;
   }
 
@@ -237,22 +237,22 @@ static int unregisterVDO(char * devName) {
 
   result = getRegistrationState(devName, NULL, &pending);
   if (result < 0) {
-    log_error("Failed to get registration info for VDO device %s",
-              devName);
+    uds_log_error("Failed to get registration info for VDO device %s",
+                  devName);
     return 1;
   }
 
   if ((result == 0) || (pending == 1)) {
-    log_error("VDO device %s %s", devName,
-              pending ? "cannot be unregistered until completed"
-              : "is not currently being monitored");
+    uds_log_error("VDO device %s %s", devName,
+                  pending ? "cannot be unregistered until completed"
+                  : "is not currently being monitored");
     return 1;
   }
 
   result = processEvents(EVENTS_UNREGISTER, devName, NULL);
   if (result != 0) {
-    log_error("Unable to unregister dmeventd events for VDO "
-              "device %s", devName);
+    uds_log_error("Unable to unregister dmeventd events for VDO "
+                  "device %s", devName);
     return result;
   }
 
@@ -271,8 +271,8 @@ static int validatePlugin(void)
 {
   void *dl = dlopen(PLUGIN_NAME, RTLD_NOW);
   if (!dl) {
-    log_error("The dynamic shared library %s could not "
-              "be loaded: %s", PLUGIN_NAME, dlerror());
+    uds_log_error("The dynamic shared library %s could not "
+                  "be loaded: %s", PLUGIN_NAME, dlerror());
     return 1; /* Failure. */
   }
 
@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
   }
 
   if (validatePlugin()) {
-    log_error("Failed to load the dmeventd plugin");
+    uds_log_error("Failed to load the dmeventd plugin");
     return 1;
   }
 

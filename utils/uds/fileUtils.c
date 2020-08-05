@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#8 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#9 $
  */
 
 #include "fileUtils.h"
@@ -300,10 +300,10 @@ bool file_name_match(const char *pattern, const char *string, int flags)
 {
 	int result = fnmatch(pattern, string, flags);
 	if ((result != 0) && (result != FNM_NOMATCH)) {
-		log_error("file_name_match(): fnmatch(): returned an error: %d, looking for \"%s\" with flags: %d",
-			  result,
-			  string,
-			  flags);
+		uds_log_error("file_name_match(): fnmatch(): returned an error: %d, looking for \"%s\" with flags: %d",
+			      result,
+			      string,
+			      flags);
 	}
 	return (result == 0);
 }

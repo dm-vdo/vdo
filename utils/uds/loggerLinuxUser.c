@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#19 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#20 $
  */
 
 #include "logger.h"
@@ -89,7 +89,7 @@ static void init_logger(void)
 	} else {
 		mini_openlog(IDENTITY, LOG_PID | LOG_NDELAY | LOG_CONS,
 			     LOG_USER);
-		log_error("Could not include program name in log");
+		uds_log_error("Could not include program name in log");
 	}
 
 	if (error != 0) {
