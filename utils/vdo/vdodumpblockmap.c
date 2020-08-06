@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#15 $
  */
 
 #include <err.h>
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   char *filename;
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
   result = makeVDOFromFile(filename, true, &vdo);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s",
-         filename, stringError(result, errBuf, ERRBUF_SIZE));
+         filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   result = ((lbn != 0xFFFFFFFFFFFFFFFF)

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#44 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#45 $
  */
 
 #include <err.h>
@@ -579,7 +579,7 @@ readVDOFromDump(const char *filename)
   if (result != VDO_SUCCESS) {
     char errBuf[ERRBUF_SIZE];
     warnx("Failed to make FileLayer from '%s' with %s",
-          filename, stringError(result, errBuf, ERRBUF_SIZE));
+          filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 
@@ -590,7 +590,7 @@ readVDOFromDump(const char *filename)
     layer->destroy(&layer);
     char errBuf[ERRBUF_SIZE];
     warnx("VDO geometry read failed for '%s' with %s",
-          filename, stringError(result, errBuf, ERRBUF_SIZE));
+          filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
     return result;
   }
   geometry.regions[DATA_REGION].start_block = 1;
@@ -607,7 +607,7 @@ int main(int argc, char *argv[])
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   char *filename;
@@ -632,7 +632,7 @@ int main(int argc, char *argv[])
   result = readVDOFromDump(filename);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s",
-         filename, stringError(result, errBuf, ERRBUF_SIZE));
+         filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   allocateMetadataSpace();

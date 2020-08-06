@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#25 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#26 $
  */
 
 #include "blockMapUtils.h"
@@ -243,7 +243,7 @@ int readBlockMapPage(PhysicalLayer            *layer,
   if (result != VDO_SUCCESS) {
     char errBuf[ERRBUF_SIZE];
     printf("%" PRIu64 " unreadable : %s",
-           pbn, stringError(result, errBuf, ERRBUF_SIZE));
+           pbn, uds_string_error(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 

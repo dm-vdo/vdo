@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#42 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#43 $
  */
 
 #include <err.h>
@@ -712,7 +712,7 @@ int main(int argc, char *argv[])
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   result = processAuditArgs(argc, argv);
@@ -723,7 +723,7 @@ int main(int argc, char *argv[])
   result = makeVDOFromFile(filename, true, &vdo);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s",
-         filename, stringError(result, errBuf, ERRBUF_SIZE));
+         filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
@@ -744,7 +744,7 @@ int main(int argc, char *argv[])
     if (result != VDO_SUCCESS) {
       freeAuditAllocations();
       errx(1, "Could not allocate %" PRIu64 " reference counts: %s",
-           slabDataBlocks, stringError(result, errBuf, ERRBUF_SIZE));
+           slabDataBlocks, uds_string_error(result, errBuf, ERRBUF_SIZE));
     }
   }
 

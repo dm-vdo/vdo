@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoForceRebuild.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoForceRebuild.c#5 $
  */
 
 #include <err.h>
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   int c;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
   if (result != VDO_SUCCESS) {
     char buf[ERRBUF_SIZE];
     errx(result, "forceRebuild failed on '%s': %s",
-         filename, stringError(result, buf, sizeof(buf)));
+         filename, uds_string_error(result, buf, sizeof(buf)));
   }
 
   layer->destroy(&layer);

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#31 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#32 $
  */
 
 #include <err.h>
@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   result = ALLOCATE(MAX_LBNS, physical_block_number_t, __func__, &lbns);

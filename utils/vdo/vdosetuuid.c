@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#8 $
  */
 
 #include <err.h>
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-	 stringError(result, errBuf, ERRBUF_SIZE));
+	 uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   // Generate a UUID as a default value in case the options is not specified.
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
   if (result != VDO_SUCCESS) {
     freeVDOFromFile(&vdo);
     errx(1, "Could not write the geometry to '%s' %s", vdoBacking,
-	 stringError(result, errBuf, ERRBUF_SIZE));
+	 uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   freeVDOFromFile(&vdo);

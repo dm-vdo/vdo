@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#25 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoVolumeUtils.c#26 $
  */
 
 #include "vdoVolumeUtils.h"
@@ -61,7 +61,7 @@ static int __must_check loadVDOFromFile(const char *filename,
 
   if (result != VDO_SUCCESS) {
     warnx("Failed to make FileLayer from '%s' with %s",
-          filename, stringError(result, errBuf, ERRBUF_SIZE));
+          filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 
@@ -71,7 +71,7 @@ static int __must_check loadVDOFromFile(const char *filename,
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
     warnx("loading VDO failed with: %s",
-          stringError(result, errBuf, ERRBUF_SIZE));
+          uds_string_error(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#25 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#26 $
  */
 
 #include <blkid/blkid.h>
@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   uint64_t     logicalSize  = 0; // defaults to physicalSize
@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
          "%" PRIu64 " requested logical space exceeds the maximum "
          "(%" PRIu64 "): %s",
          logicalSize, MAXIMUM_LOGICAL_BLOCKS * VDO_BLOCK_SIZE,
-         stringError(VDO_OUT_OF_RANGE, errorBuffer, sizeof(errorBuffer)));
+         uds_string_error(VDO_OUT_OF_RANGE, errorBuffer, sizeof(errorBuffer)));
   }
 
   PhysicalLayer *layer;
@@ -571,7 +571,7 @@ int main(int argc, char *argv[])
   result = parseIndexConfig(&configStrings, &indexConfig);
   if (result != UDS_SUCCESS) {
     errx(result, "parseIndexConfig failed: %s",
-         stringError(result, errorBuffer, sizeof(errorBuffer)));
+         uds_string_error(result, errorBuffer, sizeof(errorBuffer)));
   }
 
   // Zero out the UDS superblock in case there's already a UDS there.
@@ -623,7 +623,7 @@ int main(int argc, char *argv[])
     }
     errx(result, "formatVDO failed on '%s': %s%s",
          filename,
-         stringError(result, errorBuffer, sizeof(errorBuffer)),
+         uds_string_error(result, errorBuffer, sizeof(errorBuffer)),
          extraHelp);
   }
 
