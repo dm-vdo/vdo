@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#20 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#21 $
  */
 
 #include "logger.h"
@@ -207,7 +207,7 @@ log_at_level(int priority, const char *format, ...)
 	va_list args;
 
 	va_start(args, format);
-	v_log_message(priority, format, args);
+	vlog_message(priority, format, args);
 	va_end(args);
 }
 
