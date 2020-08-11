@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#5 $
  */
 
 #include "slabSummaryReader.h"
@@ -63,7 +63,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   physical_block_number_t origin
     = get_fixed_layout_partition_offset(slab_summary_partition);
   result = vdo->layer->reader(vdo->layer, origin, summary_blocks,
-                              (char *) entries, NULL);
+                              (char *) entries);
   if (result != VDO_SUCCESS) {
     warnx("Could not read summary data");
     FREE(entries);
@@ -87,7 +87,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
     for (zone_count_t zone = 1; zone < zones; zone++) {
       origin += summary_blocks;
       result = vdo->layer->reader(vdo->layer, origin, summary_blocks,
-                                  (char *) buffer, NULL);
+                                  (char *) buffer);
       if (result != VDO_SUCCESS) {
         warnx("Could not read summary data");
         FREE(buffer);

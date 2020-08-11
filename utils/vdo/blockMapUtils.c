@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#26 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#27 $
  */
 
 #include "blockMapUtils.h"
@@ -239,7 +239,7 @@ int readBlockMapPage(PhysicalLayer            *layer,
                      nonce_t                   nonce,
                      struct block_map_page    *page)
 {
-  int result = layer->reader(layer, pbn, 1, (char *) page, NULL);
+  int result = layer->reader(layer, pbn, 1, (char *) page);
   if (result != VDO_SUCCESS) {
     char errBuf[ERRBUF_SIZE];
     printf("%" PRIu64 " unreadable : %s",

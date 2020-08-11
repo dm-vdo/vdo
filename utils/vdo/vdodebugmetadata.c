@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#45 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#46 $
  */
 
 #include <err.h>
@@ -207,7 +207,7 @@ __attribute__((noinline)) static void doNothing(void)
  **/
 static int readBlocks(block_count_t count, char *buffer)
 {
-  int result = vdo->layer->reader(vdo->layer, nextBlock, count, buffer, NULL);
+  int result = vdo->layer->reader(vdo->layer, nextBlock, count, buffer);
   if (result != VDO_SUCCESS) {
     return result;
   }

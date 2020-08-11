@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#43 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#44 $
  */
 
 #include <err.h>
@@ -303,7 +303,7 @@ static int readFromLayer(physical_block_number_t  startBlock,
                          block_count_t            blockCount,
                          char                    *buffer)
 {
-  return vdo->layer->reader(vdo->layer, startBlock, blockCount, buffer, NULL);
+  return vdo->layer->reader(vdo->layer, startBlock, blockCount, buffer);
 }
 
 /**

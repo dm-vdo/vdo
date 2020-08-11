@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#7 $
  */
 
 #include "userVDO.h"
@@ -71,8 +71,7 @@ int __must_check loadSuperBlock(UserVDO *vdo)
   int result
     = vdo->layer->reader(vdo->layer,
                          get_data_region_offset(vdo->geometry), 1,
-                         (char *) vdo->superBlockCodec.encoded_super_block,
-                         NULL);
+                         (char *) vdo->superBlockCodec.encoded_super_block);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -144,8 +143,7 @@ int saveSuperBlock(UserVDO *vdo)
 
   return vdo->layer->writer(vdo->layer, get_data_region_offset(vdo->geometry),
                             1,
-                            (char *) vdo->superBlockCodec.encoded_super_block,
-                            NULL);
+                            (char *) vdo->superBlockCodec.encoded_super_block);
 }
 
 /**********************************************************************/

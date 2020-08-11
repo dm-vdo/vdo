@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#26 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#27 $
  */
 
 #include <blkid/blkid.h>
@@ -582,7 +582,7 @@ int main(int argc, char *argv[])
     return result;
   }
 
-  result = layer->writer(layer, 1, 1, zeroBuffer, NULL);
+  result = layer->writer(layer, 1, 1, zeroBuffer);
   if (result != VDO_SUCCESS) {
     return result;
   }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#11 $
  */
 
 #include <err.h>
@@ -251,7 +251,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
   struct block_map_state_2_0 map = candidate->vdo->states.block_map;
   for (block_count_t root = 0; root < map.root_count; root++) {
     int result = fileLayer->reader(fileLayer, map.root_origin + root, 1,
-                                   blockBuffer, NULL);
+                                   blockBuffer);
     if (result != VDO_SUCCESS) {
       warnx("candidate block map root at %" PRIu64 " unreadable: %s",
             map.root_origin + root, resultString(result));
