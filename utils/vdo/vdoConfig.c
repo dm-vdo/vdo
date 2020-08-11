@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#40 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#41 $
  */
 
 #include <uuid/uuid.h>
@@ -357,7 +357,7 @@ updateVDOSuperBlockState(PhysicalLayer *layer,
 
   if (requireReadOnly && (vdo->states.vdo.state != VDO_READ_ONLY_MODE)) {
     freeUserVDO(&vdo);
-    return result;
+    return VDO_NOT_READ_ONLY;
   }
 
   vdo->states.vdo.state = newState;
