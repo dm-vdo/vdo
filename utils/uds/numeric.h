@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#7 $
+ * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#8 $
  */
 
 #ifndef NUMERIC_H
@@ -35,11 +35,11 @@
 #ifndef __KERNEL__
 /*
  * Type safe comparison macros, similar to the ones in linux/kernel.h.
-*/
+ */
 /* If pointers to types are comparable (without dereferencing them and
  * potentially causing side effects) then types are the same.
  */
-#define TYPECHECK(x, y) (!!(sizeof((typeof(x) *)1 == (typeof(y) *)1)))
+#define TYPECHECK(x, y) (!!(sizeof((typeof(x) *) 1 == (typeof(y) *) 1)))
 #define CONSTCHECK(x, y) (__builtin_constant_p(x) && __builtin_constant_p(y))
 
 // It takes two levels of macro expansion to compose the unique temp names.
@@ -47,15 +47,18 @@
 #define CONCAT(a, b) CONCAT_(a, b)
 #define UNIQUE_ID(a) CONCAT(_UNIQUE_, CONCAT(a, __COUNTER__))
 
-#define SAFE_COMPARE(x, y, unique_x, unique_y, op) ({		\
-      typeof(x) unique_x = (x);					\
-      typeof(y) unique_y = (y);					\
-      unique_x op unique_y ? unique_x : unique_y;})
+#define SAFE_COMPARE(x, y, unique_x, unique_y, op)          \
+	__extension__({                                     \
+		typeof(x) unique_x = (x);                   \
+		typeof(y) unique_y = (y);                   \
+		unique_x op unique_y ? unique_x : unique_y; \
+	})
 
-#define COMPARE(x, y, op)						\
-  __builtin_choose_expr((TYPECHECK(x, y) && CONSTCHECK(x, y)),		\
-			(((x) op (y)) ? (x) : (y)),			\
-			SAFE_COMPARE(x, y, UNIQUE_ID(x_), UNIQUE_ID(y_), op))
+#define COMPARE(x, y, op)                              \
+	__builtin_choose_expr(                         \
+		(TYPECHECK(x, y) && CONSTCHECK(x, y)), \
+		(((x) op(y)) ? (x) : (y)),             \
+		SAFE_COMPARE(x, y, UNIQUE_ID(x_), UNIQUE_ID(y_), op))
 
 #define min(x, y) COMPARE(x, y, <)
 #define max(x, y) COMPARE(x, y, >)
