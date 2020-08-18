@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#18 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#19 $
 
 # UDS_INTERNAL_VERSION is the short version name, which is used to version the
 # UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
@@ -62,7 +62,7 @@ GLOBAL_FLAGS   = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS)		\
 		 $(WARNS) $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)	\
 		 -DUDS_VERSION='"$(BUILD_VERSION)"'			\
 
-CFLAGS  = $(GLOBAL_FLAGS) -I. -std=gnu99 $(C_WARNS) $(MY_CFLAGS)
+CFLAGS  = $(GLOBAL_FLAGS) -I. -std=gnu99 -pedantic $(C_WARNS) $(MY_CFLAGS)
 LDFLAGS = $(RPM_LD_FLAGS) $(MY_LDFLAGS)
 
 MY_FLAGS    =
