@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/atomicDefs.h#2 $
+ * $Id: //eng/uds-releases/krusty/src/uds/atomicDefs.h#3 $
  */
 
 #ifndef ATOMIC_DEFS_H
@@ -181,27 +181,6 @@ static INLINE void smp_mb__after_atomic(void)
   barrier();
 #else
   smp_mb();
-#endif
-}
-
-/**
- * Provide a read barrier, if needed, between dependent reads.
- *
- * On most architectures, a read issued using a memory location that was
- * itself read from memory (or derived from something read from memory) cannot
- * pick up "stale" data if the data was written out before the pointer itself
- * was saved and proper write fencing was used. On one or two, like the Alpha,
- * a barrier is needed between the reads to ensure that proper cache
- * invalidation happens.
- **/
-static INLINE void smp_read_barrier_depends(void)
-{
-#if defined(__x86_64__) || defined(__PPC__) || defined(__s390__) \
-  || defined(__aarch64__)
-  // Nothing needed for these architectures.
-#else
-  // Default to playing it safe.
-  rmb();
 #endif
 }
 

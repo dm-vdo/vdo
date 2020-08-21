@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#9 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#10 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -461,6 +461,7 @@ suffix is optional""").format(options
     self._statusCommandParser = subparserAdder.add_parser(
       "status",
       parents = [self._namingOptionsParser(required = False),
+                 self._pendingOptionParser(),
                  self.__commonOptions],
       help = highLevelHelp,
       description = description)
@@ -782,6 +783,20 @@ suffix is optional""").format(options
                                                         required = required)
     self.__parserAddAllOption(parser)
     self.__parserAddNameOption(parser)
+
+    return parser
+
+  ####################################################################
+  def _pendingOptionParser(self):
+    parser = argparse.ArgumentParser(add_help = False)
+    parser.add_argument("--pending",
+                        action = "store_true",
+                        dest = "pending",
+                        help = _("""
+      Shows pending modifications that will take effect upon restart 
+      in the status report of a running VDO volume. Pending modifications are 
+      denoted with square brackets.
+                                 """))
 
     return parser
 

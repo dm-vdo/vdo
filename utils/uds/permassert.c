@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#5 $
  */
 
 #include "permassert.h"
@@ -40,93 +40,104 @@
 #include "threads.h"
 
 #ifdef DEBUGGING_OFF
-static bool exitOnAssertionFailure = false;
+static bool exit_on_assertion_failure = false;
 #else /* !DEBUGGING_OFF */
-static bool exitOnAssertionFailure = true;
+static bool exit_on_assertion_failure = true;
 #endif /* DEBUGGING_OFF */
 
-static const char *EXIT_ON_ASSERTION_FAILURE_VARIABLE
-  = "UDS_EXIT_ON_ASSERTION_FAILURE";
+static const char *EXIT_ON_ASSERTION_FAILURE_VARIABLE =
+	"UDS_EXIT_ON_ASSERTION_FAILURE";
 
-static once_state_t initOnce = ONCE_STATE_INITIALIZER;
-static struct mutex mutex    = { .mutex = MUTEX_INITIALIZER };
+static once_state_t init_once = ONCE_STATE_INITIALIZER;
+static struct mutex mutex = { .mutex = MUTEX_INITIALIZER };
 
 /**********************************************************************/
 static void initialize(void)
 {
-  initialize_mutex(&mutex, !DO_ASSERTIONS);
-  char *exitOnAssertionFailureString
-    = getenv(EXIT_ON_ASSERTION_FAILURE_VARIABLE);
-  if (exitOnAssertionFailureString != NULL) {
-    exitOnAssertionFailure
-      = (strcasecmp(exitOnAssertionFailureString, "true") == 0);
-  }
+	initialize_mutex(&mutex, !DO_ASSERTIONS);
+	char *exit_on_assertion_failure_string =
+		getenv(EXIT_ON_ASSERTION_FAILURE_VARIABLE);
+	if (exit_on_assertion_failure_string != NULL) {
+		exit_on_assertion_failure =
+			(strcasecmp(exit_on_assertion_failure_string,
+				    "true") == 0);
+	}
 }
 
 /**********************************************************************/
-bool setExitOnAssertionFailure(bool shouldExit)
+bool set_exit_on_assertion_failure(bool should_exit)
 {
-  perform_once(&initOnce, initialize);
-  lock_mutex(&mutex);
-  bool previousSetting = exitOnAssertionFailure;
-  exitOnAssertionFailure = shouldExit;
-  unlock_mutex(&mutex);
-  return previousSetting;
+	perform_once(&init_once, initialize);
+	lock_mutex(&mutex);
+	bool previous_setting = exit_on_assertion_failure;
+	exit_on_assertion_failure = should_exit;
+	unlock_mutex(&mutex);
+	return previous_setting;
 }
 
 // Here ends large block of userspace stuff.
 #endif // !__KERNEL__
 
 /**********************************************************************/
-__attribute__((format(printf, 4, 0)))
-static void handleAssertionFailure(const char *expressionString,
-                                   const char *fileName,
-                                   int         lineNumber,
-                                   const char *format,
-                                   va_list     args)
+__attribute__((format(printf, 4, 0))) static void
+handle_assertion_failure(const char *expression_string,
+			 const char *file_name,
+			 int line_number,
+			 const char *format,
+			 va_list args)
 {
-  log_embedded_message(LOG_ERR, "assertion \"", format, args,
-                       "\" (%s) failed at %s:%d",
-                       expressionString, fileName, lineNumber);
-  log_backtrace(LOG_ERR);
+	log_embedded_message(LOG_ERR,
+			     "assertion \"",
+			     format,
+			     args,
+			     "\" (%s) failed at %s:%d",
+			     expression_string,
+			     file_name,
+			     line_number);
+	log_backtrace(LOG_ERR);
 
 #ifndef __KERNEL__
-  perform_once(&initOnce, initialize);
-  lock_mutex(&mutex);
-  if (exitOnAssertionFailure) {
-    __assert_fail(expressionString, fileName, lineNumber, __ASSERT_FUNCTION);
-  }
-  unlock_mutex(&mutex);
+	perform_once(&init_once, initialize);
+	lock_mutex(&mutex);
+	if (exit_on_assertion_failure) {
+		__assert_fail(expression_string,
+			      file_name,
+			      line_number,
+			      __ASSERT_FUNCTION);
+	}
+	unlock_mutex(&mutex);
 #endif // !__KERNEL__
 }
 
 /*****************************************************************************/
-int assertionFailed(const char *expressionString,
-                    int         code,
-                    const char *fileName,
-                    int         lineNumber,
-                    const char *format,
-                    ...)
+int assertion_failed(const char *expression_string,
+		     int code,
+		     const char *file_name,
+		     int line_number,
+		     const char *format,
+		     ...)
 {
-  va_list args;
-  va_start(args, format);
-  handleAssertionFailure(expressionString, fileName, lineNumber, format, args);
-  va_end(args);
+	va_list args;
+	va_start(args, format);
+	handle_assertion_failure(
+		expression_string, file_name, line_number, format, args);
+	va_end(args);
 
-  return code;
+	return code;
 }
 
 /*****************************************************************************/
-int assertionFailedLogOnly(const char *expressionString,
-                           const char *fileName,
-                           int         lineNumber,
-                           const char *format,
-                           ...)
+int assertion_failed_log_only(const char *expression_string,
+			      const char *file_name,
+			      int line_number,
+			      const char *format,
+			      ...)
 {
-  va_list args;
-  va_start(args, format);
-  handleAssertionFailure(expressionString, fileName, lineNumber, format, args);
-  va_end(args);
+	va_list args;
+	va_start(args, format);
+	handle_assertion_failure(
+		expression_string, file_name, line_number, format, args);
+	va_end(args);
 
-  return UDS_ASSERTION_FAILED;
+	return UDS_ASSERTION_FAILED;
 }

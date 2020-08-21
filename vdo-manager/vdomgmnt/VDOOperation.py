@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#7 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#8 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -597,7 +597,7 @@ class StatusOperation(VDOOperation):
       perVdoStatus = { _("VDOs") : vdos }
       for vdo in self.getVdoServices(args, conf):
         try:
-          vdos[vdo.getName()] = vdo.status()
+          vdos[vdo.getName()] = vdo.status(args.pending)
         except VDOServiceError as ex:
           vdos[vdo.getName()] = str(ex)
 

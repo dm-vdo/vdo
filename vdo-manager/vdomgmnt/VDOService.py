@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#22 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#23 $
 
 """
 from __future__ import absolute_import
@@ -159,6 +159,7 @@ class VDOService(Service):
   # Access the per-VDO info.
   vdoAckThreadsKey           = _("Acknowledgement threads")
   vdoBioSubmitThreadsKey     = _("Bio submission threads")
+  vdoBioRotationIntervalKey  = _("Bio rotation interval")
   vdoBlockMapCacheSizeKey    = _("Block map cache size")
   vdoBlockMapPeriodKey       = _("Block map period")
   vdoBlockSizeKey            = _("Block size")
@@ -693,7 +694,7 @@ class VDOService(Service):
       raise
 
   ######################################################################
-  def status(self):
+  def status(self, pending=False):
     """Returns a dictionary representing the status of this object.
     """
     self._handlePreviousOperationFailure()
@@ -743,6 +744,10 @@ class VDOService(Service):
     # match the config file
     if self.running():
       self._getStatusFromDmsetupTable(status)
+      
+      # Add pending modifications, if applicable.
+      if pending:
+        self._getPendingChanges(status)
     else:
       self._getStatusFromConfig(status)
 
@@ -1840,7 +1845,7 @@ class VDOService(Service):
     statusDict[self.vdoMaxDiscardSizeKey] = _("non-existent") 
     statusDict[self.vdoAckThreadsKey] = _("non-existent") 
     statusDict[self.vdoBioSubmitThreadsKey] = _("non-existent") 
-    statusDict[ ("Bio rotation interval")] = _("non-existent") 
+    statusDict[self.vdoBioRotationIntervalKey] = _("non-existent") 
     statusDict[self.vdoCpuThreadsKey] = _("non-existent") 
     statusDict[self.vdoHashZoneThreadsKey] = _("non-existent") 
     statusDict[self.vdoLogicalThreadsKey] = _("non-existent") 
@@ -1863,7 +1868,7 @@ class VDOService(Service):
     if "bio" in dmTable:
       statusDict[self.vdoBioSubmitThreadsKey] = dmTable["bio"]
     if "bioRotationInterval" in dmTable:
-      statusDict[_("Bio rotation interval")] = dmTable[(
+      statusDict[self.vdoBioRotationIntervalKey] = dmTable[(
                                                 "bioRotationInterval")]
     if "cpu" in dmTable:
       statusDict[self.vdoCpuThreadsKey] = dmTable["cpu"]
@@ -1888,7 +1893,7 @@ class VDOService(Service):
     statusDict[self.vdoMaxDiscardSizeKey] = str(self.maxDiscardSize)
     statusDict[self.vdoAckThreadsKey] = self.ackThreads
     statusDict[self.vdoBioSubmitThreadsKey] = self.bioThreads
-    statusDict[_("Bio rotation interval")] = self.bioRotationInterval
+    statusDict[self.vdoBioRotationIntervalKey] = self.bioRotationInterval
     statusDict[self.vdoCpuThreadsKey] = self.cpuThreads
     statusDict[self.vdoHashZoneThreadsKey] = self.hashZoneThreads
     statusDict[self.vdoLogicalThreadsKey] = self.logicalThreads
@@ -1926,7 +1931,43 @@ class VDOService(Service):
     # Create dictionary from dmsetup table output
     dmTable = dict(zip(tableOrder, tableItems))
     return dmTable
+
+  ######################################################################
+  def _getPendingChanges(self, statusDict):
+    """Updates the input status dictionary with pending changes to modifiable
+    parameters for the running device.
+    """
+    # Map the modifiable options to their statusDict keys
+    # Option 'uuid' is intentionally excluded, as it cannot be modified on a 
+    # running vdo volume
+    optionToStatusKeys = { 
+      'blockMapCacheSize'      : self.vdoBlockMapCacheSizeKey,
+      'blockMapPeriod'         : self.vdoBlockMapPeriodKey,
+      'maxDiscardSize'         : self.vdoMaxDiscardSizeKey,
+      'vdoAckThreads'          : self.vdoAckThreadsKey,
+      'vdoBioRotationInterval' : self.vdoBioRotationIntervalKey,
+      'vdoBioThreads'          : self.vdoBioSubmitThreadsKey,
+      'vdoCpuThreads'          : self.vdoCpuThreadsKey,
+      'vdoHashZoneThreads'     : self.vdoHashZoneThreadsKey,
+      'vdoLogicalThreads'      : self.vdoLogicalThreadsKey,
+      'vdoPhysicalThreads'     : self.vdoPhysicalThreadsKey }
     
+    # Loop through modifiable options and compare config file values to 
+    # the device values
+    for option in self.modifiableOptions:
+      if option not in optionToStatusKeys:
+        continue
+      if optionToStatusKeys[option] not in statusDict:
+        continue
+      
+      configValue = getattr(self, self.modifiableOptions[option], None)
+      statusValue = str(statusDict[optionToStatusKeys[option]])
+      
+      if configValue is not None and (str(configValue) != statusValue):
+        # Add pending change to statusDict information for the parameter
+        pendingValue = "{0}[{1}]".format("    ", str(configValue))
+        statusDict[optionToStatusKeys[option]] = statusValue + pendingValue
+
   ######################################################################
   def _hasHolders(self):
     """Tests whether other devices are holding the VDO device open. This
