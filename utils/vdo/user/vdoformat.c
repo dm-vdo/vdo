@@ -294,8 +294,12 @@ static int checkForSignaturesUsingBlkid(const char *filename, bool force)
 				    BLKID_SUBLKS_TYPE |
 				    BLKID_SUBLKS_USAGE |
 				    BLKID_SUBLKS_VERSION |
+#if defined (BLKID_SUBLKS_BADCSUM)
 				    BLKID_SUBLKS_MAGIC |
 				    BLKID_SUBLKS_BADCSUM);
+#else
+				    BLKID_SUBLKS_MAGIC );
+#endif
 
   Buffer *buffer = NULL;
   result = makeBuffer(0, &buffer);
