@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#19 $
+.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#20 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -414,6 +414,7 @@ require root privileges though information will be incomplete if run without.
 Applicable options include:
 .startOptionList
 \*[targetSpec]
+\-\-pending
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -629,6 +630,11 @@ a multiple of \*[maxDiscardSize]. \*[lvmOptionalSuffix]. If no suffix
 is supplied, the value will be interpreted as \*[lvmUnitsDefault].
 The value must be at least \*[maxDiscardSizeMin] and less than
 \*[maxDiscardSizeMaxPlusOne]. The default is \*[maxDiscardSize].
+.TP
+.B \-\-pending
+Shows pending modifications that will take effect upon restart 
+in the status report of a running VDO volume. Pending modifications are 
+denoted with square brackets.
 .TP
 .B \-\-sparseIndex=\*[bool]
 Enables sparse indexing. The default is \*[sparseIndexDefault].
