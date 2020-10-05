@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#17 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/physicalLayer.c#18 $
  */
 
 #include "physicalLayer.h"
@@ -40,7 +40,7 @@ crc32_checksum_t update_crc32(crc32_checksum_t  crc,
 // tools, but still necessary to link against physical layer functions.
 
 /**********************************************************************/
-thread_id_t getCallbackThreadID(void)
+thread_id_t get_callback_thread_id(void)
 {
   ASSERT_LOG_ONLY(false, "Stubs are never called");
   return -1;
