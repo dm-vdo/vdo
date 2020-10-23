@@ -184,14 +184,14 @@ _vdo()
     COMPREPLY=( $( compgen -W '
     activate changeWritePolicy create deactivate disableCompression
     disableDeduplication enableCompression enableDeduplication growLogical
-    growPhysical list modify printConfigFile remove start status
-	stop' -- "$cur" ) )
+    growPhysical import list modify printConfigFile remove start status
+    stop version' -- "$cur" ) )
   else
     case "${words[1]}" in
       activate|changeWritePolicy|create|deactivate|disableCompression|\
       disableDeduplication|enableCompression|enableDeduplication|\
-      growLogical|growPhysical|list|modify|printConfigFile|remove|\
-      start|status|stop)
+      growLogical|growPhysical|import|list|modify|printConfigFile|remove|\
+      start|status|stop|version)
 	   _generic_function ${words[1]}
       ;;
     esac
