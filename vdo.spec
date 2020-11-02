@@ -22,8 +22,10 @@ ExcludeArch: ppc64
 ExcludeArch: ppc64le
 ExcludeArch: aarch64
 ExcludeArch: i686
+BuildRequires: device-mapper-devel
 BuildRequires: device-mapper-event-devel
 BuildRequires: gcc
+BuildRequires: libblkid-devel
 BuildRequires: libuuid-devel
 BuildRequires: make
 BuildRequires: python3
