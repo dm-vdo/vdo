@@ -66,6 +66,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %files
 #defattr(-,root,root)
 %{_bindir}/vdo
+%{_bindir}/vdo-by-dev
 %{_bindir}/vdostats
 %{_bindir}/vdodmeventd
 %{_bindir}/vdodumpconfig
@@ -112,6 +113,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python3_sitelib}/%{name}/utils/__init__.py
 %{python3_sitelib}/%{name}/utils/__pycache__/*
 %{_unitdir}/vdo.service
+%{_unitdir}/vdo-start-by-dev@.service
 %{_presetdir}/97-vdo.preset
 %dir %{_defaultdocdir}/%{name}
 %license %{_defaultdocdir}/%{name}/COPYING
@@ -137,6 +139,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %dir %{_sysconfdir}/bash_completion.d
 %{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats
+%{_sysconfdir}/udev/rules.d/69-vdo-start-by-dev.rules
 
 %package support
 Summary: Support tools for Virtual Data Optimizer
@@ -174,4 +177,4 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Thu Oct 29 2020 - corwin@bf30-1 - 8.1.0.0-1
+* Mon Nov 02 2020 - corwin@bf30-1 - 8.1.0.0-1
