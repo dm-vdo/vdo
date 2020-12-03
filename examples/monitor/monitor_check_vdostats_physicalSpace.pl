@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
