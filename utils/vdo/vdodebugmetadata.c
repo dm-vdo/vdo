@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#47 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#48 $
  */
 
 #include <err.h>
@@ -429,8 +429,8 @@ static void readMetadata(void)
 
   for (block_count_t i = 0; i < config->recovery_journal_size; i++) {
     UnpackedJournalBlock *block = &recoveryJournal[i];
-    union packed_journal_header *packedHeader
-      = (union packed_journal_header *) &rawJournalBytes[i * VDO_BLOCK_SIZE];
+    struct packed_journal_header *packedHeader
+      = (struct packed_journal_header *) &rawJournalBytes[i * VDO_BLOCK_SIZE];
     unpack_recovery_block_header(packedHeader, &block->header);
     for (uint8_t sector = 1; sector < SECTORS_PER_BLOCK; sector++) {
       block->sectors[sector] = get_journal_block_sector(packedHeader, sector);
