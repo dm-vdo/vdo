@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#48 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#49 $
  */
 
 #include <err.h>
@@ -469,8 +469,8 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
       struct slab_journal_entry entry
         = decode_slab_journal_entry(block, entryIndex);
       if (slabOffset == entry.sbn) {
-        printf("PBN %" PRIu64 " (%llu, %d) %s\n",
-               pbn, __le64_to_cpu(block->header.sequence_number),
+        printf("PBN %" PRIu64 " (%" PRIu64 ", %d) %s\n",
+               pbn, (uint64_t) __le64_to_cpu(block->header.sequence_number),
                entryIndex, get_journal_operation_name(entry.operation));
       }
     }
