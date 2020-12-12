@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#49 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#50 $
  */
 
 #include <err.h>
@@ -462,8 +462,9 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
   for (block_count_t i = 0; i < depot.slab_config.slab_journal_blocks; i++) {
     struct packed_slab_journal_block *block
       = slabs[slabNumber].slabJournalBlocks[i];
-    JournalEntryCount entryCount = __le16_to_cpu(block->header.entry_count);
-    for (JournalEntryCount entryIndex = 0;
+    journal_entry_count_t entryCount
+      = __le16_to_cpu(block->header.entry_count);
+    for (journal_entry_count_t entryIndex = 0;
          entryIndex < entryCount;
          entryIndex++) {
       struct slab_journal_entry entry
@@ -534,7 +535,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
     for (sector_count_t j = 1; j < SECTORS_PER_BLOCK; j++) {
       const struct packed_journal_sector *sector = block.sectors[j];
 
-      for (JournalEntryCount k = 0; k < sector->entry_count; k++) {
+      for (journal_entry_count_t k = 0; k < sector->entry_count; k++) {
         struct recovery_journal_entry entry
           = unpack_recovery_journal_entry(&sector->entries[k]);
 
