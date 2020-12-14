@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#44 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#45 $
  */
 
 #include <err.h>
@@ -423,8 +423,8 @@ static void reportRefCount(SlabAudit         *audit,
                            slab_block_number  sbn,
                            bool               treePage,
                            bool               pristine,
-                           ReferenceCount     auditedReferences,
-                           ReferenceCount     storedReferences)
+                           vdo_refcount_t     auditedReferences,
+                           vdo_refcount_t     storedReferences)
 {
   int errorDelta = storedReferences - (int) auditedReferences;
   badRefCounts++;
@@ -471,9 +471,9 @@ verifyRefCountSector(SlabAudit                      *audit,
 {
   block_count_t allocatedCount = 0;
   for (block_count_t i = 0; i < entries; i++) {
-    slab_block_number sbn              = startingOffset + i;
-    ReferenceCount  observedReferences = audit->refCounts[sbn];
-    ReferenceCount  storedReferences   = sector->counts[i];
+    slab_block_number sbn                = startingOffset + i;
+    vdo_refcount_t    observedReferences = audit->refCounts[sbn];
+    vdo_refcount_t    storedReferences   = sector->counts[i];
 
     // If the observed reference is provisional, it is a block map tree page,
     // and there are two valid reference count values.
