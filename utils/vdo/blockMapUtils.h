@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.h#11 $
  */
 
 #ifndef BLOCK_MAP_UTILS_H
@@ -43,7 +43,7 @@ typedef int __must_check
 MappingExaminer(struct block_map_slot slot,
 		height_t height,
 		physical_block_number_t pbn,
-		BlockMappingState state);
+		enum block_mapping_state state);
 
 /**
  * Apply a mapping examiner to each mapped block map entry in a VDO.
@@ -83,7 +83,7 @@ int __must_check findLBNPage(UserVDO *vdo,
 int __must_check findLBNMapping(UserVDO *vdo,
 				logical_block_number_t lbn,
 				physical_block_number_t *pbnPtr,
-				BlockMappingState *statePtr);
+				enum block_mapping_state *statePtr);
 
 /**
  * Read a single block map page into the buffer. The page will be marked

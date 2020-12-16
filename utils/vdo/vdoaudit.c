@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#45 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#46 $
  */
 
 #include <err.h>
@@ -309,11 +309,11 @@ static int readFromLayer(physical_block_number_t  startBlock,
 /**
  * Report a problem with a block map entry.
  **/
-static void reportBlockMapEntry(const char              *message,
-                                struct block_map_slot    slot,
-                                height_t                 height,
-                                physical_block_number_t  pbn,
-                                BlockMappingState        state)
+static void reportBlockMapEntry(const char               *message,
+                                struct block_map_slot     slot,
+                                height_t                  height,
+                                physical_block_number_t   pbn,
+                                enum block_mapping_state  state)
 {
   badBlockMappings++;
   if (!verbose) {
@@ -336,10 +336,10 @@ static void reportBlockMapEntry(const char              *message,
  *
  * Implements MappingExaminer.
  **/
-static int examineBlockMapEntry(struct block_map_slot   slot,
-                                height_t                height,
-                                physical_block_number_t pbn,
-                                BlockMappingState       state)
+static int examineBlockMapEntry(struct block_map_slot    slot,
+                                height_t                 height,
+                                physical_block_number_t  pbn,
+                                enum block_mapping_state state)
 {
   if (state == MAPPING_STATE_UNMAPPED) {
     if (pbn != ZERO_BLOCK) {

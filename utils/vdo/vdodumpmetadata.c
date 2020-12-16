@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#33 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#34 $
  */
 
 #include <err.h>
@@ -215,10 +215,10 @@ static int zeroBlock(void)
  *
  * Implements MappingExaminer.
  **/
-static int copyPage(struct block_map_slot   slot __attribute__((unused)),
-                    height_t                height,
-                    physical_block_number_t pbn,
-                    BlockMappingState       state)
+static int copyPage(struct block_map_slot    slot __attribute__((unused)),
+                    height_t                 height,
+                    physical_block_number_t  pbn,
+                    enum block_mapping_state state)
 {
   if ((height == 0) || !isValidDataBlock(vdo, pbn)
       || (state == MAPPING_STATE_UNMAPPED)) {

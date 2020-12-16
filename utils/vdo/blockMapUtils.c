@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#27 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#28 $
  */
 
 #include "blockMapUtils.h"
@@ -136,11 +136,11 @@ int examineBlockMapEntries(UserVDO *vdo, MappingExaminer *examiner)
  *
  * @return VDO_SUCCESS or an error
  **/
-static int readSlotFromPage(UserVDO                 *vdo,
-                            physical_block_number_t  pbn,
-                            slot_number_t            slot,
-                            physical_block_number_t *mappedPBNPtr,
-                            BlockMappingState       *mappedStatePtr)
+static int readSlotFromPage(UserVDO                  *vdo,
+                            physical_block_number_t   pbn,
+                            slot_number_t             slot,
+                            physical_block_number_t  *mappedPBNPtr,
+                            enum block_mapping_state *mappedStatePtr)
 {
   struct block_map_page *page;
   int result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
@@ -198,7 +198,7 @@ int findLBNPage(UserVDO                 *vdo,
 
   physical_block_number_t pbn = map->root_origin + rootIndex;
   for (int i = BLOCK_MAP_TREE_HEIGHT - 1; i > 0; i--) {
-    BlockMappingState state;
+    enum block_mapping_state state;
     int result = readSlotFromPage(vdo, pbn, slots[i], &pbn, &state);
     if ((result != VDO_SUCCESS) || (pbn == ZERO_BLOCK)
         || (state == MAPPING_STATE_UNMAPPED)) {
@@ -212,10 +212,10 @@ int findLBNPage(UserVDO                 *vdo,
 }
 
 /**********************************************************************/
-int findLBNMapping(UserVDO                 *vdo,
-                   logical_block_number_t   lbn,
-                   physical_block_number_t *pbnPtr,
-                   BlockMappingState       *statePtr)
+int findLBNMapping(UserVDO                  *vdo,
+                   logical_block_number_t    lbn,
+                   physical_block_number_t  *pbnPtr,
+                   enum block_mapping_state *statePtr)
 {
   physical_block_number_t pagePBN;
   int result = findLBNPage(vdo, lbn, &pagePBN);

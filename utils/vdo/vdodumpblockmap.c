@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#15 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#16 $
  */
 
 #include <err.h>
@@ -117,8 +117,8 @@ static int processDumpArgs(int argc, char *argv[], char **filename)
 /**********************************************************************/
 static int dumpLBN(void)
 {
-  physical_block_number_t pbn;
-  BlockMappingState       state;
+  physical_block_number_t  pbn;
+  enum block_mapping_state state;
   int result = findLBNMapping(vdo, lbn, &pbn, &state);
   if (result != VDO_SUCCESS) {
     warnx("Could not read mapping for lbn %" PRIu64, lbn);
@@ -149,10 +149,10 @@ static int dumpLBN(void)
  *
  * Implements MappingExaminer.
  **/
-static int dumpBlockMapEntry(struct block_map_slot   slot,
-                             height_t                height,
-                             physical_block_number_t pbn,
-                             BlockMappingState       state)
+static int dumpBlockMapEntry(struct block_map_slot    slot,
+                             height_t                 height,
+                             physical_block_number_t  pbn,
+                             enum block_mapping_state state)
 {
   if ((state != MAPPING_STATE_UNMAPPED) || (pbn != ZERO_BLOCK)) {
     printf("PBN %" PRIu64 "\t slot %u\t height %u\t"
