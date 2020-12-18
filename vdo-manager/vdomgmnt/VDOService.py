@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#23 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#24 $
 
 """
 from __future__ import absolute_import
@@ -1221,7 +1221,6 @@ class VDOService(Service):
                                               Defaults.logicalThreads)
     self.maxDiscardSize = self._defaultIfNone(kw, 'maxDiscardSize',
                                               Defaults.maxDiscardSize)
-    self.mdRaid5Mode = Defaults.mdRaid5Mode
     self.physicalSize = SizeString("0")
     self.physicalThreads = self._defaultIfNone(kw, 'vdoPhysicalThreads',
                                                Defaults.physicalThreads)
@@ -1583,11 +1582,11 @@ class VDOService(Service):
                                   "logical", str(self.logicalThreads),
                                   "physical", str(self.physicalThreads)])
     arguments = ["0", str(numSectors), Defaults.vdoTargetName,
-                 "V2", self.device,
+                 "V3", self.device,
                  str(self._getVDOConfigFromVDO()['physicalBlocks']),
                  str(self.logicalBlockSize),
                  str(cachePages), str(self.blockMapPeriod),
-                 self.mdRaid5Mode, self.writePolicy,
+                 self.writePolicy,
                  self._name,
                  "maxDiscard", str(maxDiscardBlocks),
                  threadCountConfig]
@@ -1613,7 +1612,7 @@ class VDOService(Service):
     # Parse the existing table.
     tableOrder = ("logicalStart numSectors targetName version storagePath"
                   + " storageSize blockSize cacheBlocks blockMapPeriod"
-                  + " mdRaid5Mode writePolicy poolName")
+                  + " writePolicy poolName")
 
     tableOrderItems = tableOrder.split(" ")
     tableItems = table.split(" ")
@@ -1915,7 +1914,7 @@ class VDOService(Service):
     # Parse the existing table required and optional parameters
     tableOrder = ("logicalStart numSectors targetName version"
                   + " storagePath storageSize blockSize cacheBlocks"
-                  + " blockMapPeriod mdRaid5Mode writePolicy poolName")
+                  + " blockMapPeriod writePolicy poolName")
     tableOrder= tableOrder.split(" ")
     tableItems = table.split(" ")
     tableOptionalItems = tableItems[len(tableOrder):]

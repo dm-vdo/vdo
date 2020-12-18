@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#5 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#6 $
 
 """
 from __future__ import absolute_import
@@ -92,7 +92,6 @@ class Defaults(object):
   maxDiscardSize = SizeString("4K")
   maxDiscardSizeMaxPlusOne = SizeString("4G");
   maxDiscardSizeMin = SizeString("4K");
-  mdRaid5Mode = 'on'
   physicalThreadOverheadMB = 10  # MB
   physicalThreads = 1
   physicalThreadsMax = 16
