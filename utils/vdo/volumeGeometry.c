@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#28 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#29 $
  */
 
 #include "volumeGeometry.h"
@@ -74,11 +74,11 @@ static const release_version_number_t COMPATIBLE_RELEASE_VERSIONS[] = {
  **/
 static inline bool is_loadable_release_version(release_version_number_t version)
 {
+	unsigned int i;
 	if (version == CURRENT_RELEASE_VERSION_NUMBER) {
 		return true;
 	}
 
-	unsigned int i;
 	for (i = 0; i < COUNT_OF(COMPATIBLE_RELEASE_VERSIONS); i++) {
 		if (version == COMPATIBLE_RELEASE_VERSIONS[i]) {
 			return true;
@@ -100,18 +100,18 @@ static int decode_index_config(struct buffer *buffer,
 			       struct index_config *config)
 {
 	uint32_t mem;
+	uint32_t checkpoint_frequency;
+	bool sparse;
 	int result = get_uint32_le_from_buffer(buffer, &mem);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	uint32_t checkpoint_frequency;
 	result = get_uint32_le_from_buffer(buffer, &checkpoint_frequency);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	bool sparse;
 	result = get_boolean(buffer, &sparse);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -160,13 +160,13 @@ static int encode_index_config(const struct index_config *config,
 static int decode_volume_region(struct buffer *buffer,
 				struct volume_region *region)
 {
+	physical_block_number_t start_block;
 	volume_region_id id;
 	int result = get_uint32_le_from_buffer(buffer, &id);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	physical_block_number_t start_block;
 	result = get_uint64_le_from_buffer(buffer, &start_block);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -210,12 +210,13 @@ static int decode_volume_geometry(struct buffer *buffer,
 				  struct volume_geometry *geometry)
 {
 	release_version_number_t release_version;
+	volume_region_id id;
+	nonce_t nonce;
 	int result = get_uint32_le_from_buffer(buffer, &release_version);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	nonce_t nonce;
 	result = get_uint64_le_from_buffer(buffer, &nonce);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -229,7 +230,6 @@ static int decode_volume_geometry(struct buffer *buffer,
 		return result;
 	}
 
-	volume_region_id id;
 	for (id = 0; id < VOLUME_REGION_COUNT; id++) {
 		result = decode_volume_region(buffer, &geometry->regions[id]);
 		if (result != VDO_SUCCESS) {
@@ -289,16 +289,18 @@ static int encode_volume_geometry(const struct volume_geometry *geometry,
 static int decode_geometry_block(struct buffer *buffer,
 				 struct volume_geometry *geometry)
 {
+	int result;
+	struct header header;
+
 	if (!has_same_bytes(buffer, MAGIC_NUMBER, MAGIC_NUMBER_SIZE)) {
 		return VDO_BAD_MAGIC;
 	}
 
-	int result = skip_forward(buffer, MAGIC_NUMBER_SIZE);
+	result = skip_forward(buffer, MAGIC_NUMBER_SIZE);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	struct header header;
 	result = decode_header(buffer, &header);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -366,13 +368,13 @@ static int encode_geometry_block(const struct volume_geometry *geometry,
  **/
 static int read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
 {
+	char *block;
 	int result =
 		ASSERT(layer->reader != NULL, "Layer must have a sync reader");
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	char *block;
 	result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
 					 "geometry block", &block);
 	if (result != VDO_SUCCESS) {
@@ -392,13 +394,14 @@ static int read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
 /**********************************************************************/
 int load_volume_geometry(PhysicalLayer *layer, struct volume_geometry *geometry)
 {
+	crc32_checksum_t checksum, saved_checksum;
 	byte *block;
+	struct buffer *buffer;
 	int result = read_geometry_block(layer, &block);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	struct buffer *buffer;
 	result = wrap_buffer(block, VDO_BLOCK_SIZE, VDO_BLOCK_SIZE, &buffer);
 	if (result != VDO_SUCCESS) {
 		FREE(block);
@@ -413,9 +416,8 @@ int load_volume_geometry(PhysicalLayer *layer, struct volume_geometry *geometry)
 	}
 
 	// Checksum everything decoded so far.
-	crc32_checksum_t checksum = update_crc32(INITIAL_CHECKSUM, block,
-						 uncompacted_amount(buffer));
-	crc32_checksum_t saved_checksum;
+	checksum = update_crc32(INITIAL_CHECKSUM, block,
+				uncompacted_amount(buffer));
 	result = get_uint32_le_from_buffer(buffer, &saved_checksum);
 	if (result != VDO_SUCCESS) {
 		free_buffer(&buffer);
@@ -441,6 +443,8 @@ int load_volume_geometry(PhysicalLayer *layer, struct volume_geometry *geometry)
 int compute_index_blocks(const struct index_config *index_config,
 			 block_count_t *index_blocks_ptr)
 {
+	uint64_t index_bytes;
+	block_count_t index_blocks;
 	struct uds_configuration *uds_configuration = NULL;
 	int result = index_config_to_uds_configuration(index_config,
 						       &uds_configuration);
@@ -449,7 +453,6 @@ int compute_index_blocks(const struct index_config *index_config,
 					  "error creating index config");
 	}
 
-	uint64_t index_bytes;
 	result = uds_compute_index_size(uds_configuration, 0, &index_bytes);
 	uds_free_configuration(uds_configuration);
 	if (result != UDS_SUCCESS) {
@@ -457,7 +460,7 @@ int compute_index_blocks(const struct index_config *index_config,
 					  "error computing index size");
 	}
 
-	block_count_t index_blocks = index_bytes / VDO_BLOCK_SIZE;
+	index_blocks = index_bytes / VDO_BLOCK_SIZE;
 	if ((((uint64_t) index_blocks) * VDO_BLOCK_SIZE) != index_bytes) {
 		return log_error_strerror(VDO_PARAMETER_MISMATCH,
 					  "index size must be a multiple of block size %d",
@@ -526,13 +529,15 @@ int write_volume_geometry(PhysicalLayer *layer,
 			  struct volume_geometry *geometry)
 {
 	char *block;
+	struct buffer *buffer;
+	crc32_checksum_t checksum;
+
 	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
 					     "geometry block", &block);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	struct buffer *buffer;
 	result = wrap_buffer((byte *) block, VDO_BLOCK_SIZE, 0, &buffer);
 	if (result != VDO_SUCCESS) {
 		FREE(block);
@@ -547,9 +552,8 @@ int write_volume_geometry(PhysicalLayer *layer,
 	}
 
 	// Checksum everything encoded so far and then encode the checksum.
-	crc32_checksum_t checksum = update_crc32(INITIAL_CHECKSUM,
-						 (byte *) block,
-						 content_length(buffer));
+	checksum = update_crc32(INITIAL_CHECKSUM, (byte *) block,
+				content_length(buffer));
 	result = put_uint32_le_into_buffer(buffer, checksum);
 	if (result != VDO_SUCCESS) {
 		free_buffer(&buffer);
