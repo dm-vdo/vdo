@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#29 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#30 $
  */
 
 #include "volumeGeometry.h"
@@ -251,6 +251,7 @@ static int decode_volume_geometry(struct buffer *buffer,
 static int encode_volume_geometry(const struct volume_geometry *geometry,
 				  struct buffer *buffer)
 {
+	volume_region_id id;
 	int result = put_uint32_le_into_buffer(buffer, geometry->release_version);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -266,7 +267,6 @@ static int encode_volume_geometry(const struct volume_geometry *geometry,
 		return result;
 	}
 
-	volume_region_id id;
 	for (id = 0; id < VOLUME_REGION_COUNT; id++) {
 		result = encode_volume_region(&geometry->regions[id], buffer);
 		if (result != VDO_SUCCESS) {
