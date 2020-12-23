@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#30 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#31 $
  */
 
 #include "volumeGeometry.h"
@@ -369,14 +369,18 @@ static int encode_geometry_block(const struct volume_geometry *geometry,
 static int read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
 {
 	char *block;
-	int result =
-		ASSERT(layer->reader != NULL, "Layer must have a sync reader");
+	int result;
+#ifdef __KERNEL__
+	result = ALLOCATE(VDO_BLOCK_SIZE, char, "geometry block", &block);
+#else
+	result = ASSERT(layer->reader != NULL, "Layer must have a sync reader");
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
 	result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
 					 "geometry block", &block);
+#endif // __KERNEL__
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
