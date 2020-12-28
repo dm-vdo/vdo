@@ -687,7 +687,7 @@ static int readIndexSaveData(BufferedReader  *reader,
 
     if (saveData->version > 1) {
       return logErrorWithStringError(UDS_UNSUPPORTED_VERSION,
-                                     "unkown index save verion number %"
+                                     "unknown index save version number %"
                                      PRIu32,
                                      saveData->version);
     }

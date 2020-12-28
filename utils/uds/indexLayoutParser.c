@@ -42,7 +42,7 @@ static int setParameterValue(LayoutParameter *lp, char *data)
     *lp->value.str = data;
   } else {
     return logErrorWithStringError(UDS_INVALID_ARGUMENT,
-                                   "unkown LayoutParameter type code %x",
+                                   "unknown LayoutParameter type code %x",
                                    (lp->type & LP_TYPE_MASK));
   }
   return UDS_SUCCESS;
@@ -81,7 +81,7 @@ int parseLayoutString(char *info, LayoutParameter *params, size_t count)
       }
       if (lp == NULL) {
         return logErrorWithStringError(UDS_INDEX_NAME_REQUIRED,
-                                       "unkown index parameter %s",
+                                       "unknown index parameter %s",
                                        token);
       }
       if (lp->seen) {

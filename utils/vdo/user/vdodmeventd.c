@@ -91,7 +91,7 @@ static struct dm_event_handler *createEventHandler(const char *devName,
 
   struct dm_event_handler *dmevh = dm_event_handler_create();
   if (dmevh == NULL) {
-    logError("Failure to create event hander");
+    logError("Failure to create event handler");
     return NULL;
   }
 

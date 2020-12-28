@@ -515,7 +515,7 @@ void freeRecoveryJournal(RecoveryJournal **journalPtr)
                     "journal being freed has no active tail blocks");
   } else if (!isSaved(&journal->state)
              && !isRingEmpty(&journal->activeTailBlocks)) {
-    logWarning("journal being freed has uncommited entries");
+    logWarning("journal being freed has uncommitted entries");
   }
 
   RecoveryJournalBlock *block;
