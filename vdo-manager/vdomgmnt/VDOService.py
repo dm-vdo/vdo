@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#24 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#25 $
 
 """
 from __future__ import absolute_import
@@ -1587,7 +1587,6 @@ class VDOService(Service):
                  str(self.logicalBlockSize),
                  str(cachePages), str(self.blockMapPeriod),
                  self.writePolicy,
-                 self._name,
                  "maxDiscard", str(maxDiscardBlocks),
                  threadCountConfig]
     if not self.enableDeduplication:
@@ -1612,7 +1611,7 @@ class VDOService(Service):
     # Parse the existing table.
     tableOrder = ("logicalStart numSectors targetName version storagePath"
                   + " storageSize blockSize cacheBlocks blockMapPeriod"
-                  + " writePolicy poolName")
+                  + " writePolicy")
 
     tableOrderItems = tableOrder.split(" ")
     tableItems = table.split(" ")
@@ -1914,7 +1913,7 @@ class VDOService(Service):
     # Parse the existing table required and optional parameters
     tableOrder = ("logicalStart numSectors targetName version"
                   + " storagePath storageSize blockSize cacheBlocks"
-                  + " blockMapPeriod writePolicy poolName")
+                  + " blockMapPeriod writePolicy")
     tableOrder= tableOrder.split(" ")
     tableItems = table.split(" ")
     tableOptionalItems = tableItems[len(tableOrder):]
