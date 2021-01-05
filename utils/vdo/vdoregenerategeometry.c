@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#11 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#12 $
  */
 
 #include <err.h>
@@ -258,7 +258,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
       return false;
     }
 
-    block_map_page_validity validity
+    enum block_map_page_validity validity
       = validate_block_map_page((struct block_map_page *) blockBuffer,
                                 candidate->vdo->states.vdo.nonce,
                                 map.root_origin + root);
