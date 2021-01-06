@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#25 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#26 $
 
 """
 from __future__ import absolute_import
@@ -1507,8 +1507,12 @@ class VDOService(Service):
   ######################################################################
   def _determineInstanceNumber(self):
     """Determine the instance number of a running VDO using sysfs."""
-    path = "/sys/kvdo/{0}/instance".format(self.getName())
     try:
+      st = os.stat(self.getPath())
+      major = os.major(st.st_rdev)
+      minor = os.minor(st.st_rdev)
+      path = "/sys/kvdo/{major}:{minor}/instance".format(major=major,
+                                                         minor=minor)
       with open(path, "r") as f:
         self.instanceNumber = int(f.read().strip())
     except Exception as err:
