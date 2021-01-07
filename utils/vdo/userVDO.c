@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#8 $
  */
 
 #include "userVDO.h"
@@ -219,9 +219,9 @@ bool isValidDataBlock(const UserVDO *vdo, physical_block_number_t pbn)
 
 /**********************************************************************/
 const struct partition *
-getPartition(const UserVDO *vdo,
-             partition_id   id,
-             const char    *errorMessage)
+getPartition(const UserVDO     *vdo,
+             enum partition_id  id,
+             const char        *errorMessage)
 {
   struct partition *partition;
   int result = get_partition(vdo->states.layout, id, &partition);

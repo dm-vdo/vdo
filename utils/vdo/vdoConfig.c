@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#41 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#42 $
  */
 
 #include <uuid/uuid.h>
@@ -220,12 +220,12 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 /**
  * Clear a partition by writing zeros to every block in that partition.
  *
- * @param vdo           The VDO with the partition to be cleared
- * @param id            The ID of the partition to clear
+ * @param vdo  The VDO with the partition to be cleared
+ * @param id   The ID of the partition to clear
  *
  * @return VDO_SUCCESS or an error code
  **/
-static int __must_check clearPartition(UserVDO *vdo, partition_id id)
+static int __must_check clearPartition(UserVDO *vdo, enum partition_id id)
 {
   struct partition *partition;
   int result = get_partition(vdo->states.layout, id, &partition);

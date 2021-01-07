@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#7 $
  */
 
 #ifndef USER_VDO_H
@@ -170,13 +170,13 @@ isValidDataBlock(const UserVDO *vdo, physical_block_number_t pbn);
 /**
  * Get a partition from the VDO or fail with an error.
  *
- * @param vdo  The VDO
- * @param partitionID  The ID of the desired partition
- * @param errorMessage The error message if the partition does not exist
+ * @param vdo           The VDO
+ * @param id            The ID of the desired partition
+ * @param errorMessage  The error message if the partition does not exist
  **/
 const struct partition * __must_check
-getPartition(const UserVDO *vdo,
-             partition_id   id,
-             const char    *errorMessage);
+getPartition(const UserVDO     *vdo,
+             enum partition_id  id,
+             const char        *errorMessage);
 
 #endif /* USER_VDO_H */
