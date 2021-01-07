@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#42 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#43 $
  */
 
 #include <uuid/uuid.h>
@@ -347,7 +347,7 @@ int formatVDOWithNonce(const struct vdo_config   *config,
 static int __must_check
 updateVDOSuperBlockState(PhysicalLayer *layer,
                          bool requireReadOnly,
-                         VDOState newState)
+                         enum vdo_state newState)
 {
   UserVDO *vdo;
   int result = loadVDO(layer, false, &vdo);
