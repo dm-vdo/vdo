@@ -23,6 +23,8 @@ ExcludeArch: ppc64le
 ExcludeArch: aarch64
 ExcludeArch: i686
 BuildRequires: device-mapper-event-devel
+BuildRequires: device-mapper-devel
+BuildRequires: libblkid-devel
 BuildRequires: gcc
 BuildRequires: libuuid-devel
 BuildRequires: make
@@ -72,6 +74,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_bindir}/vdoforcerebuild
 %{_bindir}/vdoformat
 %{_bindir}/vdosetuuid
+%{_bindir}/vdo-by-dev
 %dir %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}/__pycache__/*
 %{python3_sitelib}/%{name}/__init__.py
@@ -112,6 +115,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python3_sitelib}/%{name}/utils/__init__.py
 %{python3_sitelib}/%{name}/utils/__pycache__/*
 %{_unitdir}/vdo.service
+%{_unitdir}/vdo-start-by-dev@.service
 %{_presetdir}/97-vdo.preset
 %dir %{_defaultdocdir}/%{name}
 %license %{_defaultdocdir}/%{name}/COPYING
@@ -137,6 +141,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %dir %{_sysconfdir}/bash_completion.d
 %{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats
+%{_sysconfdir}/udev/rules.d/69-vdo-start-by-dev.rules
 
 %package support
 Summary: Support tools for Virtual Data Optimizer
