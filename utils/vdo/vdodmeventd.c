@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#7 $
  */
 
 #include <dlfcn.h>
@@ -93,7 +93,7 @@ static struct dm_event_handler *createEventHandler(const char *devName,
 
   struct dm_event_handler *dmevh = dm_event_handler_create();
   if (dmevh == NULL) {
-    uds_log_error("Failure to create event hander");
+    uds_log_error("Failure to create event handler");
     return NULL;
   }
 
