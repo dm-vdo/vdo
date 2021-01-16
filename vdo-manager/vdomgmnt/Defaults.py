@@ -18,9 +18,9 @@
 #
 
 """
-  Defaults - manage Albireo/VDO defaults
+  Defaults - manage UDS/VDO defaults
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#6 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#7 $
 
 """
 from __future__ import absolute_import

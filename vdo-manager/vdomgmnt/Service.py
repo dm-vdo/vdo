@@ -20,7 +20,7 @@
 """
   Service - Abstract superclass for services
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Service.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Service.py#2 $
 
 """
 from __future__ import absolute_import
@@ -57,9 +57,9 @@ class ServiceError(ExitStatus, Exception):
 class Service(YAMLObject):
   """Superclass for services.
 
-  Every subclass of Service controls a service (such as an Albireo
-  index or a VDO target) managed by this command. The create/remove/
-  have methods are one-time operations that do things like 'albcreate'
+  Every subclass of Service controls a service (such as a UDS index
+  or a VDO target) managed by this command. The create/remove/have
+  methods are one-time operations that do things like 'albcreate'
   that are persistent, while start/stop/running are used to control
   the availability of the service, either manually or automatically at
   system boot and shutdown. The control commands are idempotent, and

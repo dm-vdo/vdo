@@ -20,9 +20,9 @@
 #
 
 """
-  vdoStats - Report statistics from an Albireo VDO.
+  vdoStats - Report statistics from a running VDO volume.
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdoStats#4 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdoStats#5 $
 """
 from __future__ import absolute_import
 from __future__ import division
