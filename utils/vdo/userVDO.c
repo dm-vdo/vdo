@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#9 $
  */
 
 #include "userVDO.h"
@@ -27,6 +27,7 @@
 
 #include "numUtils.h"
 #include "physicalLayer.h"
+#include "statusCodes.h"
 #include "types.h"
 #include "superBlockCodec.h"
 #include "vdoComponentStates.h"
