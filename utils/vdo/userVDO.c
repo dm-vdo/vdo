@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#10 $
  */
 
 #include "userVDO.h"
@@ -93,7 +93,6 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
   }
 
   vdo->geometry = *geometry;
-//  set_load_config_from_geometry(geometry, &vdo->load_config);
   result = loadSuperBlock(vdo);
   if (result != VDO_SUCCESS) {
     freeUserVDO(&vdo);
