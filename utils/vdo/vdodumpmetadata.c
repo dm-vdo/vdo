@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#34 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#35 $
  */
 
 #include <err.h>
@@ -183,7 +183,7 @@ static void processArgs(int argc, char *argv[])
 static int copyBlocks(physical_block_number_t startBlock, block_count_t count)
 {
   while ((count > 0)) {
-    block_count_t blocksToWrite = min_block(STRIDE_LENGTH, count);
+    block_count_t blocksToWrite = min((block_count_t) STRIDE_LENGTH, count);
     int result = vdo->layer->reader(vdo->layer, startBlock, blocksToWrite,
                                     buffer);
     if (result != VDO_SUCCESS) {

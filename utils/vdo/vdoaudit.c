@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#46 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#47 $
  */
 
 #include <err.h>
@@ -434,8 +434,8 @@ static void reportRefCount(SlabAudit         *audit,
 
   audit->badRefCounts++;
   audit->deltaCounts[errorDelta - MIN_ERROR_DELTA]++;
-  audit->firstError = min_block(audit->firstError, sbn);
-  audit->lastError  = max_block(audit->lastError, sbn);
+  audit->firstError = min(audit->firstError, sbn);
+  audit->lastError  = max(audit->lastError, sbn);
 
   if (!verbose) {
     return;
@@ -529,7 +529,8 @@ verifyRefCountBlock(SlabAudit                     *audit,
   block_count_t allocatedCount = 0;
   block_count_t entries        = blockEntries;
   for (sector_count_t i = 0; (i < SECTORS_PER_BLOCK) && (entries > 0); i++) {
-    block_count_t sectorEntries = min_block(entries, COUNTS_PER_SECTOR);
+    block_count_t sectorEntries
+      = min(entries, (block_count_t) COUNTS_PER_SECTOR);
     allocatedCount += verifyRefCountSector(audit, &block->sectors[i],
                                            sectorEntries, startingOffset);
     startingOffset += sectorEntries;
@@ -553,7 +554,7 @@ static void verifySummaryHint(slab_count_t  slabNumber,
     = slabSummaryEntries[slabNumber].fullness_hint << hintShift;
 
   block_count_t hintError = (1ULL << hintShift);
-  if ((freeBlocks < max_block(freeBlockHint, hintError) - hintError)
+  if ((freeBlocks < max(freeBlockHint, hintError) - hintError)
       || (freeBlocks >= (freeBlockHint + hintError))) {
     badSummaryHints++;
     if (verbose) {
@@ -606,7 +607,8 @@ static int verifySlab(slab_count_t slabNumber, char *buffer)
   while (remainingEntries > 0) {
     struct packed_reference_block *block
       = (struct packed_reference_block *) currentBlockStart;
-    block_count_t blockEntries = min_block(COUNTS_PER_BLOCK, remainingEntries);
+    block_count_t blockEntries
+      = min((block_count_t) COUNTS_PER_BLOCK, remainingEntries);
     block_count_t allocatedCount
       = verifyRefCountBlock(audit, block, blockEntries, currentOffset);
     freeBlocks        += (blockEntries - allocatedCount);
