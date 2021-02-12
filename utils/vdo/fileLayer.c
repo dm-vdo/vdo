@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#13 $
  */
 
 #include "fileLayer.h"
@@ -210,9 +210,8 @@ static int setupFileLayer(const char     *name,
     return result;
   }
 
-  size_t     nameLen = strlen(name);
+  size_t     nameLen = strlen(name) + 1;
   FileLayer *layer;
-
   result = ALLOCATE_EXTENDED(FileLayer, nameLen, char, "file layer", &layer);
   if (result != UDS_SUCCESS) {
     return result;
