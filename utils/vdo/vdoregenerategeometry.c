@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#13 $
  */
 
 #include <err.h>
@@ -336,8 +336,8 @@ int main(int argc, char *argv[])
          fileName, resultString(result));
   }
 
-  result = fileLayer->allocateIOBuffer(fileLayer, VDO_BLOCK_SIZE,
-                                       "block buffer", &blockBuffer);
+  result = allocateIOBuffer(fileLayer, VDO_BLOCK_SIZE, "block buffer",
+                            &blockBuffer);
   if (result != VDO_SUCCESS) {
     errx(result, "Failed to allocate block buffer: %s", resultString(result));
   }

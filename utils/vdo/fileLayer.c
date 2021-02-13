@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#14 $
  */
 
 #include "fileLayer.h"
@@ -39,6 +39,7 @@ typedef struct fileLayer {
   PhysicalLayer common;
   block_count_t blockCount;
   int           fd;
+  size_t        alignment;
   char          name[];
 } FileLayer;
 
@@ -56,24 +57,57 @@ static block_count_t getBlockCount(PhysicalLayer *header)
 }
 
 /**********************************************************************/
-static int bufferAllocator(PhysicalLayer   *header,
-                           size_t           bytes,
-                           const char      *why,
-                           char           **bufferPtr)
+static int makeAlignedBuffer(FileLayer *layer,
+                             char *buffer,
+                             size_t bytes,
+                             const char *what,
+                             char **alignedBufferPtr)
 {
-  if ((bytes % VDO_BLOCK_SIZE) != 0) {
-    return log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
-			      " a multiple of the VDO block size");
+  if ((((uintptr_t) buffer) % layer->alignment) == 0) {
+    *alignedBufferPtr = buffer;
+    return VDO_SUCCESS;
   }
 
-  FileLayer *layer = asFileLayer(header);
-  struct stat statbuf;
-  int result = logging_fstat(layer->fd, &statbuf, __func__);
-  if (result != UDS_SUCCESS) {
-    return result;
+  return allocateIOBuffer(&layer->common, bytes, what, alignedBufferPtr);
+}
+
+/**
+ * Perform an I/O using a properly aligned buffer.
+ *
+ * @param [in]     layer       The layer from which to read or write
+ * @param [in]     startBlock  The physical block number of the start of the
+ *                             extent
+ * @param [in]     blockCount  The number of blocks in the extent
+ * @param [in]     read        Wether the I/O to perform is a read
+ * @param [in/out] buffer      The buffer to read into or write from
+ *
+ * @return VDO_SUCCESS or an error code
+ **/
+static int performIO(FileLayer               *layer,
+                     physical_block_number_t  startBlock,
+                     size_t                   bytes,
+                     bool                     read,
+                     char                    *buffer)
+{
+  // Make sure we cast so we get a proper 64 bit value on the calculation
+  off_t offset = (off_t) startBlock * VDO_BLOCK_SIZE;
+  ssize_t n;
+  for (; bytes > 0; bytes -= n) {
+    n = (read
+         ? pread(layer->fd, buffer, bytes, offset)
+         : pwrite(layer->fd, buffer, bytes, offset));
+    if (n <= 0) {
+      if (n == 0) {
+        errno = VDO_UNEXPECTED_EOF;
+      }
+      return log_error_strerror(errno, "pread %s", layer->name);
+    }
+
+    offset += n;
+    buffer += n;
   }
 
-  return allocate_memory(bytes, statbuf.st_blksize, why, bufferPtr);
+  return VDO_SUCCESS;
 }
 
 /**********************************************************************/
@@ -92,23 +126,21 @@ static int fileReader(PhysicalLayer           *header,
 	    blockCount, startBlock);
 
   // Make sure we cast so we get a proper 64 bit value on the calculation
-  off_t  offset = (off_t) startBlock * VDO_BLOCK_SIZE;
-  size_t remain = blockCount * VDO_BLOCK_SIZE;
-
-  while (remain > 0) {
-    ssize_t n = pread(layer->fd, buffer, remain, offset);
-    if (n <= 0) {
-      if (n == 0) {
-        errno = VDO_UNEXPECTED_EOF;
-      }
-      return log_error_strerror(errno, "pread %s", layer->name);
-    }
-    offset += n;
-    buffer += n;
-    remain -= n;
+  char *alignedBuffer;
+  size_t bytes = VDO_BLOCK_SIZE * blockCount;
+  int   result = makeAlignedBuffer(layer, buffer, bytes, "aligned read buffer",
+                                   &alignedBuffer);
+  if (result != VDO_SUCCESS) {
+    return result;
   }
 
-  return VDO_SUCCESS;
+  result = performIO(layer, startBlock, bytes, true, alignedBuffer);
+  if (alignedBuffer != buffer) {
+    memcpy(buffer, alignedBuffer, bytes);
+    FREE(alignedBuffer);
+  }
+
+  return result;
 }
 
 /**********************************************************************/
@@ -127,20 +159,25 @@ static int fileWriter(PhysicalLayer           *header,
 	    blockCount, startBlock);
 
   // Make sure we cast so we get a proper 64 bit value on the calculation
-  off_t  offset = (off_t) startBlock * VDO_BLOCK_SIZE;
-  size_t remain = blockCount * VDO_BLOCK_SIZE;
-
-  while (remain > 0) {
-    ssize_t n = pwrite(layer->fd, buffer, remain, offset);
-    if (n < 0) {
-      return log_error_strerror(errno, "pwrite %s", layer->name);
-    }
-    offset += n;
-    buffer += n;
-    remain -= n;
+  size_t bytes = blockCount * VDO_BLOCK_SIZE;
+  char *alignedBuffer;
+  int result = makeAlignedBuffer(layer, buffer, bytes, "aligned write buffer",
+                                 &alignedBuffer);
+  if (result != VDO_SUCCESS) {
+    return result;
   }
 
-  return VDO_SUCCESS;
+  bool wasAligned = (alignedBuffer == buffer);
+  if (!wasAligned) {
+    memcpy(alignedBuffer, buffer, bytes);
+  }
+
+  result = performIO(layer, startBlock, bytes, false, alignedBuffer);
+  if (alignedBuffer != buffer) {
+    FREE(alignedBuffer);
+  }
+
+  return result;
 }
 
 /**********************************************************************/
@@ -248,6 +285,15 @@ static int setupFileLayer(const char     *name,
     return result;
   }
 
+  // Determine the block size of the file or device
+  struct stat statbuf;
+  result = logging_fstat(layer->fd, &statbuf, __func__);
+  if (result != UDS_SUCCESS) {
+    try_close_file(layer->fd);
+    FREE(layer);
+    return result;
+  }
+
   // Make sure the physical blocks == size of the block device
   block_count_t deviceBlocks;
   if (blockDevice) {
@@ -260,13 +306,6 @@ static int setupFileLayer(const char     *name,
     }
     deviceBlocks = bytes / VDO_BLOCK_SIZE;
   } else {
-    struct stat statbuf;
-    result = logging_stat(layer->name, &statbuf, __func__);
-    if (result != UDS_SUCCESS) {
-      try_close_file(layer->fd);
-      FREE(layer);
-      return result;
-    }
     deviceBlocks = statbuf.st_size / VDO_BLOCK_SIZE;
   }
 
@@ -283,12 +322,12 @@ static int setupFileLayer(const char     *name,
     return result;
   }
 
-  layer->common.destroy             = freeLayer;
-  layer->common.getBlockCount       = getBlockCount;
-  layer->common.allocateIOBuffer    = bufferAllocator;
-  layer->common.reader              = fileReader;
-  layer->common.writer              = readOnly ? noWriter : fileWriter;
-  layer->common.completeFlush       = vacuousFlush;
+  layer->alignment               = statbuf.st_blksize;
+  layer->common.destroy          = freeLayer;
+  layer->common.getBlockCount    = getBlockCount;
+  layer->common.reader           = fileReader;
+  layer->common.writer           = readOnly ? noWriter : fileWriter;
+  layer->common.completeFlush    = vacuousFlush;
 
   *layerPtr = &layer->common;
   return VDO_SUCCESS;
@@ -306,4 +345,21 @@ int makeFileLayer(const char           *name,
 int makeReadOnlyFileLayer(const char *name, PhysicalLayer **layerPtr)
 {
   return setupFileLayer(name, true, 0, layerPtr);
+}
+
+/**********************************************************************/
+int allocateIOBuffer(PhysicalLayer   *header,
+                     size_t           bytes,
+                     const char      *why,
+                     char           **bufferPtr)
+{
+  if ((bytes % VDO_BLOCK_SIZE) != 0) {
+    return log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
+			      " a multiple of the VDO block size");
+  }
+
+  return allocate_memory(bytes,
+                         asFileLayer(header)->alignment,
+                         why,
+                         bufferPtr);
 }

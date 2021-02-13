@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#43 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#44 $
  */
 
 #include <uuid/uuid.h>
@@ -244,9 +244,10 @@ static int __must_check clearPartition(UserVDO *vdo, enum partition_id id)
   }
 
   char *zeroBuffer;
-  result = vdo->layer->allocateIOBuffer(vdo->layer,
-                                        bufferBlocks * VDO_BLOCK_SIZE,
-                                        "zero buffer", &zeroBuffer);
+  result = ALLOCATE(bufferBlocks * VDO_BLOCK_SIZE,
+                    char,
+                    "zero buffer",
+                    &zeroBuffer);
   if (result != VDO_SUCCESS) {
     return result;
   }

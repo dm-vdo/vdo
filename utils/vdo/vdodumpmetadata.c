@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#35 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#36 $
  */
 
 #include <err.h>
@@ -369,8 +369,8 @@ int main(int argc, char *argv[])
 
   // Allocate buffer for copies.
   size_t copyBufferBytes = STRIDE_LENGTH * VDO_BLOCK_SIZE;
-  result = vdo->layer->allocateIOBuffer(vdo->layer, copyBufferBytes,
-                                        "copy buffer", &buffer);
+  result = allocateIOBuffer(vdo->layer, copyBufferBytes, "copy buffer",
+                            &buffer);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %zu bytes", copyBufferBytes);
   }

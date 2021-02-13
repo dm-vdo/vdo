@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#47 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#48 $
  */
 
 #include <err.h>
@@ -44,6 +44,7 @@
 #include "vdoState.h"
 
 #include "blockMapUtils.h"
+#include "fileLayer.h"
 #include "slabSummaryReader.h"
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
@@ -634,8 +635,10 @@ static int verifyPBNRefCounts(void)
   size_t refCountBytes = (slabConfig.reference_count_blocks * VDO_BLOCK_SIZE);
 
   char *buffer;
-  int result = vdo->layer->allocateIOBuffer(vdo->layer, refCountBytes,
-                                            "slab reference counts", &buffer);
+  int result = allocateIOBuffer(vdo->layer,
+                                refCountBytes,
+                                "slab reference counts",
+                                &buffer);
   if (result != VDO_SUCCESS) {
     warnx("Could not allocate %zu bytes for slab reference counts",
           refCountBytes);

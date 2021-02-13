@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#33 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#34 $
  */
 
 #include "volumeGeometry.h"
@@ -369,8 +369,7 @@ static int __must_check
 read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
 {
 	char *block;
-	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
-					     "geometry block", &block);
+	int result = ALLOCATE(VDO_BLOCK_SIZE, char, "geometry block", &block);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -513,8 +512,7 @@ int initialize_volume_geometry(nonce_t nonce,
 int clear_volume_geometry(PhysicalLayer *layer)
 {
 	char *block;
-	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
-					     "geometry block", &block);
+	int result = ALLOCATE(VDO_BLOCK_SIZE, char, "geometry block", &block);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -532,8 +530,7 @@ int write_volume_geometry(PhysicalLayer *layer,
 	struct buffer *buffer;
 	crc32_checksum_t checksum;
 
-	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
-					     "geometry block", &block);
+	int result = ALLOCATE(VDO_BLOCK_SIZE, 1, "geometry block", &block);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}

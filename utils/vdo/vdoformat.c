@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#27 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#28 $
  */
 
 #include <blkid/blkid.h>
@@ -576,8 +576,7 @@ int main(int argc, char *argv[])
 
   // Zero out the UDS superblock in case there's already a UDS there.
   char *zeroBuffer;
-  result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
-                                   "zero buffer", &zeroBuffer);
+  result = allocateIOBuffer(layer, VDO_BLOCK_SIZE, "zero buffer", &zeroBuffer);
   if (result != VDO_SUCCESS) {
     return result;
   }

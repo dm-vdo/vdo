@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#50 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#51 $
  */
 
 #include <err.h>
@@ -270,8 +270,10 @@ static int allocateState(SlabState *state)
   PhysicalLayer *layer = vdo->layer;
   for (block_count_t i = 0; i < slabConfig->reference_count_blocks; i++) {
     char *buffer;
-    result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
-                                     "reference count block", &buffer);
+    result = allocateIOBuffer(layer,
+                              VDO_BLOCK_SIZE,
+                              "reference count block",
+                              &buffer);
     if (result != VDO_SUCCESS) {
       freeState(state);
       return result;
@@ -281,8 +283,10 @@ static int allocateState(SlabState *state)
 
   for (block_count_t i = 0; i < slabConfig->slab_journal_blocks; i++) {
     char *buffer;
-    result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
-                                     "slab journal block", &buffer);
+    result = allocateIOBuffer(layer,
+                              VDO_BLOCK_SIZE,
+                              "slab journal block",
+                              &buffer);
     if (result != VDO_SUCCESS) {
       freeState(state);
       return result;
@@ -315,8 +319,10 @@ static int allocateMetadataSpace(void)
   PhysicalLayer *layer = vdo->layer;
   struct vdo_config *config = &vdo->states.vdo.config;
   size_t journalBytes = config->recovery_journal_size * VDO_BLOCK_SIZE;
-  result = layer->allocateIOBuffer(layer, journalBytes,
-                                   "recovery journal", &rawJournalBytes);
+  result = allocateIOBuffer(layer,
+                            journalBytes,
+                            "recovery journal",
+                            &rawJournalBytes);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %" PRIu64" bytes for the journal",
          journalBytes);
@@ -339,8 +345,10 @@ static int allocateMetadataSpace(void)
 
   for (block_count_t i = 0; i < get_slab_summary_size(VDO_BLOCK_SIZE); i++) {
     char *buffer;
-    result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
-                                     "slab summary block", &buffer);
+    result = allocateIOBuffer(layer,
+                              VDO_BLOCK_SIZE,
+                              "slab summary block",
+                              &buffer);
     if (result != VDO_SUCCESS) {
       errx(1, "Could not allocate slab summary block %" PRIu64, i);
     }

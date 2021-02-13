@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#11 $
  */
 
 #include "userVDO.h"
@@ -41,7 +41,7 @@ int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
     return result;
   }
 
-  result = initialize_super_block_codec(layer, &vdo->superBlockCodec);
+  result = initialize_super_block_codec(&vdo->superBlockCodec);
   if (result != VDO_SUCCESS) {
     freeUserVDO(&vdo);
     return result;
