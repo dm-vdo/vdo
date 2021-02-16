@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#8 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOOperation.py#9 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -261,30 +261,6 @@ class ActivateOperation(VDOOperation):
   ######################################################################
   def _activate(self, args, vdo):
     vdo.activate()
-
-########################################################################
-class ChangeWritePolicyOperation(VDOOperation):
-  """Implements the changeWritePolicy command."""
-
-  ######################################################################
-  # Overridden methods
-  ######################################################################
-  def __init__(self):
-    super(ChangeWritePolicyOperation, self).__init__()
-
-  ######################################################################
-  @exclusivelock
-  def execute(self, args):
-    self._newWritePolicy = getattr(args, 'writePolicy')
-    if self._newWritePolicy is None:
-      return
-    self.applyToVDOs(args, self._changeWritePolicy, readonly=False)
-
-  ######################################################################
-  # Protected methods
-  ######################################################################
-  def _changeWritePolicy(self, args, vdo):
-    vdo.setWritePolicy(self._newWritePolicy)
 
 ########################################################################
 class CreateOperation(VDOOperation):

@@ -20,7 +20,7 @@
 """
   Defaults - manage UDS/VDO defaults
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#7 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/Defaults.py#8 $
 
 """
 from __future__ import absolute_import
@@ -107,8 +107,6 @@ class Defaults(object):
   vdoLogLevelChoices = ['critical', 'error', 'warning', 'notice', 'info',
                         'debug']
   vdoTargetName = 'vdo'
-  writePolicy = 'auto'
-  writePolicyChoices = ['async', 'async-unsafe', 'sync', 'auto']
 
   ######################################################################
   # Public methods

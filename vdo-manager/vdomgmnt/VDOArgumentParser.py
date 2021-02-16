@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#10 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOArgumentParser.py#11 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -148,20 +148,6 @@ suffix is optional""").format(options
       help = highLevelHelp,
       description = description)
 
-    # changeWritePolicy command.
-    highLevelHelp = _("""
-      Modifies the write policy of one or all running VDO volumes.
-                      """)
-    description = _("""
-      {0} This command must be run with root privileges.
-                    """).format(highLevelHelp)
-    self._changeWritePolicyCommandParser = subparserAdder.add_parser(
-      "changeWritePolicy",
-      parents = [self.__namingOptions,
-                 self._writePolicyOptionParser(required = True),
-                 self.__commonOptions],
-      help = highLevelHelp,
-      description = description)
     # create command.
     highLevelHelp = _("""
       Creates a VDO volume and its associated index and makes it available.
@@ -199,7 +185,6 @@ suffix is optional""").format(options
                   self._vdoLogLevelOptionParser(),
                   self._vdoPhysicalThreadsOptionParser(),
                   self._vdoSlabSizeOptionParser(),
-                  self._writePolicyOptionParser(),
                   self.__commonOptions],
       help = highLevelHelp,
       description = description)
@@ -345,7 +330,6 @@ suffix is optional""").format(options
                   self._vdoLogicalThreadsOptionParser(),
                   self._vdoLogLevelOptionParser(),
                   self._vdoPhysicalThreadsOptionParser(),
-                  self._writePolicyOptionParser(),
                   self.__commonOptions],
       help = highLevelHelp,
       description = description)
@@ -1106,40 +1090,6 @@ suffix is optional""").format(options
                         help = _("""
       Prints commands before executing them.
                                  """))
-
-    return parser
-
-  ####################################################################
-  def _writePolicyOptionParser(self, required = False):
-    """
-    Arguments:
-      required (boolean)  - If True, no default is provided or mentioned
-                            in the help text.
-    """
-    defaultHelp = ("" if required else
-                   _("The default is {0}.").format(Defaults.writePolicy))
-
-    parser = argparse.ArgumentParser(add_help = False)
-    parser.add_argument("--writePolicy",
-                        choices =  Defaults.writePolicyChoices,
-                        default = None if required else Defaults.writePolicy,
-                        required = required,
-                        help = _("""
-      Specifies the write policy. If 'sync', writes are acknowledged only
-      after the data is guaranteed to persist. If 'async', writes are
-      acknowledged when the data has been cached for writing to the
-      underlying storage. Data which has not been flushed is not guaranteed
-      to persist in this mode, however this mode is ACID compliant (after
-      recovery from a crash any unflushed write is guaranteed either to have
-      persisted all its data, or to have done nothing). Most databases and
-      filesystems should use this mode. If 'async-unsafe', writes are handled
-      like 'async' but there is no guarantee of the above atomicity. This
-      mode should only be used for better performance when atomicity is
-      not required. If 'auto', VDO will check the underlying storage and
-      determine whether it supports flushes. If it does, VDO will run in async
-      mode, otherwise it will run in sync mode. {defaultHelp}
-                                 """)
-      .format(defaultHelp = defaultHelp))
 
     return parser
 

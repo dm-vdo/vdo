@@ -157,9 +157,6 @@ _generic_function()
           _vdo_names
         fi
     ;;
-    --writePolicy)
-    COMPREPLY=( $( compgen -W 'sync async auto' -- "$cur" ) )
-    ;;
     --activate|--compression|--deduplication|--emulate512|--sparseIndex)
     COMPREPLY=( $( compgen -W 'disabled enabled' -- "$cur" ) )
     ;;
@@ -182,16 +179,14 @@ _vdo()
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=( $( compgen -W '
-    activate changeWritePolicy create deactivate disableCompression
-    disableDeduplication enableCompression enableDeduplication growLogical
-    growPhysical import list modify printConfigFile remove start status
-    stop version' -- "$cur" ) )
+    activate create deactivate disableCompression disableDeduplication
+    enableCompression enableDeduplication growLogical growPhysical import list
+    modify printConfigFile remove start status stop version' -- "$cur" ) )
   else
     case "${words[1]}" in
-      activate|changeWritePolicy|create|deactivate|disableCompression|\
-      disableDeduplication|enableCompression|enableDeduplication|\
-      growLogical|growPhysical|import|list|modify|printConfigFile|remove|\
-      start|status|stop|version)
+      activate|create|deactivate|disableCompression|disableDeduplication|\
+      enableCompression|enableDeduplication|growLogical|growPhysical|import|\
+      list|modify|printConfigFile|remove|start|status|stop|version)
 	   _generic_function ${words[1]}
       ;;
     esac
