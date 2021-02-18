@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.h#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.h#5 $
  */
 
 #ifndef FILE_LAYER_H
@@ -47,21 +47,5 @@ int __must_check makeFileLayer(const char *name,
  **/
 int __must_check
 makeReadOnlyFileLayer(const char *name, PhysicalLayer **layerPtr);
-
-/**
- * Allocate a buffer which is properly aligned to the device under a file
- * layer.
- *
- * @param [in]  layer       The file layer in question
- * @param [in]  bytes       The size of the buffer, in bytes.
- * @param [in]  why         The occasion for allocating the buffer
- * @param [out] buffer_ptr  A pointer to hold the buffer
- *
- * @return a success or error code
- **/
-int allocateIOBuffer(PhysicalLayer   *header,
-                     size_t           bytes,
-                     const char      *why,
-                     char           **bufferPtr);
 
 #endif // FILE_LAYER_H

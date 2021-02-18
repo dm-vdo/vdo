@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#8 $
  */
 
 #include "slabSummaryReader.h"
@@ -32,7 +32,6 @@
 #include "types.h"
 #include "vdoComponentStates.h"
 
-#include "fileLayer.h"
 #include "userVDO.h"
 
 /**********************************************************************/
@@ -45,10 +44,10 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
 
   struct slab_summary_entry *entries;
   block_count_t summary_blocks = get_slab_summary_zone_size(VDO_BLOCK_SIZE);
-  int result = allocateIOBuffer(vdo->layer,
-                                summary_blocks * VDO_BLOCK_SIZE,
-                                "slab summary entries",
-                                (char **) &entries);
+  int result = vdo->layer->allocateIOBuffer(vdo->layer,
+                                            summary_blocks * VDO_BLOCK_SIZE,
+                                            "slab summary entries",
+                                            (char **) &entries);
   if (result != VDO_SUCCESS) {
     warnx("Could not create in-memory slab summary");
     return result;
@@ -76,10 +75,10 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   // with the data already read from the first zone.
   if (zones > 1) {
     struct slab_summary_entry *buffer;
-    result = allocateIOBuffer(vdo->layer,
-                              summary_blocks * VDO_BLOCK_SIZE,
-                              "slab summary entries",
-                              (char **) &buffer);
+    result = vdo->layer->allocateIOBuffer(vdo->layer,
+                                          summary_blocks * VDO_BLOCK_SIZE,
+                                          "slab summary entries",
+                                          (char **) &buffer);
     if (result != VDO_SUCCESS) {
       warnx("Could not create slab summary buffer");
       FREE(entries);

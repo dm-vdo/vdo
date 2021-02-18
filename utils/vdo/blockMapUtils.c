@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#31 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#32 $
  */
 
 #include "blockMapUtils.h"
@@ -32,7 +32,6 @@
 #include "statusCodes.h"
 #include "types.h"
 
-#include "fileLayer.h"
 #include "userVDO.h"
 
 /**
@@ -52,10 +51,8 @@ static int readAndExaminePage(UserVDO                 *vdo,
                               MappingExaminer         *examiner)
 {
   struct block_map_page *page;
-  int result = allocateIOBuffer(vdo->layer,
-                                VDO_BLOCK_SIZE,
-                                "block map page",
-                                (char **) &page);
+  int result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
+                                            "block map page", (char **) &page);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -148,10 +145,8 @@ static int readSlotFromPage(UserVDO                  *vdo,
                             enum block_mapping_state *mappedStatePtr)
 {
   struct block_map_page *page;
-  int result = allocateIOBuffer(vdo->layer,
-                                VDO_BLOCK_SIZE,
-                                "page buffer",
-                                (char **) &page);
+  int result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
+                                            "page buffer", (char **) &page);
   if (result != VDO_SUCCESS) {
     return result;
   }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#15 $
  */
 
 #include "fileLayer.h"
@@ -56,7 +56,46 @@ static block_count_t getBlockCount(PhysicalLayer *header)
   return asFileLayer(header)->blockCount;
 }
 
-/**********************************************************************/
+/**
+ * An implementation of buffer_allocator that creates a buffer
+ * properly aligned for direct I/O to the device under the file layer.
+ *
+ * @param [in]  layer       The file layer in question
+ * @param [in]  bytes       The size of the buffer, in bytes
+ * @param [in]  why         The occasion for allocating the buffer
+ * @param [out] buffer_ptr  A pointer to hold the buffer
+ *
+ * @return a success or error code
+ **/
+static int allocateIOBuffer(PhysicalLayer   *header,
+                            size_t           bytes,
+                            const char      *why,
+                            char           **bufferPtr)
+{
+  if ((bytes % VDO_BLOCK_SIZE) != 0) {
+    return log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
+			      " a multiple of the VDO block size");
+  }
+
+  return allocate_memory(bytes,
+                         asFileLayer(header)->alignment,
+                         why,
+                         bufferPtr);
+}
+
+/**
+ * Check if the provided buffer is properly aligned for the device
+ * under the file layer; if so, return it, otherwise allocate a new, properly
+ * aligned buffer and return that.
+ *
+ * @param [in]  layer             The file layer in question
+ * @param [in]  buffer            A buffer to use, if aligned
+ * @param [in]  bytes             The size of the buffer, in bytes
+ * @param [in]  why               The occasion for allocating the buffer
+ * @param [out] alignedBufferPtr  A pointer to hold the buffer
+ *
+ * @return a success or error code
+ **/
 static int makeAlignedBuffer(FileLayer *layer,
                              char *buffer,
                              size_t bytes,
@@ -325,6 +364,7 @@ static int setupFileLayer(const char     *name,
   layer->alignment               = statbuf.st_blksize;
   layer->common.destroy          = freeLayer;
   layer->common.getBlockCount    = getBlockCount;
+  layer->common.allocateIOBuffer = allocateIOBuffer;
   layer->common.reader           = fileReader;
   layer->common.writer           = readOnly ? noWriter : fileWriter;
   layer->common.completeFlush    = vacuousFlush;
@@ -345,21 +385,4 @@ int makeFileLayer(const char           *name,
 int makeReadOnlyFileLayer(const char *name, PhysicalLayer **layerPtr)
 {
   return setupFileLayer(name, true, 0, layerPtr);
-}
-
-/**********************************************************************/
-int allocateIOBuffer(PhysicalLayer   *header,
-                     size_t           bytes,
-                     const char      *why,
-                     char           **bufferPtr)
-{
-  if ((bytes % VDO_BLOCK_SIZE) != 0) {
-    return log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
-			      " a multiple of the VDO block size");
-  }
-
-  return allocate_memory(bytes,
-                         asFileLayer(header)->alignment,
-                         why,
-                         bufferPtr);
 }
