@@ -80,7 +80,7 @@ class KernelStatistics(StatStruct):
 			Uint32Field("releaseVersion", display = False),
 			# The VDO instance
 			Uint32Field("instance"),
-			StringField("fiveTwelveByteEmulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'", label = "512 byte emulation"),
+			StringField("fiveTwelveByteEmulation", label = "512 byte emulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'"),
 			# Current number of active VIOs
 			Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
 			# Maximum number of active VIOs
@@ -115,7 +115,7 @@ class KernelStatistics(StatStruct):
 			IndexStatistics("index"),
 		], ioctl="kernel_stats", **kwargs)
 
-	statisticsVersion = 31
+	statisticsVersion = 32
 
 	def sample(self, device):
 		sample = super(KernelStatistics, self).sample(device)
