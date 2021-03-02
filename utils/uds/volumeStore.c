@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#8 $
+ * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#9 $
  */
 
 #include "geometry.h"
@@ -70,7 +70,7 @@ int initialize_volume_page(const struct geometry *geometry,
 /*****************************************************************************/
 int open_volume_store(struct volume_store *volume_store,
 		      struct index_layout *layout,
-		      unsigned int reserved_buffers __attribute__((unused)),
+		      unsigned int reserved_buffers __maybe_unused,
 		      size_t bytes_per_page)
 {
 #ifdef __KERNEL__
@@ -83,10 +83,9 @@ int open_volume_store(struct volume_store *volume_store,
 }
 
 /*****************************************************************************/
-void prefetch_volume_pages(const struct volume_store *vs
-			   __attribute__((unused)),
-			   unsigned int physical_page __attribute__((unused)),
-			   unsigned int page_count __attribute__((unused)))
+void prefetch_volume_pages(const struct volume_store *vs __maybe_unused,
+			   unsigned int physical_page __maybe_unused,
+			   unsigned int page_count __maybe_unused)
 {
 #ifdef __KERNEL__
 	dm_bufio_prefetch(vs->vs_client, physical_page, page_count);
@@ -97,11 +96,10 @@ void prefetch_volume_pages(const struct volume_store *vs
 
 /*****************************************************************************/
 int prepare_to_write_volume_page(const struct volume_store *volume_store
-				 __attribute__((unused)),
-				 unsigned int physical_page
-				 __attribute__((unused)),
+				 __maybe_unused,
+				 unsigned int physical_page __maybe_unused,
 				 struct volume_page *volume_page
-				 __attribute__((unused)))
+				 __maybe_unused)
 {
 #ifdef __KERNEL__
 	release_volume_page(volume_page);
@@ -150,8 +148,7 @@ int read_volume_page(const struct volume_store *volume_store,
 }
 
 /*****************************************************************************/
-void release_volume_page(struct volume_page *volume_page
-			 __attribute__((unused)))
+void release_volume_page(struct volume_page *volume_page __maybe_unused)
 {
 #ifdef __KERNEL__
 	if (volume_page->vp_buffer != NULL) {
