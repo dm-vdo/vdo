@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#45 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#46 $
  */
 
 #include <uuid/uuid.h>
@@ -289,7 +289,7 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
 
   vdo->states.vdo.config              = *config;
   vdo->states.vdo.nonce               = nonce;
-  vdo->states.master_version          = VDO_MASTER_VERSION_67_0;
+  vdo->states.volume_version          = VDO_VOLUME_VERSION_67_0;
   result = configureVDO(vdo);
   if (result != VDO_SUCCESS) {
     return result;
