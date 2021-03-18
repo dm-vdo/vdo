@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#46 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#47 $
  */
 
 #include <uuid/uuid.h>
@@ -176,14 +176,12 @@ int formatVDO(const struct vdo_config   *config,
               const struct index_config *indexConfig,
               PhysicalLayer             *layer)
 {
-  STATIC_ASSERT(sizeof(uuid_t) == sizeof(UUID));
-
-  // Generate a UUID.
+  // Generate a uuid.
   uuid_t uuid;
   uuid_generate(uuid);
 
   return formatVDOWithNonce(config, indexConfig, layer, current_time_us(),
-                            uuid);
+                            &uuid);
 }
 
 /**********************************************************************/
@@ -274,7 +272,7 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
                                 const struct vdo_config   *config,
                                 const struct index_config *indexConfig,
                                 nonce_t                    nonce,
-                                UUID                       uuid)
+                                uuid_t                    *uuid)
 {
   int result = initialize_volume_geometry(nonce, uuid, indexConfig,
                                           &vdo->geometry);
@@ -314,7 +312,7 @@ int formatVDOWithNonce(const struct vdo_config   *config,
                        const struct index_config *indexConfig,
                        PhysicalLayer             *layer,
                        nonce_t                    nonce,
-                       UUID                       uuid)
+                       uuid_t                    *uuid)
 {
   int result = register_status_codes();
   if (result != VDO_SUCCESS) {

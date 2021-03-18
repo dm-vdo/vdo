@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#13 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -101,7 +101,7 @@ int __must_check formatVDOWithNonce(const struct vdo_config *config,
 				    const struct index_config *indexConfig,
 				    PhysicalLayer *layer,
 				    nonce_t nonce,
-				    UUID uuid);
+				    uuid_t *uuid);
 
 /**
  * Force the VDO to exit read-only mode and rebuild when it next loads

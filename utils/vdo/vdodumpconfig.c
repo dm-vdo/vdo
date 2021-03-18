@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#15 $
  */
 
 #include <err.h>
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
   struct volume_geometry geometry;
   readVDOConfig(vdoBacking, &config, &geometry);
 
-  char uuid[37];
+  char uuid[UUID_STR_LEN];
   uuid_unparse(geometry.uuid, uuid);
 
   // This output must be valid YAML.

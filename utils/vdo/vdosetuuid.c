@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#9 $
  */
 
 #include <err.h>
@@ -123,8 +123,6 @@ static const char *processArgs(int argc, char *argv[])
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  STATIC_ASSERT(sizeof(uuid_t) == sizeof(UUID));
-
   static char errBuf[ERRBUF_SIZE];
 
   int result = register_status_codes();
@@ -133,7 +131,7 @@ int main(int argc, char *argv[])
 	 uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
-  // Generate a UUID as a default value in case the options is not specified.
+  // Generate a uuid as a default value in case the options is not specified.
   uuid_generate(uuid);
 
   const char *vdoBacking = processArgs(argc, argv);
@@ -151,7 +149,7 @@ int main(int argc, char *argv[])
     errx(1, "Could not load the geometry from '%s'", vdoBacking);
   }
 
-  memcpy(geometry.uuid, uuid, sizeof(UUID));
+  uuid_copy(geometry.uuid, uuid);
 
   result = write_volume_geometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {

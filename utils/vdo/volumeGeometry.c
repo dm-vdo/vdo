@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#36 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#37 $
  */
 
 #include "volumeGeometry.h"
@@ -225,7 +225,8 @@ static int decode_volume_geometry(struct buffer *buffer,
 	geometry->release_version = release_version;
 	geometry->nonce = nonce;
 
-	result = get_bytes_from_buffer(buffer, sizeof(UUID), geometry->uuid);
+	result = get_bytes_from_buffer(buffer, sizeof(uuid_t),
+				       (unsigned char *) &geometry->uuid);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -262,7 +263,8 @@ static int encode_volume_geometry(const struct volume_geometry *geometry,
 		return result;
 	}
 
-	result = put_bytes(buffer, sizeof(UUID), geometry->uuid);
+	result = put_bytes(buffer, sizeof(uuid_t),
+			   (unsigned char *) &geometry->uuid);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -474,7 +476,7 @@ int compute_index_blocks(const struct index_config *index_config,
 
 /**********************************************************************/
 int initialize_volume_geometry(nonce_t nonce,
-			       UUID uuid,
+			       uuid_t *uuid,
 			       const struct index_config *index_config,
 			       struct volume_geometry *geometry)
 {
@@ -500,7 +502,11 @@ int initialize_volume_geometry(nonce_t nonce,
 			}
 		}
 	};
-	memcpy(geometry->uuid, uuid, sizeof(UUID));
+#ifdef __KERNEL__
+	uuid_copy(&geometry->uuid, uuid);
+#else
+	uuid_copy(geometry->uuid, *uuid);
+#endif // __KERNEL__
 	if (index_size > 0) {
 		memcpy(&geometry->index_config,
 		       index_config,

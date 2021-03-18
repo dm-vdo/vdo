@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#15 $
  */
 
 #include <err.h>
@@ -204,7 +204,7 @@ static int generateGeometry(const uds_memory_config_size_t memory, bool sparse)
     return result;
   }
 
-  result = initialize_volume_geometry(current_time_us(), uuid, &indexConfig,
+  result = initialize_volume_geometry(current_time_us(), &uuid, &indexConfig,
                                       &candidate->geometry);
   if (result != VDO_SUCCESS) {
     warnx("failed to generate geometry for memory %s%s: %s",
