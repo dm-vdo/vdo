@@ -438,17 +438,6 @@ int __must_check uds_create_index_session(struct uds_index_session **session);
  **/
 const char * __must_check uds_get_version(void);
 
-#ifdef __KERNEL__
-/**
- * The name argument to #uds_open_index is a text string that names the index.
- * The name should have the form "path", where path is the name of the block
- * device.  The path should not contain white space.  The names can optionally
- * contain size and/or offset options which give the number of bytes in the
- * index and the byte offset to the start of the index.  For example, the name
- * "/dev/sda8 offset=409600 size=2048000000" is an index that is stored in
- * 2040000000 bytes of /dev/sda8 starting at byte 409600.
- **/
-#else
 /**
  * The name argument to #uds_open_index is a text string that names the index.
  * The name should have the form "path", where path is the name of the file or
@@ -458,7 +447,6 @@ const char * __must_check uds_get_version(void);
  * the name "/dev/sda8 offset=409600 size=2048000000" is an index that is
  * stored in 2040000000 bytes of /dev/sda8 starting at byte 409600.
  **/
-#endif
 
 /**
  * Opens an index with an existing session.  This operation will fail if the

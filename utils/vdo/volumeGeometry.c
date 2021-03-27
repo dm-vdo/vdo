@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#37 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#38 $
  */
 
 #include "volumeGeometry.h"
@@ -502,11 +502,7 @@ int initialize_volume_geometry(nonce_t nonce,
 			}
 		}
 	};
-#ifdef __KERNEL__
-	uuid_copy(&geometry->uuid, uuid);
-#else
 	uuid_copy(geometry->uuid, *uuid);
-#endif // __KERNEL__
 	if (index_size > 0) {
 		memcpy(&geometry->index_config,
 		       index_config,

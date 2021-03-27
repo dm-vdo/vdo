@@ -22,11 +22,7 @@
 #ifndef CHECKSUM_H
 #define CHECKSUM_H
 
-#ifdef __KERNEL__
-#include <linux/crc32.h>
-#else
 #include <zlib.h>
-#endif // __KERNEL__
 
 /**
  * A CRC-32 checksum
@@ -53,15 +49,7 @@ static inline crc32_checksum_t update_crc32(crc32_checksum_t crc,
 					    const byte *buffer,
 			                    size_t length)
 {
-#ifdef __KERNEL__
-	/*
-	 * The kernel's CRC 32 implementation does not do pre- and post-
-	 * conditioning, so do it ourselves.
-	 */
-	return crc32(crc ^ 0xffffffff, buffer, length) ^ 0xffffffff;
-#else
 	return crc32(crc, buffer, length);
-#endif // __KERNEL__
 }
 
 #endif // CHECKSUM_H

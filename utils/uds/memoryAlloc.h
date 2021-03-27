@@ -29,10 +29,6 @@
 #include "permassert.h"
 #include "typeDefs.h"
 
-#ifdef __KERNEL__
-#include <linux/io.h> // for PAGE_SIZE
-#include "threadRegistry.h"
-#endif
 
 /**
  * Allocate storage based on memory size and  alignment, logging an error if
@@ -177,13 +173,8 @@ int __must_check reallocate_memory(void *ptr,
  *
  * @return UDS_SUCCESS or an error code
  **/
-#ifdef __KERNEL__
-#define ALLOCATE_IO_ALIGNED(COUNT, TYPE, WHAT, PTR) \
-	do_allocation(COUNT, sizeof(TYPE), 0, PAGE_SIZE, WHAT, PTR)
-#else
 #define ALLOCATE_IO_ALIGNED(COUNT, TYPE, WHAT, PTR) \
 	ALLOCATE(COUNT, TYPE, WHAT, PTR)
-#endif
 
 /**
  * Free memory allocated with ALLOCATE().
@@ -212,30 +203,6 @@ static INLINE int __must_check allocate_cache_aligned(size_t size,
 	return allocate_memory(size, CACHE_LINE_BYTES, what, ptr);
 }
 
-#ifdef __KERNEL__
-/**
- * Allocate storage based on memory size, failing immediately if the required
- * memory is not available.  The memory will be zeroed.
- *
- * @param size  The size of an object.
- * @param what  What is being allocated (for error logging)
- *
- * @return pointer to the allocated memory, or NULL if the required space is
- *         not available.
- **/
-void *__must_check allocate_memory_nowait(size_t size, const char *what);
-
-/**
- * Allocate one element of the indicated type immediately, failing if the
- * required memory is not immediately available.
- *
- * @param TYPE   The type of objects to allocate
- * @param WHAT   What is being allocated (for error logging)
- *
- * @return pointer to the memory, or NULL if the memory is not available.
- **/
-#define ALLOCATE_NOWAIT(TYPE, WHAT) allocate_memory_nowait(sizeof(TYPE), WHAT)
-#endif
 
 /**
  * Duplicate a string.
@@ -279,56 +246,5 @@ static INLINE void free_const(const void *pointer)
 	FREE(u.not_const);
 }
 
-#ifdef __KERNEL__
-/**
- * Perform termination of the memory allocation subsystem.
- **/
-void memory_exit(void);
-
-/**
- * Perform initialization of the memory allocation subsystem.
- **/
-void memory_init(void);
-
-/**
- * Register the current thread as an allocating thread.
- *
- * An optional flag location can be supplied indicating whether, at
- * any given point in time, the threads associated with that flag
- * should be allocating storage.  If the flag is false, a message will
- * be logged.
- *
- * If no flag is supplied, the thread is always allowed to allocate
- * storage without complaint.
- *
- * @param new_thread  registered_thread structure to use for the current thread
- * @param flag_ptr    Location of the allocation-allowed flag
- **/
-void register_allocating_thread(struct registered_thread *new_thread,
-				const bool *flag_ptr);
-
-/**
- * Unregister the current thread as an allocating thread.
- **/
-void unregister_allocating_thread(void);
-
-/**
- * Get the memory statistics.
- *
- * @param bytes_used      A pointer to hold the number of bytes in use
- * @param peak_bytes_used A pointer to hold the maximum value bytes_used has
- *                      attained
- **/
-void get_memory_stats(uint64_t *bytes_used, uint64_t *peak_bytes_used);
-
-/**
- * Report stats on any allocated memory that we're tracking.
- *
- * Not all allocation types are guaranteed to be tracked in bytes
- * (e.g., bios).
- **/
-void report_memory_usage(void);
-
-#endif
 
 #endif /* MEMORY_ALLOC_H */

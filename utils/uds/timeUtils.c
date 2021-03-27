@@ -23,14 +23,8 @@
 #include "stringUtils.h"
 #include "timeUtils.h"
 
-#ifdef __KERNEL__
-#include <linux/delay.h>
-#include <linux/ktime.h> // for getnstimeofday on Vivid
-#else
 #include <errno.h>
-#endif
 
-#ifndef __KERNEL__
 /*****************************************************************************/
 ktime_t current_time_ns(clockid_t clock)
 {
@@ -50,7 +44,6 @@ struct timespec future_time(ktime_t offset)
 		.tv_nsec = future % NSEC_PER_SEC,
 	};
 }
-#endif /* __KERNEL__ */
 
 /*****************************************************************************/
 int64_t current_time_us(void)

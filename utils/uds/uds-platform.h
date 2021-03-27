@@ -27,14 +27,10 @@
 #define UDS_PLATFORM_H
 
 
-#ifdef __KERNEL__
-#include <linux/types.h>
-#else
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#endif
 
 #endif /* UDS_PLATFORM_H */

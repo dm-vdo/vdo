@@ -24,31 +24,10 @@
 
 #include "common.h"
 
-#ifdef __KERNEL__
-struct dm_bufio_client;
-struct io_factory;
-#else
 struct io_region;
-#endif
 
 struct buffered_writer;
 
-#ifdef __KERNEL__
-/**
- * Make a new buffered writer.
- *
- * @param factory       The IO factory creating the buffered writer
- * @param client        The dm_bufio_client to write to.
- * @param block_limit   The number of blocks that may be written to.
- * @param writer_ptr    The new buffered writer goes here.
- *
- * @return UDS_SUCCESS or an error code.
- **/
-int __must_check make_buffered_writer(struct io_factory *factory,
-				      struct dm_bufio_client *client,
-				      sector_t block_limit,
-				      struct buffered_writer **writer_ptr);
-#else
 /**
  * Make a new buffered writer.
  *
@@ -59,7 +38,6 @@ int __must_check make_buffered_writer(struct io_factory *factory,
  **/
 int __must_check make_buffered_writer(struct io_region *region,
 				      struct buffered_writer **writer_ptr);
-#endif
 
 /**
  * Free a buffered writer, without flushing.

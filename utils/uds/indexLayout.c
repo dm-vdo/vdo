@@ -1854,22 +1854,6 @@ int verify_index_config(struct index_layout *layout,
 			UDS_NO_INDEX);
 }
 
-#ifdef __KERNEL__
-/*****************************************************************************/
-int open_volume_bufio(struct index_layout *layout,
-		      size_t block_size,
-		      unsigned int reserved_buffers,
-		      struct dm_bufio_client **client_ptr)
-{
-	off_t offset =
-		layout->index.volume.start_block * layout->super.block_size;
-	return make_bufio(layout->factory,
-			  offset,
-			  block_size,
-			  reserved_buffers,
-			  client_ptr);
-}
-#else
 /*****************************************************************************/
 int open_volume_region(struct index_layout *layout,
 		       struct io_region **region_ptr)
@@ -1884,7 +1868,6 @@ int open_volume_region(struct index_layout *layout,
 	}
 	return UDS_SUCCESS;
 }
-#endif
 
 /*****************************************************************************/
 uint64_t get_volume_nonce(struct index_layout *layout)

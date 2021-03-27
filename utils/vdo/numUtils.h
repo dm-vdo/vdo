@@ -29,7 +29,6 @@
 
 #include "types.h"
 
-#ifndef __KERNEL__
 /**
  * Return true if and only if a number is a power of two.
  **/
@@ -37,9 +36,6 @@ static inline bool is_power_of_2(uint64_t n)
 {
 	return (n > 0) && ((n & (n - 1)) == 0);
 }
-#else
-#include <linux/log2.h>
-#endif
 
 /**
  * Efficiently calculate the base-2 logarithm of a number truncated to an

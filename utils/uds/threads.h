@@ -27,31 +27,10 @@
 #include "timeUtils.h"
 #include "uds-error.h"
 
-#ifdef __KERNEL__
-#include <linux/delay.h>
-#include <linux/jiffies.h>
-#include <linux/mutex.h>
-#include <linux/semaphore.h>
-#include "util/eventCount.h"
-#else
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
-#endif
 
-#ifdef __KERNEL__
-struct cond_var {
-	struct event_count *event_count;
-};
-struct thread;
-
-struct barrier {
-	struct semaphore mutex; // Mutex for this barrier object
-	struct semaphore wait;  // Semaphore for threads waiting at the barrier
-	int arrived;            // Number of threads which have arrived
-	int thread_count;       // Total number of threads using this barrier
-};
-#else
 struct cond_var {
 	pthread_cond_t condition;
 };
@@ -79,19 +58,7 @@ struct barrier {
 #endif
 
 extern const bool DO_ASSERTIONS;
-#endif
 
-#ifdef __KERNEL__
-/**
- * Apply a function to every thread that we have created.
- *
- * @param apply_func  The function to apply
- * @param argument    The first argument to apply_func
- *
- **/
-void apply_to_threads(void apply_func(void *, struct task_struct *),
-		      void *argument);
-#endif
 
 /**
  * Create a thread, logging any cause of failure.
@@ -125,14 +92,12 @@ unsigned int get_num_cores(void);
  **/
 pid_t __must_check get_thread_id(void);
 
-#ifndef __KERNEL__
 /**
  * Get the name of the current thread.
  *
  * @param name   a buffer of size at least 16 to write the name to
  **/
 void get_thread_name(char *name);
-#endif
 
 /**
  * Wait for termination of another thread.
@@ -144,13 +109,6 @@ void get_thread_name(char *name);
  **/
 int join_threads(struct thread *th);
 
-#ifdef __KERNEL__
-/**
- * Exit the current thread.  This is a kernel-only function that is intended to
- * be an alternative to using BUG() or BUG_ON().
- **/
-__attribute__((noreturn)) void thread_exit(void);
-#endif
 
 /**
  * Initialize a thread synchronization barrier (also known as a rendezvous).
@@ -245,7 +203,6 @@ int timed_wait_cond(struct cond_var *cond,
  **/
 int destroy_cond(struct cond_var *cond);
 
-#ifndef __KERNEL__
 /**
  * Initialize a mutex, optionally asserting if the mutex initialization fails.
  * This function should only be called directly in places where making
@@ -258,7 +215,6 @@ int destroy_cond(struct cond_var *cond);
  * @return UDS_SUCCESS or an error code
  **/
 int initialize_mutex(struct mutex *mutex, bool assert_on_error);
-#endif
 
 /**
  * Initialize the default type (error-checking during development) mutex.
@@ -267,15 +223,7 @@ int initialize_mutex(struct mutex *mutex, bool assert_on_error);
  *
  * @return UDS_SUCCESS or an error code
  **/
-#ifdef __KERNEL__
-static INLINE int __must_check init_mutex(struct mutex *mutex)
-{
-	mutex_init(mutex);
-	return UDS_SUCCESS;
-}
-#else
 int __must_check init_mutex(struct mutex *mutex);
-#endif
 
 /**
  * Destroy a mutex (with error checking during development).
@@ -284,42 +232,21 @@ int __must_check init_mutex(struct mutex *mutex);
  *
  * @return UDS_SUCCESS or error code
  **/
-#ifdef __KERNEL__
-static INLINE int destroy_mutex(struct mutex *mutex)
-{
-	return UDS_SUCCESS;
-}
-#else
 int destroy_mutex(struct mutex *mutex);
-#endif
 
 /**
  * Lock a mutex, with optional error checking during development.
  *
  * @param mutex mutex to lock
  **/
-#ifdef __KERNEL__
-static INLINE void lock_mutex(struct mutex *mutex)
-{
-	mutex_lock(mutex);
-}
-#else
 void lock_mutex(struct mutex *mutex);
-#endif
 
 /**
  * Unlock a mutex, with optional error checking during development.
  *
  * @param mutex mutex to unlock
  **/
-#ifdef __KERNEL__
-static INLINE void unlock_mutex(struct mutex *mutex)
-{
-	mutex_unlock(mutex);
-}
-#else
 void unlock_mutex(struct mutex *mutex);
-#endif
 
 /**
  * Initialize a semaphore used among threads in the same process.
@@ -329,17 +256,8 @@ void unlock_mutex(struct mutex *mutex);
  *
  * @return UDS_SUCCESS or an error code
  **/
-#ifdef __KERNEL__
-static INLINE int __must_check
-initialize_semaphore(struct semaphore *semaphore, unsigned int value)
-{
-	sema_init(semaphore, value);
-	return UDS_SUCCESS;
-}
-#else
 int __must_check initialize_semaphore(struct semaphore *semaphore,
 				      unsigned int value);
-#endif
 
 /**
  * Destroy a semaphore used among threads in the same process.
@@ -348,42 +266,14 @@ int __must_check initialize_semaphore(struct semaphore *semaphore,
  *
  * @return UDS_SUCCESS or an error code
  **/
-#ifdef __KERNEL__
-static INLINE int destroy_semaphore(struct semaphore *semaphore)
-{
-	return UDS_SUCCESS;
-}
-#else
 int destroy_semaphore(struct semaphore *semaphore);
-#endif
 
 /**
  * Acquire a permit from a semaphore, waiting if none are currently available.
  *
  * @param semaphore the semaphore to acquire
  **/
-#ifdef __KERNEL__
-static INLINE void acquire_semaphore(struct semaphore *semaphore)
-{
-	// Do not use down(semaphore).  Instead use down_interruptible so that
-	// we do not get 120 second stall messages in kern.log.
-	while (down_interruptible(semaphore) != 0) {
-		/*
-		 * If we're called from a user-mode process (e.g., "dmsetup
-		 * remove") while waiting for an operation that may take a
-		 * while (e.g., UDS index save), and a signal is sent (SIGINT,
-		 * SIGUSR2), then down_interruptible will not block. If that
-		 * happens, sleep briefly to avoid keeping the CPU locked up in
-		 * this loop. We could just call cond_resched, but then we'd
-		 * still keep consuming CPU time slices and swamp other threads
-		 * trying to do computational work. [VDO-4980]
-		 */
-		msleep(1);
-	}
-}
-#else
 void acquire_semaphore(struct semaphore *semaphore);
-#endif
 
 /**
  * Attempt to acquire a permit from a semaphore.
@@ -399,36 +289,15 @@ void acquire_semaphore(struct semaphore *semaphore);
  *
  * @return true if a permit was acquired, otherwise false
  **/
-#ifdef __KERNEL__
-static INLINE bool __must_check attempt_semaphore(struct semaphore *semaphore,
-						  ktime_t timeout)
-{
-	if (timeout <= 0) {
-		// No timeout, just try to grab the semaphore.
-		return down_trylock(semaphore) == 0;
-	} else {
-		unsigned int jiffies = nsecs_to_jiffies(timeout);
-		return down_timeout(semaphore, jiffies) == 0;
-	}
-}
-#else
 bool __must_check attempt_semaphore(struct semaphore *semaphore,
 				    ktime_t timeout);
-#endif
 
 /**
  * Release a semaphore, incrementing the number of available permits.
  *
  * @param semaphore the semaphore to increment
  **/
-#ifdef __KERNEL__
-static INLINE void release_semaphore(struct semaphore *semaphore)
-{
-	up(semaphore);
-}
-#else
 void release_semaphore(struct semaphore *semaphore);
-#endif
 
 /**
  * Yield the time slice in the given thread.
@@ -437,7 +306,6 @@ void release_semaphore(struct semaphore *semaphore);
  **/
 int yield_scheduler(void);
 
-#ifndef __KERNEL__
 /**
  * Allocate a thread specific key for thread specific data.
  *
@@ -473,6 +341,5 @@ int set_thread_specific(pthread_key_t key, const void *pointer);
  * @param key  key identifying the thread specific data
  **/
 void *get_thread_specific(pthread_key_t key);
-#endif
 
 #endif /* THREADS_H */

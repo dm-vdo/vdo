@@ -25,21 +25,14 @@
 #include "compiler.h"
 #include "typeDefs.h"
 
-#ifdef __KERNEL__
-#include <linux/ktime.h>
-#include <linux/time.h>
-#else
 #include <sys/time.h>
 #include <time.h>
-#endif
 
 // Some constants that are defined in kernel headers.
-#ifndef __KERNEL__
 #define NSEC_PER_SEC 1000000000L
 #define NSEC_PER_MSEC 1000000L
 #define NSEC_PER_USEC 1000L
 typedef int64_t ktime_t;
-#endif
 
 /**
  * Return the current nanosecond time according to the specified clock
@@ -49,17 +42,8 @@ typedef int64_t ktime_t;
  *
  * @return the current time according to the clock in question
  **/
-#ifdef __KERNEL__
-static INLINE ktime_t current_time_ns(clockid_t clock)
-{
-	// clock is always a constant, so gcc reduces this to a single call
-	return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
-}
-#else
 ktime_t current_time_ns(clockid_t clock);
-#endif
 
-#ifndef __KERNEL__
 /**
  * Return a timespec representing a time in the future for timeouts
  *
@@ -69,9 +53,7 @@ ktime_t current_time_ns(clockid_t clock);
  * @return a timespec representing a future time
  **/
 struct timespec future_time(ktime_t offset);
-#endif /* __KERNEL__ */
 
-#ifndef __KERNEL__
 /**
  * Return the difference between two times, as in ktime.h
  *
@@ -84,11 +66,9 @@ static INLINE ktime_t ktime_sub(ktime_t a, ktime_t b)
 {
 	return a - b;
 }
-#endif /* __KERNEL__ */
 
 
 
-#ifndef __KERNEL__
 /**
  * Convert a ktime_t value to milliseconds as in ktime.h
  *
@@ -100,7 +80,6 @@ static INLINE int64_t ktime_to_ms(ktime_t abstime)
 {
 	return abstime / NSEC_PER_MSEC;
 }
-#endif /* __KERNEL__ */
 
 /**
  * Convert seconds to a ktime_t value
@@ -114,7 +93,6 @@ static INLINE ktime_t seconds_to_ktime(int64_t seconds)
 	return (ktime_t) seconds * NSEC_PER_SEC;
 }
 
-#ifndef __KERNEL__
 /**
  * Convert milliseconds to a ktime_t value as in ktime.h
  *
@@ -126,7 +104,6 @@ static INLINE ktime_t ms_to_ktime(uint64_t milliseconds)
 {
 	return (ktime_t) milliseconds * NSEC_PER_MSEC;
 }
-#endif /* __KERNEL__ */
 
 /**
  * Convert microseconds to a ktime_t value
@@ -152,7 +129,6 @@ static INLINE int64_t ktime_to_seconds(ktime_t reltime)
 	return reltime / NSEC_PER_SEC;
 }
 
-#ifndef __KERNEL__
 /**
  * Convert a ktime_t value to microseconds as in ktime.h
  *
@@ -164,7 +140,6 @@ static INLINE int64_t ktime_to_us(ktime_t reltime)
 {
 	return reltime / NSEC_PER_USEC;
 }
-#endif /* __KERNEL__ */
 
 /**
  * Return the wall clock time in microseconds. The actual value is time
@@ -176,7 +151,5 @@ static INLINE int64_t ktime_to_us(ktime_t reltime)
  **/
 int64_t __must_check current_time_us(void);
 
-#ifndef __KERNEL__
-#endif /* __KERNEL__ */
 
 #endif /* TIME_UTILS_H */

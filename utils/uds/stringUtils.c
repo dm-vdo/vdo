@@ -34,22 +34,9 @@ int alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 		return UDS_INVALID_ARGUMENT;
 	}
 	va_list args;
-#ifdef __KERNEL__
-	// We want the memory allocation to use our own ALLOCATE/FREE wrappers.
-	va_start(args, fmt);
-	int count = vsnprintf(NULL, 0, fmt, args) + 1;
-	va_end(args);
-	int result = ALLOCATE(count, char, what, strp);
-	if (result == UDS_SUCCESS) {
-		va_start(args, fmt);
-		vsnprintf(*strp, count, fmt, args);
-		va_end(args);
-	}
-#else
 	va_start(args, fmt);
 	int result = vasprintf(strp, fmt, args) == -1 ? ENOMEM : UDS_SUCCESS;
 	va_end(args);
-#endif
 	if ((result != UDS_SUCCESS) && (what != NULL)) {
 		uds_log_error("cannot allocate %s", what);
 	}

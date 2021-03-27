@@ -26,32 +26,20 @@
 #include "compiler.h"
 #include "memoryAlloc.h"
 
-#ifdef __KERNEL__
-#include <linux/dm-bufio.h>
-#else
 #include "ioRegion.h"
-#endif
 
 struct geometry;
 struct index_layout;
 
 
 struct volume_store {
-#ifdef __KERNEL__
-	struct dm_bufio_client *vs_client;
-#else
 	struct io_region *vs_region;
 	size_t vs_bytes_per_page;
-#endif
 };
 
 
 struct volume_page {
-#ifdef __KERNEL__
-	struct dm_buffer *vp_buffer;
-#else
 	byte *vp_data;
-#endif
 };
 
 /**
@@ -78,11 +66,7 @@ void destroy_volume_page(struct volume_page *volume_page);
 static INLINE byte *__must_check
 get_page_data(const struct volume_page *volume_page)
 {
-#ifdef __KERNEL__
-	return dm_bufio_get_block_data(volume_page->vp_buffer);
-#else
 	return volume_page->vp_data;
-#endif
 }
 
 /**

@@ -24,7 +24,6 @@
 #include "errors.h"
 #include "logger.h"
 
-#ifndef __KERNEL__
 // Here begins a large block of userspace-only stuff.
 #ifdef NDEBUG
 #define DEBUGGING_OFF
@@ -76,7 +75,6 @@ bool set_exit_on_assertion_failure(bool should_exit)
 }
 
 // Here ends large block of userspace stuff.
-#endif // !__KERNEL__
 
 /**********************************************************************/
 __attribute__((format(printf, 4, 0))) static void
@@ -96,7 +94,6 @@ handle_assertion_failure(const char *expression_string,
 			     line_number);
 	log_backtrace(LOG_ERR);
 
-#ifndef __KERNEL__
 	perform_once(&init_once, initialize);
 	lock_mutex(&mutex);
 	if (exit_on_assertion_failure) {
@@ -106,7 +103,6 @@ handle_assertion_failure(const char *expression_string,
 			      __ASSERT_FUNCTION);
 	}
 	unlock_mutex(&mutex);
-#endif // !__KERNEL__
 }
 
 /*****************************************************************************/

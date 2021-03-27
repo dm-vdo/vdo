@@ -35,7 +35,6 @@ void random_compile_time_assertions(void)
 	STATIC_ASSERT((((uint64_t) RAND_MAX + 1) & RAND_MAX) == 0);
 }
 
-#ifndef __KERNEL__
 /*****************************************************************************/
 void fill_randomly(void *ptr, size_t len)
 {
@@ -54,4 +53,3 @@ void fill_randomly(void *ptr, size_t len)
 		rand_mask >>= 8;
 	}
 }
-#endif

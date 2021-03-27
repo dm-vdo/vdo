@@ -164,22 +164,6 @@ open_index_buffered_writer(struct index_layout *layout,
  **/
 uint64_t __must_check get_volume_nonce(struct index_layout *layout);
 
-#ifdef __KERNEL__
-/**
- * Obtain a dm_bufio_client for the specified index volume.
- *
- * @param [in]  layout            The index layout.
- * @param [in]  block_size        The size of a volume page
- * @param [in]  reserved_buffers  The count of reserved buffers
- * @param [out] client_ptr        Where to put the new dm_bufio_client
- *
- * @return UDS_SUCCESS or an error code.
- **/
-int __must_check open_volume_bufio(struct index_layout *layout,
-				   size_t block_size,
-				   unsigned int reserved_buffers,
-				   struct dm_bufio_client **client_ptr);
-#else
 /**
  * Obtain an IO region for the specified index volume.
  *
@@ -190,7 +174,6 @@ int __must_check open_volume_bufio(struct index_layout *layout,
  **/
 int __must_check open_volume_region(struct index_layout *layout,
 				    struct io_region **region_ptr);
-#endif
 
 /**
  * Read the index configuration, and verify that it matches the given

@@ -25,50 +25,9 @@
 #include "permassert.h"
 #include "stringUtils.h"
 
-#ifdef __KERNEL__
-#include <linux/errno.h>
-#endif
 
 static const struct error_info successful = { "UDS_SUCCESS", "Success" };
 
-#ifdef __KERNEL__
-static const char *const message_table[] = {
-	[EPERM] = "Operation not permitted",
-	[ENOENT] = "No such file or directory",
-	[ESRCH] = "No such process",
-	[EINTR] = "Interrupted system call",
-	[EIO] = "Input/output error",
-	[ENXIO] = "No such device or address",
-	[E2BIG] = "Argument list too long",
-	[ENOEXEC] = "Exec format error",
-	[EBADF] = "Bad file descriptor",
-	[ECHILD] = "No child processes",
-	[EAGAIN] = "Resource temporarily unavailable",
-	[ENOMEM] = "Cannot allocate memory",
-	[EACCES] = "Permission denied",
-	[EFAULT] = "Bad address",
-	[ENOTBLK] = "Block device required",
-	[EBUSY] = "Device or resource busy",
-	[EEXIST] = "File exists",
-	[EXDEV] = "Invalid cross-device link",
-	[ENODEV] = "No such device",
-	[ENOTDIR] = "Not a directory",
-	[EISDIR] = "Is a directory",
-	[EINVAL] = "Invalid argument",
-	[ENFILE] = "Too many open files in system",
-	[EMFILE] = "Too many open files",
-	[ENOTTY] = "Inappropriate ioctl for device",
-	[ETXTBSY] = "Text file busy",
-	[EFBIG] = "File too large",
-	[ENOSPC] = "No space left on device",
-	[ESPIPE] = "Illegal seek",
-	[EROFS] = "Read-only file system",
-	[EMLINK] = "Too many links",
-	[EPIPE] = "Broken pipe",
-	[EDOM] = "Numerical argument out of domain",
-	[ERANGE] = "Numerical result out of range"
-};
-#endif
 
 static const struct error_info error_list[] = {
 	{ "UDS_UNINITIALIZED", "UDS library is not initialized" },
@@ -249,32 +208,11 @@ static const char *get_error_info(int errnum,
  * @return The error string, which may be a string constant or may be
  *         returned in the buf argument
  **/
-#ifdef __KERNEL__
-static const char *system_string_error(int errnum, char *buf, size_t buflen)
-{
-	const char *error_string = NULL;
-	if ((errnum > 0) && (errnum < COUNT_OF(message_table))) {
-		error_string = message_table[errnum];
-	}
-
-	size_t len =
-		((error_string == NULL) ?
-			 snprintf(buf, buflen, "Unknown error %d", errnum) :
-			 snprintf(buf, buflen, "%s", error_string));
-	if (len < buflen) {
-		return buf;
-	}
-
-	buf[0] = '\0';
-	return "System error";
-}
-#else
 static INLINE const char *
 system_string_error(int errnum, char *buf, size_t buflen)
 {
 	return strerror_r(errnum, buf, buflen);
 }
-#endif
 
 /*****************************************************************************/
 const char *string_error(int errnum, char *buf, size_t buflen)

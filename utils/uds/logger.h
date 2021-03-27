@@ -22,36 +22,12 @@
 #ifndef LOGGER_H
 #define LOGGER_H 1
 
-#ifdef __KERNEL__
-#include <linux/ratelimit.h>
-#include <linux/version.h>
-#else
 #include <stdarg.h>
 #include "minisyslog.h"
-#endif
 
-#ifdef __KERNEL__
-#define LOG_EMERG 0 /* system is unusable */
-#define LOG_ALERT 1 /* action must be taken immediately */
-#define LOG_CRIT 2 /* critical conditions */
-#define LOG_ERR 3 /* error conditions */
-#define LOG_WARNING 4 /* warning conditions */
-#define LOG_NOTICE 5 /* normal but significant condition */
-#define LOG_INFO 6 /* informational */
-#define LOG_DEBUG 7 /* debug-level messages */
-#endif
 
-#ifdef __KERNEL__
-// Make it easy to log real pointer values using %px when in development.
-#ifdef LOG_INTERNAL
-#define PRIptr "px"
-#else
-#define PRIptr "pK"
-#endif
-#else // not __KERNEL__
 // For compatibility with hooks we need when compiling in kernel mode.
 #define PRIptr "p"
-#endif
 
 /*
  * Apply a rate limiter to a log method call.
@@ -60,19 +36,7 @@
  *                running in the kernel and the ratelimiter detects that we
  *                are calling it frequently.
  */
-#ifdef __KERNEL__
-#define log_ratelimit(log_fn, ...)                                        \
-	do {                                                              \
-		static DEFINE_RATELIMIT_STATE(_rs,                        \
-					      DEFAULT_RATELIMIT_INTERVAL, \
-					      DEFAULT_RATELIMIT_BURST);   \
-		if (__ratelimit(&_rs)) {                                  \
-			log_fn(__VA_ARGS__);                              \
-		}                                                         \
-	} while (0)
-#else
 #define log_ratelimit(log_fn, ...) log_fn(__VA_ARGS__)
-#endif
 
 /**
  * @file
@@ -80,7 +44,6 @@
  * All of the log<Level>() functions will preserve the callers value of errno.
  **/
 
-#ifndef __KERNEL__
 /**
  * Initialize the user space logger using optional environment
  * variables to set the default log level and log file. Can be called
@@ -92,7 +55,6 @@
  **/
 void open_logger(void);
 
-#endif /* __KERNEL__ */
 
 /**
  * Get the current logging level.

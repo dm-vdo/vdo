@@ -22,9 +22,6 @@
 #ifndef ATOMIC_DEFS_H
 #define ATOMIC_DEFS_H
 
-#ifdef __KERNEL__
-#include <linux/atomic.h>
-#else
 
 #include "compiler.h"
 #include "typeDefs.h"
@@ -490,5 +487,4 @@ static INLINE void atomic64_set_release(atomic64_t *atom, long value)
     __xchg_result;                                                      \
   })
 
-#endif /* __KERNEL__ */
 #endif /* ATOMIC_DEFS_H */

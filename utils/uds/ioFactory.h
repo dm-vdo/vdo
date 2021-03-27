@@ -24,12 +24,8 @@
 
 #include "bufferedReader.h"
 #include "bufferedWriter.h"
-#ifdef __KERNEL__
-#include <linux/dm-bufio.h>
-#else
 #include "fileUtils.h"
 #include "ioRegion.h"
-#endif
 
 /*
  * An IO factory object is responsible for controlling access to index
@@ -53,20 +49,6 @@ struct io_factory;
  */
 enum { UDS_BLOCK_SIZE = 4096 };
 
-#ifdef __KERNEL__
-/**
- * Create an IO factory. The IO factory is returned with a reference
- * count of 1.
- *
- * @param path        The path to the block device or file that contains the
- *                    block stream
- * @param factory_ptr The IO factory is returned here
- *
- * @return UDS_SUCCESS or an error code
- **/
-int __must_check make_io_factory(const char *path,
-				 struct io_factory **factory_ptr);
-#else
 /**
  * Create an IO factory.  The IO factory is returned with a reference
  * count of 1.
@@ -81,7 +63,6 @@ int __must_check make_io_factory(const char *path,
 int __must_check make_io_factory(const char *path,
 				 enum file_access access,
 				 struct io_factory **factory_ptr);
-#endif
 
 /**
  * Get another reference to an IO factory, incrementing its reference count.
@@ -109,24 +90,6 @@ void put_io_factory(struct io_factory *factory);
  **/
 size_t __must_check get_writable_size(struct io_factory *factory);
 
-#ifdef __KERNEL__
-/**
- * Create a struct dm_bufio_client for a region of the index.
- *
- * @param factory          The IO factory
- * @param offset           The byte offset to the region within the index
- * @param block_size       The size of a block, in bytes
- * @param reserved_buffers The number of buffers that can be reserved
- * @param client_ptr       The struct dm_bufio_client is returned here
- *
- * @return UDS_SUCCESS or an error code
- **/
-int __must_check make_bufio(struct io_factory *factory,
-			    off_t offset,
-			    size_t block_size,
-			    unsigned int reserved_buffers,
-			    struct dm_bufio_client **client_ptr);
-#else
 /**
  * Create an IO region for a region of the index.
  *
@@ -141,7 +104,6 @@ int __must_check make_io_region(struct io_factory *factory,
 				off_t offset,
 				size_t size,
 				struct io_region **region_ptr);
-#endif
 
 /**
  * Create a buffered reader for a region of the index.

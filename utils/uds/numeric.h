@@ -24,15 +24,9 @@
 
 #include "compiler.h"
 
-#ifdef __KERNEL__
-#include <asm/unaligned.h>
-#include <linux/kernel.h>
-#else
 #include "numericDefs.h"
 #include "typeDefs.h"
-#endif
 
-#ifndef __KERNEL__
 /*
  * Type safe comparison macros, similar to the ones in linux/kernel.h.
  */
@@ -62,7 +56,6 @@
 
 #define min(x, y) COMPARE(x, y, <)
 #define max(x, y) COMPARE(x, y, >)
-#endif
 
 /**
  * Extract a 64 bit signed little-endian number from a buffer at a

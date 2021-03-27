@@ -24,12 +24,7 @@
 
 #include "common.h"
 
-#ifdef __KERNEL__
-struct dm_bufio_client;
-struct io_factory;
-#else
 struct io_region;
-#endif
 
 /**
  * The buffered reader allows efficient IO for IO regions, which may be
@@ -38,22 +33,6 @@ struct io_region;
  **/
 struct buffered_reader;
 
-#ifdef __KERNEL__
-/**
- * Make a new buffered reader.
- *
- * @param factory      The IO factory creating the buffered reader.
- * @param client       The dm_bufio_client to read from.
- * @param block_limit  The number of blocks that may be read.
- * @param reader_ptr   The pointer to hold the newly allocated buffered reader
- *
- * @return UDS_SUCCESS or error code.
- **/
-int __must_check make_buffered_reader(struct io_factory *factory,
-				      struct dm_bufio_client *client,
-				      sector_t block_limit,
-				      struct buffered_reader **reader_ptr);
-#else
 /**
  * Make a new buffered reader.
  *
@@ -64,7 +43,6 @@ int __must_check make_buffered_reader(struct io_factory *factory,
  **/
 int __must_check make_buffered_reader(struct io_region *region,
 				      struct buffered_reader **reader_ptr);
-#endif
 
 /**
  * Free a buffered reader.
