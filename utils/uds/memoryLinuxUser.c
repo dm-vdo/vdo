@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#5 $
  */
 
 #include <errno.h>
@@ -75,18 +75,23 @@ void free_memory(void *ptr)
 
 /**********************************************************************/
 int reallocate_memory(void *ptr,
-		      size_t old_size __attribute__((unused)),
+		      size_t old_size,
 		      size_t size,
 		      const char *what,
 		      void *new_ptr)
 {
-	void *new = realloc(ptr, size);
+	char *new = realloc(ptr, size);
 	if ((new == NULL) && (size != 0)) {
 		return log_error_strerror(errno,
 					  "failed to reallocate %s (%zu bytes)",
 					  what,
 					  size);
 	}
+
+        if (size > old_size) {
+          memset(new + old_size, 0, size - old_size);
+        }
+
 	*((void **) new_ptr) = new;
 	return UDS_SUCCESS;
 }
