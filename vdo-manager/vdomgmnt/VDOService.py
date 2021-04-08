@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#29 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOService.py#30 $
 
 """
 from __future__ import absolute_import
@@ -1449,8 +1449,8 @@ class VDOService(Service):
       st = os.stat(self.getPath())
       major = os.major(st.st_rdev)
       minor = os.minor(st.st_rdev)
-      path = "/sys/kvdo/{major}:{minor}/instance".format(major=major,
-                                                         minor=minor)
+      path = "/sys/dev/block/{major}:{minor}/vdo/instance".format(major=major,
+                                                                  minor=minor)
       with open(path, "r") as f:
         self.instanceNumber = int(f.read().strip())
     except Exception as err:
