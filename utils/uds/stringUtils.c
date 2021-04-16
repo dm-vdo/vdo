@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/stringUtils.c#5 $
+ * $Id: //eng/uds-releases/krusty/src/uds/stringUtils.c#6 $
  */
 
 #include "stringUtils.h"
@@ -27,7 +27,7 @@
 #include "permassert.h"
 #include "uds.h"
 
-/*****************************************************************************/
+/**********************************************************************/
 int alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 {
 	if (strp == NULL) {
@@ -43,7 +43,7 @@ int alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 	return result;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int wrap_vsnprintf(const char *what,
 		   char *buf,
 		   size_t buf_size,
@@ -73,7 +73,7 @@ int wrap_vsnprintf(const char *what,
 	return UDS_SUCCESS;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int fixed_sprintf(const char *what,
 		  char *buf,
 		  size_t buf_size,
@@ -92,7 +92,7 @@ int fixed_sprintf(const char *what,
 	return result;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 char *
 v_append_to_buffer(char *buffer, char *buf_end, const char *fmt, va_list args)
 {
@@ -105,7 +105,7 @@ v_append_to_buffer(char *buffer, char *buf_end, const char *fmt, va_list args)
 	return buffer;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 char *append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
 {
 	va_list ap;
@@ -116,7 +116,7 @@ char *append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
 	return pos;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int string_to_signed_int(const char *nptr, int *num)
 {
 	long value;
@@ -131,7 +131,7 @@ int string_to_signed_int(const char *nptr, int *num)
 	return UDS_SUCCESS;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int string_to_unsigned_int(const char *nptr, unsigned int *num)
 {
 	unsigned long value;

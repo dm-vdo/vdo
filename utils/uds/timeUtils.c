@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.c#12 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.c#13 $
  */
 
 #include "permassert.h"
@@ -25,7 +25,7 @@
 
 #include <errno.h>
 
-/*****************************************************************************/
+/**********************************************************************/
 ktime_t current_time_ns(clockid_t clock)
 {
 	struct timespec ts;
@@ -35,7 +35,7 @@ ktime_t current_time_ns(clockid_t clock)
 	return ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 struct timespec future_time(ktime_t offset)
 {
 	ktime_t future = current_time_ns(CLOCK_REALTIME) + offset;
@@ -45,7 +45,7 @@ struct timespec future_time(ktime_t offset)
 	};
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int64_t current_time_us(void)
 {
 	return current_time_ns(CLOCK_REALTIME) / NSEC_PER_USEC;

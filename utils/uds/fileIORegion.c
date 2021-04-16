@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#7 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#8 $
  */
 
 #include "fileIORegion.h"
@@ -38,13 +38,13 @@ struct file_io_region {
 	size_t size;
 };
 
-/*****************************************************************************/
+/**********************************************************************/
 static INLINE struct file_io_region *as_file_io_region(struct io_region *region)
 {
 	return container_of(region, struct file_io_region, common);
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 static int validate_io(struct file_io_region *fior,
 		       off_t offset,
 		       size_t size,
@@ -76,7 +76,7 @@ static int validate_io(struct file_io_region *fior,
 	return UDS_SUCCESS;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 static void fior_free(struct io_region *region)
 {
 	struct file_io_region *fior = as_file_io_region(region);
@@ -84,7 +84,7 @@ static void fior_free(struct io_region *region)
 	FREE(fior);
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 static int fior_write(struct io_region *region,
 		      off_t offset,
 		      const void *data,
@@ -103,7 +103,7 @@ static int fior_write(struct io_region *region,
 				      length);
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 static int fior_read(struct io_region *region,
 		     off_t offset,
 		     void *buffer,
@@ -149,7 +149,7 @@ static int fior_read(struct io_region *region,
 	return UDS_SUCCESS;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 static int fior_sync_contents(struct io_region *region)
 {
 	struct file_io_region *fior = as_file_io_region(region);
@@ -157,7 +157,7 @@ static int fior_sync_contents(struct io_region *region)
 			     "cannot sync contents of file IO region");
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int make_file_region(struct io_factory *factory,
 		     int fd,
 		     enum file_access access,

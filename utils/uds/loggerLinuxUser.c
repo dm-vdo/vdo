@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#21 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#22 $
  */
 
 #include "logger.h"
@@ -139,13 +139,14 @@ static void format_current_time(char *buffer, size_t buffer_size)
 }
 
 /**********************************************************************/
-void log_message_pack(int priority,
-		      const char *prefix,
-		      const char *fmt1,
-		      va_list args1,
-		      const char *fmt2,
-		      va_list args2)
-{
+void uds_log_message_pack(int priority,
+			  const char *module __always_unused,
+			  const char *prefix,
+			  const char *fmt1,
+			  va_list args1,
+			  const char *fmt2,
+			  va_list args2)
+	{
 	open_logger();
 	if (priority > get_log_level()) {
 		return;
@@ -201,13 +202,12 @@ void log_message_pack(int priority,
 }
 
 /**********************************************************************/
-__attribute__((format(printf, 2, 3))) static void
-log_at_level(int priority, const char *format, ...)
+void uds_log_message(int priority, const char *format, ...)
 {
 	va_list args;
 
 	va_start(args, format);
-	vlog_message(priority, format, args);
+	uds_log_embedded_message(priority, NULL, NULL, format, args, "%s", "");
 	va_end(args);
 }
 
@@ -224,7 +224,7 @@ static void log_proc_maps(int priority)
 		return;
 	}
 
-	log_at_level(priority, "maps file");
+	uds_log_message(priority, "maps file");
 	char buffer[1024];
 	char *map_line;
 	while ((map_line = fgets(buffer, 1024, maps_file)) != NULL) {
@@ -232,9 +232,9 @@ static void log_proc_maps(int priority)
 		if (newline != NULL) {
 			*newline = '\0';
 		}
-		log_at_level(priority, "  %s", map_line);
+		uds_log_message(priority, "  %s", map_line);
 	}
-	log_at_level(priority, "end of maps file");
+	uds_log_message(priority, "end of maps file");
 
 	fclose(maps_file);
 }
@@ -244,15 +244,15 @@ enum { NUM_STACK_FRAMES = 32 };
 /**********************************************************************/
 void log_backtrace(int priority)
 {
-	log_at_level(priority, "[Call Trace:]");
+	uds_log_message(priority, "[Call Trace:]");
 	void *trace[NUM_STACK_FRAMES];
 	int trace_size = backtrace(trace, NUM_STACK_FRAMES);
 	char **messages = backtrace_symbols(trace, trace_size);
 	if (messages == NULL) {
-		log_at_level(priority, "backtrace failed");
+		uds_log_message(priority, "backtrace failed");
 	} else {
 		for (int i = 0; i < trace_size; ++i) {
-			log_at_level(priority, "  %s", messages[i]);
+			uds_log_message(priority, "  %s", messages[i]);
 		}
 		// "messages" is malloc'ed indirectly by backtrace_symbols
 		free(messages);

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/errors.c#7 $
+ * $Id: //eng/uds-releases/krusty/src/uds/errors.c#8 $
  */
 
 #include "errors.h"
@@ -214,7 +214,7 @@ system_string_error(int errnum, char *buf, size_t buflen)
 	return strerror_r(errnum, buf, buflen);
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 const char *string_error(int errnum, char *buf, size_t buflen)
 {
 	if (buf == NULL) {
@@ -263,7 +263,7 @@ const char *string_error(int errnum, char *buf, size_t buflen)
 	return buf;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 const char *string_error_name(int errnum, char *buf, size_t buflen)
 {
 	errnum = sans_unrecoverable(errnum);
@@ -296,7 +296,7 @@ const char *string_error_name(int errnum, char *buf, size_t buflen)
 	return buf;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int register_error_block(const char *block_name,
 			 int first_error,
 			 int last_reserved_error,

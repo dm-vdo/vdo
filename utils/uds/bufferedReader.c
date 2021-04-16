@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#8 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#9 $
  */
 
 #include "bufferedReader.h"
@@ -47,7 +47,7 @@ struct buffered_reader {
 };
 
 
-/*****************************************************************************/
+/**********************************************************************/
 int make_buffered_reader(struct io_region *region,
 			 struct buffered_reader **reader_ptr)
 {
@@ -78,7 +78,7 @@ int make_buffered_reader(struct io_region *region,
 	return UDS_SUCCESS;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 void free_buffered_reader(struct buffered_reader *br)
 {
 	if (br == NULL) {
@@ -89,7 +89,7 @@ void free_buffered_reader(struct buffered_reader *br)
 	FREE(br);
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 static int
 position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
 {
@@ -112,7 +112,7 @@ position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
 	return UDS_SUCCESS;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 static size_t bytes_remaining_in_read_buffer(struct buffered_reader *br)
 {
 	return (br->br_pointer == NULL ?
@@ -120,7 +120,7 @@ static size_t bytes_remaining_in_read_buffer(struct buffered_reader *br)
 			br->br_start + UDS_BLOCK_SIZE - br->br_pointer);
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int read_from_buffered_reader(struct buffered_reader *br,
 			      void *data,
 			      size_t length)
@@ -154,7 +154,7 @@ int read_from_buffered_reader(struct buffered_reader *br,
 	return result;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int verify_buffered_data(struct buffered_reader *br,
 			 const void *value,
 			 size_t length)

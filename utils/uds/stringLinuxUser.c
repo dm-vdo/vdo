@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/stringLinuxUser.c#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/stringLinuxUser.c#3 $
  */
 
 #include <limits.h>
@@ -58,13 +58,13 @@ int string_to_unsigned_long(const char *nptr, unsigned long *num)
 	return errno;
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 char *next_token(char *str, const char *delims, char **state)
 {
 	return strtok_r(str, delims, state);
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 int parse_uint64(const char *str, uint64_t *num)
 {
 	char *end;
