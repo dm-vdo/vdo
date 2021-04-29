@@ -20,7 +20,7 @@
 """
   VDOKernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#2 $
 
 """
 from __future__ import absolute_import
@@ -40,7 +40,8 @@ class VDOKernelModuleService(KernelModuleService):
   def setLogLevel(self, level):
     """Sets the module log level."""
     if level != Defaults.vdoLogLevel:
-      commandStr = "echo " + level + " > /sys/" + self._name + "/log_level"
+      commandStr = ("echo " + level + " > /sys/module/" + self._name
+                    + "/parameters/log_level")
       runCommand(commandStr.split(), shell=True, noThrow=True)
 
   ######################################################################
