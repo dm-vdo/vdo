@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#32 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#33 $
  */
 
 #include "blockMapUtils.h"
@@ -72,7 +72,8 @@ static int readAndExaminePage(UserVDO                 *vdo,
     .pbn  = pagePBN,
     .slot = 0,
   };
-  for (; blockMapSlot.slot < BLOCK_MAP_ENTRIES_PER_PAGE; blockMapSlot.slot++) {
+  for (; blockMapSlot.slot < VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
+        blockMapSlot.slot++) {
     struct data_location mapped
       = unpack_block_map_entry(&page->entries[blockMapSlot.slot]);
 
@@ -115,7 +116,7 @@ int examineBlockMapEntries(UserVDO *vdo, MappingExaminer *examiner)
     return result;
   }
 
-  height_t height = BLOCK_MAP_TREE_HEIGHT - 1;
+  height_t height = VDO_BLOCK_MAP_TREE_HEIGHT - 1;
   for (uint8_t rootIndex = 0; rootIndex < map->root_count; rootIndex++) {
     result = readAndExaminePage(vdo, rootIndex + map->root_origin, height,
                                 examiner);
@@ -163,7 +164,7 @@ static int readSlotFromPage(UserVDO                  *vdo,
   } else {
     mapped = (struct data_location) {
       .state = MAPPING_STATE_UNMAPPED,
-      .pbn   = ZERO_BLOCK,
+      .pbn   = VDO_ZERO_BLOCK,
     };
   }
 
@@ -186,25 +187,25 @@ int findLBNPage(UserVDO                 *vdo,
   }
 
   struct block_map_state_2_0 *map = &vdo->states.block_map;
-  page_number_t pageNumber = lbn / BLOCK_MAP_ENTRIES_PER_PAGE;
+  page_number_t pageNumber = lbn / VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
 
   // It's in the tree section of the block map.
-  slot_number_t slots[BLOCK_MAP_TREE_HEIGHT];
-  slots[0] = lbn % BLOCK_MAP_ENTRIES_PER_PAGE;
+  slot_number_t slots[VDO_BLOCK_MAP_TREE_HEIGHT];
+  slots[0] = lbn % VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
   root_count_t rootIndex = pageNumber % map->root_count;
   pageNumber = pageNumber / map->root_count;
-  for (int i = 1; i < BLOCK_MAP_TREE_HEIGHT; i++) {
-    slots[i] = pageNumber % BLOCK_MAP_ENTRIES_PER_PAGE;
-    pageNumber /= BLOCK_MAP_ENTRIES_PER_PAGE;
+  for (int i = 1; i < VDO_BLOCK_MAP_TREE_HEIGHT; i++) {
+    slots[i] = pageNumber % VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
+    pageNumber /= VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
   }
 
   physical_block_number_t pbn = map->root_origin + rootIndex;
-  for (int i = BLOCK_MAP_TREE_HEIGHT - 1; i > 0; i--) {
+  for (int i = VDO_BLOCK_MAP_TREE_HEIGHT - 1; i > 0; i--) {
     enum block_mapping_state state;
     int result = readSlotFromPage(vdo, pbn, slots[i], &pbn, &state);
-    if ((result != VDO_SUCCESS) || (pbn == ZERO_BLOCK)
+    if ((result != VDO_SUCCESS) || (pbn == VDO_ZERO_BLOCK)
         || (state == MAPPING_STATE_UNMAPPED)) {
-      *pbnPtr = ZERO_BLOCK;
+      *pbnPtr = VDO_ZERO_BLOCK;
       return result;
     }
   }
@@ -225,13 +226,13 @@ int findLBNMapping(UserVDO                  *vdo,
     return result;
   }
 
-  if (pagePBN == ZERO_BLOCK) {
-    *pbnPtr   = ZERO_BLOCK;
+  if (pagePBN == VDO_ZERO_BLOCK) {
+    *pbnPtr   = VDO_ZERO_BLOCK;
     *statePtr = MAPPING_STATE_UNMAPPED;
     return VDO_SUCCESS;
   }
 
-  slot_number_t slot = lbn % BLOCK_MAP_ENTRIES_PER_PAGE;
+  slot_number_t slot = lbn % VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
   return readSlotFromPage(vdo, pagePBN, slot, pbnPtr, statePtr);
 }
 

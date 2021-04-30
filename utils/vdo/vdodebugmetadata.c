@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#52 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#53 $
  */
 
 #include <err.h>
@@ -91,7 +91,7 @@ typedef struct {
 
 typedef struct {
   struct recovery_block_header  header;
-  struct packed_journal_sector *sectors[SECTORS_PER_BLOCK];
+  struct packed_journal_sector *sectors[VDO_SECTORS_PER_BLOCK];
 } UnpackedJournalBlock;
 
 static UserVDO                    *vdo             = NULL;
@@ -432,7 +432,7 @@ static void readMetadata(void)
     struct packed_journal_header *packedHeader
       = (struct packed_journal_header *) &rawJournalBytes[i * VDO_BLOCK_SIZE];
     unpack_recovery_block_header(packedHeader, &block->header);
-    for (uint8_t sector = 1; sector < SECTORS_PER_BLOCK; sector++) {
+    for (uint8_t sector = 1; sector < VDO_SECTORS_PER_BLOCK; sector++) {
       block->sectors[sector] = get_journal_block_sector(packedHeader, sector);
     }
   }
@@ -532,7 +532,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
        i++) {
     UnpackedJournalBlock block = recoveryJournal[i];
 
-    for (sector_count_t j = 1; j < SECTORS_PER_BLOCK; j++) {
+    for (sector_count_t j = 1; j < VDO_SECTORS_PER_BLOCK; j++) {
       const struct packed_journal_sector *sector = block.sectors[j];
 
       for (journal_entry_count_t k = 0; k < sector->entry_count; k++) {

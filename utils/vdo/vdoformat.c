@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#29 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#30 $
  */
 
 #include <blkid/blkid.h>
@@ -164,7 +164,8 @@ static void describeCapacity(const UserVDO *vdo,
 
   struct slab_config slabConfig = vdo->states.slab_depot.slab_config;
   size_t totalSize = vdo->slabCount * slabConfig.slab_blocks * VDO_BLOCK_SIZE;
-  size_t maxTotalSize = MAX_SLABS * slabConfig.slab_blocks * VDO_BLOCK_SIZE;
+  size_t maxTotalSize = MAX_VDO_SLABS * slabConfig.slab_blocks
+                          * VDO_BLOCK_SIZE;
 
   printf("The VDO volume can address ");
   printReadableSize(totalSize);
@@ -176,16 +177,16 @@ static void describeCapacity(const UserVDO *vdo,
   }
   printf(".\n");
 
-  if (vdo->slabCount < MAX_SLABS) {
+  if (vdo->slabCount < MAX_VDO_SLABS) {
     printf("It can grow to address at most ");
     printReadableSize(maxTotalSize);
-    printf(" of physical storage in %u slabs.\n", MAX_SLABS);
-    if (slabBits < MAX_SLAB_BITS) {
+    printf(" of physical storage in %u slabs.\n", MAX_VDO_SLABS);
+    if (slabBits < MAX_VDO_SLAB_BITS) {
       printf("If a larger maximum size might be needed, use bigger slabs.\n");
     }
   } else {
     printf("The volume has the maximum number of slabs and so cannot grow.\n");
-    if (slabBits < MAX_SLAB_BITS) {
+    if (slabBits < MAX_VDO_SLAB_BITS) {
       printf("Consider using larger slabs to allow the volume to grow.\n");
     }
   }
@@ -453,10 +454,10 @@ int main(int argc, char *argv[])
       break;
 
     case 'S':
-      result = parseUInt(optarg, MIN_SLAB_BITS, MAX_SLAB_BITS, &slabBits);
+      result = parseUInt(optarg, MIN_SLAB_BITS, MAX_VDO_SLAB_BITS, &slabBits);
       if (result != VDO_SUCCESS) {
         warnx("invalid slab bits, must be %u-%u",
-              MIN_SLAB_BITS, MAX_SLAB_BITS);
+              MIN_SLAB_BITS, MAX_VDO_SLAB_BITS);
         usage(argv[0], usageString);
       }
       break;
@@ -523,9 +524,9 @@ int main(int argc, char *argv[])
     errx(errno, "unable to get size of %s", filename);
   }
 
-  if (physicalSize > MAXIMUM_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE) {
+  if (physicalSize > MAXIMUM_VDO_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE) {
     errx(1, "underlying block device size exceeds the maximum (%" PRIu64 ")",
-        MAXIMUM_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE);
+        MAXIMUM_VDO_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE);
   }
 
   result = close_file(fd, "cannot close file");
@@ -537,8 +538,8 @@ int main(int argc, char *argv[])
     .logical_blocks        = logicalSize / VDO_BLOCK_SIZE,
     .physical_blocks       = physicalSize / VDO_BLOCK_SIZE,
     .slab_size             = 1 << slabBits,
-    .slab_journal_blocks   = DEFAULT_SLAB_JOURNAL_SIZE,
-    .recovery_journal_size = DEFAULT_RECOVERY_JOURNAL_SIZE,
+    .slab_journal_blocks   = DEFAULT_VDO_SLAB_JOURNAL_SIZE,
+    .recovery_journal_size = DEFAULT_VDO_RECOVERY_JOURNAL_SIZE,
   };
 
   if ((config.logical_blocks * VDO_BLOCK_SIZE) != (block_count_t) logicalSize) {
@@ -547,11 +548,11 @@ int main(int argc, char *argv[])
   }
 
   char errorBuffer[ERRBUF_SIZE];
-  if (config.logical_blocks > MAXIMUM_LOGICAL_BLOCKS) {
+  if (config.logical_blocks > MAXIMUM_VDO_LOGICAL_BLOCKS) {
     errx(VDO_OUT_OF_RANGE,
          "%" PRIu64 " requested logical space exceeds the maximum "
          "(%" PRIu64 "): %s",
-         logicalSize, MAXIMUM_LOGICAL_BLOCKS * VDO_BLOCK_SIZE,
+         logicalSize, MAXIMUM_VDO_LOGICAL_BLOCKS * VDO_BLOCK_SIZE,
          uds_string_error(VDO_OUT_OF_RANGE, errorBuffer, sizeof(errorBuffer)));
   }
 

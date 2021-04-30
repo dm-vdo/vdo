@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#9 $
  */
 
 #include "slabSummaryReader.h"
@@ -96,7 +96,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
         return result;
       }
 
-      for (slab_count_t entry_number = zone; entry_number < MAX_SLABS;
+      for (slab_count_t entry_number = zone; entry_number < MAX_VDO_SLABS;
            entry_number += zones) {
         memcpy(entries + entry_number, buffer + entry_number,
                sizeof(struct slab_summary_entry));

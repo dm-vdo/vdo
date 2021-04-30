@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#49 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#50 $
  */
 
 #include <err.h>
@@ -122,7 +122,7 @@ static unsigned int hintShift;
 static block_count_t lbnCount = 0;
 
 /** Reference counts and audit counters for each slab */
-static SlabAudit    slabs[MAX_SLABS] = { { 0, }, };
+static SlabAudit    slabs[MAX_VDO_SLABS] = { { 0, }, };
 
 // Total number of errors of each type found
 static uint64_t     badBlockMappings = 0;
@@ -342,7 +342,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
                                 enum block_mapping_state state)
 {
   if (state == MAPPING_STATE_UNMAPPED) {
-    if (pbn != ZERO_BLOCK) {
+    if (pbn != VDO_ZERO_BLOCK) {
       reportBlockMapEntry("is unmapped but has a physical block",
                           slot, height, pbn, state);
       return VDO_BAD_MAPPING;
@@ -350,7 +350,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
     return VDO_SUCCESS;
   }
 
-  if (is_compressed(state) && (pbn == ZERO_BLOCK)) {
+  if (is_compressed(state) && (pbn == VDO_ZERO_BLOCK)) {
     reportBlockMapEntry("is compressed but has no physical block",
                         slot, height, pbn, state);
     return VDO_BAD_MAPPING;
@@ -358,7 +358,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
 
   if (height == 0) {
     lbnCount++;
-    if (pbn == ZERO_BLOCK) {
+    if (pbn == VDO_ZERO_BLOCK) {
       return VDO_SUCCESS;
     }
   }
@@ -528,7 +528,8 @@ verifyRefCountBlock(SlabAudit                     *audit,
 {
   block_count_t allocatedCount = 0;
   block_count_t entries        = blockEntries;
-  for (sector_count_t i = 0; (i < SECTORS_PER_BLOCK) && (entries > 0); i++) {
+  for (sector_count_t i = 0;
+       (i < VDO_SECTORS_PER_BLOCK) && (entries > 0); i++) {
     block_count_t sectorEntries
       = min(entries, (block_count_t) COUNTS_PER_SECTOR);
     allocatedCount += verifyRefCountSector(audit, &block->sectors[i],

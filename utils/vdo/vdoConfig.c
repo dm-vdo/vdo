@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#47 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#48 $
  */
 
 #include <uuid/uuid.h>
@@ -55,7 +55,7 @@ int makeFixedLayoutFromConfig(const struct vdo_config  *config,
                               struct fixed_layout     **layoutPtr)
 {
   return make_vdo_fixed_layout(config->physical_blocks, startingOffset,
-                               DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT,
+                               DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
                                config->recovery_journal_size,
                                get_slab_summary_size(VDO_BLOCK_SIZE),
                                layoutPtr);
@@ -94,8 +94,8 @@ computeForestSize(block_count_t logicalBlocks,
   // Exclude the tree roots since those aren't allocated from slabs,
   // and also exclude the super-roots, which only exist in memory.
   approximateNonLeaves -=
-    rootCount * (newSizes.levels[BLOCK_MAP_TREE_HEIGHT - 2] +
-                 newSizes.levels[BLOCK_MAP_TREE_HEIGHT - 1]);
+    rootCount * (newSizes.levels[VDO_BLOCK_MAP_TREE_HEIGHT - 2] +
+                 newSizes.levels[VDO_BLOCK_MAP_TREE_HEIGHT - 1]);
 
   block_count_t approximateLeaves =
     compute_block_map_page_count(logicalBlocks - approximateNonLeaves);
@@ -156,15 +156,15 @@ static int __must_check configureVDO(UserVDO *vdo)
     block_count_t dataBlocks = slabConfig.data_blocks * vdo->slabCount;
     config->logical_blocks
       = dataBlocks - computeForestSize(dataBlocks,
-                                       DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT);
+                                       DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT);
   }
 
   partition = getPartition(vdo, BLOCK_MAP_PARTITION, "no block map partition");
   vdo->states.block_map = (struct block_map_state_2_0) {
-    .flat_page_origin = BLOCK_MAP_FLAT_PAGE_ORIGIN,
+    .flat_page_origin = VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN,
     .flat_page_count = 0,
     .root_origin = get_fixed_layout_partition_offset(partition),
-    .root_count = DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT,
+    .root_count = DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
   };
 
   vdo->states.vdo.state = VDO_NEW;
@@ -201,7 +201,7 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
     }
   }
 
-  block_count_t blockMapBlocks = DEFAULT_BLOCK_MAP_TREE_ROOT_COUNT;
+  block_count_t blockMapBlocks = DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT;
   block_count_t journalBlocks  = config->recovery_journal_size;
   block_count_t summaryBlocks  = get_slab_summary_size(VDO_BLOCK_SIZE);
   block_count_t slabBlocks     = config->slab_size;

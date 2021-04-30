@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#37 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#38 $
  */
 
 #include <err.h>
@@ -283,7 +283,7 @@ static void dumpBlockMap(void)
         errx(1, "Could not read block map for LBN %" PRIu64, lbns[i]);
       }
 
-      if (pagePBN == ZERO_BLOCK) {
+      if (pagePBN == VDO_ZERO_BLOCK) {
         result = zeroBlock();
       } else {
         result = copyBlocks(pagePBN, 1);
