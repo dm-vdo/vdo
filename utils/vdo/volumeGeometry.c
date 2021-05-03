@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#38 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#39 $
  */
 
 #include "volumeGeometry.h"
@@ -303,13 +303,13 @@ static int decode_geometry_block(struct buffer *buffer,
 		return result;
 	}
 
-	result = decode_header(buffer, &header);
+	result = decode_vdo_header(buffer, &header);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	result = validate_header(&GEOMETRY_BLOCK_HEADER_4_0, &header,
-				 true, __func__);
+	result = validate_vdo_header(&GEOMETRY_BLOCK_HEADER_4_0, &header,
+				     true, __func__);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -342,7 +342,7 @@ static int encode_geometry_block(const struct volume_geometry *geometry,
 		return result;
 	}
 
-	result = encode_header(&GEOMETRY_BLOCK_HEADER_4_0, buffer);
+	result = encode_vdo_header(&GEOMETRY_BLOCK_HEADER_4_0, buffer);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
