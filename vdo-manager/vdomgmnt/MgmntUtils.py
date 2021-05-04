@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   MgmntUtils - miscellaneous utilities for the VDO manager
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/MgmntUtils.py#2 $
+  $Id: //eng/vdo-releases/sulfur/src/python/vdo/vdomgmnt/MgmntUtils.py#1 $
 
 """
 from __future__ import absolute_import

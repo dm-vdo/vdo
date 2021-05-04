@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Red Hat, Inc.
+ * Copyright Red Hat
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/loggerLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#22 $
  */
 
 #include "logger.h"
@@ -31,215 +31,184 @@
 #include "threads.h"
 
 const char TIMESTAMPS_ENVIRONMENT_VARIABLE[] = "UDS_LOG_TIMESTAMPS";
-const char IDS_ENVIRONMENT_VARIABLE[]        = "UDS_LOG_IDS";
+const char IDS_ENVIRONMENT_VARIABLE[] = "UDS_LOG_IDS";
 
-static const char IDENTITY[]       = "UDS";
+static const char IDENTITY[] = "UDS";
 
-static OnceState loggerOnce = ONCE_STATE_INITIALIZER;
-static Mutex     loggerMutex;   // never destroyed....
+static once_state_t logger_once = ONCE_STATE_INITIALIZER;
 
-static unsigned int  opened      = 0;
-static FILE         *fp          = NULL;
-static bool          timestamps  = true;
-static bool          ids         = true;
+static unsigned int opened = 0;
+static FILE *fp = NULL;
+static bool timestamps = true;
+static bool ids = true;
 
 /**********************************************************************/
-static void initLogger(void)
+static void init_logger(void)
 {
-  int result = initMutex(&loggerMutex);
-  if (result != UDS_SUCCESS) {
-    logErrorWithStringError(result, "cannot initialize logger mutex");
-  }
+	const char *uds_log_level = getenv("UDS_LOG_LEVEL");
+	if (uds_log_level != NULL) {
+		set_log_level(string_to_priority(uds_log_level));
+	} else {
+		set_log_level(LOG_INFO);
+	}
+
+	char *timestamps_string = getenv(TIMESTAMPS_ENVIRONMENT_VARIABLE);
+	if (timestamps_string != NULL && strcmp(timestamps_string, "0") == 0) {
+		timestamps = false;
+	}
+
+	char *ids_string = getenv(IDS_ENVIRONMENT_VARIABLE);
+	if (ids_string != NULL && strcmp(ids_string, "0") == 0) {
+		ids = false;
+	}
+
+	int error = 0;
+	char *log_file = getenv("UDS_LOGFILE");
+	bool is_abs_path = false;
+	if (log_file != NULL) {
+		is_abs_path =
+			(make_abs_path(log_file, &log_file) == UDS_SUCCESS);
+		errno = 0;
+		fp = fopen(log_file, "a");
+		if (fp != NULL) {
+			if (is_abs_path) {
+				FREE(log_file);
+			}
+			opened = 1;
+			return;
+		}
+		error = errno;
+	}
+
+	char *identity;
+	if (alloc_sprintf(NULL, &identity, "%s/%s", IDENTITY,
+			  program_invocation_short_name) == UDS_SUCCESS) {
+		mini_openlog(identity, LOG_PID | LOG_NDELAY | LOG_CONS,
+			     LOG_USER);
+		FREE(identity);
+	} else {
+		mini_openlog(IDENTITY, LOG_PID | LOG_NDELAY | LOG_CONS,
+			     LOG_USER);
+		uds_log_error("Could not include program name in log");
+	}
+
+	if (error != 0) {
+		log_error_strerror(error, "Couldn't open log file %s",
+				   log_file);
+	}
+
+	if (is_abs_path) {
+		FREE(log_file);
+	}
+	opened = 1;
 }
 
 /**********************************************************************/
-void openLogger(void)
+void open_logger(void)
 {
-  performOnce(&loggerOnce, initLogger);
-
-  lockMutex(&loggerMutex);
-  if (opened > 0) {
-    ++opened;
-    unlockMutex(&loggerMutex);
-    return;
-  }
-
-  const char *udsLogLevel = getenv("UDS_LOG_LEVEL");
-  if (udsLogLevel != NULL) {
-    setLogLevel(stringToPriority(udsLogLevel));
-  } else {
-    setLogLevel(LOG_INFO);
-  }
-
-  char *timestampsString = getenv(TIMESTAMPS_ENVIRONMENT_VARIABLE);
-  if (timestampsString != NULL && strcmp(timestampsString, "0") == 0) {
-    timestamps = false;
-  }
-
-  char *idsString = getenv(IDS_ENVIRONMENT_VARIABLE);
-  if (idsString != NULL && strcmp(idsString, "0") == 0) {
-    ids = false;
-  }
-
-  int error = 0;
-  char *logFile = getenv("UDS_LOGFILE");
-  bool isAbsPath = false;
-  if (logFile != NULL) {
-    isAbsPath = (makeAbsPath(logFile, &logFile) == UDS_SUCCESS);
-    errno = 0;
-    fp = fopen(logFile, "a");
-    if (fp != NULL) {
-      if (isAbsPath) {
-        FREE(logFile);
-      }
-      opened = 1;
-      unlockMutex(&loggerMutex);
-      return;
-    }
-    error = errno;
-  }
-
-  char *identity;
-  if (allocSprintf(NULL, &identity, "%s/%s", IDENTITY,
-                   program_invocation_short_name)
-      == UDS_SUCCESS) {
-    miniOpenlog(identity, LOG_PID | LOG_NDELAY | LOG_CONS, LOG_USER);
-    FREE(identity);
-  } else {
-    miniOpenlog(IDENTITY, LOG_PID | LOG_NDELAY | LOG_CONS, LOG_USER);
-    logError("Could not include program name in log");
-  }
-
-  if (error != 0) {
-    logErrorWithStringError(error, "Couldn't open log file %s", logFile);
-  }
-
-  if (isAbsPath) {
-    FREE(logFile);
-  }
-  opened = 1;
-  unlockMutex(&loggerMutex);
+	perform_once(&logger_once, init_logger);
 }
 
 /**********************************************************************/
-void closeLogger(void)
+static void format_current_time(char *buffer, size_t buffer_size)
 {
-  performOnce(&loggerOnce, initLogger);
+	*buffer = 0;
 
-  lockMutex(&loggerMutex);
-  if (opened > 0 && --opened == 0) {
-    if (fp == NULL) {
-      miniCloselog();
-    } else {
-      fclose(fp);
-      fp = NULL;
-    }
-  }
-  unlockMutex(&loggerMutex);
+	ktime_t now = current_time_ns(CLOCK_REALTIME);
+	struct tm tmp;
+	const time_t seconds = now / NSEC_PER_SEC;
+	if (localtime_r(&seconds, &tmp) == NULL) {
+		return;
+	}
+
+	if (strftime(buffer, buffer_size, "%Y-%m-%d %H:%M:%S", &tmp) == 0) {
+		*buffer = 0;
+		return;
+	}
+
+	size_t current_length = strlen(buffer);
+	if (current_length > (buffer_size - 5)) {
+		// Not enough room to add milliseconds but we do have a time
+		// string.
+		return;
+	}
+	snprintf(buffer + current_length,
+		 buffer_size - current_length,
+		 ".%03d",
+		 (int) ((now % NSEC_PER_SEC) / NSEC_PER_MSEC));
 }
 
 /**********************************************************************/
-static void formatCurrentTime(char *buffer, size_t bufferSize)
-{
-  *buffer = 0;
+void uds_log_message_pack(int priority,
+			  const char *module __always_unused,
+			  const char *prefix,
+			  const char *fmt1,
+			  va_list args1,
+			  const char *fmt2,
+			  va_list args2)
+	{
+	open_logger();
+	if (priority > get_log_level()) {
+		return;
+	}
 
-  AbsTime now = currentTime(CLOCK_REALTIME);
-  if (!isValidTime(now)) {
-    return;
-  }
+	// Preserve errno since the caller cares more about their own error
+	// state than about errors in the logging code.
+	int error = errno;
 
-  struct timeval tv = asTimeVal(now);
+	if (fp == NULL) {
+		mini_syslog_pack(priority, prefix, fmt1, args1, fmt2, args2);
+	} else {
+		char tname[16];
+		get_thread_name(tname);
+		flockfile(fp);
 
-  struct tm tmp;
-  if (localtime_r(&tv.tv_sec, &tmp) == NULL) {
-    return;
-  }
+		if (timestamps) {
+			char time_buffer[32];
+			format_current_time(time_buffer, sizeof(time_buffer));
+			fprintf(fp, "%s ", time_buffer);
+		}
 
-  if (strftime(buffer, bufferSize, "%Y-%m-%d %H:%M:%S", &tmp) == 0) {
-    *buffer = 0;
-    return;
-  }
+		fputs(program_invocation_short_name, fp);
 
-  size_t currentLength = strlen(buffer);
-  if (currentLength > (bufferSize - 5)) {
-    // Not enough room to add milliseconds but we do have a time string.
-    return;
-  }
-  snprintf(buffer + currentLength, bufferSize - currentLength,
-           ".%03d", (int) (tv.tv_usec / 1000));
+		if (ids) {
+			fprintf(fp, "[%u]", getpid());
+		}
+
+		fprintf(fp, ": %-6s (%s", priority_to_string(priority), tname);
+
+		if (ids) {
+			fprintf(fp, "/%d", get_thread_id());
+		}
+
+		fputs(") ", fp);
+
+		if (prefix != NULL) {
+			fputs(prefix, fp);
+		}
+		if (fmt1 != NULL) {
+			vfprintf(fp, fmt1, args1);
+		}
+		if (fmt2 != NULL) {
+			vfprintf(fp, fmt2, args2);
+		}
+		fputs("\n", fp);
+		fflush(fp);
+		funlockfile(fp);
+	}
+
+	// Reset errno
+	errno = error;
 }
 
 /**********************************************************************/
-void logMessagePack(int         priority,
-                    const char *prefix,
-                    const char *fmt1,
-                    va_list     args1,
-                    const char *fmt2,
-                    va_list     args2)
+void uds_log_message(int priority, const char *format, ...)
 {
-  openLogger();
-  if (priority > getLogLevel()) {
-    return;
-  }
+	va_list args;
 
-  // Preserve errno since the caller cares more about their own error state
-  // than about errors in the logging code.
-  int error = errno;
-
-  if (fp == NULL) {
-    miniSyslogPack(priority, prefix, fmt1, args1, fmt2, args2);
-  } else {
-    char tname[16];
-    getThreadName(tname);
-    flockfile(fp);
-
-    if (timestamps) {
-      char timeBuffer[32];
-      formatCurrentTime(timeBuffer, sizeof(timeBuffer));
-      fprintf(fp, "%s ", timeBuffer);
-    }
-
-    fputs(program_invocation_short_name, fp);
-
-    if (ids) {
-      fprintf(fp, "[%u]", getpid());
-    }
-
-    fprintf(fp, ": %-6s (%s", priorityToString(priority), tname);
-
-    if (ids) {
-      fprintf(fp, "/%d", getThreadId());
-    }
-
-    fputs(") ", fp);
-
-    if (prefix != NULL) {
-      fputs(prefix, fp);
-    }
-    if (fmt1 != NULL) {
-      vfprintf(fp, fmt1, args1);
-    }
-    if (fmt2 != NULL) {
-      vfprintf(fp, fmt2, args2);
-    }
-    fputs("\n", fp);
-    fflush(fp);
-    funlockfile(fp);
-  }
-
-  // Reset errno
-  errno = error;
-}
-
-/**********************************************************************/
-__attribute__((format(printf, 2, 3)))
-static void logAtLevel(int priority, const char *format, ...)
-{
-  va_list args;
-
-  va_start(args, format);
-  vLogMessage(priority, format, args);
-  va_end(args);
+	va_start(args, format);
+	uds_log_embedded_message(priority, NULL, NULL, format, args, "%s", "");
+	va_end(args);
 }
 
 /**
@@ -248,51 +217,52 @@ static void logAtLevel(int priority, const char *format, ...)
  *
  * @param priority The priority at which to log
  **/
-static void logProcMaps(int priority)
+static void log_proc_maps(int priority)
 {
-  FILE *mapsFile = fopen("/proc/self/maps", "r");
-  if (mapsFile == NULL) {
-    return;
-  }
+	FILE *maps_file = fopen("/proc/self/maps", "r");
+	if (maps_file == NULL) {
+		return;
+	}
 
-  logAtLevel(priority, "maps file");
-  char buffer[1024];
-  char *mapLine;
-  while ((mapLine = fgets(buffer, 1024, mapsFile)) != NULL) {
-    char *newline = strchr(mapLine, '\n');
-    if (newline != NULL) {
-      *newline = '\0';
-    }
-    logAtLevel(priority, "  %s", mapLine);
-  }
-  logAtLevel(priority, "end of maps file");
+	uds_log_message(priority, "maps file");
+	char buffer[1024];
+	char *map_line;
+	while ((map_line = fgets(buffer, 1024, maps_file)) != NULL) {
+		char *newline = strchr(map_line, '\n');
+		if (newline != NULL) {
+			*newline = '\0';
+		}
+		uds_log_message(priority, "  %s", map_line);
+	}
+	uds_log_message(priority, "end of maps file");
 
-  fclose(mapsFile);
+	fclose(maps_file);
 }
 
 enum { NUM_STACK_FRAMES = 32 };
 
 /**********************************************************************/
-void logBacktrace(int priority)
+void log_backtrace(int priority)
 {
-  logAtLevel(priority, "[backtrace]");
-  void *trace[NUM_STACK_FRAMES];
-  int traceSize = backtrace(trace, NUM_STACK_FRAMES);
-  char **messages = backtrace_symbols(trace, traceSize);
-  if (messages == NULL) {
-    logAtLevel(priority, "backtrace failed");
-  } else {
-    for (int i = 0; i < traceSize; ++i) {
-      logAtLevel(priority, "  %s", messages[i]);
-    }
-    // "messages" is malloc'ed indirectly by backtrace_symbols
-    free(messages);
-    logProcMaps(priority);
-  }
+	uds_log_message(priority, "[Call Trace:]");
+	void *trace[NUM_STACK_FRAMES];
+	int trace_size = backtrace(trace, NUM_STACK_FRAMES);
+	char **messages = backtrace_symbols(trace, trace_size);
+	if (messages == NULL) {
+		uds_log_message(priority, "backtrace failed");
+	} else {
+		for (int i = 0; i < trace_size; ++i) {
+			uds_log_message(priority, "  %s", messages[i]);
+		}
+		// "messages" is malloc'ed indirectly by backtrace_symbols
+		free(messages);
+		log_proc_maps(priority);
+	}
 }
 
 /**********************************************************************/
-void pauseForLogger(void)
+void pause_for_logger(void)
 {
-  // User-space logger can't be overrun, so this is a no-op.
+	// User-space logger can't be overrun, so this is a no-op.
 }
+

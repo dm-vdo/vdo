@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,13 +20,12 @@
 """
   Field - base class for a field of a collection of statistics
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/Field.py#2 $
+  $Id: //eng/vdo-releases/sulfur/src/python/vdo/statistics/Field.py#1 $
 """
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from ctypes import *
 from .LabeledValue import LabeledValue
 import re
 
@@ -66,13 +65,11 @@ class Field(object):
                                      string)
     return lambda stats, parent: eval(derivation)
 
-  def __init__(self, name, cType, **kwargs):
+  def __init__(self, name, **kwargs):
     """
     Create a new field.
 
     :param name:     The name of the field
-    :param cType:    The class representing the C representation for this field
-                     when sampled via an ioctl
     :param **kwargs: Keyword arguments which may be:
                        available: Specifies python code to apply to other
                                   fields of the parent structure to decide
@@ -85,13 +82,8 @@ class Field(object):
                                   in labeled output. Defaults to True.
                        label:     The label for this field. If unspecified, the
                                   label will be derived from the field name.
-                       length:    if > 1, indicates this field is an array of
-                                  the specified cType, otherwise is is a
-                                  scalar. Defaults to 1.
     """
     self.name      = name
-    self.length    = kwargs.pop('length', 1)
-    self.cType     = cType * self.length if (self.length > 1) else cType
     self.display   = kwargs.pop('display', True)
     self.label     = (kwargs.pop('label', self._decamel(self.name))
                       if self.display else None)
@@ -103,7 +95,7 @@ class Field(object):
     derived       = kwargs.pop('derived', None)
     self.inStruct = (derived is None)
 
-    defaultValue  = "getattr(stats, '{name}')".format(name = self.name)
+    defaultValue  = "stats['{name}']".format(name = self.name)
     self.getValue = self._generateLambda(derived if derived else defaultValue)
 
     if kwargs:
@@ -149,22 +141,23 @@ class IntegerField(Field):
 # basic integer types
 class BoolField(IntegerField):
   def __init__(self, name, **kwargs):
-    super(BoolField, self).__init__(name, c_byte, **kwargs)
+    super(BoolField, self).__init__(name,**kwargs)
 
   def extractSample(self, stats, parent):
-    return (super(BoolField, self).extractSample(stats, parent) != 0)
+    sample = super(BoolField, self).extractSample(stats, parent)
+    return (sample != 0)
 
 class Uint8Field(IntegerField):
   def __init__(self, name, **kwargs):
-    super(Uint8Field, self).__init__(name, c_byte, **kwargs)
+    super(Uint8Field, self).__init__(name, **kwargs)
 
 class Uint32Field(IntegerField):
   def __init__(self, name, **kwargs):
-    super(Uint32Field, self).__init__(name, c_uint, **kwargs)
+    super(Uint32Field, self).__init__(name, **kwargs)
 
 class Uint64Field(IntegerField):
   def __init__(self, name, **kwargs):
-    super(Uint64Field, self).__init__(name, c_ulonglong, **kwargs)
+    super(Uint64Field, self).__init__(name, **kwargs)
 
 # base float
 class FloatingPointField(Field):
@@ -180,12 +173,12 @@ class FloatingPointField(Field):
 # basic float type
 class FloatField(FloatingPointField):
   def __init__(self, name, **kwargs):
-    super(FloatField, self).__init__(name, c_float, **kwargs)
+    super(FloatField, self).__init__(name, **kwargs)
 
 # the basic string type
 class StringField(Field):
   def __init__(self, name, **kwargs):
-    super(StringField, self).__init__(name, c_char, **kwargs)
+    super(StringField, self).__init__(name, **kwargs)
 
 # not available
 class NotAvailable(int):

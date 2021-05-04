@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Red Hat, Inc.
+ * Copyright Red Hat
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,55 +16,57 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/threadCondVarLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadCondVarLinuxUser.c#7 $
  */
 
 #include "permassert.h"
 #include "threads.h"
 
 /**********************************************************************/
-int initCond(CondVar *cond)
+int init_cond(struct cond_var *cond)
 {
-  int result = pthread_cond_init(cond, NULL);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_cond_init error");
+	int result = pthread_cond_init(&cond->condition, NULL);
+	return ASSERT_WITH_ERROR_CODE((result == 0), result,
+				      "pthread_cond_init error");
 }
 
 /**********************************************************************/
-int signalCond(CondVar *cond)
+int signal_cond(struct cond_var *cond)
 {
-  int result = pthread_cond_signal(cond);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_cond_signal error");
+	int result = pthread_cond_signal(&cond->condition);
+	return ASSERT_WITH_ERROR_CODE((result == 0), result,
+				      "pthread_cond_signal error");
 }
 
 /**********************************************************************/
-int broadcastCond(CondVar *cond)
+int broadcast_cond(struct cond_var *cond)
 {
-  int result = pthread_cond_broadcast(cond);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_cond_broadcast error");
+	int result = pthread_cond_broadcast(&cond->condition);
+	return ASSERT_WITH_ERROR_CODE((result == 0), result,
+				      "pthread_cond_broadcast error");
 }
 
 /**********************************************************************/
-int waitCond(CondVar *cond, Mutex *mutex)
+int wait_cond(struct cond_var *cond, struct mutex *mutex)
 {
-  int result = pthread_cond_wait(cond, mutex);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_cond_wait error");
+	int result = pthread_cond_wait(&cond->condition, &mutex->mutex);
+	return ASSERT_WITH_ERROR_CODE((result == 0), result,
+				      "pthread_cond_wait error");
 }
 
 /**********************************************************************/
-int timedWaitCond(CondVar *cond, Mutex *mutex, RelTime timeout)
+int timed_wait_cond(struct cond_var *cond,
+		    struct mutex *mutex,
+		    ktime_t timeout)
 {
-  struct timespec ts = asTimeSpec(futureTime(CLOCK_REALTIME, timeout));
-  return pthread_cond_timedwait(cond, mutex, &ts);
+	struct timespec ts = future_time(timeout);
+	return pthread_cond_timedwait(&cond->condition, &mutex->mutex, &ts);
 }
 
 /**********************************************************************/
-int destroyCond(CondVar *cond)
+int destroy_cond(struct cond_var *cond)
 {
-  int result = pthread_cond_destroy(cond);
-  return ASSERT_WITH_ERROR_CODE((result == 0), result,
-                                "pthread_cond_destroy error");
+	int result = pthread_cond_destroy(&cond->condition);
+	return ASSERT_WITH_ERROR_CODE((result == 0), result,
+				      "pthread_cond_destroy error");
 }

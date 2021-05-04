@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#37 $
+  $Id: //eng/vdo-releases/sulfur/src/python/vdo/vdomgmnt/VDOService.py#1 $
 
 """
 from __future__ import absolute_import
@@ -60,6 +60,7 @@ class VDOServiceError(ServiceError):
   # Overriden methods
   ######################################################################
   def __init__(self, msg = _("VDO volume error"), *args, **kwargs):
+
     super(VDOServiceError, self).__init__(msg, *args, **kwargs)
 
 ########################################################################
@@ -144,7 +145,6 @@ class VDOService(Service):
       a smaller size constrains the maximum physical size that can be
       accomodated. Must be a power of two between 128M and 32G.
     uuid (str): uuid of vdo volume.
-    writePolicy (str): sync, async, async-unsafe or auto.
   """
   log = logging.getLogger('vdo.vdomgmnt.Service.VDOService')
   yaml_tag = "!VDOService"
@@ -173,7 +173,6 @@ class VDOService(Service):
   vdoPhysicalSizeKey         = _("Physical size")
   vdoPhysicalThreadsKey      = _("Physical threads")
   vdoStatisticsKey           = _("VDO statistics")
-  vdoWritePolicyKey          = _("Write policy")
 
   # Options that cannot be changed for an already-created VDO device.
   # Specified as used by the command-line.
@@ -203,14 +202,12 @@ class VDOService(Service):
     beginGrowLogical = 'beginGrowLogical'
     beginGrowPhysical = 'beginGrowPhysical'
     beginImport = 'beginImport'
-    beginRunningSetWritePolicy = 'beginRunningSetWritePolicy'
     finished = 'finished'
     unknown = 'unknown'
     names = { beginCreate                : 'create',
               beginGrowLogical           : 'grow logical',
               beginGrowPhysical          : 'grow physical',
               beginImport                : 'import',
-              beginRunningSetWritePolicy : 'write policy',
               finished                   : 'unknown',
               unknown                    : 'unknown' }
               
@@ -224,7 +221,7 @@ class VDOService(Service):
       via normal processing.
       """
       return [cls.beginCreate, cls.beginGrowLogical, cls.beginGrowPhysical,
-              cls.beginImport, cls.beginRunningSetWritePolicy, cls.finished]
+              cls.beginImport, cls.finished]
       
   ######################################################################
   # Public methods
@@ -413,8 +410,8 @@ class VDOService(Service):
                               self.getName()))
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
-        
-    self._suspend(False)
+
+    self._suspend()
     self._resume()
 
     # Get the new logical size
@@ -472,8 +469,8 @@ class VDOService(Service):
                               self.getName()))
     runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
     transaction.setMessage(None)
-    
-    self._suspend(False)
+
+    self._suspend()
     self._resume()
 
     # Get the new physical size
@@ -1002,30 +999,6 @@ class VDOService(Service):
             self.getName()))
 
   ######################################################################
-  def setWritePolicy(self, policy):
-    """Changes the write policy on a VDO.  If the VDO is running it is
-    restarted with the new policy"""
-    self._handlePreviousOperationFailure()
-
-    #pylint: disable=E0203
-    if policy != self.writePolicy:
-      self.writePolicy = policy
-
-      if not self.running():
-        self.config.addVdo(self.getName(), self, True)
-      else:
-        # Because the vdo is running we need to be able to handle recovery
-        # should the user interrupt processing.
-        # Setting the operation state will update the configuration thus
-        # saving the specified state.
-        self._setOperationState(self.OperationState.beginRunningSetWritePolicy)
-
-        self._performRunningSetWritePolicy()
-
-        # The setting of the write policy is finished.
-        self._setOperationState(self.OperationState.finished)
-
-  ######################################################################
   # Overridden methods
   ######################################################################
   @staticmethod
@@ -1054,8 +1027,7 @@ class VDOService(Service):
             "physicalSize",
             "physicalThreads",
             "slabSize",
-            "uuid",
-            "writePolicy"]
+            "uuid"]
 
   ######################################################################
   @classmethod
@@ -1075,7 +1047,6 @@ class VDOService(Service):
     data["maxDiscardSize"] = str(self.maxDiscardSize)
     data["physicalSize"] = str(self.physicalSize)
     data["slabSize"] = str(self.slabSize)
-    data["writePolicy"] = self.writePolicy
     return data
 
   ######################################################################
@@ -1124,12 +1095,6 @@ class VDOService(Service):
       self._defaultIfNone(attributes, "slabSize",
                           str(self.slabSize)))
 
-    # writePolicy is handled differently as it is a computed property which
-    # depends on the config being set which is not the case when the instance
-    # is instantiated from YAML.
-    if "writePolicy" in attributes:
-      self.writePolicy = attributes["writePolicy"]
-
   ######################################################################
   @property
   def _yamlSpeciallyHandledAttributes(self):
@@ -1142,8 +1107,7 @@ class VDOService(Service):
                      "logicalSize",
                      "maxDiscardSize",
                      "physicalSize",
-                     "slabSize",
-                     "writePolicy"])
+                     "slabSize"])
     return specials
 
   ######################################################################
@@ -1163,8 +1127,6 @@ class VDOService(Service):
       return super(VDOService, self).__getattr__(name)
     elif name == "unrecoverablePreviousOperationFailure":
       return self._computedUnrecoverablePreviousOperationFailure()
-    elif name == "writePolicy":
-      return self._computedWritePolicy()
     else:
       raise AttributeError("'{obj}' object has no attribute '{attr}'".format(
           obj=type(self).__name__, attr=name))
@@ -1220,14 +1182,10 @@ class VDOService(Service):
                                               Defaults.logicalThreads)
     self.maxDiscardSize = self._defaultIfNone(kw, 'maxDiscardSize',
                                               Defaults.maxDiscardSize)
-    self.mdRaid5Mode = Defaults.mdRaid5Mode
     self.physicalSize = SizeString("0")
     self.physicalThreads = self._defaultIfNone(kw, 'vdoPhysicalThreads',
                                                Defaults.physicalThreads)
     self.slabSize = self._defaultIfNone(kw, 'vdoSlabSize', Defaults.slabSize)
-    self._writePolicy = self._defaultIfNone(kw, 'writePolicy',
-                                            Defaults.writePolicy)
-    self._writePolicySet = False  # track if the policy is explicitly set
 
     self.instanceNumber = 0
 
@@ -1247,9 +1205,6 @@ class VDOService(Service):
   def __setattr__(self, name, value):
     if name == 'indexMemory':
       self._setMemoryAttr(value)
-    elif name == "writePolicy":
-      self._writePolicy = value
-      self._writePolicySet = True
     elif name == 'identifier':
       # Setting the identifier must work, since we might have an old config
       # file with the identifier set, but we don't use it anymore so just
@@ -1457,23 +1412,6 @@ class VDOService(Service):
             ))
 
   ######################################################################
-  def _computedWritePolicy(self):
-    """Return the write policy of the instance.
-
-    If this instance's write policy was not explicitly set and there is an
-    instance in the configuration the write policy reported is from that
-    instance else it's from this instance.
-    """
-    service = self
-    if not self._writePolicySet:
-      try:
-        service = self.config.getVdo(self.getName())
-      except ArgumentError:
-        pass
-
-    return service._writePolicy
-
-  ######################################################################
   def _computeSlabBits(self):
     """Compute the --slab-bits parameter value for the slabSize attribute."""
     # add some fudge because of imprecision in long arithmetic
@@ -1507,8 +1445,12 @@ class VDOService(Service):
   ######################################################################
   def _determineInstanceNumber(self):
     """Determine the instance number of a running VDO using sysfs."""
-    path = "/sys/kvdo/{0}/instance".format(self.getName())
     try:
+      st = os.stat(self.getPath())
+      major = os.major(st.st_rdev)
+      minor = os.minor(st.st_rdev)
+      path = "/sys/dev/block/{major}:{minor}/vdo/instance".format(major=major,
+                                                                  minor=minor)
       with open(path, "r") as f:
         self.instanceNumber = int(f.read().strip())
     except Exception as err:
@@ -1582,12 +1524,10 @@ class VDOService(Service):
                                   "logical", str(self.logicalThreads),
                                   "physical", str(self.physicalThreads)])
     arguments = ["0", str(numSectors), Defaults.vdoTargetName,
-                 "V2", self.device,
+                 "V4", self.device,
                  str(self._getVDOConfigFromVDO()['physicalBlocks']),
                  str(self.logicalBlockSize),
                  str(cachePages), str(self.blockMapPeriod),
-                 self.mdRaid5Mode, self.writePolicy,
-                 self._name,
                  "maxDiscard", str(maxDiscardBlocks),
                  threadCountConfig]
     if not self.enableDeduplication:
@@ -1611,8 +1551,7 @@ class VDOService(Service):
 
     # Parse the existing table.
     tableOrder = ("logicalStart numSectors targetName version storagePath"
-                  + " storageSize blockSize cacheBlocks blockMapPeriod"
-                  + " mdRaid5Mode writePolicy poolName")
+                  + " storageSize blockSize cacheBlocks blockMapPeriod")
 
     tableOrderItems = tableOrder.split(" ")
     tableItems = table.split(" ")
@@ -1689,8 +1628,6 @@ class VDOService(Service):
     elif self.operationState == self.OperationState.beginImport:
       # Import is not automatically recovered.
       self._generatePreviousOperationFailureResponse()
-    elif self.operationState == self.OperationState.beginRunningSetWritePolicy:
-      self._recoverRunningSetWritePolicy()
     else:
       msg = _("Missing handler for recover from operation state: {0}").format(
               self.operationState)
@@ -1856,7 +1793,6 @@ class VDOService(Service):
                                         dmTable["blockSize"] == 512)
     statusDict[self.vdoBlockMapCacheSizeKey] = str(cacheBlocksInBytes)
     statusDict[self.vdoBlockMapPeriodKey] = dmTable["blockMapPeriod"]
-    statusDict[_("Configured write policy")] = dmTable["writePolicy"]
     if "maxDiscard" in dmTable:
       discardBlocksInBytes = SizeString("{0}B".format(
                                         dmTable["maxDiscard"]
@@ -1888,7 +1824,6 @@ class VDOService(Service):
                                         self.logicalBlockSize == 512)
     statusDict[self.vdoBlockMapCacheSizeKey] = str(self.blockMapCacheSize)
     statusDict[self.vdoBlockMapPeriodKey] = self.blockMapPeriod
-    statusDict[_("Configured write policy")] = self.writePolicy
     statusDict[self.vdoMaxDiscardSizeKey] = str(self.maxDiscardSize)
     statusDict[self.vdoAckThreadsKey] = self.ackThreads
     statusDict[self.vdoBioSubmitThreadsKey] = self.bioThreads
@@ -1914,7 +1849,7 @@ class VDOService(Service):
     # Parse the existing table required and optional parameters
     tableOrder = ("logicalStart numSectors targetName version"
                   + " storagePath storageSize blockSize cacheBlocks"
-                  + " blockMapPeriod mdRaid5Mode writePolicy poolName")
+                  + " blockMapPeriod")
     tableOrder= tableOrder.split(" ")
     tableItems = table.split(" ")
     tableOptionalItems = tableItems[len(tableOrder):]
@@ -2036,26 +1971,6 @@ class VDOService(Service):
       return False
 
   ######################################################################
-  @transactional
-  def _performRunningSetWritePolicy(self):
-    """Peforms the changing of the write policy on a running vdo instance.
-    """
-    transaction = Transaction.transaction()
-    transaction.setMessage(self.log.error,
-                           _("Device {0} could not be read").format(
-                                                          self.getName()))
-    vdoConf = self._generateModifiedDmTable(writePolicy = self.writePolicy)
-
-    transaction.setMessage(self.log.error,
-                           _("Device {0} could not be changed").format(
-                                                          self.getName()))
-    runCommand(["dmsetup", "reload", self._name, "--table", vdoConf])
-    transaction.setMessage(None)
-    
-    self._suspend(False)
-    self._resume()
-
-  ######################################################################
   def _recoverGrowLogical(self):
     """Recovers a VDO target from a previous grow logical failure.
 
@@ -2114,35 +2029,6 @@ class VDOService(Service):
       # This is safe even if not necessary.
       if self.running():
         self._resume()
-
-      # Mark the operation as finished (which also updates and persists the
-      # configuration.
-      self._setOperationState(self.OperationState.finished)
-
-  ######################################################################
-  def _recoverRunningSetWritePolicy(self):
-    """Recovers a VDO target from a previous setting of write policy against
-    a running VDO.
-
-    Raises:
-      VDOServiceError
-    """
-    if not self.previousOperationFailure:
-      self.log.debug(
-        _("No set write policy recovery necessary for VDO volume {0}").format(
-          self.getName()))
-    elif self.operationState != self.OperationState.beginRunningSetWritePolicy:
-      msg = _("Previous operation failure for VDO volume {0} not from"
-              " set write policy").format(self.getName())
-      raise VDOServiceError(msg, exitStatus = DeveloperExitStatus)
-    else:
-      # Perform the recovery only if the vdo is actually running (indicating
-      # the user aborted the command).
-      # If the vdo is not running the value stored in the configuration is what
-      # we want to use and it will be used when starting the vdo.
-      # In both cases we can go ahead and mark the operation as finished.
-      if self.running():
-        self._performRunningSetWritePolicy()
 
       # Mark the operation as finished (which also updates and persists the
       # configuration.
@@ -2274,14 +2160,13 @@ class VDOService(Service):
       runCommand(command, noThrow=True)
 
   ######################################################################
-  def _suspend(self, flush=True):
+  def _suspend(self):
     """Suspends a running VDO."""
     self.log.info(_("Suspending VDO volume {0} with {1}").format(
-      self.getName(), "flush" if flush else "no flush"))
+      self.getName(), "no flush"))
     self._stopFullnessMonitoring(True, None)
     try:
-      runCommand(["dmsetup", "suspend", "" if flush else "--noflush",
-                  self.getName()])
+      runCommand(["dmsetup", "suspend", "--noflush", self.getName()])
     except Exception as ex:
       self.log.error(_("Can't suspend VDO volume {0}; {1!s}").format(
           self.getName(), ex))

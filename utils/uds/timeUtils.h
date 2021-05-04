@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Red Hat, Inc.
+ * Copyright Red Hat
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/timeUtils.h#5 $
+ * $Id: //eng/uds-releases/krusty/src/uds/timeUtils.h#13 $
  */
 
 #ifndef TIME_UTILS_H
@@ -25,184 +25,120 @@
 #include "compiler.h"
 #include "typeDefs.h"
 
-#ifdef __KERNEL__
-#include <linux/ktime.h>
-#include <linux/time.h>
-#else
 #include <sys/time.h>
 #include <time.h>
-#endif
 
-// Absolute time.
-#ifdef __KERNEL__
-typedef int64_t AbsTime;
-#else
-typedef struct timespec AbsTime;
-#endif
-
-// Relative time, the length of a time interval, or the difference between
-// two times.  A signed 64-bit number of nanoseconds.
-typedef int64_t RelTime;
-
-#ifndef __KERNEL__
-/**
- * Return true if the time is valid.
- *
- * @param time  a time
- *
- * @return true if the time is valid
- *
- * @note an invalid time is generally returned from a failed attempt
- *      to get the time from the system
- **/
-bool isValidTime(AbsTime time);
-#endif
+// Some constants that are defined in kernel headers.
+#define NSEC_PER_SEC 1000000000L
+#define NSEC_PER_MSEC 1000000L
+#define NSEC_PER_USEC 1000L
+typedef int64_t ktime_t;
 
 /**
- * Return the current time according to the specified clock type.
+ * Return the current nanosecond time according to the specified clock
+ * type.
  *
  * @param clock         Either CLOCK_REALTIME or CLOCK_MONOTONIC
  *
  * @return the current time according to the clock in question
- *
- * @note the precision of the clock is system specific
  **/
-#ifdef __KERNEL__
-static INLINE AbsTime currentTime(clockid_t clock)
-{
-  // clock is always a constant, so gcc reduces this to a single call
-  return clock == CLOCK_MONOTONIC ? ktime_get_ns() : ktime_get_real_ns();
-}
-#else
-AbsTime currentTime(clockid_t clock);
-#endif
-
-#ifndef __KERNEL__
-/**
- * Return the timestamp a certain number of nanoseconds in the future.
- *
- * @param clock    Either CLOCK_REALTIME or CLOCK_MONOTONIC
- * @param reltime  The relative time to the clock value
- *
- * @return the timestamp for that time (potentially rounded to the next
- *         representable instant for the system in question)
- **/
-AbsTime futureTime(clockid_t clock, RelTime reltime);
-#endif
+ktime_t current_time_ns(clockid_t clock);
 
 /**
- * Return the difference between two timestamps.
+ * Return a timespec representing a time in the future for timeouts
+ *
+ * @param offset Nanosecond offset to be added to the current
+ *               CLOCK_REALTIME time to compute a future time
+ *
+ * @return a timespec representing a future time
+ **/
+struct timespec future_time(ktime_t offset);
+
+/**
+ * Return the difference between two times, as in ktime.h
  *
  * @param a  A time
- * @param b  Another time, based on the same clock as a.
+ * @param b  Another time, based on the same clock as a
  *
- * @return the relative time between the two timestamps
+ * @return the difference between times a and b
  **/
-#ifdef __KERNEL__
-static INLINE RelTime timeDifference(AbsTime a, AbsTime b)
+static INLINE ktime_t ktime_sub(ktime_t a, ktime_t b)
 {
-  return a - b;
+	return a - b;
 }
-#else
-RelTime timeDifference(AbsTime a, AbsTime b);
-#endif
 
 
 
 /**
- * Convert seconds to a RelTime value
+ * Convert a ktime_t value to milliseconds as in ktime.h
+ *
+ * @param abstime  The absolute time
+ *
+ * @return the equivalent number of milliseconds since the epoch
+ **/
+static INLINE int64_t ktime_to_ms(ktime_t abstime)
+{
+	return abstime / NSEC_PER_MSEC;
+}
+
+/**
+ * Convert seconds to a ktime_t value
  *
  * @param seconds  A number of seconds
  *
- * @return the equivalent number of seconds as a RelTime
+ * @return the equivalent number of seconds as a ktime_t
  **/
-static INLINE RelTime secondsToRelTime(int64_t seconds)
+static INLINE ktime_t seconds_to_ktime(int64_t seconds)
 {
-  return (RelTime) seconds * (1000 * 1000 * 1000);
+	return (ktime_t) seconds * NSEC_PER_SEC;
 }
 
 /**
- * Convert milliseconds to a RelTime value
+ * Convert milliseconds to a ktime_t value as in ktime.h
  *
  * @param milliseconds  A number of milliseconds
  *
- * @return the equivalent number of milliseconds as a RelTime
+ * @return the equivalent number of milliseconds as a ktime_t
  **/
-static INLINE RelTime millisecondsToRelTime(int64_t milliseconds)
+static INLINE ktime_t ms_to_ktime(uint64_t milliseconds)
 {
-  return (RelTime) milliseconds * (1000 * 1000);
+	return (ktime_t) milliseconds * NSEC_PER_MSEC;
 }
 
 /**
- * Convert microseconds to a RelTime value
+ * Convert microseconds to a ktime_t value
  *
  * @param microseconds  A number of microseconds
  *
- * @return the equivalent number of microseconds as a RelTime
+ * @return the equivalent number of microseconds as a ktime_t
  **/
-static INLINE RelTime microsecondsToRelTime(int64_t microseconds)
+static INLINE ktime_t us_to_ktime(int64_t microseconds)
 {
-  return (RelTime) microseconds * 1000;
+	return (ktime_t) microseconds * NSEC_PER_USEC;
 }
 
 /**
- * Convert nanoseconds to a RelTime value
+ * Convert a ktime_t value to seconds
  *
- * @param nanoseconds  A number of nanoseconds
+ * @param reltime  The time value
  *
- * @return the equivalent number of nanoseconds as a RelTime
+ * @return the equivalent number of seconds, truncated
  **/
-static INLINE RelTime nanosecondsToRelTime(int64_t nanoseconds)
+static INLINE int64_t ktime_to_seconds(ktime_t reltime)
 {
-  return (RelTime) nanoseconds;
+	return reltime / NSEC_PER_SEC;
 }
 
 /**
- * Convert a RelTime value to milliseconds
+ * Convert a ktime_t value to microseconds as in ktime.h
  *
- * @param reltime  The relative time
- *
- * @return the equivalent number of milliseconds
- **/
-static INLINE int64_t relTimeToSeconds(RelTime reltime)
-{
-  return reltime / (1000 * 1000 * 1000);
-}
-
-/**
- * Convert a RelTime value to milliseconds
- *
- * @param reltime  The relative time
- *
- * @return the equivalent number of milliseconds
- **/
-static INLINE int64_t relTimeToMilliseconds(RelTime reltime)
-{
-  return reltime / (1000 * 1000);
-}
-
-/**
- * Convert a RelTime value to microseconds
- *
- * @param reltime  The relative time
+ * @param reltime  The time value
  *
  * @return the equivalent number of microseconds
  **/
-static INLINE int64_t relTimeToMicroseconds(RelTime reltime)
+static INLINE int64_t ktime_to_us(ktime_t reltime)
 {
-  return reltime / 1000;
-}
-
-/**
- * Convert a RelTime value to nanoseconds
- *
- * @param reltime  The relative time
- *
- * @return the equivalent number of nanoseconds
- **/
-static INLINE int64_t relTimeToNanoseconds(RelTime reltime)
-{
-  return reltime;
+	return reltime / NSEC_PER_USEC;
 }
 
 /**
@@ -213,70 +149,7 @@ static INLINE int64_t relTimeToNanoseconds(RelTime reltime)
  *
  * @return the time in microseconds
  **/
-uint64_t nowUsec(void) __attribute__((warn_unused_result));
+int64_t __must_check current_time_us(void);
 
-/**
- * Convert from an AbsTime to a time_t
- *
- * @param time  an AbsTime time
- *
- * @return a time_t time
- **/
-static INLINE time_t asTimeT(AbsTime time)
-{
-#ifdef __KERNEL__
-  return time / 1000000000;
-#else
-  return time.tv_sec;
-#endif
-}
-
-/**
- * Convert from a time_t to an AbsTime,
- *
- * @param time  a time_t time
- *
- * @return an AbsTime time
- **/
-static INLINE AbsTime fromTimeT(time_t time)
-{
-#ifdef __KERNEL__
-  return time * 1000000000;
-#else
-  AbsTime abs;
-  abs.tv_sec = time;
-  abs.tv_nsec = 0;
-  return abs;
-#endif
-}
-
-#ifndef __KERNEL__
-/**
- * Convert from an AbsTime to a struct timespec
- *
- * @param time  an AbsTime time
- *
- * @return a time_t time
- **/
-static INLINE struct timespec asTimeSpec(AbsTime time)
-{
-  return time;
-}
-#endif
-
-#ifndef __KERNEL__
-/**
- * Convert from an AbsTime to a struct timeval
- *
- * @param time  an AbsTime time
- *
- * @return a time_t time
- **/
-static INLINE struct timeval asTimeVal(AbsTime time)
-{
-  struct timeval tv = { time.tv_sec, time.tv_nsec / 1000 };
-  return tv;
-}
-#endif
 
 #endif /* TIME_UTILS_H */

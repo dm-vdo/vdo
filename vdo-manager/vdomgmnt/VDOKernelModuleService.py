@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOKernelModuleService - manages the kvdo kernel module
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#3 $
+  $Id: //eng/vdo-releases/sulfur/src/python/vdo/vdomgmnt/VDOKernelModuleService.py#1 $
 
 """
 from __future__ import absolute_import
@@ -40,7 +40,8 @@ class VDOKernelModuleService(KernelModuleService):
   def setLogLevel(self, level):
     """Sets the module log level."""
     if level != Defaults.vdoLogLevel:
-      commandStr = "echo " + level + " > /sys/" + self._name + "/log_level"
+      commandStr = ("echo " + level + " > /sys/module/" + self._name
+                    + "/parameters/log_level")
       runCommand(commandStr.split(), shell=True, noThrow=True)
 
   ######################################################################

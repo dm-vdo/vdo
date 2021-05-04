@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   DisplaySpec
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/statistics/StatFormatter.py#2 $
+  $Id: //eng/vdo-releases/sulfur/src/python/vdo/statistics/StatFormatter.py#1 $
 """
 from __future__ import absolute_import
 from __future__ import division

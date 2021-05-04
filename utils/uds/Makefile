@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,13 +16,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/uds/Makefile#5 $
+# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/uds/Makefile#1 $
 
 # UDS_INTERNAL_VERSION is the short version name, which is used to version the
 # UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
 # version name used in distribution builds.  We extract these values from the
 # traditional location.
-UDS_VERSION      = 8.0.2.2
+UDS_VERSION      = 8.1.0.247
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -62,7 +62,7 @@ GLOBAL_FLAGS   = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS)		\
 		 $(WARNS) $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)	\
 		 -DUDS_VERSION='"$(BUILD_VERSION)"'			\
 
-CFLAGS  = $(GLOBAL_FLAGS) -I. -std=c99 $(C_WARNS) -pedantic $(MY_CFLAGS)
+CFLAGS  = $(GLOBAL_FLAGS) -I. -std=gnu99 -pedantic $(C_WARNS) $(MY_CFLAGS)
 LDFLAGS = $(RPM_LD_FLAGS) $(MY_LDFLAGS)
 
 MY_FLAGS    =
@@ -119,13 +119,11 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		memoryAlloc.o			\
 		memoryLinuxUser.o		\
 		minisyslog.o			\
-		numeric.o			\
 		nonce.o				\
 		openChapter.o			\
 		openChapterZone.o		\
 		pageCache.o			\
 		permassert.o			\
-		permassertLinuxUser.o		\
 		radixSort.o			\
 		random.o			\
 		recordPage.o			\

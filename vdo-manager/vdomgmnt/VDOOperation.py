@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#11 $
+  $Id: //eng/vdo-releases/sulfur/src/python/vdo/vdomgmnt/VDOOperation.py#1 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -261,30 +261,6 @@ class ActivateOperation(VDOOperation):
   ######################################################################
   def _activate(self, args, vdo):
     vdo.activate()
-
-########################################################################
-class ChangeWritePolicyOperation(VDOOperation):
-  """Implements the changeWritePolicy command."""
-
-  ######################################################################
-  # Overridden methods
-  ######################################################################
-  def __init__(self):
-    super(ChangeWritePolicyOperation, self).__init__()
-
-  ######################################################################
-  @exclusivelock
-  def execute(self, args):
-    self._newWritePolicy = getattr(args, 'writePolicy')
-    if self._newWritePolicy is None:
-      return
-    self.applyToVDOs(args, self._changeWritePolicy, readonly=False)
-
-  ######################################################################
-  # Protected methods
-  ######################################################################
-  def _changeWritePolicy(self, args, vdo):
-    vdo.setWritePolicy(self._newWritePolicy)
 
 ########################################################################
 class CreateOperation(VDOOperation):
@@ -606,7 +582,7 @@ class StatusOperation(VDOOperation):
       print(yaml.safe_dump(vdoStatus, default_flow_style = False)[:-1])
       print(yaml.safe_dump(kernelStatus, default_flow_style = False)[:-1])
       print(yaml.safe_dump(confStatus, default_flow_style = False)[:-1])
-      print(yaml.safe_dump(perVdoStatus, default_flow_style = False, 
+      print(yaml.safe_dump(perVdoStatus, default_flow_style = False,
                            width=float("inf"))[:-1])
 
       sys.stdout.flush()

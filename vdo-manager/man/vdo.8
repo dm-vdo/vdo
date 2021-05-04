@@ -1,6 +1,6 @@
 .TH VDO 8 "2018-07-19" "Red Hat" \" -*- nroff -*-
 .\"
-.\" Copyright (c) 2020 Red Hat, Inc.
+.\" Copyright Red Hat
 .\"
 .\" This program is free software; you can redistribute it and/or
 .\" modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#20 $
+.\" $Id: //eng/vdo-releases/sulfur/src/python/vdo/man/vdo.8#1 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -117,8 +117,6 @@ vdo \- manage kernel VDO devices and related configuration information
 {
 .B activate
 |
-.B changeWritePolicy
-|
 .B create
 |
 .B deactivate
@@ -171,18 +169,6 @@ privileges. Applicable options include:
 \-\-verbose
 .endOptionList
 .TP
-.B changeWritePolicy
-Modifies the write policy of one or all running VDO
-volumes. This command must be run with root privileges.
-Applicable options include:
-.startOptionList
-\*[targetSpecRequired]
-\-\-writePolicy=\fIpolicy\fP\fR (required)\fP
-\-\-confFile=\fIfile\fP
-\-\-logfile=\fIfile\fP
-\-\-verbose
-.endOptionList
-.TP
 .B create
 Creates a VDO volume and its associated index and makes it available. If
 \fB\-\-activate=disabled\fP is specified the VDO volume is created but not made
@@ -220,7 +206,6 @@ Applicable options include:
 \-\-vdoLogicalSize=\fIsize\fP
 \-\-vdoPhysicalThreads=\fIthread count\fP
 \-\-vdoSlabSize=\fIsize\fP
-\-\-writePolicy=\fIpolicy\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -338,7 +323,6 @@ root privileges. Applicaable options include:
 \-\-vdoLogicalThreads=\fIthread count\fP
 \-\-vdoLogLevel=\fIlevel\fP
 \-\-vdoPhysicalThreads=\fIthread count\fP
-\-\-writePolicy=\fIpolicy\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -505,9 +489,6 @@ The logical size of the VDO volume.
 .TP
 .B Physical size
 The size of a VDO volume's underlying physical storage.
-.TP
-.B Configured write policy
-The configured value of the write policy (sync, async, async-unsafe or auto).
 .TP
 .B VDO Statistics
 Output of the \fBvdostats\fP utility.
@@ -698,6 +679,7 @@ Specifies the VDO driver log level: \*[logLevelChoices]. Levels are
 case sensitive; the default is \*[logLevelDefault].
 .TP
 .B \-\-vdoPhysicalThreads=\fIthread count\fR
+
 Specifies the number of threads across which to subdivide parts of the
 VDO processing based on physical block addresses. The value must be at
 least \*[physicalThreadsMin] and less than or equal to
@@ -707,6 +689,7 @@ device creation). Each additional thread after the first will use an
 additional \*[physicalThreadOverheadMB] MB of RAM. vdoPhysicalThreads,
 vdoHashZonesThreads and vdoLogicalThreads must be either all zero or
 all non-zero. The default is \*[physicalThreadsDefault].
+
 .TP
 .B \-\-vdoSlabSize=\fImegabytes\fR
 Set the free space allocator's slab size. Must be a power of two between
@@ -725,32 +708,6 @@ of the volume.
 .TP
 .B \-\-verbose
 Prints commands before executing them.
-.TP
-.B \-\-writePolicy=\fIpolicy\fR
-Specifies the write policy:
-.RS
-.TP
-.B sync
-Writes are acknowledged only after the data is guaranteed to persist.
-.TP
-.B async
-Writes are acknowledged when the data has been cached for writing to the
-underlying storage. Data which has not been flushed is not guaranteed
-to persist in this mode, however this mode is ACID compliant (after
-recovery from a crash any unflushed write is guaranteed either to have
-persisted all its data, or to have done nothing). Most databases and
-filesystems should use this mode.
-.TP
-.B async-unsafe
-Writes are handled like 'async' but there is no guarantee of the atomicity
-async provides. This mode should only be used for better performance when
-atomicity is not required.
-.TP
-.B auto
-VDO will check the storage device and determine whether it supports
-flushes. If it does, VDO will run in async mode, otherwise it will run
-in sync mode. This is the default.
-.RE
 .
 .
 .SH DEVICE NAMES

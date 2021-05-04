@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Red Hat, Inc.
+ * Copyright Red Hat
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,25 +16,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/typeDefs.h#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/typeDefs.h#1 $
  */
 
-#ifndef LINUX_USER_TYPE_DEFS_H
-#define LINUX_USER_TYPE_DEFS_H
+#ifndef TYPE_DEFS_H
+#define TYPE_DEFS_H
 
 /*
- * General system type definitions.  This file is parallel to the other
- * typeDefs.h files in this project.  We pick up what we can from the system
- * include files, and explicitly define the other things we need.
+ * General system type definitions.
  */
+
+#include <stddef.h>
 
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
 
 typedef unsigned char byte;
 
-#endif /* LINUX_USER_TYPE_DEFS_H */
+
+#endif /* TYPE_DEFS_H */

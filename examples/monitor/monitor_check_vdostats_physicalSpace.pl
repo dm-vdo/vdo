@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -36,7 +36,7 @@
 #
 # The "vdostats" program must be in the path used by "sudo".
 #
-# $Id: //eng/vdo-releases/aluminum/src/tools/monitor/monitor_check_vdostats_physicalSpace.pl#2 $
+# $Id: //eng/vdo-releases/sulfur/src/tools/monitor/monitor_check_vdostats_physicalSpace.pl#1 $
 #
 ##
 

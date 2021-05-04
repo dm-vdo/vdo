@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Red Hat, Inc.
+ * Copyright Red Hat
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/ioRegion.h#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/ioRegion.h#3 $
  */
 
 #ifndef IO_REGION_H
@@ -28,81 +28,48 @@
 #include "uds-error.h"
 
 /**
- * The IORegion type is an abstraction which represents a specific place which
- * can be read or written. There are file-based implementations as well as
- * block-range based implementations. Although the operations defined on
- * IORegion appear to take any byte address in reality these addresses can be
- * constrained to the implementation's alignment restrictions.
+ * The IO region type is an abstraction which represents a specific
+ * place which can be read or written. There are file-based
+ * implementations as well as block-range based implementations.
+ * Although the operations defined on IO region appear to take any
+ * byte address in reality these addresses can be constrained to the
+ * implementation's alignment restrictions.
  **/
-typedef struct ioRegion {
-  void (*free)        (struct ioRegion *);
-  int  (*getDataSize) (struct ioRegion *, off_t *);
-  int  (*getLimit)    (struct ioRegion *, off_t *);
-  int  (*read)        (struct ioRegion *, off_t, void *, size_t, size_t *);
-  int  (*syncContents)(struct ioRegion *);
-  int  (*write)       (struct ioRegion *, off_t, const void *, size_t, size_t);
-  atomic_t refCount;
-} IORegion;
+struct io_region {
+	void (*free)(struct io_region *);
+	int (*read)(struct io_region *, off_t, void *, size_t, size_t *);
+	int (*sync_contents)(struct io_region *);
+	int (*write)(struct io_region *, off_t, const void *, size_t, size_t);
+	atomic_t ref_count;
+};
 
 /**
- * Get another reference to an IORegion, incrementing its reference count.
+ * Get another reference to an IO region, incrementing its reference count.
  *
- * @param [in] region  The IORegion.
+ * @param [in] region  The IO region.
  **/
-static INLINE void getIORegion(IORegion *region)
+static INLINE void get_io_region(struct io_region *region)
 {
-  atomic_inc(&region->refCount);
+	atomic_inc(&region->ref_count);
 }
 
 /**
- * Get the extent of of previously written data. Note that not all regions can
- * track this information, some just return the limit.
+ * Free a reference to an IO region.  If the reference count drops to
+ * zero, free the IO region and release all its resources.
  *
- * @param [in]  region  The IORegion.
- * @param [out] extent  The maximum offset of the existing data in the region,
- *                      set to limit if unknown.
- *
- * @return UDS_SUCCESS or an error code.
+ * @param [in] region  The IO region.
  **/
-__attribute__((warn_unused_result))
-static INLINE int getRegionDataSize(IORegion *region, off_t *extent)
+static INLINE void put_io_region(struct io_region *region)
 {
-  return region->getDataSize(region, extent);
-}
-
-/**
- * Get the predefined size of the region. Note not all implementations have a
- * limit.
- *
- * @param [in]  region  The IORegion.
- * @param [out] limit   The maximum offset of the region in bytes, set to the
- *                      maximum value if unlimited.
- *
- * @return UDS_SUCCESS or an error code.
- **/
-__attribute__((warn_unused_result))
-static INLINE int getRegionLimit(IORegion *region, off_t *limit)
-{
-  return region->getLimit(region, limit);
-}
-
-/**
- * Free a reference to an IORegion.  If the reference count drops to zero, free
- * the IORegion and release all its resources.
- *
- * @param [in] region  The IORegion.
- **/
-static INLINE void putIORegion(IORegion *region)
-{
-  if (atomic_add_return(-1, &region->refCount) <= 0) {
-    region->free(region);
-  }
+	if (atomic_add_return(-1, &region->ref_count) <= 0) {
+		region->free(region);
+	}
 }
 
 /**
  * Read some data from a region into a buffer.
  *
- * @param [in]      region  The IORegion.
+ * @param [in]      region  The IO region.
  * @param [in]      offset  The offset from which to read; must be aligned to
  *                          the regions's block size.
  * @param [out]     buffer  The buffer to read to.
@@ -120,34 +87,32 @@ static INLINE void putIORegion(IORegion *region)
  *         UDS_INCORRECT_ALIGNMENT if the offset is incorrect,
  *         UDS_END_OF_FILE or UDS_SHORT_READ if the data is not available,
  **/
-__attribute__((warn_unused_result))
-static INLINE int readFromRegion(IORegion *region,
-                                 off_t     offset,
-                                 void     *buffer,
-                                 size_t    size,
-                                 size_t   *length)
+static INLINE int __must_check read_from_region(struct io_region *region,
+						off_t offset,
+						void *buffer,
+						size_t size,
+						size_t *length)
 {
-  return region->read(region, offset, buffer, size, length);
+	return region->read(region, offset, buffer, size, length);
 }
 
 /**
  * Force the region to be written to the backing store, if supported.
  *
- * @param region  The IORegion.
+ * @param region  The IO region.
  *
  * @return UDS_SUCCESS or an error code, particularly UDS_UNSUPPORTED for
  *         regions where this operation is not implemented.
  **/
-__attribute__((warn_unused_result))
-static INLINE int syncRegionContents(IORegion *region)
+static INLINE int __must_check sync_region_contents(struct io_region *region)
 {
-  return region->syncContents(region);
+	return region->sync_contents(region);
 }
 
 /**
  * Write a buffer to a region.
  *
- * @param region  The IORegion.
+ * @param region  The IO region.
  * @param offset  The offset at which to write; must be aligned to the region's
  *                block size.
  * @param data    A buffer of data.
@@ -161,14 +126,13 @@ static INLINE int syncRegionContents(IORegion *region)
  *         UDS_BUFFER_ERROR if the buffer size is incorrect,
  *         UDS_OUT_OF_RANGE if the offset plus length exceeds the region limits
  **/
-__attribute__((warn_unused_result))
-static INLINE int writeToRegion(IORegion   *region,
-                                off_t       offset,
-                                const void *data,
-                                size_t      size,
-                                size_t      length)
+static INLINE int __must_check write_to_region(struct io_region *region,
+					       off_t offset,
+					       const void *data,
+					       size_t size,
+					       size_t length)
 {
-  return region->write(region, offset, data, size, length);
+	return region->write(region, offset, data, size, length);
 }
 
 #endif // IO_REGION_H

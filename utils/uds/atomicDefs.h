@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Red Hat, Inc.
+ * Copyright Red Hat
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,17 +16,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/userLinux/uds/atomicDefs.h#1 $
+ * $Id: //eng/uds-releases/krusty/src/uds/atomicDefs.h#3 $
  */
 
-#ifndef LINUX_USER_ATOMIC_DEFS_H
-#define LINUX_USER_ATOMIC_DEFS_H
+#ifndef ATOMIC_DEFS_H
+#define ATOMIC_DEFS_H
+
 
 #include "compiler.h"
 #include "typeDefs.h"
 
 // The atomic interfaces are chosen to exactly match those interfaces defined
-// by the Linux kernel.  This is the matching user-mode implementation.
+// by the Linux kernel.  The rest of this file is the matching user-mode
+// implementation.
 
 typedef struct {
   int32_t value;
@@ -152,31 +154,30 @@ static INLINE void smp_wmb(void)
 }
 
 /**
- * Provide a memory barrier before an atomic operation.
+ * Provide a memory barrier before an atomic read-modify-write operation
+ * that does not imply one.
  **/
 static INLINE void smp_mb__before_atomic(void)
 {
+#if defined(__x86_64__) || defined(__s390__)
+  // Atomic operations are already serializing on x86 and s390
+  barrier();
+#else
   smp_mb();
+#endif
 }
 
 /**
- * Provide a read barrier, if needed, between dependent reads.
- *
- * On most architectures, a read issued using a memory location that was
- * itself read from memory (or derived from something read from memory) cannot
- * pick up "stale" data if the data was written out before the pointer itself
- * was saved and proper write fencing was used. On one or two, like the Alpha,
- * a barrier is needed between the reads to ensure that proper cache
- * invalidation happens.
+ * Provide a memory barrier after an atomic read-modify-write operation
+ * that does not imply one.
  **/
-static INLINE void smp_read_barrier_depends(void)
+static INLINE void smp_mb__after_atomic(void)
 {
-#if defined(__x86_64__) || defined(__PPC__) || defined(__s390__) \
-  || defined(__aarch64__)
-  // Nothing needed for these architectures.
+#if defined(__x86_64__) || defined(__s390__)
+  // Atomic operations are already serializing on x86 and s390
+  barrier();
 #else
-  // Default to playing it safe.
-  rmb();
+  smp_mb();
 #endif
 }
 
@@ -486,4 +487,4 @@ static INLINE void atomic64_set_release(atomic64_t *atom, long value)
     __xchg_result;                                                      \
   })
 
-#endif /* LINUX_USER_ATOMIC_DEFS_H */
+#endif /* ATOMIC_DEFS_H */
