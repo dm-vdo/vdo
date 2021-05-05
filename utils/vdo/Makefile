@@ -18,7 +18,7 @@
 #
 # $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#12 $
 
-VDO_VERSION = 8.1.0.0
+VDO_VERSION = 8.2.0.0
 
 UDS_DIR      = ../uds
 
