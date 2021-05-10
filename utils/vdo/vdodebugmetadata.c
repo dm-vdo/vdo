@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#54 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#55 $
  */
 
 #include <err.h>
@@ -538,7 +538,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
 
       for (journal_entry_count_t k = 0; k < sector->entry_count; k++) {
         struct recovery_journal_entry entry
-          = unpack_recovery_journal_entry(&sector->entries[k]);
+          = unpack_vdo_recovery_journal_entry(&sector->entries[k]);
 
         if ((desiredSlot.pbn == entry.slot.pbn)
             && (desiredSlot.slot == entry.slot.slot)) {
