@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#55 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#56 $
  */
 
 #include <err.h>
@@ -473,7 +473,7 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
       if (slabOffset == entry.sbn) {
         printf("PBN %" PRIu64 " (%" PRIu64 ", %d) %s\n",
                pbn, (uint64_t) __le64_to_cpu(block->header.sequence_number),
-               entryIndex, get_journal_operation_name(entry.operation));
+               entryIndex, get_vdo_journal_operation_name(entry.operation));
       }
     }
   }
@@ -514,8 +514,8 @@ isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 {
   block_count_t journal_size = vdo->states.vdo.config.recovery_journal_size;
   physical_block_number_t expectedOffset
-    = compute_recovery_journal_block_number(journal_size,
-                                            header->sequence_number);
+    = compute_vdo_recovery_journal_block_number(journal_size,
+                                                header->sequence_number);
   return (expectedOffset == offset);
 }
 
@@ -546,7 +546,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
           bool isSequenceNumberPossible
             = isSequenceNumberPossibleForOffset(&block.header, i);
           bool isSectorValid
-            = is_valid_recovery_journal_sector(&block.header, sector);
+            = is_valid_vdo_recovery_journal_sector(&block.header, sector);
 
           printf("found LBN %" PRIu64 " at offset %" PRIu64
                  " (block %svalid, sequence number %" PRIu64 " %spossible), "
@@ -556,7 +556,8 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
                  block.header.sequence_number,
                  (isSequenceNumberPossible ? "" : "not "),
                  j, (isSectorValid ? "" : "not "), k,
-                 entry.mapping.pbn, get_journal_operation_name(entry.operation),
+                 entry.mapping.pbn,
+                 get_vdo_journal_operation_name(entry.operation),
                  entry.mapping.state);
         }
       }
