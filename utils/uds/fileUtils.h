@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.h#4 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.h#5 $
  */
 
 #ifndef FILE_UTILS_H
@@ -162,7 +162,7 @@ int __must_check write_buffer(int fd, const void *buffer, unsigned int length);
 int __must_check write_buffer_at_offset(int fd,
 					off_t offset,
 					const void *buffer,
-					unsigned int length);
+					size_t length);
 
 /**
  * Determine the size of an open file.

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#8 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#9 $
  */
 
 #include "fileIORegion.h"
@@ -67,9 +67,9 @@ static int validate_io(struct file_io_region *fior,
 
 	if (offset + length > fior->size) {
 		return log_error_strerror(UDS_OUT_OF_RANGE,
-					  "range %zd-%zd not in range 0 to %zu",
-					  offset,
-					  offset + length,
+					  "range %lld-%lld not in range 0 to %zu",
+					  (long long)offset,
+					  (long long)offset + length,
 					  fior->size);
 	}
 

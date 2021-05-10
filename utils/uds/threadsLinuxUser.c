@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#7 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#8 $
  */
 
 #include "threads.h"
@@ -124,8 +124,8 @@ int join_threads(struct thread *th)
 	int result = pthread_join(th->thread, NULL);
 	pthread_t pthread = th->thread;
 	FREE(th);
-	return ASSERT_WITH_ERROR_CODE((result == 0), result, "th: %zu",
-				      pthread);
+	return ASSERT_WITH_ERROR_CODE((result == 0), result, "th: %p",
+				      (void *)pthread);
 }
 
 /**********************************************************************/

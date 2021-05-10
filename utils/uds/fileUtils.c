@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#9 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#10 $
  */
 
 #include "fileUtils.h"
@@ -239,7 +239,7 @@ int write_buffer(int fd, const void *buffer, unsigned int length)
 int write_buffer_at_offset(int fd,
 			   off_t offset,
 			   const void *buffer,
-			   unsigned int length)
+			   size_t length)
 {
 	size_t bytes_to_write = length;
 	const byte *ptr = buffer;

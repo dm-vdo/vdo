@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#39 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#40 $
  */
 
 #include "volumeGeometry.h"
@@ -416,7 +416,7 @@ int parse_geometry_block(byte *block, struct volume_geometry *geometry)
 
 	result = decode_geometry_block(buffer, geometry);
 	if (result != VDO_SUCCESS) {
-		free_buffer(&buffer);
+		free_buffer(FORGET(buffer));
 		return result;
 	}
 
@@ -425,12 +425,12 @@ int parse_geometry_block(byte *block, struct volume_geometry *geometry)
 				uncompacted_amount(buffer));
 	result = get_uint32_le_from_buffer(buffer, &saved_checksum);
 	if (result != VDO_SUCCESS) {
-		free_buffer(&buffer);
+		free_buffer(FORGET(buffer));
 		return result;
 	}
 
 	// Finished all decoding. Everything that follows is validation code.
-	free_buffer(&buffer);
+	free_buffer(FORGET(buffer));
 
 	if (!is_loadable_release_version(geometry->release_version)) {
 		return log_error_strerror(VDO_UNSUPPORTED_VERSION,
@@ -549,7 +549,7 @@ int write_volume_geometry(PhysicalLayer *layer,
 
 	result = encode_geometry_block(geometry, buffer);
 	if (result != VDO_SUCCESS) {
-		free_buffer(&buffer);
+		free_buffer(FORGET(buffer));
 		FREE(block);
 		return result;
 	}
@@ -559,14 +559,14 @@ int write_volume_geometry(PhysicalLayer *layer,
 				content_length(buffer));
 	result = put_uint32_le_into_buffer(buffer, checksum);
 	if (result != VDO_SUCCESS) {
-		free_buffer(&buffer);
+		free_buffer(FORGET(buffer));
 		FREE(block);
 		return result;
 	}
 
 	// Write it.
 	result = layer->writer(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
-	free_buffer(&buffer);
+	free_buffer(FORGET(buffer));
 	FREE(block);
 	return result;
 }
