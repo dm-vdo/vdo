@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.4.14
+Version: 6.2.5.11
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -22,8 +22,10 @@ ExcludeArch: ppc64
 ExcludeArch: ppc64le
 ExcludeArch: aarch64
 ExcludeArch: i686
+BuildRequires: device-mapper-devel
 BuildRequires: device-mapper-event-devel
 BuildRequires: gcc
+BuildRequires: libblkid-devel
 BuildRequires: libuuid-devel
 BuildRequires: make
 BuildRequires: python3
@@ -66,6 +68,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %files
 #defattr(-,root,root)
 %{_bindir}/vdo
+%{_bindir}/vdo-by-dev
 %{_bindir}/vdostats
 %{_bindir}/vdodmeventd
 %{_bindir}/vdodumpconfig
@@ -112,6 +115,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{python3_sitelib}/%{name}/utils/__init__.py
 %{python3_sitelib}/%{name}/utils/__pycache__/*
 %{_unitdir}/vdo.service
+%{_unitdir}/vdo-start-by-dev@.service
 %{_presetdir}/97-vdo.preset
 %dir %{_defaultdocdir}/%{name}
 %license %{_defaultdocdir}/%{name}/COPYING
@@ -137,6 +141,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %dir %{_sysconfdir}/bash_completion.d
 %{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats
+%{_sysconfdir}/udev/rules.d/69-vdo-start-by-dev.rules
 
 %package support
 Summary: Support tools for Virtual Data Optimizer
@@ -174,5 +179,13 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Thu Oct 01 2020 - Red Hat VDO Group <vdo-devel@redhat.com> - 6.2.4.14-1
-HASH(0x55c9459fe3b8)
+* Tue May 11 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.11-1
+- Introduced new memory size parameter values for UDS indexes which have
+  been converted from vdo script management to LVM.
+- Updated spec file to include new files needed for udev/systemd startup
+  rules.
+- Added some BuildRequires to the spec file.
+- Modified vdo script to fail if the same option is supplied multiple
+  times.
+- Fixed permissions on the vdo script's lock directory.
+  

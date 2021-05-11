@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#15 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#16 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -101,6 +101,20 @@ suffix is optional""").format(options
                        self).parse_known_args(args, namespace)
 
       return result
+
+  ####################################################################
+  class ExclusiveStoreAction(argparse.Action):
+    """Action type to use for commands.
+
+    Provides a class to store a string into a namespace as specified,
+    returning an error if it's already set. 
+    """
+    ##################################################################
+    def __call__(self, parser, namespace, values, option_string=None):
+      if getattr(namespace, self.dest, self.default) is not self.default:
+        parser.error(_("option '{0}' was specified more than once")
+                     .format(self.dest));
+      setattr(namespace, self.dest, values)
 
   ####################################################################
   # Public methods
@@ -504,6 +518,7 @@ suffix is optional""").format(options
   def _activateOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--activate",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         choices =  Constants.enableChoices,
                         help = _("""
       Indicates if the VDO volume should, in addition to being created, be
@@ -531,6 +546,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--blockMapCacheSize",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkPageCachesz),
                         metavar = "<megabytes>",
                         help = _("""
@@ -562,6 +578,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--blockMapPeriod",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(
                                   Defaults.checkBlockMapPeriod),
                         metavar = "<period>",
@@ -589,6 +606,7 @@ suffix is optional""").format(options
   def _compressionOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--compression",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         choices =  Constants.enableChoices,
                         default = Defaults.compression,
                         help = _("""
@@ -604,6 +622,7 @@ suffix is optional""").format(options
   def _confFileOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("-f", "--confFile",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkConfFile),
                         default = Defaults.confFile,
                         metavar = "<file>",
@@ -628,6 +647,7 @@ suffix is optional""").format(options
   def _deduplicationOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--deduplication",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         choices =  Constants.enableChoices,
                         default = Defaults.deduplication,
                         help = _("""
@@ -644,6 +664,7 @@ suffix is optional""").format(options
   def _deviceOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--device",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkBlkDev),
                         metavar = "<devicepath>",
                         required = True,
@@ -657,6 +678,7 @@ suffix is optional""").format(options
   def _emulate512OptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--emulate512",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         choices =  Constants.enableChoices,
                         help = _("""
       Specifies that the VDO volume is to emulate a 512 byte block device. The
@@ -698,6 +720,7 @@ suffix is optional""").format(options
   def _indexMemOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--indexMem",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkIndexmem),
                         default = Defaults.indexMem,
                         metavar = "<gigabytes>",
@@ -724,6 +747,7 @@ suffix is optional""").format(options
   def _logFileOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--logfile",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkLogFile),
                         metavar = "<pathname>",
                         help = _("""
@@ -746,6 +770,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--maxDiscardSize",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkMaxDiscardSize),
                         metavar = "<megabytes>",
                         help = _("""
@@ -804,6 +829,7 @@ suffix is optional""").format(options
   def _sparseIndexOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--sparseIndex",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         choices =  Constants.enableChoices,
                         help = _("""
       Enables sparse indexing. The default is {sparseIndex}.
@@ -823,6 +849,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--uuid",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkUUIDValue),
                         metavar = "<uuid>",
                         help = _("""
@@ -846,6 +873,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoAckThreads",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(
                                   Defaults.checkThreadCount0_100),
                         metavar = "<threadCount>",
@@ -871,6 +899,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoBioRotationInterval",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(
                                   Defaults.checkRotationInterval),
                         metavar = "<ioCount>",
@@ -896,6 +925,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoBioThreads",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(
                                   Defaults.checkThreadCount1_100),
                         metavar = "<threadCount>",
@@ -923,6 +953,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoCpuThreads",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(
                                   Defaults.checkThreadCount1_100),
                         metavar = "<threadCount>",
@@ -948,6 +979,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoHashZoneThreads",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(
                                   Defaults.checkThreadCount0_100),
                         metavar = "<threadCount>",
@@ -975,6 +1007,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoLogicalThreads",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(
                                   Defaults.checkLogicalThreadCount),
                         metavar = "<threadCount>",
@@ -1006,6 +1039,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoLogicalSize",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkLogicalSize),
                         default = None if required else "0",
                         required = required,
@@ -1026,6 +1060,7 @@ suffix is optional""").format(options
   def _vdoLogLevelOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoLogLevel",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         choices =  Defaults.vdoLogLevelChoices,
                         default = Defaults.vdoLogLevel,
                         help = _("""
@@ -1047,6 +1082,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoPhysicalThreads",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(
                                   Defaults.checkPhysicalThreadCount),
                         metavar = "<threadCount>",
@@ -1072,6 +1108,7 @@ suffix is optional""").format(options
   def _vdoSlabSizeOptionParser(self):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--vdoSlabSize",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkSlabSize),
                         default = Defaults.slabSize,
                         metavar = "<megabytes>",
@@ -1121,6 +1158,7 @@ suffix is optional""").format(options
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--writePolicy",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         choices =  Defaults.writePolicyChoices,
                         default = None if required else Defaults.writePolicy,
                         required = required,
@@ -1182,6 +1220,7 @@ suffix is optional""").format(options
   ####################################################################
   def __parserAddNameOption(self, parser, required = False):
     parser.add_argument("-n", "--name",
+                        action = VDOArgumentParser.ExclusiveStoreAction,
                         type = self.__optionCheck(Defaults.checkVDOName),
                         metavar = "<volume>",
                         required = required,

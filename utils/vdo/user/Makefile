@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2020 Red Hat, Inc.
+# Copyright Red Hat
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 
 # $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#13 $
 
-VDO_VERSION = 6.2.4.14
+VDO_VERSION = 6.2.5.11
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
