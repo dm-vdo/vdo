@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#48 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#49 $
  */
 
 #include <uuid/uuid.h>
@@ -129,9 +129,9 @@ static int __must_check configureVDO(UserVDO *vdo)
   vdo->states.recovery_journal = configureRecoveryJournal();
 
   struct slab_config slabConfig;
-  result = configure_slab(config->slab_size,
-                          config->slab_journal_blocks,
-                          &slabConfig);
+  result = configure_vdo_slab(config->slab_size,
+                              config->slab_journal_blocks,
+                              &slabConfig);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -143,9 +143,10 @@ static int __must_check configureVDO(UserVDO *vdo)
     return result;
   }
 
-  result = configure_slab_depot(get_fixed_layout_partition_size(partition),
-                                get_fixed_layout_partition_offset(partition),
-                                slabConfig, 0, &vdo->states.slab_depot);
+  result
+    = configure_vdo_slab_depot(get_fixed_layout_partition_size(partition),
+                               get_fixed_layout_partition_offset(partition),
+                               slabConfig, 0, &vdo->states.slab_depot);
   if (result != VDO_SUCCESS) {
     return result;
   }

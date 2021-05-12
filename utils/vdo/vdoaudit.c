@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#50 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#51 $
  */
 
 #include <err.h>
@@ -732,9 +732,9 @@ int main(int argc, char *argv[])
   struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
   physical_block_number_t slabOrigin = depot.first_block;
   slabDataBlocks = depot.slab_config.data_blocks;
-  slab_count_t slabCount = compute_slab_count(depot.first_block,
-                                              depot.last_block,
-                                              vdo->slabSizeShift);
+  slab_count_t slabCount = compute_vdo_slab_count(depot.first_block,
+                                                  depot.last_block,
+                                                  vdo->slabSizeShift);
   for (slab_count_t i = 0; i < slabCount; i++) {
     SlabAudit *audit = &slabs[i];
     audit->slabNumber = i;

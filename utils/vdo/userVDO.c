@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#11 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#12 $
  */
 
 #include "userVDO.h"
@@ -171,9 +171,9 @@ int saveVDO(UserVDO *vdo, bool saveGeometry)
 void setDerivedSlabParameters(UserVDO *vdo)
 {
   vdo->slabSizeShift = log_base_two(vdo->states.vdo.config.slab_size);
-  vdo->slabCount = compute_slab_count(vdo->states.slab_depot.first_block,
-                                      vdo->states.slab_depot.last_block,
-                                      vdo->slabSizeShift);
+  vdo->slabCount = compute_vdo_slab_count(vdo->states.slab_depot.first_block,
+                                          vdo->states.slab_depot.last_block,
+                                          vdo->slabSizeShift);
   vdo->slabOffsetMask = (1ULL << vdo->slabSizeShift) - 1;
 }
 
