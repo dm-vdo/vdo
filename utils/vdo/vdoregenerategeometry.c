@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#15 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#16 $
  */
 
 #include <err.h>
@@ -110,7 +110,7 @@ static void usage(const char *programName)
  **/
 static void processArgs(int argc, char *argv[])
 {
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errorBuffer, ERRBUF_SIZE));
@@ -322,7 +322,7 @@ static void rewriteGeometry(Candidate *candidate)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errorBuffer, ERRBUF_SIZE));

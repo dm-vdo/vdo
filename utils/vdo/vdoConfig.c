@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#49 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#50 $
  */
 
 #include <uuid/uuid.h>
@@ -315,7 +315,7 @@ int formatVDOWithNonce(const struct vdo_config   *config,
                        nonce_t                    nonce,
                        uuid_t                    *uuid)
 {
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     return result;
   }
