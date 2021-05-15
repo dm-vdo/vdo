@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#12 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#13 $
  */
 
 #include "userVDO.h"
@@ -41,7 +41,7 @@ int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
     return result;
   }
 
-  result = initialize_super_block_codec(&vdo->superBlockCodec);
+  result = initialize_vdo_super_block_codec(&vdo->superBlockCodec);
   if (result != VDO_SUCCESS) {
     freeUserVDO(&vdo);
     return result;
@@ -61,7 +61,7 @@ void freeUserVDO(UserVDO **vdoPtr)
   }
 
   destroy_component_states(&vdo->states);
-  destroy_super_block_codec(&vdo->superBlockCodec);
+  destroy_vdo_super_block_codec(&vdo->superBlockCodec);
   FREE(vdo);
   *vdoPtr = NULL;
 }
@@ -77,7 +77,7 @@ int __must_check loadSuperBlock(UserVDO *vdo)
     return result;
   }
 
-  return decode_super_block(&vdo->superBlockCodec);
+  return decode_vdo_super_block(&vdo->superBlockCodec);
 }
 
 /**********************************************************************/
@@ -136,7 +136,7 @@ int loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr)
 /**********************************************************************/
 int saveSuperBlock(UserVDO *vdo)
 {
-  int result = encode_super_block(&vdo->superBlockCodec);
+  int result = encode_vdo_super_block(&vdo->superBlockCodec);
   if (result != VDO_SUCCESS) {
     return result;
   }
