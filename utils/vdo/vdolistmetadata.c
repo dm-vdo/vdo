@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#28 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#29 $
  */
 
 #include <err.h>
@@ -164,8 +164,8 @@ static void listSlabs(void)
 
     // List the slab's journal blocks.
     sprintf(buffer, "slab %u journal", slab);
-    listBlocks(buffer, get_slab_journal_start_block(&depot.slab_config,
-                                                    slabOrigin),
+    listBlocks(buffer, get_vdo_slab_journal_start_block(&depot.slab_config,
+                                                        slabOrigin),
                depot.slab_config.slab_journal_blocks);
 
     slabOrigin += vdo->states.vdo.config.slab_size;
