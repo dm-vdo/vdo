@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#30 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#31 $
  */
 
 #include <err.h>
@@ -188,7 +188,7 @@ static void listSlabSummary(void)
   const struct partition *partition
     = getPartition(vdo, SLAB_SUMMARY_PARTITION, "no slab summary partition");
   listBlocks("slab summary", get_fixed_layout_partition_offset(partition),
-             get_slab_summary_size(VDO_BLOCK_SIZE));
+             get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
 }
 
 /**********************************************************************/

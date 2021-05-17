@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#40 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#41 $
  */
 
 #include <err.h>
@@ -336,7 +336,7 @@ static void dumpSlabSummary(void)
     = getPartition(vdo, SLAB_SUMMARY_PARTITION,
                    "Could not copy slab summary, no partition");
   int result = copyBlocks(get_fixed_layout_partition_offset(partition),
-                          get_slab_summary_size(VDO_BLOCK_SIZE));
+                          get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy slab summary");
   }

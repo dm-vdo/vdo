@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#52 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#53 $
  */
 
 #include <err.h>
@@ -643,7 +643,7 @@ static int verifyPBNRefCounts(void)
     return result;
   }
 
-  hintShift = get_slab_summary_hint_shift(vdo->slabSizeShift);
+  hintShift = get_vdo_slab_summary_hint_shift(vdo->slabSizeShift);
   for (slab_count_t slabNumber = 0; slabNumber < vdo->slabCount;
        slabNumber++) {
     result = verifySlab(slabNumber, buffer);

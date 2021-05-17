@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#51 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#52 $
  */
 
 #include <uuid/uuid.h>
@@ -57,7 +57,7 @@ int makeFixedLayoutFromConfig(const struct vdo_config  *config,
   return make_vdo_fixed_layout(config->physical_blocks, startingOffset,
                                DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
                                config->recovery_journal_size,
-                               get_slab_summary_size(VDO_BLOCK_SIZE),
+                               get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
                                layoutPtr);
 }
 
@@ -204,7 +204,7 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 
   block_count_t blockMapBlocks = DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT;
   block_count_t journalBlocks  = config->recovery_journal_size;
-  block_count_t summaryBlocks  = get_slab_summary_size(VDO_BLOCK_SIZE);
+  block_count_t summaryBlocks  = get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
   block_count_t slabBlocks     = config->slab_size;
 
   // The +2 takes into account the super block and geometry block.

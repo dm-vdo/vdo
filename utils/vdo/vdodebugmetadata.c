@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#59 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#60 $
  */
 
 #include <err.h>
@@ -329,15 +329,16 @@ static int allocateMetadataSpace(void)
          config->recovery_journal_size);
   }
 
-  result = ALLOCATE(get_slab_summary_size(VDO_BLOCK_SIZE),
+  result = ALLOCATE(get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
                     struct slab_summary_entry *,
                     __func__, &slabSummary);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %" PRIu64 " slab summary block pointers",
-         get_slab_summary_size(VDO_BLOCK_SIZE));
+         get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
   }
 
-  for (block_count_t i = 0; i < get_slab_summary_size(VDO_BLOCK_SIZE); i++) {
+  for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+       i++) {
     char *buffer;
     result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
                                      "slab summary block", &buffer);
@@ -370,7 +371,8 @@ static void freeMetadataSpace(void)
   recoveryJournal = NULL;
 
   if (slabSummary != NULL) {
-    for (block_count_t i = 0; i < get_slab_summary_size(VDO_BLOCK_SIZE); i++) {
+    for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+         i++) {
       FREE(slabSummary[i]);
       slabSummary[i] = NULL;
     }
@@ -398,7 +400,7 @@ static void readMetadata(void)
   block_count_t totalNonBlockMapMetadataBlocks
     = ((metadataBlocksPerSlab * slabCount)
        + config->recovery_journal_size
-       + get_slab_summary_size(VDO_BLOCK_SIZE));
+       + get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
 
   nextBlock
     = (vdo->layer->getBlockCount(vdo->layer) - totalNonBlockMapMetadataBlocks);
@@ -438,7 +440,8 @@ static void readMetadata(void)
     }
   }
 
-  for (block_count_t i = 0; i < get_slab_summary_size(VDO_BLOCK_SIZE); i++) {
+  for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+       i++) {
     readBlocks(1, (char *) slabSummary[i]);
   }
 }
