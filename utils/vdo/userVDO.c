@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#15 $
  */
 
 #include "userVDO.h"
@@ -60,7 +60,7 @@ void freeUserVDO(UserVDO **vdoPtr)
     return;
   }
 
-  destroy_component_states(&vdo->states);
+  destroy_vdo_component_states(&vdo->states);
   destroy_vdo_super_block_codec(&vdo->superBlockCodec);
   FREE(vdo);
   *vdoPtr = NULL;
@@ -99,16 +99,17 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
     return result;
   }
 
-  result = decode_component_states(vdo->superBlockCodec.component_buffer,
-                                   geometry->release_version, &vdo->states);
+  result = decode_vdo_component_states(vdo->superBlockCodec.component_buffer,
+                                       geometry->release_version,
+                                       &vdo->states);
   if (result != VDO_SUCCESS) {
     freeUserVDO(&vdo);
     return result;
   }
 
   if (validateConfig) {
-    result = validate_component_states(&vdo->states, geometry->nonce,
-                                       layer->getBlockCount(layer));
+    result = validate_vdo_component_states(&vdo->states, geometry->nonce,
+                                           layer->getBlockCount(layer));
     if (result != VDO_SUCCESS) {
       freeUserVDO(&vdo);
       return result;
@@ -150,8 +151,9 @@ int saveSuperBlock(UserVDO *vdo)
 /**********************************************************************/
 int saveVDO(UserVDO *vdo, bool saveGeometry)
 {
-  int result = encode_component_states(vdo->superBlockCodec.component_buffer,
-                                       &vdo->states);
+  int result
+    = encode_vdo_component_states(vdo->superBlockCodec.component_buffer,
+                                  &vdo->states);
   if (result != VDO_SUCCESS) {
     return result;
   }
