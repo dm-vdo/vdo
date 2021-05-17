@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#29 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#30 $
  */
 
 #include <err.h>
@@ -131,14 +131,14 @@ static void listIndex(void)
 {
   // The index is all blocks from the geometry block to the super block,
   // exclusive.
-  listBlocks("index", 1, get_data_region_offset(vdo->geometry) - 1);
+  listBlocks("index", 1, vdo_get_data_region_offset(vdo->geometry) - 1);
 }
 
 /**********************************************************************/
 static void listSuperBlock(void)
 {
   // The SuperBlock is a single block at the start of the data region.
-  listBlocks("super block", get_data_region_offset(vdo->geometry), 1);
+  listBlocks("super block", vdo_get_data_region_offset(vdo->geometry), 1);
 }
 
 /**********************************************************************/

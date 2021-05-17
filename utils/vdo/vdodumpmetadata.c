@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#39 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#40 $
  */
 
 #include <err.h>
@@ -247,13 +247,13 @@ static void dumpGeometryBlock(void)
 static void dumpSuperBlock(void)
 {
   struct volume_geometry geometry;
-  int result = load_volume_geometry(vdo->layer, &geometry);
+  int result = vdo_load_volume_geometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load geometry");
   }
 
   // Copy the super block.
-  result = copyBlocks(get_data_region_offset(geometry), 1);
+  result = copyBlocks(vdo_get_data_region_offset(geometry), 1);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy super block");
   }

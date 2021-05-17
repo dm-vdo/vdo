@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoSetUUID.c#11 $
  */
 
 #include <err.h>
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
   }
 
   struct volume_geometry geometry;
-  result = load_volume_geometry(vdo->layer, &geometry);
+  result = vdo_load_volume_geometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     freeVDOFromFile(&vdo);
     errx(1, "Could not load the geometry from '%s'", vdoBacking);
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 
   uuid_copy(geometry.uuid, uuid);
 
-  result = write_volume_geometry(vdo->layer, &geometry);
+  result = vdo_write_volume_geometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     freeVDOFromFile(&vdo);
     errx(1, "Could not write the geometry to '%s' %s", vdoBacking,

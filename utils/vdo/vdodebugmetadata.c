@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#58 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#59 $
  */
 
 #include <err.h>
@@ -587,7 +587,7 @@ readVDOFromDump(const char *filename)
 
   // Load the geometry and tweak it to match the dump.
   struct volume_geometry geometry;
-  result = load_volume_geometry(layer, &geometry);
+  result = vdo_load_volume_geometry(layer, &geometry);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
     char errBuf[ERRBUF_SIZE];

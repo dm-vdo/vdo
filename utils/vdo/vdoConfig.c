@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#50 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#51 $
  */
 
 #include <uuid/uuid.h>
@@ -119,7 +119,7 @@ static int __must_check configureVDO(UserVDO *vdo)
   // The layout starts 1 block past the beginning of the data region, as the
   // data region contains the super block but the layout does not.
   physical_block_number_t startingOffset =
-    get_data_region_offset(vdo->geometry) + 1;
+    vdo_get_data_region_offset(vdo->geometry) + 1;
   int result = makeFixedLayoutFromConfig(config, startingOffset,
                                          &vdo->states.layout);
   if (result != VDO_SUCCESS) {
@@ -196,7 +196,7 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 
   block_count_t indexSize = 0;
   if (indexConfig != NULL) {
-    int result = compute_index_blocks(indexConfig, &indexSize);
+    int result = vdo_compute_index_blocks(indexConfig, &indexSize);
     if (result != VDO_SUCCESS) {
       return result;
     }
@@ -275,13 +275,13 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
                                 nonce_t                    nonce,
                                 uuid_t                    *uuid)
 {
-  int result = initialize_volume_geometry(nonce, uuid, indexConfig,
-                                          &vdo->geometry);
+  int result = vdo_initialize_volume_geometry(nonce, uuid, indexConfig,
+                                              &vdo->geometry);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  result = clear_volume_geometry(vdo->layer);
+  result = vdo_clear_volume_geometry(vdo->layer);
   if (result != VDO_SUCCESS) {
     return result;
   }

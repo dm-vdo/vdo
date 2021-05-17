@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#14 $
  */
 
 #include "userVDO.h"
@@ -71,7 +71,7 @@ int __must_check loadSuperBlock(UserVDO *vdo)
 {
   int result
     = vdo->layer->reader(vdo->layer,
-                         get_data_region_offset(vdo->geometry), 1,
+                         vdo_get_data_region_offset(vdo->geometry), 1,
                          (char *) vdo->superBlockCodec.encoded_super_block);
   if (result != VDO_SUCCESS) {
     return result;
@@ -125,7 +125,7 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
 int loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr)
 {
   struct volume_geometry geometry;
-  int result = load_volume_geometry(layer, &geometry);
+  int result = vdo_load_volume_geometry(layer, &geometry);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -141,7 +141,8 @@ int saveSuperBlock(UserVDO *vdo)
     return result;
   }
 
-  return vdo->layer->writer(vdo->layer, get_data_region_offset(vdo->geometry),
+  return vdo->layer->writer(vdo->layer,
+                            vdo_get_data_region_offset(vdo->geometry),
                             1,
                             (char *) vdo->superBlockCodec.encoded_super_block);
 }
@@ -164,7 +165,7 @@ int saveVDO(UserVDO *vdo, bool saveGeometry)
     return VDO_SUCCESS;
   }
 
-  return write_volume_geometry(vdo->layer, &vdo->geometry);
+  return vdo_write_volume_geometry(vdo->layer, &vdo->geometry);
 }
 
 /**********************************************************************/

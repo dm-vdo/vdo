@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#40 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#41 $
  */
 
 #include "volumeGeometry.h"
@@ -369,7 +369,7 @@ static int encode_geometry_block(const struct volume_geometry *geometry,
  * @return VDO_SUCCESS or an error code
  **/
 static int __must_check
-read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
+vdo_read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
 {
 	char *block;
 	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
@@ -389,21 +389,21 @@ read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
 }
 
 /**********************************************************************/
-int load_volume_geometry(PhysicalLayer *layer, struct volume_geometry *geometry)
+int vdo_load_volume_geometry(PhysicalLayer *layer, struct volume_geometry *geometry)
 {
 	byte *block;
-	int result = read_geometry_block(layer, &block);
+	int result = vdo_read_geometry_block(layer, &block);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	result = parse_geometry_block(block, geometry);
+	result = vdo_parse_geometry_block(block, geometry);
 	FREE(block);
 	return result;
 }
 
 /**********************************************************************/
-int parse_geometry_block(byte *block, struct volume_geometry *geometry)
+int vdo_parse_geometry_block(byte *block, struct volume_geometry *geometry)
 {
 	crc32_checksum_t checksum, saved_checksum;
 	struct buffer *buffer;
@@ -443,14 +443,14 @@ int parse_geometry_block(byte *block, struct volume_geometry *geometry)
 }
 
 /************************************************************************/
-int compute_index_blocks(const struct index_config *index_config,
-			 block_count_t *index_blocks_ptr)
+int vdo_compute_index_blocks(const struct index_config *index_config,
+			     block_count_t *index_blocks_ptr)
 {
 	uint64_t index_bytes;
 	block_count_t index_blocks;
 	struct uds_configuration *uds_configuration = NULL;
-	int result = index_config_to_uds_configuration(index_config,
-						       &uds_configuration);
+	int result = vdo_index_config_to_uds_configuration(index_config,
+							   &uds_configuration);
 	if (result != UDS_SUCCESS) {
 		return log_error_strerror(result,
 					  "error creating index config");
@@ -475,14 +475,14 @@ int compute_index_blocks(const struct index_config *index_config,
 }
 
 /**********************************************************************/
-int initialize_volume_geometry(nonce_t nonce,
-			       uuid_t *uuid,
-			       const struct index_config *index_config,
-			       struct volume_geometry *geometry)
+int vdo_initialize_volume_geometry(nonce_t nonce,
+				   uuid_t *uuid,
+				   const struct index_config *index_config,
+				   struct volume_geometry *geometry)
 {
 	block_count_t index_size = 0;
 	if (index_config != NULL) {
-		int result = compute_index_blocks(index_config, &index_size);
+		int result = vdo_compute_index_blocks(index_config, &index_size);
 		if (result != VDO_SUCCESS) {
 			return result;
 		}
@@ -513,7 +513,7 @@ int initialize_volume_geometry(nonce_t nonce,
 }
 
 /**********************************************************************/
-int clear_volume_geometry(PhysicalLayer *layer)
+int vdo_clear_volume_geometry(PhysicalLayer *layer)
 {
 	char *block;
 	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
@@ -528,8 +528,8 @@ int clear_volume_geometry(PhysicalLayer *layer)
 }
 
 /**********************************************************************/
-int write_volume_geometry(PhysicalLayer *layer,
-			  struct volume_geometry *geometry)
+int vdo_write_volume_geometry(PhysicalLayer *layer,
+			      struct volume_geometry *geometry)
 {
 	char *block;
 	struct buffer *buffer;
@@ -572,8 +572,8 @@ int write_volume_geometry(PhysicalLayer *layer,
 }
 
 /************************************************************************/
-int index_config_to_uds_configuration(const struct index_config *index_config,
-				      struct uds_configuration **uds_config_ptr)
+int vdo_index_config_to_uds_configuration(const struct index_config *index_config,
+					  struct uds_configuration **uds_config_ptr)
 {
 	struct uds_configuration *uds_configuration;
 	int result = uds_initialize_configuration(&uds_configuration,
@@ -589,8 +589,8 @@ int index_config_to_uds_configuration(const struct index_config *index_config,
 }
 
 /************************************************************************/
-void index_config_to_uds_parameters(const struct index_config *index_config,
-				    struct uds_parameters *user_params)
+void vdo_index_config_to_uds_parameters(const struct index_config *index_config,
+					struct uds_parameters *user_params)
 {
 	user_params->checkpoint_frequency = index_config->checkpoint_frequency;
 }
