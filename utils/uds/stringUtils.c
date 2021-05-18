@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/stringUtils.c#6 $
+ * $Id: //eng/uds-releases/krusty/src/uds/stringUtils.c#7 $
  */
 
 #include "stringUtils.h"
@@ -30,12 +30,13 @@
 /**********************************************************************/
 int alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 {
+	va_list args;
+	int result;
 	if (strp == NULL) {
 		return UDS_INVALID_ARGUMENT;
 	}
-	va_list args;
 	va_start(args, fmt);
-	int result = vasprintf(strp, fmt, args) == -1 ? ENOMEM : UDS_SUCCESS;
+	result = vasprintf(strp, fmt, args) == -1 ? ENOMEM : UDS_SUCCESS;
 	va_end(args);
 	if ((result != UDS_SUCCESS) && (what != NULL)) {
 		uds_log_error("cannot allocate %s", what);
@@ -52,12 +53,13 @@ int wrap_vsnprintf(const char *what,
 		   va_list ap,
 		   size_t *needed)
 {
+	int n;
 	if (buf == NULL) {
 		static char nobuf[1];
 		buf = nobuf;
 		buf_size = 0;
 	}
-	int n = vsnprintf(buf, buf_size, fmt, ap);
+	n = vsnprintf(buf, buf_size, fmt, ap);
 	if (n < 0) {
 		return log_error_strerror(UDS_UNEXPECTED_RESULT,
 					  "%s: vsnprintf failed", what);
@@ -81,13 +83,13 @@ int fixed_sprintf(const char *what,
 		  const char *fmt,
 		  ...)
 {
+	va_list args;
+	int result;
 	if (buf == NULL) {
 		return UDS_INVALID_ARGUMENT;
 	}
-	va_list args;
 	va_start(args, fmt);
-	int result =
-		wrap_vsnprintf(what, buf, buf_size, error, fmt, args, NULL);
+	result = wrap_vsnprintf(what, buf, buf_size, error, fmt, args, NULL);
 	va_end(args);
 	return result;
 }
@@ -109,9 +111,10 @@ v_append_to_buffer(char *buffer, char *buf_end, const char *fmt, va_list args)
 char *append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
 {
 	va_list ap;
+	char *pos;
 
 	va_start(ap, fmt);
-	char *pos = v_append_to_buffer(buffer, buf_end, fmt, ap);
+	pos = v_append_to_buffer(buffer, buf_end, fmt, ap);
 	va_end(ap);
 	return pos;
 }

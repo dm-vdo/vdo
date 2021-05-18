@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#9 $
+ * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#10 $
  */
 
 #include "permassert.h"
@@ -66,9 +66,10 @@ static void initialize(void)
 /**********************************************************************/
 bool set_exit_on_assertion_failure(bool should_exit)
 {
+	bool previous_setting;
 	perform_once(&init_once, initialize);
 	lock_mutex(&mutex);
-	bool previous_setting = exit_on_assertion_failure;
+	previous_setting = exit_on_assertion_failure;
 	exit_on_assertion_failure = should_exit;
 	unlock_mutex(&mutex);
 	return previous_setting;

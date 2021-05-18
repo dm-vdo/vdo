@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#10 $
+ * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#11 $
  */
 
 #include "geometry.h"
@@ -95,7 +95,6 @@ int read_volume_page(const struct volume_store *volume_store,
 		return log_warning_strerror(result,
 					    "error reading physical page %u",
 					    physical_page);
-			
 	}
 	return UDS_SUCCESS;
 }

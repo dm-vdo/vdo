@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/errors.c#8 $
+ * $Id: //eng/uds-releases/krusty/src/uds/errors.c#9 $
  */
 
 #include "errors.h"
@@ -167,6 +167,7 @@ static struct error_information {
 static const char *get_error_info(int errnum,
 				  const struct error_info **info_ptr)
 {
+	struct error_block *block;
 
 	if (errnum == UDS_SUCCESS) {
 		if (info_ptr != NULL) {
@@ -175,7 +176,6 @@ static const char *get_error_info(int errnum,
 		return NULL;
 	}
 
-	struct error_block *block;
 	for (block = registered_errors.blocks;
 	     block < registered_errors.blocks + registered_errors.count;
 	     ++block) {
@@ -217,22 +217,23 @@ system_string_error(int errnum, char *buf, size_t buflen)
 /**********************************************************************/
 const char *string_error(int errnum, char *buf, size_t buflen)
 {
+	char *buffer = buf;
+	char *buf_end = buf + buflen;
+	const struct error_info *info = NULL;
+	const char *block_name;
+
 	if (buf == NULL) {
 		return NULL;
 	}
 
-	char *buffer = buf;
-	char *buf_end = buf + buflen;
-
 	if (is_unrecoverable(errnum)) {
 		buffer = append_to_buffer(buffer, buf_end,
 					  "Unrecoverable error: ");
-			
+
 		errnum = sans_unrecoverable(errnum);
 	}
 
-	const struct error_info *info = NULL;
-	const char *block_name = get_error_info(errnum, &info);
+	block_name = get_error_info(errnum, &info);
 
 	if (block_name != NULL) {
 		if (info != NULL) {
@@ -266,14 +267,14 @@ const char *string_error(int errnum, char *buf, size_t buflen)
 /**********************************************************************/
 const char *string_error_name(int errnum, char *buf, size_t buflen)
 {
-	errnum = sans_unrecoverable(errnum);
 
 	char *buffer = buf;
 	char *buf_end = buf + buflen;
-
 	const struct error_info *info = NULL;
-	const char *block_name = get_error_info(errnum, &info);
+	const char *block_name;
 
+	errnum = sans_unrecoverable(errnum);
+	block_name = get_error_info(errnum, &info);
 	if (block_name != NULL) {
 		if (info != NULL) {
 			buffer = append_to_buffer(buffer, buf_end, "%s",
@@ -303,6 +304,7 @@ int register_error_block(const char *block_name,
 			 const struct error_info *infos,
 			 size_t info_size)
 {
+	struct error_block *block;
 	int result = ASSERT(first_error < last_reserved_error,
 			    "bad error block range");
 	if (result != UDS_SUCCESS) {
@@ -314,7 +316,6 @@ int register_error_block(const char *block_name,
 		return UDS_OVERFLOW;
 	}
 
-	struct error_block *block;
 	for (block = registered_errors.blocks;
 	     block < registered_errors.blocks + registered_errors.count;
 	     ++block) {
