@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#60 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#61 $
  */
 
 #include <err.h>
@@ -528,8 +528,8 @@ isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 static void findRecoveryJournalEntries(logical_block_number_t lbn)
 {
   struct block_map_slot desiredSlot = (struct block_map_slot) {
-    .pbn  = compute_page_number(lbn),
-    .slot = compute_slot(lbn),
+    .pbn  = vdo_compute_page_number(lbn),
+    .slot = vdo_compute_slot(lbn),
   };
   for (block_count_t i = 0;
        i < vdo->states.vdo.config.recovery_journal_size;

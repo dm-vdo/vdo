@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#52 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#53 $
  */
 
 #include <uuid/uuid.h>
@@ -86,10 +86,8 @@ computeForestSize(block_count_t logicalBlocks,
                   root_count_t  rootCount)
 {
   struct boundary newSizes;
-  block_count_t approximateNonLeaves = compute_new_forest_pages(rootCount,
-                                                                NULL,
-                                                                logicalBlocks,
-                                                                &newSizes);
+  block_count_t approximateNonLeaves
+    = vdo_compute_new_forest_pages(rootCount, NULL, logicalBlocks, &newSizes);
 
   // Exclude the tree roots since those aren't allocated from slabs,
   // and also exclude the super-roots, which only exist in memory.
@@ -98,7 +96,7 @@ computeForestSize(block_count_t logicalBlocks,
                  newSizes.levels[VDO_BLOCK_MAP_TREE_HEIGHT - 1]);
 
   block_count_t approximateLeaves =
-    compute_block_map_page_count(logicalBlocks - approximateNonLeaves);
+    compute_vdo_block_map_page_count(logicalBlocks - approximateNonLeaves);
 
   // This can be a slight over-estimate since the tree will never have to
   // address these blocks, so it might be a tiny bit smaller.
