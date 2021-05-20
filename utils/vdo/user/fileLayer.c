@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/fileLayer.c#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/fileLayer.c#3 $
  */
 
 #include "fileLayer.h"
@@ -38,6 +38,7 @@
 typedef struct fileLayer {
   PhysicalLayer common;
   BlockCount    blockCount;
+  BlockCount    fileOffset;
   int           fd;
   char          name[];
 } FileLayer;
@@ -92,6 +93,7 @@ static int fileReader(PhysicalLayer       *header,
                       size_t              *blocksRead)
 {
   FileLayer *layer = asFileLayer(header);
+  startBlock += layer->fileOffset;
 
   if (startBlock + blockCount > layer->blockCount) {
     return VDO_OUT_OF_RANGE;
@@ -131,6 +133,7 @@ static int fileWriter(PhysicalLayer       *header,
                       size_t              *blocksWritten)
 {
   FileLayer *layer = asFileLayer(header);
+  startBlock += layer->fileOffset;
 
   if (startBlock + blockCount > layer->blockCount) {
     return VDO_OUT_OF_RANGE;
@@ -213,6 +216,7 @@ static void freeLayer(PhysicalLayer **layerPtr)
  * @param [in]  readOnly    whether the layer is not allowed to write
  * @param [in]  blockCount  the span of the file, in blocks (may be zero for
  *                            read-only layers in which case it is computed)
+ * @param [in]  fileOffset  the block offset to apply to I/O operations
  * @param [out] layerPtr    the pointer to hold the result
  *
  * @return a success or error code
@@ -220,6 +224,7 @@ static void freeLayer(PhysicalLayer **layerPtr)
 static int setupFileLayer(const char     *name,
                           bool            readOnly,
                           BlockCount      blockCount,
+                          BlockCount      fileOffset,
                           PhysicalLayer **layerPtr)
 {
   int result = ASSERT(layerPtr != NULL, "layerPtr must not be NULL");
@@ -227,15 +232,15 @@ static int setupFileLayer(const char     *name,
     return result;
   }
 
-  size_t     nameLen = strlen(name);
+  size_t     nameLen = strlen(name) + 1;
   FileLayer *layer;
-
   result = ALLOCATE_EXTENDED(FileLayer, nameLen, char, "file layer", &layer);
   if (result != UDS_SUCCESS) {
     return result;
   }
 
   layer->blockCount = blockCount;
+  layer->fileOffset = fileOffset;
   strcpy(layer->name, name);
 
   bool exists = false;
@@ -317,11 +322,20 @@ int makeFileLayer(const char           *name,
                   BlockCount            blockCount,
                   PhysicalLayer       **layerPtr)
 {
-  return setupFileLayer(name, false, blockCount, layerPtr);
+  return setupFileLayer(name, false, blockCount, 0, layerPtr);
 }
 
 /**********************************************************************/
 int makeReadOnlyFileLayer(const char *name, PhysicalLayer **layerPtr)
 {
-  return setupFileLayer(name, true, 0, layerPtr);
+  return setupFileLayer(name, true, 0, 0, layerPtr);
+}
+
+/**********************************************************************/
+int makeOffsetFileLayer(const char           *name,
+                        BlockCount            blockCount,
+                        BlockCount            fileOffset,
+                        PhysicalLayer       **layerPtr)
+{
+  return setupFileLayer(name, false, blockCount, fileOffset, layerPtr);
 }

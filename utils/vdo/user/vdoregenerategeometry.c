@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoRegenerateGeometry.c#3 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoRegenerateGeometry.c#4 $
  */
 
 #include <err.h>
@@ -231,7 +231,7 @@ static bool tryUDSConfig(const UdsMemoryConfigSize memory, bool sparse)
     return false;
   }
 
-  if ((offset != 0) && (getDataRegionOffset(candidate->geometry) != offset)) {
+  if ((offset != 0) && (getDataRegionStart(candidate->geometry) != offset)) {
     return false;
   }
 
@@ -262,7 +262,7 @@ static bool tryUDSConfig(const UdsMemoryConfigSize memory, bool sparse)
     if (validity == BLOCK_MAP_PAGE_VALID) {
       printf("Found candidate super block at block %" PRIu64
              " (index memory %sGB%s)\n",
-             getDataRegionOffset(candidate->geometry),
+             getDataRegionStart(candidate->geometry),
              candidate->memoryString, (sparse ? ", sparse" : ""));
       return true;
     }
@@ -288,13 +288,13 @@ static void findSuperBlocks(void)
     Candidate *candidate = &candidates[candidateCount];
     if (tryUDSConfig(memory, false)) {
       candidateCount++;
-    } else if (getDataRegionOffset(candidate->geometry) > physicalSize) {
+    } else if (getDataRegionStart(candidate->geometry) > physicalSize) {
       return;
     }
 
     if (trySparse && tryUDSConfig(memory, true)) {
       candidateCount++;
-    } else if (getDataRegionOffset(candidate->geometry) > physicalSize) {
+    } else if (getDataRegionStart(candidate->geometry) > physicalSize) {
       trySparse = false;
     }
   }
@@ -357,7 +357,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < candidateCount; i++) {
       Candidate *candidate = &candidates[i];
       printf("offset: %" PRIu64 ", index memory %s%s\n",
-             getDataRegionOffset(candidate->geometry) * VDO_BLOCK_SIZE,
+             getDataRegionStart(candidate->geometry) * VDO_BLOCK_SIZE,
              candidate->memoryString, (candidate->sparse ?  ", sparse" : ""));
       freeVDO(&candidate->vdo);
     }

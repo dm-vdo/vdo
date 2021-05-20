@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoDumpMetadata.c#3 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoDumpMetadata.c#4 $
  */
 
 #include <err.h>
@@ -252,7 +252,7 @@ static void dumpSuperBlock(void)
   }
 
   // Copy the super block.
-  result = copyBlocks(getDataRegionOffset(geometry), 1);
+  result = copyBlocks(getDataRegionStart(geometry), 1);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy super block");
   }

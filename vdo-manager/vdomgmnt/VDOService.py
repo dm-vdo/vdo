@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#37 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#38 $
 
 """
 from __future__ import absolute_import
@@ -286,6 +286,34 @@ class VDOService(Service):
     runCommand(['dmsetup', 'message', self.getName(), '0', 'index-enable'])
     self._announce(_("{0} connect succeeded").format(self.getName()))
 
+  ######################################################################
+  @transactional
+  def convert(self):
+    """Convert the VDO device to be used by LVM. This will stop the VDO
+       device, run the conversion tool and then remove the entry from the
+       VDO config file.
+    """
+    self._handlePreviousOperationFailure()
+    
+    self._announce(_("Converting VDO {0}").format(self.getName()))
+
+    transaction = Transaction.transaction()    
+    if self.running():
+      self.stop()
+      transaction.addUndoStage(self.start())
+      
+    # vdo2lvm will do the actual conversion and print info about
+    # where the new geometry block is located.
+    transaction.setMessage(self.log.error,
+                           _("Device {0} could not be converted").format(
+                              self.getName()))
+    output = runCommand(["vdo2lvm", self.device]).strip()
+    transaction.setMessage(None)
+    if output != "":
+      self._announce(textwrap.indent(output, "      "))
+    
+    self.config.removeVdo(self.getName())
+        
   ######################################################################
   @transactional
   def create(self, force = False):

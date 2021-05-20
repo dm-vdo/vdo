@@ -1,0 +1,22 @@
+.TH VDO2LVM 8 "2020-09-23" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdo2lvm \- Converts a VDO device for use with LVM
+.SH SYNOPSIS
+.B vdo2lvm
+.I filename
+.SH DESCRIPTION
+.B vdo2lvm
+converts the VDO block device named by \fIfilename\fP for use with LVM.
+The VDO device to be converted must not be running, and should not
+already be an LVM VDO.
+.PP
+.SH OPTIONS
+.TP
+.B \-\-help
+Print this help message and exit.
+.TP
+.B \-\-version
+Show the version of vdo2lvm.
+.
+.SH SEE ALSO
+.BR vdo (8).

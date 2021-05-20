@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#20 $
+.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#21 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -119,6 +119,8 @@ vdo \- manage kernel VDO devices and related configuration information
 |
 .B changeWritePolicy
 |
+.B convert
+|
 .B create
 |
 .B deactivate
@@ -178,6 +180,19 @@ Applicable options include:
 .startOptionList
 \*[targetSpecRequired]
 \-\-writePolicy=\fIpolicy\fP\fR (required)\fP
+\-\-confFile=\fIfile\fP
+\-\-logfile=\fIfile\fP
+\-\-verbose
+.endOptionList
+.TP
+.B convert
+Converts a VDO volume so it can be managed by LVM. Converted volumes
+cannot be reverted back. This command is intended to be used by LVM.
+Do not call this directly unless you are sure what you are doing.
+This command must be run with root privileges. Applicable options include:
+.startOptionList
+\-\-name=\fIvolume\fP\fR (required)\fP
+\-\-force\fP\fR (required)\fP
 \-\-confFile=\fIfile\fP
 \-\-logfile=\fIfile\fP
 \-\-verbose
@@ -581,7 +596,8 @@ default is \*[emulate512Default].
 When creating a volume, ignores any existing file system or VDO
 signature already present in the storage device. When stopping or
 removing a VDO volume, first unmounts the file system stored on the
-device if mounted.
+device if mounted. When converting a volume to be used by LVM, this
+parameter is required.
 .TP
 .B \-\-forceRebuild
 Forces an offline rebuild of a read-only VDO's metadata before starting so

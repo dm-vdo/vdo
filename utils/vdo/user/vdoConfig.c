@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.c#8 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoConfig.c#9 $
  */
 
 #include <uuid/uuid.h>
@@ -245,7 +245,7 @@ static int makeAndWriteVDO(const VDOConfig      *config,
 
   vdo->config                      = *config;
   vdo->nonce                       = geometry->nonce;
-  vdo->loadConfig.firstBlockOffset = getDataRegionOffset(*geometry);
+  vdo->loadConfig.firstBlockOffset = getDataRegionStart(*geometry);
   result = configureVDO(vdo);
   if (result != VDO_SUCCESS) {
     freeVDO(&vdo);

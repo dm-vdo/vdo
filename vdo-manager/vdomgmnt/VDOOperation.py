@@ -20,7 +20,7 @@
 """
   VDOOperation - an object representing a vdo script command
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#11 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOOperation.py#12 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -285,6 +285,26 @@ class ChangeWritePolicyOperation(VDOOperation):
   ######################################################################
   def _changeWritePolicy(self, args, vdo):
     vdo.setWritePolicy(self._newWritePolicy)
+
+########################################################################
+class ConvertOperation(VDOOperation):
+  """Implements the convert command."""
+
+  ######################################################################
+  # Overridden methods
+  ######################################################################
+  def __init__(self):
+    super(ConvertOperation, self).__init__()
+
+  ######################################################################
+  @exclusivelock
+  def execute(self, args):
+    conf = Configuration.modifiableSingleton(self.confFile)
+    self._checkForName(args)
+
+    vdo = conf.getVdo(args.name)
+    vdo.convert()
+    conf.persist()
 
 ########################################################################
 class CreateOperation(VDOOperation):

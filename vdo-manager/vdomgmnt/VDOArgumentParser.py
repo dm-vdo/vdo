@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#16 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#17 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -176,6 +176,26 @@ suffix is optional""").format(options
                  self.__commonOptions],
       help = highLevelHelp,
       description = description)
+
+    # convert command. Should only be called by LVM.
+    highLevelHelp = _("""
+      Converts a VDO volume so it can be managed by LVM. Converted volumes
+      cannot be reverted back.
+                      """)
+    description = _("""
+      {0} This command is intended to be used by LVM. Do not call this
+      directly unless you are sure what you are doing. This command must 
+      be run with root privileges.
+                    """).format(highLevelHelp)
+    
+    self._convertCommandParser = subparserAdder.add_parser(
+      "convert",
+      parents = [self._nameOptionParser(),
+                 self._forceOptionParser(required = True),
+                 self.__commonOptions],
+      help = highLevelHelp,
+      description = description)      
+        
     # create command.
     highLevelHelp = _("""
       Creates a VDO volume and its associated index and makes it available.
@@ -689,15 +709,17 @@ suffix is optional""").format(options
     return parser
 
   ####################################################################
-  def _forceOptionParser(self):
+  def _forceOptionParser(self, required = False):
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--force",
                         action = "store_true",
                         dest = "force",
+                        required = required,                        
                         help = _("""
       When creating a volume, ignores any existing file system or VDO signature
       already present in the storage device. When stopping or removing a VDO
       volume, first unmounts the file system stored on the device if mounted.
+      When converting a volume to be used by LVM, this parameter is required.
                                  """))
 
     return parser

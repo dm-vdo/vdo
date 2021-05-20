@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.5.11
+Version: 6.2.5.21
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -68,6 +68,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %files
 #defattr(-,root,root)
 %{_bindir}/vdo
+%{_bindir}/vdo2lvm
 %{_bindir}/vdo-by-dev
 %{_bindir}/vdostats
 %{_bindir}/vdodmeventd
@@ -132,6 +133,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %dir %{_defaultdocdir}/%{name}/examples/systemd
 %doc %{_defaultdocdir}/%{name}/examples/systemd/VDO.mount.example
 %{_mandir}/man8/vdo.8.gz
+%{_mandir}/man8/vdo2lvm.8.gz
 %{_mandir}/man8/vdostats.8.gz
 %{_mandir}/man8/vdodmeventd.8.gz
 %{_mandir}/man8/vdodumpconfig.8.gz
@@ -179,13 +181,9 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Tue May 11 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.11-1
-- Introduced new memory size parameter values for UDS indexes which have
-  been converted from vdo script management to LVM.
-- Updated spec file to include new files needed for udev/systemd startup
-  rules.
-- Added some BuildRequires to the spec file.
-- Modified vdo script to fail if the same option is supplied multiple
-  times.
-- Fixed permissions on the vdo script's lock directory.
+* Thu May 20 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.21-1
+
+- Added a tool for converting a VDO volume from the vdo management script
+  to LVM. The tool can be invoked from the new vdo convert command.
+- Fixed a (relatively harmless) buffer overflow in vdo userspace tools.
   
