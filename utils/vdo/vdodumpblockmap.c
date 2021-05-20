@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#18 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#19 $
  */
 
 #include <err.h>
@@ -137,7 +137,7 @@ static int dumpLBN(void)
 
   default:
     printf("compressed \t%" PRIu64 " slot %u\n",
-           pbn, get_slot_from_state(state));
+           pbn, vdo_get_slot_from_state(state));
     break;
   }
 

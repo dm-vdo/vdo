@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#53 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#54 $
  */
 
 #include <err.h>
@@ -320,7 +320,7 @@ static void reportBlockMapEntry(const char               *message,
     return;
   }
 
-  if (is_compressed(state)) {
+  if (vdo_is_state_compressed(state)) {
     warnx("Mapping at (page %" PRIu64 ", slot %u) (height %u)"
           " %s (PBN %" PRIu64 ", state %u)\n",
           slot.pbn, slot.slot, height, message, pbn, state);
@@ -350,7 +350,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
     return VDO_SUCCESS;
   }
 
-  if (is_compressed(state) && (pbn == VDO_ZERO_BLOCK)) {
+  if (vdo_is_state_compressed(state) && (pbn == VDO_ZERO_BLOCK)) {
     reportBlockMapEntry("is compressed but has no physical block",
                         slot, height, pbn, state);
     return VDO_BAD_MAPPING;
@@ -388,7 +388,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
     }
 
     // If this interior tree block appears to be compressed, warn.
-    if (is_compressed(state)) {
+    if (vdo_is_state_compressed(state)) {
       reportBlockMapEntry("refers to compressed fragment",
                           slot, height, pbn, state);
     }
