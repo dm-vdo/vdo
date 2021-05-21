@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#61 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#62 $
  */
 
 #include <err.h>
@@ -192,7 +192,7 @@ static int processArgs(int argc, char *argv[], char **filename)
 /**
  * This function provides an easy place to set a breakpoint.
  **/
-__attribute__((noinline)) static void doNothing(void)
+__attribute__((__noinline__)) static void doNothing(void)
 {
   __asm__("");
 }

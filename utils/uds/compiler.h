@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/compiler.h#4 $
+ * $Id: //eng/uds-releases/krusty/src/uds/compiler.h#5 $
  */
 
 #ifndef COMMON_COMPILER_H
@@ -47,9 +47,11 @@
 #define INLINE __attribute__((always_inline)) inline
 
 #define __always_unused __attribute__((unused))
-#define __maybe_unused __attribute__((unused))
-#define __must_check __attribute__((warn_unused_result))
-#define __packed __attribute__((packed))
+#define __maybe_unused  __attribute__((unused))
+#define __must_check    __attribute__((warn_unused_result))
+#define noinline        __attribute__((__noinline__))
+#define __packed        __attribute__((packed))
+#define __printf(a, b)  __attribute__((__format__(printf, a, b)))
 
 /**
  * CPU Branch-prediction hints, courtesy of GCC. Defining these as inline
