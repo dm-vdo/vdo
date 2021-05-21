@@ -21,7 +21,7 @@
 
   FileUtils - Provides dmmgmnt file-related capabilities.
 
-  $Id: //eng/linux-vdo/src/python/vdo/utils/FileUtils.py#3 $
+  $Id: //eng/linux-vdo/src/python/vdo/utils/FileUtils.py#4 $
 
 """
 from __future__ import absolute_import
@@ -139,10 +139,10 @@ class FileTouch(FileBase):
       # Make certain the file exists and that we have access to it.
       dirPath = os.path.dirname(self.path)
 
-      # Make certain the directory exists.
+      # Make certain the directory exists and has good permissions.
       # N.B.: The names may not be sanitized for use with a shell!
       if not os.access(dirPath, os.F_OK):
-        cmd = Command(["mkdir", "-p", dirPath])
+        cmd = Command(["mkdir", "-p", "-m", "755", dirPath])
         cmd.run()
 
       # Make certain the target exists.
