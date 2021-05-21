@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#53 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#54 $
  */
 
 #include <uuid/uuid.h>
@@ -54,11 +54,12 @@ int makeFixedLayoutFromConfig(const struct vdo_config  *config,
                               physical_block_number_t   startingOffset,
                               struct fixed_layout     **layoutPtr)
 {
-  return make_vdo_fixed_layout(config->physical_blocks, startingOffset,
-                               DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
-                               config->recovery_journal_size,
-                               get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
-                               layoutPtr);
+  return make_partitioned_vdo_fixed_layout(config->physical_blocks,
+                                           startingOffset,
+                                           DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
+                                           config->recovery_journal_size,
+                                           get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
+                                           layoutPtr);
 }
 
 struct recovery_journal_state_7_0 __must_check configureRecoveryJournal(void)
@@ -141,9 +142,11 @@ static int __must_check configureVDO(UserVDO *vdo)
     return result;
   }
 
+  physical_block_number_t partitionOffset
+    = get_vdo_fixed_layout_partition_offset(partition);
   result
-    = configure_vdo_slab_depot(get_fixed_layout_partition_size(partition),
-                               get_fixed_layout_partition_offset(partition),
+    = configure_vdo_slab_depot(get_vdo_fixed_layout_partition_size(partition),
+                               partitionOffset,
                                slabConfig, 0, &vdo->states.slab_depot);
   if (result != VDO_SUCCESS) {
     return result;
@@ -162,7 +165,7 @@ static int __must_check configureVDO(UserVDO *vdo)
   vdo->states.block_map = (struct block_map_state_2_0) {
     .flat_page_origin = VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN,
     .flat_page_count = 0,
-    .root_origin = get_fixed_layout_partition_offset(partition),
+    .root_origin = get_vdo_fixed_layout_partition_offset(partition),
     .root_count = DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
   };
 
@@ -225,13 +228,14 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 static int __must_check clearPartition(UserVDO *vdo, enum partition_id id)
 {
   struct partition *partition;
-  int result = get_partition(vdo->states.layout, id, &partition);
+  int result = vdo_get_partition(vdo->states.layout, id, &partition);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  block_count_t size = get_fixed_layout_partition_size(partition);
-  physical_block_number_t start = get_fixed_layout_partition_offset(partition);
+  block_count_t size = get_vdo_fixed_layout_partition_size(partition);
+  physical_block_number_t start
+    = get_vdo_fixed_layout_partition_offset(partition);
 
   block_count_t bufferBlocks = 1;
   for (block_count_t n = size;

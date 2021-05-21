@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#11 $
  */
 
 #include "slabSummaryReader.h"
@@ -55,15 +55,15 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   }
 
   struct partition *slab_summary_partition;
-  result = get_partition(vdo->states.layout, SLAB_SUMMARY_PARTITION,
-                         &slab_summary_partition);
+  result = vdo_get_partition(vdo->states.layout, SLAB_SUMMARY_PARTITION,
+                             &slab_summary_partition);
   if (result != VDO_SUCCESS) {
     warnx("Could not find slab summary partition");
     return result;
   }
 
   physical_block_number_t origin
-    = get_fixed_layout_partition_offset(slab_summary_partition);
+    = get_vdo_fixed_layout_partition_offset(slab_summary_partition);
   result = vdo->layer->reader(vdo->layer, origin, summary_blocks,
                               (char *) entries);
   if (result != VDO_SUCCESS) {

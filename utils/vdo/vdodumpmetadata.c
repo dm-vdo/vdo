@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#41 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#42 $
  */
 
 #include <err.h>
@@ -321,7 +321,7 @@ static void dumpRecoveryJournal(void)
   const struct partition *partition
     = getPartition(vdo, RECOVERY_JOURNAL_PARTITION,
                    "Could not copy recovery journal, no partition");
-  int result = copyBlocks(get_fixed_layout_partition_offset(partition),
+  int result = copyBlocks(get_vdo_fixed_layout_partition_offset(partition),
                           vdo->states.vdo.config.recovery_journal_size);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy recovery journal");
@@ -335,7 +335,7 @@ static void dumpSlabSummary(void)
   const struct partition *partition
     = getPartition(vdo, SLAB_SUMMARY_PARTITION,
                    "Could not copy slab summary, no partition");
-  int result = copyBlocks(get_fixed_layout_partition_offset(partition),
+  int result = copyBlocks(get_vdo_fixed_layout_partition_offset(partition),
                           get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy slab summary");
