@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#17 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#18 $
  */
 
 #include <err.h>
@@ -234,7 +234,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
   }
 
   if ((offset != 0)
-      && (vdo_get_data_region_offset(candidate->geometry) != offset)) {
+      && (vdo_get_data_region_start(candidate->geometry) != offset)) {
     return false;
   }
 
@@ -266,7 +266,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     if (validity == BLOCK_MAP_PAGE_VALID) {
       printf("Found candidate super block at block %" PRIu64
              " (index memory %sGB%s)\n",
-             vdo_get_data_region_offset(candidate->geometry),
+             vdo_get_data_region_start(candidate->geometry),
              candidate->memoryString, (sparse ? ", sparse" : ""));
       return true;
     }
@@ -292,14 +292,14 @@ static void findSuperBlocks(void)
     Candidate *candidate = &candidates[candidateCount];
     if (tryUDSConfig(memory, false)) {
       candidateCount++;
-    } else if (vdo_get_data_region_offset(candidate->geometry)
+    } else if (vdo_get_data_region_start(candidate->geometry)
                > physicalSize) {
       return;
     }
 
     if (trySparse && tryUDSConfig(memory, true)) {
       candidateCount++;
-    } else if (vdo_get_data_region_offset(candidate->geometry)
+    } else if (vdo_get_data_region_start(candidate->geometry)
                > physicalSize) {
       trySparse = false;
     }
@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < candidateCount; i++) {
       Candidate *candidate = &candidates[i];
       printf("offset: %" PRIu64 ", index memory %s%s\n",
-             vdo_get_data_region_offset(candidate->geometry) * VDO_BLOCK_SIZE,
+             vdo_get_data_region_start(candidate->geometry) * VDO_BLOCK_SIZE,
              candidate->memoryString, (candidate->sparse ?  ", sparse" : ""));
       freeUserVDO(&candidate->vdo);
     }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#43 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#44 $
  */
 
 #include "volumeGeometry.h"
@@ -37,14 +37,25 @@
 
 enum {
 	MAGIC_NUMBER_SIZE = 8,
+	DEFAULT_GEOMETRY_BLOCK_VERSION = 4,
 };
 
 struct geometry_block {
 	char magic_number[MAGIC_NUMBER_SIZE];
 	struct header header;
-	struct volume_geometry geometry;
 	crc32_checksum_t checksum;
 } __packed;
+
+static const struct header GEOMETRY_BLOCK_HEADER_5_0 = {
+	.id = GEOMETRY_BLOCK,
+	.version = {
+		.major_version = 5,
+		.minor_version = 0,
+	},
+	// Note: this size isn't just the payload size following the header,
+	// like it is everywhere else in VDO.
+	.size = sizeof(struct geometry_block) + sizeof(struct volume_geometry),
+};
 
 static const struct header GEOMETRY_BLOCK_HEADER_4_0 = {
 	.id = GEOMETRY_BLOCK,
@@ -54,7 +65,8 @@ static const struct header GEOMETRY_BLOCK_HEADER_4_0 = {
 	},
 	// Note: this size isn't just the payload size following the header,
 	// like it is everywhere else in VDO.
-	.size = sizeof(struct geometry_block),
+	.size = sizeof(struct geometry_block) +
+		sizeof(struct volume_geometry_4_0),
 };
 
 static const byte MAGIC_NUMBER[MAGIC_NUMBER_SIZE + 1] = "dmvdo001";
@@ -203,11 +215,13 @@ static int encode_volume_region(const struct volume_region *region,
  *
  * @param buffer    A buffer positioned at the start of the encoding
  * @param geometry  The structure to receive the decoded fields
+ * @param version   The geometry block version to decode
  *
  * @return UDS_SUCCESS or an error
  **/
 static int decode_volume_geometry(struct buffer *buffer,
-				  struct volume_geometry *geometry)
+				  struct volume_geometry *geometry,
+				  uint32_t version)
 {
 	release_version_number_t release_version;
 	enum volume_region_id id;
@@ -231,6 +245,15 @@ static int decode_volume_geometry(struct buffer *buffer,
 		return result;
 	}
 
+	block_count_t bio_offset = 0;
+	if (version > 4) {
+		result = get_uint64_le_from_buffer(buffer, &bio_offset);
+		if (result != VDO_SUCCESS) {
+			return result;
+		}
+	}
+	geometry->bio_offset = bio_offset;
+
 	for (id = 0; id < VOLUME_REGION_COUNT; id++) {
 		result = decode_volume_region(buffer, &geometry->regions[id]);
 		if (result != VDO_SUCCESS) {
@@ -246,11 +269,13 @@ static int decode_volume_geometry(struct buffer *buffer,
  *
  * @param geometry  The geometry to encode
  * @param buffer    A buffer positioned at the start of the encoding
+ * @param version   The geometry block version to encode
  *
  * @return UDS_SUCCESS or an error
  **/
 static int encode_volume_geometry(const struct volume_geometry *geometry,
-				  struct buffer *buffer)
+				  struct buffer *buffer,
+				  uint32_t version)
 {
 	enum volume_region_id id;
 	int result = put_uint32_le_into_buffer(buffer, geometry->release_version);
@@ -267,6 +292,15 @@ static int encode_volume_geometry(const struct volume_geometry *geometry,
 			   (unsigned char *) &geometry->uuid);
 	if (result != VDO_SUCCESS) {
 		return result;
+	}
+
+
+	if (version >= 5) {
+		result = put_uint64_le_into_buffer(buffer,
+						   geometry->bio_offset);
+		if (result != VDO_SUCCESS) {
+			return result;
+		}
 	}
 
 	for (id = 0; id < VOLUME_REGION_COUNT; id++) {
@@ -308,13 +342,19 @@ static int decode_geometry_block(struct buffer *buffer,
 		return result;
 	}
 
-	result = validate_vdo_header(&GEOMETRY_BLOCK_HEADER_4_0, &header,
-				     true, __func__);
+	if (header.version.major_version <= 4) {
+		result = validate_vdo_header(&GEOMETRY_BLOCK_HEADER_4_0,
+					     &header, true, __func__);
+	} else {
+		result = validate_vdo_header(&GEOMETRY_BLOCK_HEADER_5_0,
+					     &header, true, __func__);
+	}
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	result = decode_volume_geometry(buffer, geometry);
+	result = decode_volume_geometry(buffer, geometry, 
+					header.version.major_version);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -331,31 +371,36 @@ static int decode_geometry_block(struct buffer *buffer,
  *
  * @param geometry  The volume geometry to encode into the block
  * @param buffer    A buffer positioned at the start of the block
+ * @param version   The geometry block version to encode
  *
  * @return UDS_SUCCESS or an error
  **/
 static int encode_geometry_block(const struct volume_geometry *geometry,
-				 struct buffer *buffer)
+				 struct buffer *buffer,
+				 uint32_t version)
 {
+	const struct header *header;
+
 	int result = put_bytes(buffer, MAGIC_NUMBER_SIZE, MAGIC_NUMBER);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	result = encode_vdo_header(&GEOMETRY_BLOCK_HEADER_4_0, buffer);
+	header = ((version <= 4) ? &GEOMETRY_BLOCK_HEADER_4_0
+				 : &GEOMETRY_BLOCK_HEADER_5_0);
+	result = encode_vdo_header(header, buffer);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	result = encode_volume_geometry(geometry, buffer);
+	result = encode_volume_geometry(geometry, buffer, version);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
 	// Leave the CRC for the caller to compute and encode.
-	return ASSERT(GEOMETRY_BLOCK_HEADER_4_0.size ==
-			      (content_length(buffer) +
-			       sizeof(crc32_checksum_t)),
+	return ASSERT(header->size ==
+		      (content_length(buffer) + sizeof(crc32_checksum_t)),
 		      "should have decoded up to the geometry checksum");
 }
 
@@ -491,6 +536,7 @@ int vdo_initialize_volume_geometry(nonce_t nonce,
 	*geometry = (struct volume_geometry) {
 		.release_version = CURRENT_RELEASE_VERSION_NUMBER,
 		.nonce = nonce,
+		.bio_offset = 0,
 		.regions = {
 			[INDEX_REGION] = {
 				.id = INDEX_REGION,
@@ -531,6 +577,16 @@ int vdo_clear_volume_geometry(PhysicalLayer *layer)
 int vdo_write_volume_geometry(PhysicalLayer *layer,
 			      struct volume_geometry *geometry)
 {
+	return vdo_write_volume_geometry_with_version(
+			layer, geometry, DEFAULT_GEOMETRY_BLOCK_VERSION);
+}
+
+/**********************************************************************/
+int __must_check
+vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
+				       struct volume_geometry *geometry,
+				       uint32_t version)
+{
 	char *block;
 	struct buffer *buffer;
 	crc32_checksum_t checksum;
@@ -547,7 +603,7 @@ int vdo_write_volume_geometry(PhysicalLayer *layer,
 		return result;
 	}
 
-	result = encode_geometry_block(geometry, buffer);
+	result = encode_geometry_block(geometry, buffer, version);
 	if (result != VDO_SUCCESS) {
 		free_buffer(FORGET(buffer));
 		FREE(block);

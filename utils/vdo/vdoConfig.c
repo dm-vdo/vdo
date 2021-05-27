@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#54 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#55 $
  */
 
 #include <uuid/uuid.h>
@@ -117,8 +117,8 @@ static int __must_check configureVDO(UserVDO *vdo)
 
   // The layout starts 1 block past the beginning of the data region, as the
   // data region contains the super block but the layout does not.
-  physical_block_number_t startingOffset =
-    vdo_get_data_region_offset(vdo->geometry) + 1;
+  physical_block_number_t startingOffset
+    = vdo_get_data_region_start(vdo->geometry) + 1;
   int result = makeFixedLayoutFromConfig(config, startingOffset,
                                          &vdo->states.layout);
   if (result != VDO_SUCCESS) {
