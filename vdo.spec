@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.5.21
+Version: 6.2.5.41
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -181,9 +181,8 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Thu May 20 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.21-1
+* Thu May 27 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.41-1
+- Integrated the vdo to lvm conversion tool into the vdo management script
+  and modified the tool itself to correctly convert the UDS index so that
+  dedupe information is not lost by conversion.
 
-- Added a tool for converting a VDO volume from the vdo management script
-  to LVM. The tool can be invoked from the new vdo convert command.
-- Fixed a (relatively harmless) buffer overflow in vdo userspace tools.
-  

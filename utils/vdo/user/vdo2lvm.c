@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdo2LVM.c#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdo2LVM.c#3 $
  */
 
 #include <err.h>
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "convertToLVM.h"
 #include "errors.h"
 #include "logger.h"
 #include "memoryAlloc.h"
@@ -73,6 +74,8 @@ static struct option options[] = {
 static char optionString[] = "hV";
 
 static const char *fileName;
+static const off_t vdoByteOffset       = (1024 * 1024) * 2;
+static const BlockCount vdoBlockOffset = vdoByteOffset / VDO_BLOCK_SIZE;
 
 static void usage(const char *progname, const char *usageOptionsString)
 {
@@ -152,34 +155,79 @@ static int openDeviceExclusively(int *descriptorPtr)
 }
 
 /**
+ * Perform the UDS index conversion.
+ *
+ * @param [in/out] indexConfig       The index configuration to be updated
+ * @param [in]     geometry          The volume geometry
+ * @param [out]    superblockOffset  A pointer for the superblock byte offset
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+static int convertUDS(IndexConfig    *indexConfig,
+                      VolumeGeometry  geometry,
+                      off_t          *superblockOffset)
+{
+  int result;
+  UdsConfiguration udsConfig = NULL;
+  char *indexName;
+
+  result = indexConfigToUdsConfiguration(indexConfig, &udsConfig);
+  if (result != UDS_SUCCESS) {
+    warnx("Failed to make UDS configuration for conversion");
+    return result;
+  }
+
+  udsConfigurationSetNonce(udsConfig, geometry.nonce);
+
+  off_t startByte = geometry.regions[INDEX_REGION].startBlock * VDO_BLOCK_SIZE; 
+  result = asprintf(&indexName, "%s offset=%ld", fileName, startByte);
+  if (result == -1) {
+    udsFreeConfiguration(udsConfig);
+    return ENOMEM;
+  }
+  
+  result = udsConvertToLVM(indexName, udsConfig, superblockOffset);
+  if (result == UDS_SUCCESS) {
+    indexConfig->mem = udsConfigurationGetMemory(udsConfig);
+  }
+
+  free(indexName);
+  udsFreeConfiguration(udsConfig);
+
+  return result;
+}
+
+/**
  * Perform the VDO conversion.
  *
- * @param [in/out] vdo          The vdo structure to be converted
- * @param [in/out] geometry     The volume geometry
- * @param [in]     indexConfig  The converted index configuration
- * @param [in]     offset       The block offset to be applied
+ * @param [in/out] vdo               The vdo structure to be converted
+ * @param [in/out] geometry          The volume geometry
+ * @param [in]     indexConfig       The converted index configuration
+ * @param [in]     indexStartOffset  The converted index start block offset
  *
  * @return VDO_SUCCESS or an error code
  **/
 static int convertVDO(VDO            *vdo,
                       VolumeGeometry *geometry,
                       IndexConfig     indexConfig,
-                      BlockCount      offset)
+                      off_t           indexStartOffset)
 {
   int result;
+  char *zeroBuf;
 
-  vdo->config.physicalBlocks -= offset;
+  vdo->config.physicalBlocks -= vdoBlockOffset;
   result = saveVDOComponents(vdo);
   if (result != VDO_SUCCESS) {
     warnx("Failed to save the updated configuration");
     return result;
   }
 
-  geometry->bioOffset = offset;
+  geometry->regions[INDEX_REGION].startBlock = indexStartOffset + 1;
+  geometry->bioOffset = vdoBlockOffset;
   geometry->indexConfig = indexConfig;
 
   PhysicalLayer *offsetLayer;
-  result = makeOffsetFileLayer(fileName, 0, offset, &offsetLayer);
+  result = makeOffsetFileLayer(fileName, 0, vdoBlockOffset, &offsetLayer);
   if (result != VDO_SUCCESS) {
     warnx("Failed to make offset FileLayer for writing converted volume"
           " geometry");
@@ -190,6 +238,20 @@ static int convertVDO(VDO            *vdo,
   offsetLayer->destroy(&offsetLayer);
   if (result != VDO_SUCCESS) {
     warnx("Failed to write the converted volume geometry");
+    return result;
+  }
+  
+  result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
+                                        "zero buffer", &zeroBuf);
+  if (result != VDO_SUCCESS) {
+    warnx("Failed to allocate zero buffer");
+    return result;
+  }
+
+  result = vdo->layer->writer(vdo->layer, 0, 1, zeroBuf, NULL);
+  FREE(zeroBuf);
+  if (result != VDO_SUCCESS) {
+    warnx("Failed to zero the geometry block from the old VDO location");
     return result;
   }
 
@@ -267,31 +329,22 @@ int main(int argc, char *argv[])
          getVDOStateName(vdo->loadState));
   }
 
-  IndexConfig config;
-  STATIC_ASSERT(sizeof(config) == sizeof(geometry.indexConfig));
-  config = geometry.indexConfig;
-
-  //XXX: Temporarily set offset to 2MB and manually set indexConfig mem param
-  //     until UDS conversion is implemented.
-  printf("WARNING: UDS conversion not implemented - expect index to be"
-         " recreated\n");
-  off_t byteOffset = (1024 * 1024 * 2);
-  off_t blockOffset = byteOffset / VDO_BLOCK_SIZE;
-
-  if (config.mem == UDS_MEMORY_CONFIG_256MB) {
-    config.mem = UDS_MEMORY_CONFIG_REDUCED_256MB;
-  } else if (config.mem == UDS_MEMORY_CONFIG_512MB) {
-    config.mem = UDS_MEMORY_CONFIG_REDUCED_512MB;
-  } else if (config.mem == UDS_MEMORY_CONFIG_768MB) {
-    config.mem = UDS_MEMORY_CONFIG_REDUCED_768MB;
-  } else {
-    errx(1, "Unsupported index memory configuration detected.\nIndex memory"
-         " sizes of >=1G will be supported when the UDS\nconversion is"
-         " implemented.");
+  printf("Converting the UDS index\n");
+  IndexConfig config = geometry.indexConfig;
+  off_t superblockOffset = 0;
+  
+  result = convertUDS(&config, geometry, &superblockOffset);
+  if (result != UDS_SUCCESS) {
+    cleanup(vdo, layer);
+    errx(1, "Failed to convert the UDS index for usage with LVM: %s",
+         stringError(result, errBuf, ERRBUF_SIZE));
   }
 
   printf("Converting the VDO\n");
-  result = convertVDO(vdo, &geometry, config, (BlockCount) blockOffset);
+  result = convertVDO(vdo,
+                      &geometry,
+                      config,
+                      (superblockOffset / VDO_BLOCK_SIZE));
   if (result != VDO_SUCCESS) {
     cleanup(vdo, layer);
     errx(1, "Failed to convert VDO volume '%s': %s",
@@ -302,5 +355,5 @@ int main(int argc, char *argv[])
   close(fd);
 
   printf("Conversion completed for '%s': VDO is now offset by %ld bytes\n",
-         fileName, byteOffset);
+         fileName, vdoByteOffset);
 }

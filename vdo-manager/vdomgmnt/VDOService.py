@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#38 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#39 $
 
 """
 from __future__ import absolute_import
@@ -300,7 +300,7 @@ class VDOService(Service):
     transaction = Transaction.transaction()    
     if self.running():
       self.stop()
-      transaction.addUndoStage(self.start())
+      transaction.addUndoStage(self.start)
       
     # vdo2lvm will do the actual conversion and print info about
     # where the new geometry block is located.
