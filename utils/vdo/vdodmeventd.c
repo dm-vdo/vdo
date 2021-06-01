@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDMEventd.c#9 $
  */
 
 #include <dlfcn.h>
@@ -218,8 +218,8 @@ static int registerVDO(char * devName) {
     return result;
   }
 
-  log_info("VDO device %s is now registered with dmeventd "
-           "for monitoring", devName);
+  uds_log_info("VDO device %s is now registered with dmeventd for monitoring",
+               devName);
 
   return 0;
 }
@@ -256,8 +256,7 @@ static int unregisterVDO(char * devName) {
     return result;
   }
 
-  log_info("VDO device %s is now unregistered from dmeventd",
-           devName);
+  uds_log_info("VDO device %s is now unregistered from dmeventd", devName);
 
   return 0;
 }
