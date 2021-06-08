@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/logger.h#16 $
+ * $Id: //eng/uds-releases/krusty/src/uds/logger.h#17 $
  */
 
 #ifndef LOGGER_H
@@ -25,6 +25,8 @@
 #include <stdarg.h>
 #include "minisyslog.h"
 
+
+#define UDS_LOGGING_MODULE_NAME "vdo"
 
 // For compatibility with hooks we need when compiling in kernel mode.
 #define PRIptr "p"

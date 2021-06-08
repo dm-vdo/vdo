@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#10 $
+ * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#11 $
  */
 
 #include "permassert.h"
@@ -80,13 +80,12 @@ bool set_exit_on_assertion_failure(bool should_exit)
 /**********************************************************************/
 int uds_assertion_failed(const char *expression_string,
 			 int code,
+			 const char *module_name,
 			 const char *file_name,
 			 int line_number,
 			 const char *format,
 			 ...)
 {
-	// XXX plumb module_name through to here
-	const char *module_name = NULL;
 	va_list args;
 	va_start(args, format);
 
