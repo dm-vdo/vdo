@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#34 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#35 $
  */
 
 #include "blockMapUtils.h"
@@ -63,7 +63,7 @@ static int readAndExaminePage(UserVDO                 *vdo,
     return result;
   }
 
-  if (!is_block_map_page_initialized(page)) {
+  if (!is_vdo_block_map_page_initialized(page)) {
     FREE(page);
     return VDO_SUCCESS;
   }
@@ -159,7 +159,7 @@ static int readSlotFromPage(UserVDO                  *vdo,
   }
 
   struct data_location mapped;
-  if (is_block_map_page_initialized(page)) {
+  if (is_vdo_block_map_page_initialized(page)) {
     mapped = unpack_vdo_block_map_entry(&page->entries[slot]);
   } else {
     mapped = (struct data_location) {
@@ -251,16 +251,16 @@ int readBlockMapPage(PhysicalLayer            *layer,
   }
 
   enum block_map_page_validity validity
-    = validate_block_map_page(page, nonce, pbn);
+    = validate_vdo_block_map_page(page, nonce, pbn);
   if (validity == BLOCK_MAP_PAGE_VALID) {
     return VDO_SUCCESS;
   }
 
   if (validity == BLOCK_MAP_PAGE_BAD) {
     warnx("Expected page %" PRIu64 " but got page %" PRIu64,
-          pbn, get_block_map_page_pbn(page));
+          pbn, get_vdo_block_map_page_pbn(page));
   }
 
-  mark_block_map_page_initialized(page, false);
+  mark_vdo_block_map_page_initialized(page, false);
   return VDO_SUCCESS;
 }
