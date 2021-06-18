@@ -98,7 +98,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %dir %{python3_sitelib}/%{name}/statistics/
 %{python3_sitelib}/%{name}/statistics/Command.py
 %{python3_sitelib}/%{name}/statistics/Field.py
-%{python3_sitelib}/%{name}/statistics/KernelStatistics.py
 %{python3_sitelib}/%{name}/statistics/LabeledValue.py
 %{python3_sitelib}/%{name}/statistics/StatFormatter.py
 %{python3_sitelib}/%{name}/statistics/StatStruct.py
@@ -179,5 +178,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Thu Jun 17 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.0-1
+* Fri Jun 18 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.0-1
 - See https://github.com/dm-vdo/vdo.git

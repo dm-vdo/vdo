@@ -184,6 +184,56 @@ class ErrorStatistics(StatStruct):
 			Uint64Field("readOnlyErrorCount"),
 		], **kwargs)
 
+class BioStats(StatStruct):
+	def __init__(self, name="BioStats", **kwargs):
+		super(BioStats, self).__init__(name, [
+			# Number of REQ_OP_READ bios
+			Uint64Field("read"),
+			# Number of REQ_OP_WRITE bios with data
+			Uint64Field("write"),
+			# Number of bios tagged with REQ_PREFLUSH and containing no data
+			Uint64Field("emptyFlush"),
+			# Number of REQ_OP_DISCARD bios
+			Uint64Field("discard"),
+			# Number of bios tagged with REQ_PREFLUSH
+			Uint64Field("flush"),
+			# Number of bios tagged with REQ_FUA
+			Uint64Field("fua"),
+		], **kwargs)
+
+class MemoryUsage(StatStruct):
+	def __init__(self, name="MemoryUsage", **kwargs):
+		super(MemoryUsage, self).__init__(name, [
+			# Tracked bytes currently allocated.
+			Uint64Field("bytesUsed"),
+			# Maximum tracked bytes allocated.
+			Uint64Field("peakBytesUsed"),
+		], **kwargs)
+
+# UDS index statistics
+class IndexStatistics(StatStruct):
+	def __init__(self, name="IndexStatistics", **kwargs):
+		super(IndexStatistics, self).__init__(name, [
+			# Number of chunk names stored in the index
+			Uint64Field("entriesIndexed"),
+			# Number of post calls that found an existing entry
+			Uint64Field("postsFound"),
+			# Number of post calls that added a new entry
+			Uint64Field("postsNotFound"),
+			# Number of query calls that found an existing entry
+			Uint64Field("queriesFound"),
+			# Number of query calls that added a new entry
+			Uint64Field("queriesNotFound"),
+			# Number of update calls that found an existing entry
+			Uint64Field("updatesFound"),
+			# Number of update calls that added a new entry
+			Uint64Field("updatesNotFound"),
+			# Current number of dedupe queries that are in flight
+			Uint32Field("currDedupeQueries", label = "current dedupe queries"),
+			# Maximum number of dedupe queries that have been in flight
+			Uint32Field("maxDedupeQueries", label = "maximum dedupe queries"),
+		], **kwargs)
+
 # The statistics of the vdo service.
 class VDOStatistics(StatStruct):
 	def __init__(self, name="VDOStatistics", **kwargs):
@@ -202,9 +252,9 @@ class VDOStatistics(StatStruct):
 			Uint64Field("logicalBlocks"),
 			Uint64Field("oneKBlocks", derived = "$physicalBlocks * $blockSize // 1024", label = "1K-blocks"),
 			Uint64Field("oneKBlocksUsed", available = "not $inRecoveryMode", label = "1K-blocks used", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024"),
-			Uint64Field("oneKBlocksAvailable", available = "not $inRecoveryMode", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024", label = "1K-blocks available"),
-			Uint8Field("usedPercent", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))"),
-			Uint8Field("savings", derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1", display = False, available = "not $inRecoveryMode"),
+			Uint64Field("oneKBlocksAvailable", available = "not $inRecoveryMode", label = "1K-blocks available", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024"),
+			Uint8Field("usedPercent", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)"),
+			Uint8Field("savings", display = False, available = "not $inRecoveryMode", derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1"),
 			Uint8Field("savingPercent", derived = "$savings if ($savings >= 0) else NotAvailable()", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))"),
 			# Size of the block map page cache, in bytes
 			Uint64Field("blockMapCacheSize"),
@@ -238,9 +288,44 @@ class VDOStatistics(StatStruct):
 			HashLockStatistics("hashLock"),
 			# Counts of error conditions
 			ErrorStatistics("errors"),
-		], ioctl="dedupe_stats", **kwargs)
+			# The VDO instance
+			Uint32Field("instance"),
+			StringField("fiveTwelveByteEmulation", label = "512 byte emulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'"),
+			# Current number of active VIOs
+			Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
+			# Maximum number of active VIOs
+			Uint32Field("maxVIOs", label = "maximum VDO IO requests in progress"),
+			# Number of times the UDS index was too slow in responding
+			Uint64Field("dedupeAdviceTimeouts"),
+			# Number of flush requests submitted to the storage device
+			Uint64Field("flushOut"),
+			# Logical block size
+			Uint64Field("logicalBlockSize", display = False),
+			FloatField("writeAmplificationRatio", derived = "round(($biosMeta[\"write\"] + $biosOut[\"write\"]) // float($biosIn[\"write\"]), 2) if $biosIn[\"write\"] > 0 else 0.00"),
+			# Bios submitted into VDO from above
+			BioStats("biosIn", labelPrefix = "bios in"),
+			BioStats("biosInPartial", labelPrefix = "bios in partial"),
+			# Bios submitted onward for user data
+			BioStats("biosOut", labelPrefix = "bios out"),
+			# Bios submitted onward for metadata
+			BioStats("biosMeta", labelPrefix = "bios meta"),
+			BioStats("biosJournal", labelPrefix = "bios journal"),
+			BioStats("biosPageCache", labelPrefix = "bios page cache"),
+			BioStats("biosOutCompleted", labelPrefix = "bios out completed"),
+			BioStats("biosMetaCompleted", labelPrefix = "bios meta completed"),
+			BioStats("biosJournalCompleted", labelPrefix = "bios journal completed"),
+			BioStats("biosPageCacheCompleted", labelPrefix = "bios page cache completed"),
+			BioStats("biosAcknowledged", labelPrefix = "bios acknowledged"),
+			BioStats("biosAcknowledgedPartial", labelPrefix = "bios acknowledged partial"),
+			# Current number of bios in progress
+			BioStats("biosInProgress", labelPrefix = "bios in progress"),
+			# Memory usage stats.
+			MemoryUsage("memoryUsage", labelPrefix = "KVDO module"),
+			# The statistics for the UDS index
+			IndexStatistics("index"),
+		], ioctl="stats", **kwargs)
 
-	statisticsVersion = 33
+	statisticsVersion = 34
 
 	def sample(self, device):
 		sample = super(VDOStatistics, self).sample(device)
