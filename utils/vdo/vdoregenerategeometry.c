@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#19 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#20 $
  */
 
 #include <err.h>
@@ -263,7 +263,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
       = validate_vdo_block_map_page((struct block_map_page *) blockBuffer,
                                     candidate->vdo->states.vdo.nonce,
                                     map.root_origin + root);
-    if (validity == BLOCK_MAP_PAGE_VALID) {
+    if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
       printf("Found candidate super block at block %" PRIu64
              " (index memory %sGB%s)\n",
              vdo_get_data_region_start(candidate->geometry),

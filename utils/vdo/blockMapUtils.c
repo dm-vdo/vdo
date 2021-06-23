@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#35 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#36 $
  */
 
 #include "blockMapUtils.h"
@@ -252,11 +252,11 @@ int readBlockMapPage(PhysicalLayer            *layer,
 
   enum block_map_page_validity validity
     = validate_vdo_block_map_page(page, nonce, pbn);
-  if (validity == BLOCK_MAP_PAGE_VALID) {
+  if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
     return VDO_SUCCESS;
   }
 
-  if (validity == BLOCK_MAP_PAGE_BAD) {
+  if (validity == VDO_BLOCK_MAP_PAGE_BAD) {
     warnx("Expected page %" PRIu64 " but got page %" PRIu64,
           pbn, get_vdo_block_map_page_pbn(page));
   }
