@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#43 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#44 $
  */
 
 #include <err.h>
@@ -221,7 +221,7 @@ static int copyPage(struct block_map_slot    slot __attribute__((unused)),
                     enum block_mapping_state state)
 {
   if ((height == 0) || !isValidDataBlock(vdo, pbn)
-      || (state == MAPPING_STATE_UNMAPPED)) {
+      || (state == VDO_MAPPING_STATE_UNMAPPED)) {
     // Nothing to add to the dump.
     return VDO_SUCCESS;
   }

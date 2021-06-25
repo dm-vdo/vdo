@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#19 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpBlockMap.c#20 $
  */
 
 #include <err.h>
@@ -127,11 +127,11 @@ static int dumpLBN(void)
 
   printf("%" PRIu64 "\t", lbn);
   switch (state) {
-  case MAPPING_STATE_UNMAPPED:
+  case VDO_MAPPING_STATE_UNMAPPED:
     printf("unmapped   \t%" PRIu64 "\n", pbn);
     break;
 
-  case MAPPING_STATE_UNCOMPRESSED:
+  case VDO_MAPPING_STATE_UNCOMPRESSED:
     printf("mapped     \t%" PRIu64 "\n", pbn);
     break;
 
@@ -154,7 +154,7 @@ static int dumpBlockMapEntry(struct block_map_slot    slot,
                              physical_block_number_t  pbn,
                              enum block_mapping_state state)
 {
-  if ((state != MAPPING_STATE_UNMAPPED) || (pbn != VDO_ZERO_BLOCK)) {
+  if ((state != VDO_MAPPING_STATE_UNMAPPED) || (pbn != VDO_ZERO_BLOCK)) {
     printf("PBN %" PRIu64 "\t slot %u\t height %u\t"
            "-> PBN %" PRIu64 " (compression state %u)\n",
            slot.pbn, slot.slot, height, pbn, state);

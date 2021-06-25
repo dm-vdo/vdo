@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#54 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#55 $
  */
 
 #include <err.h>
@@ -341,7 +341,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
                                 physical_block_number_t  pbn,
                                 enum block_mapping_state state)
 {
-  if (state == MAPPING_STATE_UNMAPPED) {
+  if (state == VDO_MAPPING_STATE_UNMAPPED) {
     if (pbn != VDO_ZERO_BLOCK) {
       reportBlockMapEntry("is unmapped but has a physical block",
                           slot, height, pbn, state);
