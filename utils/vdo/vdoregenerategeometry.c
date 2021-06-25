@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#20 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#21 $
  */
 
 #include <err.h>
@@ -254,8 +254,9 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     int result = fileLayer->reader(fileLayer, map.root_origin + root, 1,
                                    blockBuffer);
     if (result != VDO_SUCCESS) {
-      warnx("candidate block map root at %" PRIu64 " unreadable: %s",
-            map.root_origin + root, resultString(result));
+      warnx("candidate block map root at %llu unreadable: %s",
+            (unsigned long long) (map.root_origin + root),
+            resultString(result));
       return false;
     }
 
@@ -264,9 +265,9 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
                                     candidate->vdo->states.vdo.nonce,
                                     map.root_origin + root);
     if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
-      printf("Found candidate super block at block %" PRIu64
+      printf("Found candidate super block at block %llu"
              " (index memory %sGB%s)\n",
-             vdo_get_data_region_start(candidate->geometry),
+             (unsigned long long) vdo_get_data_region_start(candidate->geometry),
              candidate->memoryString, (sparse ? ", sparse" : ""));
       return true;
     }
@@ -348,8 +349,8 @@ int main(int argc, char *argv[])
   physicalSize = fileLayer->getBlockCount(fileLayer);
 
   if (offset > physicalSize) {
-    errx(1, "Specified super block offset %" PRIu64
-         " is beyond the end of the device", offset);
+    errx(1, "Specified super block offset %llu"
+         " is beyond the end of the device", (unsigned long long) offset);
   }
 
   uuid_generate(uuid);
@@ -362,8 +363,8 @@ int main(int argc, char *argv[])
     printf("Found multiple candidate super blocks:\n");
     for (int i = 0; i < candidateCount; i++) {
       Candidate *candidate = &candidates[i];
-      printf("offset: %" PRIu64 ", index memory %s%s\n",
-             vdo_get_data_region_start(candidate->geometry) * VDO_BLOCK_SIZE,
+      printf("offset: %llu, index memory %s%s\n",
+             (unsigned long long) vdo_get_data_region_start(candidate->geometry) * VDO_BLOCK_SIZE,
              candidate->memoryString, (candidate->sparse ?  ", sparse" : ""));
       freeUserVDO(&candidate->vdo);
     }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/vdoComponent.c#11 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/vdoComponent.c#12 $
  */
 
 #include "vdoComponent.h"
@@ -316,9 +316,9 @@ int validate_vdo_config(const struct vdo_config *config,
 	}
 
 	result = ASSERT(config->physical_blocks <= MAXIMUM_VDO_PHYSICAL_BLOCKS,
-			"physical block count %" PRIu64 " exceeds maximum %" PRIu64,
-			config->physical_blocks,
-			MAXIMUM_VDO_PHYSICAL_BLOCKS);
+			"physical block count %llu exceeds maximum %llu",
+			(unsigned long long) config->physical_blocks,
+			(unsigned long long) MAXIMUM_VDO_PHYSICAL_BLOCKS);
 	if (result != UDS_SUCCESS) {
 		return VDO_OUT_OF_RANGE;
 	}
@@ -326,9 +326,9 @@ int validate_vdo_config(const struct vdo_config *config,
 	// This can't check equality because FileLayer et al can only known
 	// about the storage size, which may not match the super block size.
 	if (block_count < config->physical_blocks) {
-		uds_log_error("A physical size of %" PRIu64 " blocks was specified, but that is smaller than the %" PRIu64 " blocks configured in the vdo super block",
-			      block_count,
-			      config->physical_blocks);
+		uds_log_error("A physical size of %llu blocks was specified, but that is smaller than the %llu blocks configured in the vdo super block",
+			      (unsigned long long) block_count,
+			      (unsigned long long) config->physical_blocks);
 		return VDO_PARAMETER_MISMATCH;
 	}
 

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#37 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#38 $
  */
 
 #include "blockMapUtils.h"
@@ -181,8 +181,9 @@ int findLBNPage(UserVDO                 *vdo,
                 physical_block_number_t *pbnPtr)
 {
   if (lbn >= vdo->states.vdo.config.logical_blocks) {
-    warnx("VDO has only %" PRIu64 " logical blocks, cannot dump mapping for"
-          " LBA %" PRIu64, vdo->states.vdo.config.logical_blocks, lbn);
+    warnx("VDO has only %llu logical blocks, cannot dump mapping for LBA %llu",
+          (unsigned long long) vdo->states.vdo.config.logical_blocks,
+          (unsigned long long) lbn);
     return VDO_OUT_OF_RANGE;
   }
 
@@ -245,8 +246,9 @@ int readBlockMapPage(PhysicalLayer            *layer,
   int result = layer->reader(layer, pbn, 1, (char *) page);
   if (result != VDO_SUCCESS) {
     char errBuf[ERRBUF_SIZE];
-    printf("%" PRIu64 " unreadable : %s",
-           pbn, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    printf("%llu unreadable : %s",
+           (unsigned long long) pbn,
+           uds_string_error(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 
@@ -257,8 +259,9 @@ int readBlockMapPage(PhysicalLayer            *layer,
   }
 
   if (validity == VDO_BLOCK_MAP_PAGE_BAD) {
-    warnx("Expected page %" PRIu64 " but got page %" PRIu64,
-          pbn, get_vdo_block_map_page_pbn(page));
+    warnx("Expected page %llu but got page %llu",
+          (unsigned long long) pbn,
+          (unsigned long long) get_vdo_block_map_page_pbn(page));
   }
 
   mark_vdo_block_map_page_initialized(page, false);

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#44 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#45 $
  */
 
 #include <err.h>
@@ -228,7 +228,7 @@ static int copyPage(struct block_map_slot    slot __attribute__((unused)),
 
   int result = copyBlocks(pbn, 1);
   if (result != VDO_SUCCESS) {
-    warnx("Could not copy block map page %" PRIu64, pbn);
+    warnx("Could not copy block map page %llu", (unsigned long long) pbn);
   }
   return result;
 }
@@ -280,7 +280,8 @@ static void dumpBlockMap(void)
       physical_block_number_t pagePBN;
       int result = findLBNPage(vdo, lbns[i], &pagePBN);
       if (result != VDO_SUCCESS) {
-        errx(1, "Could not read block map for LBN %" PRIu64, lbns[i]);
+        errx(1, "Could not read block map for LBN %llu",
+             (unsigned long long) lbns[i]);
       }
 
       if (pagePBN == VDO_ZERO_BLOCK) {
@@ -289,7 +290,8 @@ static void dumpBlockMap(void)
         result = copyBlocks(pagePBN, 1);
       }
       if (result != VDO_SUCCESS) {
-        errx(1, "Could not copy block map for LBN %" PRIu64, lbns[i]);
+        errx(1, "Could not copy block map for LBN %llu",
+             (unsigned long long) lbns[i]);
       }
     }
   }
@@ -355,7 +357,7 @@ int main(int argc, char *argv[])
 
   result = ALLOCATE(MAX_LBNS, physical_block_number_t, __func__, &lbns);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not allocate %" PRIu64 " bytes",
+    errx(1, "Could not allocate %zu bytes",
          sizeof(physical_block_number_t) * MAX_LBNS);
   }
 

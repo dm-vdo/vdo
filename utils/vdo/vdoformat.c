@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#31 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#32 $
  */
 
 #include <blkid/blkid.h>
@@ -158,8 +158,8 @@ static void describeCapacity(const UserVDO *vdo,
                              unsigned int   slabBits)
 {
   if (logicalSize == 0) {
-    printf("Logical blocks defaulted to %" PRIu64 " blocks.\n",
-           vdo->states.vdo.config.logical_blocks);
+    printf("Logical blocks defaulted to %llu blocks.\n",
+           (unsigned long long) vdo->states.vdo.config.logical_blocks);
   }
 
   struct slab_config slabConfig = vdo->states.slab_depot.slab_config;
@@ -212,8 +212,8 @@ static const char MSG_SIG_DATA[] = "Found existing signature on %s at" \
  * @return VDO_SUCCESS or error.
  */
 static int printSignatureInfo(blkid_probe probe,
-		  	      const char *filename,
-			      bool force)
+                              const char *filename,
+                              bool force)
 {
   const char *offset = NULL, *type = NULL, *magic = NULL,
     *usage = NULL, *label = NULL, *uuid = NULL;
@@ -263,7 +263,7 @@ static int printSignatureInfo(blkid_probe probe,
   (void) blkid_probe_lookup_value(probe, "UUID", &uuid, NULL);
 
   fprintf(force ? stdout : stderr, MSG_SIG_DATA, filename, offset, label,
-	  uuid, type, usage);
+          uuid, type, usage);
 
   return VDO_SUCCESS;
 }
@@ -291,12 +291,12 @@ static int checkForSignaturesUsingBlkid(const char *filename, bool force)
 
   blkid_probe_enable_superblocks(probe, 1);
   blkid_probe_set_superblocks_flags(probe, BLKID_SUBLKS_LABEL |
-				    BLKID_SUBLKS_UUID |
-				    BLKID_SUBLKS_TYPE |
-				    BLKID_SUBLKS_USAGE |
-				    BLKID_SUBLKS_VERSION |
-				    BLKID_SUBLKS_MAGIC |
-				    BLKID_SUBLKS_BADCSUM);
+                                    BLKID_SUBLKS_UUID |
+                                    BLKID_SUBLKS_TYPE |
+                                    BLKID_SUBLKS_USAGE |
+                                    BLKID_SUBLKS_VERSION |
+                                    BLKID_SUBLKS_MAGIC |
+                                    BLKID_SUBLKS_BADCSUM);
 
   struct buffer *buffer = NULL;
   result = make_buffer(0, &buffer);
@@ -382,8 +382,8 @@ static int checkDeviceInUse(char *filename, uint32_t major, uint32_t minor)
   int holders = 0;
 
   char *path;
-  int result = alloc_sprintf(__func__, &path, "/sys/dev/block/%" PRIu32
-			    ":%" PRIu32 "/holders", major, minor);
+  int result = alloc_sprintf(__func__, &path, "/sys/dev/block/%u:%u/holders",
+                             major, minor);
   if (result != UDS_SUCCESS) {
     return result;
   }
@@ -525,8 +525,8 @@ int main(int argc, char *argv[])
   }
 
   if (physicalSize > MAXIMUM_VDO_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE) {
-    errx(1, "underlying block device size exceeds the maximum (%" PRIu64 ")",
-        MAXIMUM_VDO_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE);
+    errx(1, "underlying block device size exceeds the maximum (%llu)",
+         (unsigned long long) (MAXIMUM_VDO_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE));
   }
 
   result = close_file(fd, "cannot close file");
@@ -550,9 +550,10 @@ int main(int argc, char *argv[])
   char errorBuffer[ERRBUF_SIZE];
   if (config.logical_blocks > MAXIMUM_VDO_LOGICAL_BLOCKS) {
     errx(VDO_OUT_OF_RANGE,
-         "%" PRIu64 " requested logical space exceeds the maximum "
-         "(%" PRIu64 "): %s",
-         logicalSize, MAXIMUM_VDO_LOGICAL_BLOCKS * VDO_BLOCK_SIZE,
+         "%llu requested logical space exceeds the maximum "
+         "(%llu): %s",
+         (unsigned long long) logicalSize,
+         (unsigned long long) (MAXIMUM_VDO_LOGICAL_BLOCKS * VDO_BLOCK_SIZE),
          uds_string_error(VDO_OUT_OF_RANGE, errorBuffer, sizeof(errorBuffer)));
   }
 
@@ -590,14 +591,16 @@ int main(int argc, char *argv[])
 
   if (verbose) {
     if (logicalSize > 0) {
-      printf("Formatting '%s' with %" PRIu64 " logical and %" PRIu64
+      printf("Formatting '%s' with %llu logical and %llu"
              " physical blocks of %u bytes.\n",
-             filename, config.logical_blocks, config.physical_blocks,
+             filename, (unsigned long long) config.logical_blocks,
+             (unsigned long long) config.physical_blocks,
              VDO_BLOCK_SIZE);
     } else {
-      printf("Formatting '%s' with default logical and %" PRIu64
+      printf("Formatting '%s' with default logical and %llu"
              " physical blocks of %u bytes.\n",
-             filename, config.physical_blocks, VDO_BLOCK_SIZE);
+             filename, (unsigned long long) config.physical_blocks,
+             VDO_BLOCK_SIZE);
     }
   }
 
@@ -610,16 +613,16 @@ int main(int argc, char *argv[])
     if (result == VDO_NO_SPACE) {
       block_count_t minVDOBlocks = 0;
       int calcResult = calculateMinimumVDOFromConfig(&config,
-						     &indexConfig,
-						     &minVDOBlocks);
+                                                     &indexConfig,
+                                                     &minVDOBlocks);
       if (calcResult != VDO_SUCCESS) {
-	errx(calcResult,
-	     "Unable to calculate minimum required VDO size");
+        errx(calcResult,
+             "Unable to calculate minimum required VDO size");
       } else {
-	uint64_t minimumSize = minVDOBlocks * VDO_BLOCK_SIZE;
-	fprintf(stderr,
-		"Minimum required size for VDO volume: %" PRIu64 " bytes\n",
-		minimumSize);
+        uint64_t minimumSize = minVDOBlocks * VDO_BLOCK_SIZE;
+        fprintf(stderr,
+                "Minimum required size for VDO volume: %llu bytes\n",
+                (unsigned long long) minimumSize);
       }
     }
     errx(result, "formatVDO failed on '%s': %s%s",
