@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#9 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#11 $
  */
 
 #include "fileIORegion.h"
@@ -52,25 +52,25 @@ static int validate_io(struct file_io_region *fior,
 		       bool will_write)
 {
 	if (!(will_write ? fior->writing : fior->reading)) {
-		return log_error_strerror(UDS_BAD_IO_DIRECTION,
-					  "not open for %s",
-					  will_write ? "writing" :
-					  "reading");
+		return uds_log_error_strerror(UDS_BAD_IO_DIRECTION,
+					      "not open for %s",
+					      will_write ? "writing" :
+					      "reading");
 	}
 
 	if (length > size) {
-		return log_error_strerror(UDS_BUFFER_ERROR,
-					  "length %zd exceeds buffer size %zd",
-					  length,
-					  size);
+		return uds_log_error_strerror(UDS_BUFFER_ERROR,
+					      "length %zd exceeds buffer size %zd",
+					      length,
+					      size);
 	}
 
 	if (offset + length > fior->size) {
-		return log_error_strerror(UDS_OUT_OF_RANGE,
-					  "range %lld-%lld not in range 0 to %zu",
-					  (long long)offset,
-					  (long long)offset + length,
-					  fior->size);
+		return uds_log_error_strerror(UDS_OUT_OF_RANGE,
+					      "range %lld-%lld not in range 0 to %zu",
+					      (long long)offset,
+					      (long long)offset + length,
+					      fior->size);
 	}
 
 	return UDS_SUCCESS;
@@ -80,7 +80,7 @@ static int validate_io(struct file_io_region *fior,
 static void fior_free(struct io_region *region)
 {
 	struct file_io_region *fior = as_file_io_region(region);
-	put_io_factory(fior->factory);
+	put_uds_io_factory(fior->factory);
 	FREE(fior);
 }
 
@@ -135,14 +135,14 @@ static int fior_read(struct io_region *region,
 
 	if (data_length < *length) {
 		if (data_length == 0) {
-			return log_error_strerror(UDS_END_OF_FILE,
-						  "expected at least %zu bytes, got EOF",
-						  len);
+			return uds_log_error_strerror(UDS_END_OF_FILE,
+						      "expected at least %zu bytes, got EOF",
+						      len);
 		} else {
-			return log_error_strerror(UDS_SHORT_READ,
-						  "expected at least %zu bytes, got %zu",
-						  len,
-						  data_length);
+			return uds_log_error_strerror(UDS_SHORT_READ,
+						      "expected at least %zu bytes, got %zu",
+						      len,
+						      data_length);
 		}
 	}
 	*length = data_length;
@@ -171,7 +171,7 @@ int make_file_region(struct io_factory *factory,
 		return result;
 	}
 
-	get_io_factory(factory);
+	get_uds_io_factory(factory);
 
 	fior->common.free = fior_free;
 	fior->common.read = fior_read;

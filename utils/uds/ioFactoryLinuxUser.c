@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#10 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#11 $
  */
 
 #include "atomicDefs.h"
@@ -33,15 +33,15 @@ struct io_factory {
 };
 
 /**********************************************************************/
-void get_io_factory(struct io_factory *factory)
+void get_uds_io_factory(struct io_factory *factory)
 {
 	atomic_inc(&factory->ref_count);
 }
 
 /**********************************************************************/
-int make_io_factory(const char *path,
-		    enum file_access access,
-		    struct io_factory **factory_ptr)
+int make_uds_io_factory(const char *path,
+			enum file_access access,
+			struct io_factory **factory_ptr)
 {
 	struct io_factory *factory;
 	int result = ALLOCATE(1, struct io_factory, __func__, &factory);
@@ -61,7 +61,7 @@ int make_io_factory(const char *path,
 }
 
 /**********************************************************************/
-void put_io_factory(struct io_factory *factory)
+void put_uds_io_factory(struct io_factory *factory)
 {
 	if (atomic_add_return(-1, &factory->ref_count) <= 0) {
 		close_file(factory->fd, NULL);
@@ -70,7 +70,7 @@ void put_io_factory(struct io_factory *factory)
 }
 
 /**********************************************************************/
-size_t get_writable_size(struct io_factory *factory __attribute__((unused)))
+size_t get_uds_writable_size(struct io_factory *factory __attribute__((unused)))
 {
 	/*
 	 * The actual maximum is dependent upon the type of filesystem, and the
@@ -82,10 +82,10 @@ size_t get_writable_size(struct io_factory *factory __attribute__((unused)))
 }
 
 /**********************************************************************/
-int make_io_region(struct io_factory *factory,
-		   off_t offset,
-		   size_t size,
-		   struct io_region  **region_ptr)
+int make_uds_io_region(struct io_factory *factory,
+		       off_t offset,
+		       size_t size,
+		       struct io_region  **region_ptr)
 {
 	return make_file_region(factory,
 				factory->fd,
@@ -97,10 +97,10 @@ int make_io_region(struct io_factory *factory,
 
 /**********************************************************************/
 
-int open_buffered_reader(struct io_factory *factory,
-			 off_t offset,
-			 size_t size,
-			 struct buffered_reader **reader_ptr)
+int open_uds_buffered_reader(struct io_factory *factory,
+			     off_t offset,
+			     size_t size,
+			     struct buffered_reader **reader_ptr)
 {
 	struct io_region *region;
 	int result = make_file_region(factory,
@@ -118,10 +118,10 @@ int open_buffered_reader(struct io_factory *factory,
 }
 
 /**********************************************************************/
-int open_buffered_writer(struct io_factory *factory,
-			 off_t offset,
-			 size_t size,
-			 struct buffered_writer **writer_ptr)
+int open_uds_buffered_writer(struct io_factory *factory,
+			     off_t offset,
+			     size_t size,
+			     struct buffered_writer **writer_ptr)
 {
 	struct io_region *region;
 	int result = make_file_region(factory,

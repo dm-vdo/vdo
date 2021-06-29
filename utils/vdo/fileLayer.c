@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#18 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#19 $
  */
 
 #include "fileLayer.h"
@@ -74,8 +74,8 @@ static int allocateIOBuffer(PhysicalLayer   *header,
                             char           **bufferPtr)
 {
   if ((bytes % VDO_BLOCK_SIZE) != 0) {
-    return log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
-			      " a multiple of the VDO block size");
+    return uds_log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
+                                  " a multiple of the VDO block size");
   }
 
   return allocate_memory(bytes,
@@ -140,7 +140,7 @@ static int performIO(FileLayer               *layer,
       if (n == 0) {
         errno = VDO_UNEXPECTED_EOF;
       }
-      return log_error_strerror(errno, "pread %s", layer->name);
+      return uds_log_error_strerror(errno, "pread %s", layer->name);
     }
 
     offset += n;
@@ -164,7 +164,7 @@ static int fileReader(PhysicalLayer           *header,
   }
 
   uds_log_debug("FL: Reading %zu blocks from block %llu",
-		blockCount, (unsigned long long) startBlock);
+                blockCount, (unsigned long long) startBlock);
 
   // Make sure we cast so we get a proper 64 bit value on the calculation
   char *alignedBuffer;
@@ -198,7 +198,7 @@ static int fileWriter(PhysicalLayer           *header,
   }
 
   uds_log_debug("FL: Writing %zu blocks from block %llu",
-		blockCount, (unsigned long long) startBlock);
+                blockCount, (unsigned long long) startBlock);
 
   // Make sure we cast so we get a proper 64 bit value on the calculation
   size_t bytes = blockCount * VDO_BLOCK_SIZE;
@@ -344,7 +344,7 @@ static int setupFileLayer(const char     *name,
   if (blockDevice) {
     uint64_t bytes;
     if (ioctl(layer->fd, BLKGETSIZE64, &bytes) < 0) {
-      result = log_error_strerror(errno, "get size of %s", layer->name);
+      result = uds_log_error_strerror(errno, "get size of %s", layer->name);
       try_close_file(layer->fd);
       FREE(layer);
       return result;
@@ -357,11 +357,11 @@ static int setupFileLayer(const char     *name,
   if (layer->blockCount == 0) {
     layer->blockCount = deviceBlocks;
   } else if (layer->blockCount != deviceBlocks) {
-    result = log_error_strerror(VDO_PARAMETER_MISMATCH,
-				"physical size %ld 4k blocks must match"
-				" physical size %ld 4k blocks of %s",
-				layer->blockCount, deviceBlocks,
-				layer->name);
+    result = uds_log_error_strerror(VDO_PARAMETER_MISMATCH,
+                                    "physical size %ld 4k blocks must match"
+                                    " physical size %ld 4k blocks of %s",
+                                    layer->blockCount, deviceBlocks,
+                                    layer->name);
     try_close_file(layer->fd);
     FREE(layer);
     return result;

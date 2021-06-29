@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#11 $
+ * $Id: //eng/uds-releases/krusty/src/uds/permassert.c#12 $
  */
 
 #include "permassert.h"
@@ -89,7 +89,7 @@ int uds_assertion_failed(const char *expression_string,
 	va_list args;
 	va_start(args, format);
 
-	uds_log_embedded_message(LOG_ERR,
+	uds_log_embedded_message(UDS_LOG_ERR,
 				 module_name,
 				 "assertion \"",
 				 format,
@@ -98,7 +98,7 @@ int uds_assertion_failed(const char *expression_string,
 				 expression_string,
 				 file_name,
 				 line_number);
-	uds_log_backtrace(LOG_ERR);
+	uds_log_backtrace(UDS_LOG_ERR);
 
 	perform_once(&init_once, initialize);
 	lock_mutex(&mutex);

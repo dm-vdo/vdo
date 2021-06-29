@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/config.c#8 $
+ * $Id: //eng/uds-releases/krusty/src/uds/config.c#9 $
  */
 
 #include "config.h"
@@ -85,9 +85,9 @@ bool are_uds_configurations_equal(struct uds_configuration *a,
 		result = false;
 	}
 	if (a->nonce != b->nonce) {
-		uds_log_error("Nonce (%" PRIu64 ") does not match (%" PRIu64 ")",
-			      a->nonce,
-			      b->nonce);
+		uds_log_error("Nonce (%llu) does not match (%llu)",
+			      (unsigned long long) a->nonce,
+			      (unsigned long long) b->nonce);
 		result = false;
 	}
 	return result;
@@ -106,10 +106,11 @@ void log_uds_configuration(struct uds_configuration *conf)
 	uds_log_debug("  Cache size (chapters):      %10u",
 		      conf->cache_chapters);
 	uds_log_debug("  Volume index mean delta:    %10u",
-		  conf->volume_index_mean_delta);
+		      conf->volume_index_mean_delta);
 	uds_log_debug("  Bytes per page:             %10u",
 		      conf->bytes_per_page);
 	uds_log_debug("  Sparse sample rate:         %10u",
 		      conf->sparse_sample_rate);
-	uds_log_debug("  Nonce:                      %" PRIu64, conf->nonce);
+	uds_log_debug("  Nonce:                      %llu",
+		      (unsigned long long) conf->nonce);
 }

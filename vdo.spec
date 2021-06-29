@@ -178,5 +178,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Fri Jun 25 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.0-1
+* Tue Jun 29 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.0-1
 - See https://github.com/dm-vdo/vdo.git

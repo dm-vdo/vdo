@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#5 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#6 $
  */
 
 #ifndef SYSCALLS_H
@@ -135,7 +135,8 @@ int process_control(int option,
 static INLINE int log_system_call_errno(const char *function,
 					const char *context)
 {
-	return uds_log_strerror(((errno == EINTR) ? LOG_DEBUG : LOG_ERR),
+	return uds_log_strerror(((errno == EINTR) ? UDS_LOG_DEBUG
+						  : UDS_LOG_ERR),
 				errno,
 				"%s failed in %s",
 				function,

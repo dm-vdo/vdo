@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#55 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#56 $
  */
 
 #include <uuid/uuid.h>
@@ -298,13 +298,13 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
 
   result = clearPartition(vdo, BLOCK_MAP_PARTITION);
   if (result != VDO_SUCCESS) {
-    return log_error_strerror(result, "cannot clear block map partition");
+    return uds_log_error_strerror(result, "cannot clear block map partition");
   }
 
   result = clearPartition(vdo, RECOVERY_JOURNAL_PARTITION);
   if (result != VDO_SUCCESS) {
-    return log_error_strerror(result,
-                              "cannot clear recovery journal partition");
+    return uds_log_error_strerror(result,
+                                  "cannot clear recovery journal partition");
   }
 
   return saveVDO(vdo, true);
@@ -372,8 +372,8 @@ int forceVDORebuild(PhysicalLayer *layer)
 {
   int result = updateVDOSuperBlockState(layer, true, VDO_FORCE_REBUILD);
   if (result == VDO_NOT_READ_ONLY) {
-    return log_error_strerror(VDO_NOT_READ_ONLY,
-                              "Can't force rebuild on a normal VDO");
+    return uds_log_error_strerror(VDO_NOT_READ_ONLY,
+                                  "Can't force rebuild on a normal VDO");
   }
 
   return result;

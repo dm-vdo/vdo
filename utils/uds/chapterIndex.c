@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/chapterIndex.c#13 $
+ * $Id: //eng/uds-releases/krusty/src/uds/chapterIndex.c#14 $
  */
 
 #include "chapterIndex.h"
@@ -136,8 +136,8 @@ int put_open_chapter_index_record(struct open_chapter_index *open_chapter_index,
 	found = was_entry_found(&entry, address);
 	result = ASSERT_WITH_ERROR_CODE(!(found && entry.is_collision),
 					UDS_BAD_STATE,
-					"Chunk appears more than once in chapter %" PRIu64,
-					open_chapter_index->virtual_chapter_number);
+					"Chunk appears more than once in chapter %llu",
+					(unsigned long long) open_chapter_index->virtual_chapter_number);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -193,8 +193,8 @@ int pack_open_chapter_index_page(struct open_chapter_index *open_chapter_index,
 		if (removals == 0) {
 			struct delta_index_stats stats;
 			get_delta_index_stats(delta_index, &stats);
-			uds_log_warning("The chapter index for chapter %" PRIu64 " contains %ld entries with %ld collisions",
-					open_chapter_index->virtual_chapter_number,
+			uds_log_warning("The chapter index for chapter %llu contains %ld entries with %ld collisions",
+					(unsigned long long) open_chapter_index->virtual_chapter_number,
 					stats.record_count,
 					stats.collision_count);
 		}
@@ -227,8 +227,8 @@ int pack_open_chapter_index_page(struct open_chapter_index *open_chapter_index,
 		} while (!entry.at_end);
 	}
 	if (removals > 0) {
-		uds_log_warning("To avoid chapter index page overflow in chapter %" PRIu64 ", %u entries were removed from the chapter index",
-				open_chapter_index->virtual_chapter_number,
+		uds_log_warning("To avoid chapter index page overflow in chapter %llu, %u entries were removed from the chapter index",
+				(unsigned long long) open_chapter_index->virtual_chapter_number,
 				removals);
 	}
 	return UDS_SUCCESS;

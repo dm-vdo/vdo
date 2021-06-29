@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#45 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#46 $
  */
 
 #include "volumeGeometry.h"
@@ -354,7 +354,7 @@ static int decode_geometry_block(struct buffer *buffer,
 		return result;
 	}
 
-	result = decode_volume_geometry(buffer, geometry, 
+	result = decode_volume_geometry(buffer, geometry,
 					header.version.major_version);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -479,9 +479,9 @@ int vdo_parse_geometry_block(byte *block, struct volume_geometry *geometry)
 	free_buffer(FORGET(buffer));
 
 	if (!is_loadable_release_version(geometry->release_version)) {
-		return log_error_strerror(VDO_UNSUPPORTED_VERSION,
-					  "release version %d cannot be loaded",
-					  geometry->release_version);
+		return uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
+					      "release version %d cannot be loaded",
+					      geometry->release_version);
 	}
 
 	return ((checksum == saved_checksum) ? VDO_SUCCESS :
@@ -498,22 +498,22 @@ int vdo_compute_index_blocks(const struct index_config *index_config,
 	int result = vdo_index_config_to_uds_configuration(index_config,
 							   &uds_configuration);
 	if (result != UDS_SUCCESS) {
-		return log_error_strerror(result,
-					  "error creating index config");
+		return uds_log_error_strerror(result,
+					      "error creating index config");
 	}
 
 	result = uds_compute_index_size(uds_configuration, 0, &index_bytes);
 	uds_free_configuration(uds_configuration);
 	if (result != UDS_SUCCESS) {
-		return log_error_strerror(result,
-					  "error computing index size");
+		return uds_log_error_strerror(result,
+					      "error computing index size");
 	}
 
 	index_blocks = index_bytes / VDO_BLOCK_SIZE;
 	if ((((uint64_t) index_blocks) * VDO_BLOCK_SIZE) != index_bytes) {
-		return log_error_strerror(VDO_PARAMETER_MISMATCH,
-					  "index size must be a multiple of block size %d",
-					  VDO_BLOCK_SIZE);
+		return uds_log_error_strerror(VDO_PARAMETER_MISMATCH,
+					      "index size must be a multiple of block size %d",
+					      VDO_BLOCK_SIZE);
 	}
 
 	*index_blocks_ptr = index_blocks;
@@ -636,8 +636,8 @@ int vdo_index_config_to_uds_configuration(const struct index_config *index_confi
 	int result = uds_initialize_configuration(&uds_configuration,
 						  index_config->mem);
 	if (result != UDS_SUCCESS) {
-		return log_error_strerror(result,
-					  "error initializing configuration");
+		return uds_log_error_strerror(result,
+					      "error initializing configuration");
 	}
 
 	uds_configuration_set_sparse(uds_configuration, index_config->sparse);

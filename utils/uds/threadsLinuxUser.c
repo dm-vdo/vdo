@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#9 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#10 $
  */
 
 #include "threads.h"
@@ -36,8 +36,8 @@ unsigned int get_num_cores(void)
 {
 	cpu_set_t cpu_set;
 	if (sched_getaffinity(0, sizeof(cpu_set), &cpu_set) != 0) {
-		log_warning_strerror(errno,
-				     "sched_getaffinity() failed, using 1 as number of cores.");
+		uds_log_warning_strerror(errno,
+					 "sched_getaffinity() failed, using 1 as number of cores.");
 		return 1;
 	}
 
@@ -108,8 +108,8 @@ int create_thread(void (*thread_func)(void *),
 
 	result = pthread_create(&thread->thread, NULL, thread_starter, tsi);
 	if (result != 0) {
-		log_error_strerror(errno, "could not create %s thread",
-				   name);
+		uds_log_error_strerror(errno, "could not create %s thread",
+				       name);
 		FREE(thread);
 		FREE(tsi);
 		return UDS_ENOTHREADS;
@@ -201,7 +201,7 @@ int yield_scheduler(void)
 {
 	int result = sched_yield();
 	if (result != 0) {
-		return log_error_strerror(errno, "sched_yield failed");
+		return uds_log_error_strerror(errno, "sched_yield failed");
 	}
 
 	return UDS_SUCCESS;

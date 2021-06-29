@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#11 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#14 $
  */
 
 #include "errors.h"
@@ -28,10 +28,10 @@
 #include "uds.h"
 
 /**********************************************************************/
-int make_index_layout(const char *name,
-		      bool new_layout,
-		      const struct uds_configuration *config,
-		      struct index_layout **layout_ptr)
+int make_uds_index_layout(const char *name,
+			  bool new_layout,
+			  const struct uds_configuration *config,
+			  struct index_layout **layout_ptr)
 {
 	char *file = NULL;
 	uint64_t offset = 0;
@@ -45,7 +45,7 @@ int make_index_layout(const char *name,
 	};
 
 	char *params = NULL;
-	int result = duplicate_string(name, "make_index_layout parameters",
+	int result = duplicate_string(name, "make_uds_index_layout parameters",
 				      &params);
 	if (result != UDS_SUCCESS) {
 		return result;
@@ -60,23 +60,24 @@ int make_index_layout(const char *name,
 
 	if (!file) {
 		FREE(params);
-		return log_error_strerror(UDS_INDEX_NAME_REQUIRED,
-					  "no index specified");
+		return uds_log_error_strerror(UDS_INDEX_NAME_REQUIRED,
+					      "no index specified");
 	}
 
 	struct io_factory *factory = NULL;
 	result =
-		make_io_factory(file,
-				new_layout ? FU_CREATE_READ_WRITE : FU_READ_WRITE,
-				&factory);
+		make_uds_io_factory(file,
+				    new_layout ? FU_CREATE_READ_WRITE
+				    	       : FU_READ_WRITE,
+				    &factory);
 	FREE(params);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 	struct index_layout *layout;
-	result = make_index_layout_from_factory(
+	result = make_uds_index_layout_from_factory(
 		factory, offset, size, new_layout, config, &layout);
-	put_io_factory(factory);
+	put_uds_io_factory(factory);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
