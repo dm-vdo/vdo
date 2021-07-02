@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#25 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#26 $
  */
 
 #include "logger.h"
@@ -81,8 +81,8 @@ static void init_logger(void)
 	}
 
 	char *identity;
-	if (alloc_sprintf(NULL, &identity, "%s/%s", IDENTITY,
-			  program_invocation_short_name) == UDS_SUCCESS) {
+	if (uds_alloc_sprintf(NULL, &identity, "%s/%s", IDENTITY,
+			      program_invocation_short_name) == UDS_SUCCESS) {
 		mini_openlog(identity, LOG_PID | LOG_NDELAY | LOG_CONS,
 			     LOG_USER);
 		UDS_FREE(identity);

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#12 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#13 $
  */
 
 #include "fileUtils.h"
@@ -320,7 +320,7 @@ int make_abs_path(const char *path, char **abs_path)
 		if (cwd == NULL) {
 			return errno;
 		}
-		result = alloc_sprintf(__func__, &tmp, "%s/%s", cwd, path);
+		result = uds_alloc_sprintf(__func__, &tmp, "%s/%s", cwd, path);
 		UDS_FREE(cwd);
 	}
 	if (result == UDS_SUCCESS) {
