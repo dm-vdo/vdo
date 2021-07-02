@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#16 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#18 $
  */
 
 #include "requestQueue.h"
@@ -82,8 +82,8 @@ enum {
 
 struct uds_request_queue {
 	const char *name; // name of queue
-	request_queue_processor_t *process_one; // function to process 1
-						// request
+	uds_request_queue_processor_t *process_one; // function to process 1
+						    // request
 
 	struct funnel_queue *main_queue;  // new incoming requests
 	struct funnel_queue *retry_queue; // old requests to retry first
@@ -231,7 +231,7 @@ static Request *dequeue_request(RequestQueue *queue)
 			 * Ensure that we see any requests that were guaranteed
 			 * to have been fully enqueued before shutdown was
 			 * flagged.  The corresponding write barrier is in
-			 * request_queue_finish.
+			 * uds_request_queue_finish.
 			 */
 			smp_rmb();
 		}
@@ -283,12 +283,12 @@ static void request_queue_worker(void *arg)
 }
 
 /**********************************************************************/
-int make_request_queue(const char *queue_name,
-		       request_queue_processor_t *process_one,
-		       RequestQueue **queue_ptr)
+int make_uds_request_queue(const char *queue_name,
+			   uds_request_queue_processor_t *process_one,
+			   RequestQueue **queue_ptr)
 {
 	RequestQueue *queue;
-	int result = ALLOCATE(1, RequestQueue, __func__, &queue);
+	int result = UDS_ALLOCATE(1, RequestQueue, __func__, &queue);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -300,26 +300,26 @@ int make_request_queue(const char *queue_name,
 
 	result = make_funnel_queue(&queue->main_queue);
 	if (result != UDS_SUCCESS) {
-		request_queue_finish(queue);
+		uds_request_queue_finish(queue);
 		return result;
 	}
 
 	result = make_funnel_queue(&queue->retry_queue);
 	if (result != UDS_SUCCESS) {
-		request_queue_finish(queue);
+		uds_request_queue_finish(queue);
 		return result;
 	}
 
 	result = make_event_count(&queue->work_event);
 	if (result != UDS_SUCCESS) {
-		request_queue_finish(queue);
+		uds_request_queue_finish(queue);
 		return result;
 	}
 
 	result = create_thread(request_queue_worker, queue, queue_name,
 			       &queue->thread);
 	if (result != UDS_SUCCESS) {
-		request_queue_finish(queue);
+		uds_request_queue_finish(queue);
 		return result;
 	}
 
@@ -336,7 +336,7 @@ static INLINE void wake_up_worker(RequestQueue *queue)
 }
 
 /**********************************************************************/
-void request_queue_enqueue(RequestQueue *queue, Request *request)
+void uds_request_queue_enqueue(RequestQueue *queue, Request *request)
 {
 	bool unbatched = request->unbatched;
 	funnel_queue_put(request->requeued ? queue->retry_queue :
@@ -354,7 +354,7 @@ void request_queue_enqueue(RequestQueue *queue, Request *request)
 }
 
 /**********************************************************************/
-void request_queue_finish(RequestQueue *queue)
+void uds_request_queue_finish(RequestQueue *queue)
 {
 	if (queue == NULL) {
 		return;
@@ -388,5 +388,5 @@ void request_queue_finish(RequestQueue *queue)
 	free_event_count(queue->work_event);
 	free_funnel_queue(queue->main_queue);
 	free_funnel_queue(queue->retry_queue);
-	FREE(queue);
+	UDS_FREE(queue);
 }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#38 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/blockMapUtils.c#39 $
  */
 
 #include "blockMapUtils.h"
@@ -59,12 +59,12 @@ static int readAndExaminePage(UserVDO                 *vdo,
 
   result = readBlockMapPage(vdo->layer, pagePBN, vdo->states.vdo.nonce, page);
   if (result != VDO_SUCCESS) {
-    FREE(page);
+    UDS_FREE(page);
     return result;
   }
 
   if (!is_vdo_block_map_page_initialized(page)) {
-    FREE(page);
+    UDS_FREE(page);
     return VDO_SUCCESS;
   }
 
@@ -79,7 +79,7 @@ static int readAndExaminePage(UserVDO                 *vdo,
 
     result = examiner(blockMapSlot, height, mapped.pbn, mapped.state);
     if (result != VDO_SUCCESS) {
-      FREE(page);
+      UDS_FREE(page);
       return result;
     }
 
@@ -90,13 +90,13 @@ static int readAndExaminePage(UserVDO                 *vdo,
     if ((height > 0) && isValidDataBlock(vdo, mapped.pbn)) {
       result = readAndExaminePage(vdo, mapped.pbn, height - 1, examiner);
       if (result != VDO_SUCCESS) {
-        FREE(page);
+        UDS_FREE(page);
         return result;
       }
     }
   }
 
-  FREE(page);
+  UDS_FREE(page);
   return VDO_SUCCESS;
 }
 
@@ -154,7 +154,7 @@ static int readSlotFromPage(UserVDO                  *vdo,
 
   result = readBlockMapPage(vdo->layer, pbn, vdo->states.vdo.nonce, page);
   if (result != VDO_SUCCESS) {
-    FREE(page);
+    UDS_FREE(page);
     return result;
   }
 
@@ -171,7 +171,7 @@ static int readSlotFromPage(UserVDO                  *vdo,
   *mappedStatePtr = mapped.state;
   *mappedPBNPtr   = mapped.pbn;
 
-  FREE(page);
+  UDS_FREE(page);
   return VDO_SUCCESS;
 }
 

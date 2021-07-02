@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#11 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/ioFactoryLinuxUser.c#12 $
  */
 
 #include "atomicDefs.h"
@@ -44,14 +44,14 @@ int make_uds_io_factory(const char *path,
 			struct io_factory **factory_ptr)
 {
 	struct io_factory *factory;
-	int result = ALLOCATE(1, struct io_factory, __func__, &factory);
+	int result = UDS_ALLOCATE(1, struct io_factory, __func__, &factory);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
 	result = open_file(path, access, &factory->fd);
 	if (result != UDS_SUCCESS) {
-		FREE(factory);
+		UDS_FREE(factory);
 		return result;
 	}
 
@@ -65,7 +65,7 @@ void put_uds_io_factory(struct io_factory *factory)
 {
 	if (atomic_add_return(-1, &factory->ref_count) <= 0) {
 		close_file(factory->fd, NULL);
-		FREE(factory);
+		UDS_FREE(factory);
 	}
 }
 

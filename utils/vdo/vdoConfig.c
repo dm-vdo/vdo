@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#56 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#57 $
  */
 
 #include <uuid/uuid.h>
@@ -258,7 +258,7 @@ static int __must_check clearPartition(UserVDO *vdo, enum partition_id id)
     result = vdo->layer->writer(vdo->layer, pbn, bufferBlocks, zeroBuffer);
   }
 
-  FREE(zeroBuffer);
+  UDS_FREE(zeroBuffer);
   return result;
 }
 

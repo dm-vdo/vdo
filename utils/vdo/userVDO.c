@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#17 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#18 $
  */
 
 #include "userVDO.h"
@@ -36,7 +36,7 @@
 int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
 {
   UserVDO *vdo;
-  int result = ALLOCATE(1, UserVDO, __func__, &vdo);
+  int result = UDS_ALLOCATE(1, UserVDO, __func__, &vdo);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -62,7 +62,7 @@ void freeUserVDO(UserVDO **vdoPtr)
 
   destroy_vdo_component_states(&vdo->states);
   destroy_vdo_super_block_codec(&vdo->superBlockCodec);
-  FREE(vdo);
+  UDS_FREE(vdo);
   *vdoPtr = NULL;
 }
 

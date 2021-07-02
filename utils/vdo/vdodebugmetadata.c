@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#63 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#64 $
  */
 
 #include <err.h>
@@ -228,20 +228,20 @@ static void freeState(SlabState *state)
 
   if (state->slabJournalBlocks != NULL) {
     for (block_count_t i = 0; i < slabConfig->slab_journal_blocks; i++) {
-      FREE(state->slabJournalBlocks[i]);
+      UDS_FREE(state->slabJournalBlocks[i]);
       state->slabJournalBlocks[i] = NULL;
     }
   }
 
   if (state->referenceBlocks != NULL) {
     for (block_count_t i = 0; i < slabConfig->reference_count_blocks; i++) {
-      FREE(state->referenceBlocks[i]);
+      UDS_FREE(state->referenceBlocks[i]);
       state->referenceBlocks[i] = NULL;
     }
   }
 
-  FREE(state->slabJournalBlocks);
-  FREE(state->referenceBlocks);
+  UDS_FREE(state->slabJournalBlocks);
+  UDS_FREE(state->referenceBlocks);
 }
 
 /**
@@ -251,17 +251,17 @@ static void freeState(SlabState *state)
  **/
 static int allocateState(SlabState *state)
 {
-  int result = ALLOCATE(slabConfig->slab_journal_blocks,
-                        struct packed_slab_journal_block *, __func__,
-                        &state->slabJournalBlocks);
+  int result = UDS_ALLOCATE(slabConfig->slab_journal_blocks,
+                            struct packed_slab_journal_block *, __func__,
+                            &state->slabJournalBlocks);
   if (result != VDO_SUCCESS) {
     freeState(state);
     return result;
   }
 
-  result = ALLOCATE(slabConfig->reference_count_blocks,
-                    struct packed_reference_block *,
-                    __func__, &state->referenceBlocks);
+  result = UDS_ALLOCATE(slabConfig->reference_count_blocks,
+                        struct packed_reference_block *,
+                        __func__, &state->referenceBlocks);
   if (result != VDO_SUCCESS) {
     freeState(state);
     return result;
@@ -298,7 +298,7 @@ static int allocateState(SlabState *state)
 static int allocateMetadataSpace(void)
 {
   slabConfig = &vdo->states.slab_depot.slab_config;
-  int result = ALLOCATE(vdo->slabCount, SlabState, __func__, &slabs);
+  int result = UDS_ALLOCATE(vdo->slabCount, SlabState, __func__, &slabs);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %u slab state pointers", slabCount);
   }
@@ -322,16 +322,16 @@ static int allocateMetadataSpace(void)
          (unsigned long long) journalBytes);
   }
 
-  result = ALLOCATE(config->recovery_journal_size, UnpackedJournalBlock,
-                    __func__, &recoveryJournal);
+  result = UDS_ALLOCATE(config->recovery_journal_size, UnpackedJournalBlock,
+                        __func__, &recoveryJournal);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %llu journal block structures",
          (unsigned long long) config->recovery_journal_size);
   }
 
-  result = ALLOCATE(get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
-                    struct slab_summary_entry *,
-                    __func__, &slabSummary);
+  result = UDS_ALLOCATE(get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
+                        struct slab_summary_entry *,
+                        __func__, &slabSummary);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %llu slab summary block pointers",
          (unsigned long long) get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
@@ -362,24 +362,24 @@ static void freeMetadataSpace(void)
     }
   }
 
-  FREE(slabs);
+  UDS_FREE(slabs);
   slabs = NULL;
 
-  FREE(rawJournalBytes);
+  UDS_FREE(rawJournalBytes);
   rawJournalBytes = NULL;
 
-  FREE(recoveryJournal);
+  UDS_FREE(recoveryJournal);
   recoveryJournal = NULL;
 
   if (slabSummary != NULL) {
     for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
          i++) {
-      FREE(slabSummary[i]);
+      UDS_FREE(slabSummary[i]);
       slabSummary[i] = NULL;
     }
   }
 
-  FREE(slabSummary);
+  UDS_FREE(slabSummary);
   slabSummary = NULL;
 }
 
@@ -620,14 +620,14 @@ int main(int argc, char *argv[])
   }
 
   char *filename;
-  result = ALLOCATE(MAX_PBNS, physical_block_number_t, __func__, &pbns);
+  result = UDS_ALLOCATE(MAX_PBNS, physical_block_number_t, __func__, &pbns);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %zu bytes",
          sizeof(physical_block_number_t) * MAX_PBNS);
   }
 
-  result = ALLOCATE(MAX_SEARCH_LBNS, logical_block_number_t, __func__,
-                    &searchLBNs);
+  result = UDS_ALLOCATE(MAX_SEARCH_LBNS, logical_block_number_t, __func__,
+                        &searchLBNs);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %zu bytes",
          sizeof(logical_block_number_t) * MAX_SEARCH_LBNS);

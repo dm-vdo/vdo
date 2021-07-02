@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#11 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#12 $
  */
 
 #include "slabSummaryReader.h"
@@ -68,7 +68,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
                               (char *) entries);
   if (result != VDO_SUCCESS) {
     warnx("Could not read summary data");
-    FREE(entries);
+    UDS_FREE(entries);
     return result;
   }
 
@@ -82,7 +82,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
                                           (char **) &buffer);
     if (result != VDO_SUCCESS) {
       warnx("Could not create slab summary buffer");
-      FREE(entries);
+      UDS_FREE(entries);
       return result;
     }
 
@@ -92,8 +92,8 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
                                   (char *) buffer);
       if (result != VDO_SUCCESS) {
         warnx("Could not read summary data");
-        FREE(buffer);
-        FREE(entries);
+        UDS_FREE(buffer);
+        UDS_FREE(entries);
         return result;
       }
 
@@ -104,7 +104,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
       }
     }
 
-    FREE(buffer);
+    UDS_FREE(buffer);
   }
 
   *entriesPtr = entries;

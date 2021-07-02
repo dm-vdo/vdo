@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#6 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#7 $
  */
 
 #include <errno.h>
@@ -26,7 +26,7 @@
 #include "stringUtils.h"
 
 /**********************************************************************/
-int allocate_memory(size_t size, size_t align, const char *what, void *ptr)
+int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 {
 	if (ptr == NULL) {
 		return UDS_INVALID_ARGUMENT;
@@ -68,17 +68,17 @@ int allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 }
 
 /**********************************************************************/
-void free_memory(void *ptr)
+void uds_free_memory(void *ptr)
 {
 	free(ptr);
 }
 
 /**********************************************************************/
-int reallocate_memory(void *ptr,
-		      size_t old_size,
-		      size_t size,
-		      const char *what,
-		      void *new_ptr)
+int uds_reallocate_memory(void *ptr,
+			  size_t old_size,
+			  size_t size,
+			  const char *what,
+			  void *new_ptr)
 {
 	char *new = realloc(ptr, size);
 	if ((new == NULL) && (size != 0)) {

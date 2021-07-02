@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#21 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#22 $
  */
 
 #include <err.h>
@@ -374,7 +374,7 @@ int main(int argc, char *argv[])
            "\na candidate\n");
   }
 
-  FREE(blockBuffer);
+  UDS_FREE(blockBuffer);
   fileLayer->destroy(&fileLayer);
 
   if (candidateCount == 0) {

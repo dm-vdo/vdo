@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#14 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#15 $
  */
 
 #include "bufferedWriter.h"
@@ -50,17 +50,18 @@ int make_buffered_writer(struct io_region *region,
 			 struct buffered_writer **writer_ptr)
 {
 	byte *data;
-	int result = ALLOCATE_IO_ALIGNED(UDS_BLOCK_SIZE, byte,
-					 "buffer writer buffer", &data);
+	int result = UDS_ALLOCATE_IO_ALIGNED(UDS_BLOCK_SIZE, byte,
+					     "buffer writer buffer", &data);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
 	struct buffered_writer *writer;
 	result =
-		ALLOCATE(1, struct buffered_writer, "buffered writer", &writer);
+		UDS_ALLOCATE(1, struct buffered_writer, "buffered writer",
+			     &writer);
 	if (result != UDS_SUCCESS) {
-		FREE(data);
+		UDS_FREE(data);
 		return result;
 	}
 
@@ -88,12 +89,11 @@ void free_buffered_writer(struct buffered_writer *bw)
 	result = sync_region_contents(bw->bw_region);
 	if (result != UDS_SUCCESS) {
 		uds_log_warning_strerror(result,
-					 "%s cannot sync storage", __func__);
-
+				         "%s cannot sync storage", __func__);
 	}
 	put_io_region(bw->bw_region);
-	FREE(bw->bw_start);
-	FREE(bw);
+	UDS_FREE(bw->bw_start);
+	UDS_FREE(bw);
 }
 
 /**********************************************************************/

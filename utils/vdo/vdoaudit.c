@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#56 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#57 $
  */
 
 #include <err.h>
@@ -233,9 +233,9 @@ static void printErrorSummary(void)
  **/
 static void freeAuditAllocations(void)
 {
-  FREE(slabSummaryEntries);
+  UDS_FREE(slabSummaryEntries);
   for (slab_count_t i = 0; i < vdo->slabCount; i++) {
-    FREE(slabs[i].refCounts);
+    UDS_FREE(slabs[i].refCounts);
   }
   freeVDOFromFile(&vdo);
 }
@@ -655,7 +655,7 @@ static int verifyPBNRefCounts(void)
     }
   }
 
-  FREE(buffer);
+  UDS_FREE(buffer);
   return result;
 }
 
@@ -748,7 +748,8 @@ int main(int argc, char *argv[])
     // So firstError = min(firstError, x) will always do the right thing.
     audit->firstError = (slab_block_number) -1;
 
-    result = ALLOCATE(slabDataBlocks, uint8_t, __func__, &audit->refCounts);
+    result
+      = UDS_ALLOCATE(slabDataBlocks, uint8_t, __func__, &audit->refCounts);
     if (result != VDO_SUCCESS) {
       freeAuditAllocations();
       errx(1, "Could not allocate %llu reference counts: %s",

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#45 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#46 $
  */
 
 #include <err.h>
@@ -113,8 +113,8 @@ static void freeAllocations(void)
 {
   freeVDOFromFile(&vdo);
   try_sync_and_close_file(outputFD);
-  FREE(buffer);
-  FREE(lbns);
+  UDS_FREE(buffer);
+  UDS_FREE(lbns);
   buffer = NULL;
 }
 
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
          uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
-  result = ALLOCATE(MAX_LBNS, physical_block_number_t, __func__, &lbns);
+  result = UDS_ALLOCATE(MAX_LBNS, physical_block_number_t, __func__, &lbns);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %zu bytes",
          sizeof(physical_block_number_t) * MAX_LBNS);

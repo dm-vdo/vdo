@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#13 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#14 $
  */
 
 #include <fcntl.h>
@@ -84,8 +84,8 @@ void mini_openlog(const char *ident, int option, int facility)
 {
 	lock_mutex(&mutex);
 	close_locked();
-	FREE(log_ident);
-	if (duplicate_string(ident, NULL, &log_ident) != UDS_SUCCESS) {
+	UDS_FREE(log_ident);
+	if (uds_duplicate_string(ident, NULL, &log_ident) != UDS_SUCCESS) {
 		// on failure, NULL is okay
 		log_ident = NULL;
 	}
@@ -236,7 +236,7 @@ void mini_closelog(void)
 {
 	lock_mutex(&mutex);
 	close_locked();
-	FREE(log_ident);
+	UDS_FREE(log_ident);
 	log_ident = NULL;
 	log_option = 0;
 	default_facility = LOG_USER;

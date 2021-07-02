@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#46 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#47 $
  */
 
 #include "volumeGeometry.h"
@@ -426,7 +426,7 @@ vdo_read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
 
 	result = layer->reader(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
 	if (result != VDO_SUCCESS) {
-		FREE(block);
+		UDS_FREE(block);
 		return result;
 	}
 
@@ -444,7 +444,7 @@ int vdo_load_volume_geometry(PhysicalLayer *layer, struct volume_geometry *geome
 	}
 
 	result = vdo_parse_geometry_block(block, geometry);
-	FREE(block);
+	UDS_FREE(block);
 	return result;
 }
 
@@ -462,7 +462,7 @@ int vdo_parse_geometry_block(byte *block, struct volume_geometry *geometry)
 
 	result = decode_geometry_block(buffer, geometry);
 	if (result != VDO_SUCCESS) {
-		free_buffer(FORGET(buffer));
+		free_buffer(UDS_FORGET(buffer));
 		return result;
 	}
 
@@ -471,12 +471,12 @@ int vdo_parse_geometry_block(byte *block, struct volume_geometry *geometry)
 				    uncompacted_amount(buffer));
 	result = get_uint32_le_from_buffer(buffer, &saved_checksum);
 	if (result != VDO_SUCCESS) {
-		free_buffer(FORGET(buffer));
+		free_buffer(UDS_FORGET(buffer));
 		return result;
 	}
 
 	// Finished all decoding. Everything that follows is validation code.
-	free_buffer(FORGET(buffer));
+	free_buffer(UDS_FORGET(buffer));
 
 	if (!is_loadable_release_version(geometry->release_version)) {
 		return uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
@@ -570,7 +570,7 @@ int vdo_clear_volume_geometry(PhysicalLayer *layer)
 	}
 
 	result = layer->writer(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
-	FREE(block);
+	UDS_FREE(block);
 	return result;
 }
 
@@ -600,14 +600,14 @@ vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 
 	result = wrap_buffer((byte *) block, VDO_BLOCK_SIZE, 0, &buffer);
 	if (result != VDO_SUCCESS) {
-		FREE(block);
+		UDS_FREE(block);
 		return result;
 	}
 
 	result = encode_geometry_block(geometry, buffer, version);
 	if (result != VDO_SUCCESS) {
-		free_buffer(FORGET(buffer));
-		FREE(block);
+		free_buffer(UDS_FORGET(buffer));
+		UDS_FREE(block);
 		return result;
 	}
 
@@ -616,15 +616,15 @@ vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 				    content_length(buffer));
 	result = put_uint32_le_into_buffer(buffer, checksum);
 	if (result != VDO_SUCCESS) {
-		free_buffer(FORGET(buffer));
-		FREE(block);
+		free_buffer(UDS_FORGET(buffer));
+		UDS_FREE(block);
 		return result;
 	}
 
 	// Write it.
 	result = layer->writer(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
-	free_buffer(FORGET(buffer));
-	FREE(block);
+	free_buffer(UDS_FORGET(buffer));
+	UDS_FREE(block);
 	return result;
 }
 

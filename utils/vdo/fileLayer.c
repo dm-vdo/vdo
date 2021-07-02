@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#19 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#20 $
  */
 
 #include "fileLayer.h"
@@ -78,10 +78,10 @@ static int allocateIOBuffer(PhysicalLayer   *header,
                                   " a multiple of the VDO block size");
   }
 
-  return allocate_memory(bytes,
-                         asFileLayer(header)->alignment,
-                         why,
-                         bufferPtr);
+  return uds_allocate_memory(bytes,
+                             asFileLayer(header)->alignment,
+                             why,
+                             bufferPtr);
 }
 
 /**
@@ -178,7 +178,7 @@ static int fileReader(PhysicalLayer           *header,
   result = performIO(layer, startBlock, bytes, true, alignedBuffer);
   if (alignedBuffer != buffer) {
     memcpy(buffer, alignedBuffer, bytes);
-    FREE(alignedBuffer);
+    UDS_FREE(alignedBuffer);
   }
 
   return result;
@@ -216,7 +216,7 @@ static int fileWriter(PhysicalLayer           *header,
 
   result = performIO(layer, startBlock, bytes, false, alignedBuffer);
   if (alignedBuffer != buffer) {
-    FREE(alignedBuffer);
+    UDS_FREE(alignedBuffer);
   }
 
   return result;
@@ -264,7 +264,7 @@ static void freeLayer(PhysicalLayer **layerPtr)
 
   FileLayer *fileLayer = asFileLayer(layer);
   try_sync_and_close_file(fileLayer->fd);
-  FREE(fileLayer);
+  UDS_FREE(fileLayer);
   *layerPtr = NULL;
 }
 
@@ -293,7 +293,8 @@ static int setupFileLayer(const char     *name,
 
   size_t     nameLen = strlen(name) + 1;
   FileLayer *layer;
-  result = ALLOCATE_EXTENDED(FileLayer, nameLen, char, "file layer", &layer);
+  result
+    = UDS_ALLOCATE_EXTENDED(FileLayer, nameLen, char, "file layer", &layer);
   if (result != UDS_SUCCESS) {
     return result;
   }
@@ -306,11 +307,11 @@ static int setupFileLayer(const char     *name,
 
   result = file_exists(layer->name, &exists);
   if (result != UDS_SUCCESS) {
-    FREE(layer);
+    UDS_FREE(layer);
     return result;
   }
   if (!exists) {
-    FREE(layer);
+    UDS_FREE(layer);
     return ENOENT;
   }
 
@@ -318,7 +319,7 @@ static int setupFileLayer(const char     *name,
     = readOnly ? FU_READ_ONLY_DIRECT : FU_READ_WRITE_DIRECT;
   result = open_file(layer->name, access, &layer->fd);
   if (result != UDS_SUCCESS) {
-    FREE(layer);
+    UDS_FREE(layer);
     return result;
   }
 
@@ -326,7 +327,7 @@ static int setupFileLayer(const char     *name,
   result = isBlockDevice(layer->name, &blockDevice);
   if (result != UDS_SUCCESS) {
     try_close_file(layer->fd);
-    FREE(layer);
+    UDS_FREE(layer);
     return result;
   }
 
@@ -335,7 +336,7 @@ static int setupFileLayer(const char     *name,
   result = logging_fstat(layer->fd, &statbuf, __func__);
   if (result != UDS_SUCCESS) {
     try_close_file(layer->fd);
-    FREE(layer);
+    UDS_FREE(layer);
     return result;
   }
 
@@ -346,7 +347,7 @@ static int setupFileLayer(const char     *name,
     if (ioctl(layer->fd, BLKGETSIZE64, &bytes) < 0) {
       result = uds_log_error_strerror(errno, "get size of %s", layer->name);
       try_close_file(layer->fd);
-      FREE(layer);
+      UDS_FREE(layer);
       return result;
     }
     deviceBlocks = bytes / VDO_BLOCK_SIZE;
@@ -363,7 +364,7 @@ static int setupFileLayer(const char     *name,
                                     layer->blockCount, deviceBlocks,
                                     layer->name);
     try_close_file(layer->fd);
-    FREE(layer);
+    UDS_FREE(layer);
     return result;
   }
 

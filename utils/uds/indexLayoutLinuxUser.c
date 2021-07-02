@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#14 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#15 $
  */
 
 #include "errors.h"
@@ -45,8 +45,9 @@ int make_uds_index_layout(const char *name,
 	};
 
 	char *params = NULL;
-	int result = duplicate_string(name, "make_uds_index_layout parameters",
-				      &params);
+	int result = uds_duplicate_string(name,
+					  "make_uds_index_layout parameters",
+					  &params);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -54,12 +55,12 @@ int make_uds_index_layout(const char *name,
 	// note file will be set to memory owned by params
 	result = parse_layout_string(params, parameter_table);
 	if (result != UDS_SUCCESS) {
-		FREE(params);
+		UDS_FREE(params);
 		return result;
 	}
 
 	if (!file) {
-		FREE(params);
+		UDS_FREE(params);
 		return uds_log_error_strerror(UDS_INDEX_NAME_REQUIRED,
 					      "no index specified");
 	}
@@ -70,7 +71,7 @@ int make_uds_index_layout(const char *name,
 				    new_layout ? FU_CREATE_READ_WRITE
 				    	       : FU_READ_WRITE,
 				    &factory);
-	FREE(params);
+	UDS_FREE(params);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}

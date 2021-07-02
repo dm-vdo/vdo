@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#11 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.c#12 $
  */
 
 #include "fileIORegion.h"
@@ -81,7 +81,7 @@ static void fior_free(struct io_region *region)
 {
 	struct file_io_region *fior = as_file_io_region(region);
 	put_uds_io_factory(fior->factory);
-	FREE(fior);
+	UDS_FREE(fior);
 }
 
 /**********************************************************************/
@@ -166,7 +166,7 @@ int make_file_region(struct io_factory *factory,
 		     struct io_region **region_ptr)
 {
 	struct file_io_region *fior;
-	int result = ALLOCATE(1, struct file_io_region, __func__, &fior);
+	int result = UDS_ALLOCATE(1, struct file_io_region, __func__, &fior);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}

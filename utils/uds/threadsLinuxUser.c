@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#10 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#11 $
  */
 
 #include "threads.h"
@@ -78,7 +78,7 @@ static void *thread_starter(void *arg)
 	 * care much if this fails.
 	 */
 	process_control(PR_SET_NAME, (unsigned long) tsi->name, 0, 0, 0);
-	FREE(tsi);
+	UDS_FREE(tsi);
 	thread_func(thread_data);
 	return NULL;
 }
@@ -90,7 +90,7 @@ int create_thread(void (*thread_func)(void *),
 		  struct thread **new_thread)
 {
 	struct thread_start_info *tsi;
-	int result = ALLOCATE(1, struct thread_start_info, __func__, &tsi);
+	int result = UDS_ALLOCATE(1, struct thread_start_info, __func__, &tsi);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -99,10 +99,10 @@ int create_thread(void (*thread_func)(void *),
 	tsi->name = name;
 
 	struct thread *thread;
-	result = ALLOCATE(1, struct thread, __func__, &thread);
+	result = UDS_ALLOCATE(1, struct thread, __func__, &thread);
 	if (result != UDS_SUCCESS) {
 		uds_log_warning("Error allocating memory for %s", name);
-		FREE(tsi);
+		UDS_FREE(tsi);
 		return result;
 	}
 
@@ -110,8 +110,8 @@ int create_thread(void (*thread_func)(void *),
 	if (result != 0) {
 		uds_log_error_strerror(errno, "could not create %s thread",
 				       name);
-		FREE(thread);
-		FREE(tsi);
+		UDS_FREE(thread);
+		UDS_FREE(tsi);
 		return UDS_ENOTHREADS;
 	}
 	*new_thread = thread;
@@ -123,7 +123,7 @@ int join_threads(struct thread *th)
 {
 	int result = pthread_join(th->thread, NULL);
 	pthread_t pthread = th->thread;
-	FREE(th);
+	UDS_FREE(th);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result, "th: %p",
 				      (void *)pthread);
 }

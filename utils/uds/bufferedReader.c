@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#12 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#13 $
  */
 
 #include "bufferedReader.h"
@@ -52,7 +52,7 @@ int make_buffered_reader(struct io_region *region,
 			 struct buffered_reader **reader_ptr)
 {
 	byte *data;
-	int result = ALLOCATE_IO_ALIGNED(
+	int result = UDS_ALLOCATE_IO_ALIGNED(
 		UDS_BLOCK_SIZE, byte, "buffer writer buffer", &data);
 	if (result != UDS_SUCCESS) {
 		return result;
@@ -60,9 +60,10 @@ int make_buffered_reader(struct io_region *region,
 
 	struct buffered_reader *reader = NULL;
 	result =
-		ALLOCATE(1, struct buffered_reader, "buffered reader", &reader);
+		UDS_ALLOCATE(1, struct buffered_reader, "buffered reader",
+			     &reader);
 	if (result != UDS_SUCCESS) {
-		FREE(data);
+		UDS_FREE(data);
 		return result;
 	}
 
@@ -85,8 +86,8 @@ void free_buffered_reader(struct buffered_reader *br)
 		return;
 	}
 	put_io_region(br->br_region);
-	FREE(br->br_start);
-	FREE(br);
+	UDS_FREE(br->br_start);
+	UDS_FREE(br);
 }
 
 /**********************************************************************/
