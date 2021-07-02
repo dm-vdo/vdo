@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#18 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#19 $
  */
 
 #include "requestQueue.h"
@@ -316,8 +316,8 @@ int make_uds_request_queue(const char *queue_name,
 		return result;
 	}
 
-	result = create_thread(request_queue_worker, queue, queue_name,
-			       &queue->thread);
+	result = uds_create_thread(request_queue_worker, queue, queue_name,
+				   &queue->thread);
 	if (result != UDS_SUCCESS) {
 		uds_request_queue_finish(queue);
 		return result;
@@ -378,7 +378,7 @@ void uds_request_queue_finish(RequestQueue *queue)
 
 		// Wait for the worker thread to finish processing any
 		// additional pending work and exit.
-		int result = join_threads(queue->thread);
+		int result = uds_join_threads(queue->thread);
 		if (result != UDS_SUCCESS) {
 			uds_log_warning_strerror(result,
 						 "Failed to join worker thread");

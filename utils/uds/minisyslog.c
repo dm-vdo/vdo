@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#15 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#16 $
  */
 
 #include <fcntl.h>
@@ -33,7 +33,7 @@
 #include "threads.h"
 #include "timeUtils.h"
 
-static struct mutex mutex = { .mutex = MUTEX_INITIALIZER };
+static struct mutex mutex = { .mutex = UDS_MUTEX_INITIALIZER };
 
 static int log_socket = -1;
 
@@ -82,7 +82,7 @@ static void open_socket_locked(void)
 /**********************************************************************/
 void mini_openlog(const char *ident, int option, int facility)
 {
-	lock_mutex(&mutex);
+	uds_lock_mutex(&mutex);
 	close_locked();
 	UDS_FREE(log_ident);
 	if (uds_duplicate_string(ident, NULL, &log_ident) != UDS_SUCCESS) {
@@ -94,7 +94,7 @@ void mini_openlog(const char *ident, int option, int facility)
 	if (log_option & LOG_NDELAY) {
 		open_socket_locked();
 	}
-	unlock_mutex(&mutex);
+	uds_unlock_mutex(&mutex);
 }
 
 /**********************************************************************/
@@ -155,14 +155,14 @@ static void log_it(int priority,
 
 	if (log_option & LOG_PID) {
 		char tname[16];
-		get_thread_name(tname);
+		uds_get_thread_name(tname);
 		bufp = uds_append_to_buffer(bufp,
 					    buf_end,
 					    "[%u]: %-6s (%s/%d) ",
 					    getpid(),
 					    priority_str,
 					    tname,
-					    get_thread_id());
+					    uds_get_thread_id());
 	} else {
 		bufp = uds_append_to_buffer(bufp, buf_end, ": ");
 	}
@@ -219,27 +219,27 @@ void mini_syslog_pack(int priority,
 		      const char *fmt2,
 		      va_list args2)
 {
-	lock_mutex(&mutex);
+	uds_lock_mutex(&mutex);
 	log_it(priority, prefix, fmt1, args1, fmt2, args2);
-	unlock_mutex(&mutex);
+	uds_unlock_mutex(&mutex);
 }
 
 void mini_vsyslog(int priority, const char *format, va_list ap)
 {
 	va_list dummy;
 	memset(&dummy, 0, sizeof(dummy));
-	lock_mutex(&mutex);
+	uds_lock_mutex(&mutex);
 	log_it(priority, NULL, format, ap, NULL, dummy);
-	unlock_mutex(&mutex);
+	uds_unlock_mutex(&mutex);
 }
 
 void mini_closelog(void)
 {
-	lock_mutex(&mutex);
+	uds_lock_mutex(&mutex);
 	close_locked();
 	UDS_FREE(log_ident);
 	log_ident = NULL;
 	log_option = 0;
 	default_facility = LOG_USER;
-	unlock_mutex(&mutex);
+	uds_unlock_mutex(&mutex);
 }

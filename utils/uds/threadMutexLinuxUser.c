@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#6 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#7 $
  */
 
 #include <errno.h>
@@ -32,7 +32,7 @@ static enum mutex_kind {
 	error_checking
 } hidden_mutex_kind = error_checking;
 
-const bool DO_ASSERTIONS = true;
+const bool UDS_DO_ASSERTIONS = true;
 
 /**********************************************************************/
 static void initialize_mutex_kind(void)
@@ -71,7 +71,7 @@ static enum mutex_kind get_mutex_kind(void)
 }
 
 /**********************************************************************/
-int initialize_mutex(struct mutex *mutex, bool assert_on_error)
+int uds_initialize_mutex(struct mutex *mutex, bool assert_on_error)
 {
 	pthread_mutexattr_t attr;
 	int result = pthread_mutexattr_init(&attr);
@@ -99,13 +99,13 @@ int initialize_mutex(struct mutex *mutex, bool assert_on_error)
 }
 
 /**********************************************************************/
-int init_mutex(struct mutex *mutex)
+int uds_init_mutex(struct mutex *mutex)
 {
-	return initialize_mutex(mutex, DO_ASSERTIONS);
+	return uds_initialize_mutex(mutex, UDS_DO_ASSERTIONS);
 }
 
 /**********************************************************************/
-int destroy_mutex(struct mutex *mutex)
+int uds_destroy_mutex(struct mutex *mutex)
 {
 	int result = pthread_mutex_destroy(&mutex->mutex);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -119,7 +119,7 @@ int destroy_mutex(struct mutex *mutex)
  */
 
 /**********************************************************************/
-void lock_mutex(struct mutex *mutex)
+void uds_lock_mutex(struct mutex *mutex)
 {
 	int result __attribute__((unused)) = pthread_mutex_lock(&mutex->mutex);
 #ifndef NDEBUG
@@ -128,7 +128,7 @@ void lock_mutex(struct mutex *mutex)
 }
 
 /**********************************************************************/
-void unlock_mutex(struct mutex *mutex)
+void uds_unlock_mutex(struct mutex *mutex)
 {
 	int result __attribute__((unused)) =
 		pthread_mutex_unlock(&mutex->mutex);

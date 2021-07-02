@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#11 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#12 $
  */
 
 #include "threads.h"
@@ -32,7 +32,7 @@
 #include "syscalls.h"
 
 /**********************************************************************/
-unsigned int get_num_cores(void)
+unsigned int uds_get_num_cores(void)
 {
 	cpu_set_t cpu_set;
 	if (sched_getaffinity(0, sizeof(cpu_set), &cpu_set) != 0) {
@@ -49,13 +49,13 @@ unsigned int get_num_cores(void)
 }
 
 /**********************************************************************/
-void get_thread_name(char *name)
+void uds_get_thread_name(char *name)
 {
 	process_control(PR_GET_NAME, (unsigned long) name, 0, 0, 0);
 }
 
 /**********************************************************************/
-pid_t get_thread_id(void)
+pid_t uds_get_thread_id(void)
 {
 	return syscall(SYS_gettid);
 }
@@ -84,10 +84,10 @@ static void *thread_starter(void *arg)
 }
 
 /**********************************************************************/
-int create_thread(void (*thread_func)(void *),
-		  void *thread_data,
-		  const char *name,
-		  struct thread **new_thread)
+int uds_create_thread(void (*thread_func)(void *),
+		      void *thread_data,
+		      const char *name,
+		      struct thread **new_thread)
 {
 	struct thread_start_info *tsi;
 	int result = UDS_ALLOCATE(1, struct thread_start_info, __func__, &tsi);
@@ -119,7 +119,7 @@ int create_thread(void (*thread_func)(void *),
 }
 
 /**********************************************************************/
-int join_threads(struct thread *th)
+int uds_join_threads(struct thread *th)
 {
 	int result = pthread_join(th->thread, NULL);
 	pthread_t pthread = th->thread;
@@ -129,7 +129,7 @@ int join_threads(struct thread *th)
 }
 
 /**********************************************************************/
-int create_thread_key(pthread_key_t *key, void (*destr_function)(void *))
+int uds_create_thread_key(pthread_key_t *key, void (*destr_function)(void *))
 {
 	int result = pthread_key_create(key, destr_function);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -137,7 +137,7 @@ int create_thread_key(pthread_key_t *key, void (*destr_function)(void *))
 }
 
 /**********************************************************************/
-int delete_thread_key(pthread_key_t key)
+int uds_delete_thread_key(pthread_key_t key)
 {
 	int result = pthread_key_delete(key);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -145,7 +145,7 @@ int delete_thread_key(pthread_key_t key)
 }
 
 /**********************************************************************/
-int set_thread_specific(pthread_key_t key, const void *pointer)
+int uds_set_thread_specific(pthread_key_t key, const void *pointer)
 {
 	int result = pthread_setspecific(key, pointer);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -153,13 +153,13 @@ int set_thread_specific(pthread_key_t key, const void *pointer)
 }
 
 /**********************************************************************/
-void *get_thread_specific(pthread_key_t key)
+void *uds_get_thread_specific(pthread_key_t key)
 {
 	return pthread_getspecific(key);
 }
 
 /**********************************************************************/
-int initialize_barrier(struct barrier *barrier, unsigned int thread_count)
+int uds_initialize_barrier(struct barrier *barrier, unsigned int thread_count)
 {
 	int result =
 		pthread_barrier_init(&barrier->barrier, NULL, thread_count);
@@ -168,7 +168,7 @@ int initialize_barrier(struct barrier *barrier, unsigned int thread_count)
 }
 
 /**********************************************************************/
-int destroy_barrier(struct barrier *barrier)
+int uds_destroy_barrier(struct barrier *barrier)
 {
 	int result = pthread_barrier_destroy(&barrier->barrier);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -176,7 +176,7 @@ int destroy_barrier(struct barrier *barrier)
 }
 
 /**********************************************************************/
-int enter_barrier(struct barrier *barrier, bool *winner)
+int uds_enter_barrier(struct barrier *barrier, bool *winner)
 {
 	int result = pthread_barrier_wait(&barrier->barrier);
 
@@ -197,7 +197,7 @@ int enter_barrier(struct barrier *barrier, bool *winner)
 }
 
 /**********************************************************************/
-int yield_scheduler(void)
+int uds_yield_scheduler(void)
 {
 	int result = sched_yield();
 	if (result != 0) {
