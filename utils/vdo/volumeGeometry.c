@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#47 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#48 $
  */
 
 #include "volumeGeometry.h"
@@ -405,17 +405,9 @@ static int encode_geometry_block(const struct volume_geometry *geometry,
 		      "should have decoded up to the geometry checksum");
 }
 
-/**
- * Allocate a block-size buffer to read the geometry from the physical layer,
- * read the block, and return the buffer.
- *
- * @param [in]  layer      The physical layer containing the block to read
- * @param [out] block_ptr  A pointer to receive the allocated buffer
- *
- * @return VDO_SUCCESS or an error code
- **/
-static int __must_check
-vdo_read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
+/**********************************************************************/
+int vdo_load_volume_geometry(PhysicalLayer *layer,
+			     struct volume_geometry *geometry)
 {
 	char *block;
 	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
@@ -430,20 +422,7 @@ vdo_read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
 		return result;
 	}
 
-	*block_ptr = (byte *) block;
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
-int vdo_load_volume_geometry(PhysicalLayer *layer, struct volume_geometry *geometry)
-{
-	byte *block;
-	int result = vdo_read_geometry_block(layer, &block);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	result = vdo_parse_geometry_block(block, geometry);
+	result = vdo_parse_geometry_block((byte *) block, geometry);
 	UDS_FREE(block);
 	return result;
 }
@@ -629,8 +608,9 @@ vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 }
 
 /************************************************************************/
-int vdo_index_config_to_uds_configuration(const struct index_config *index_config,
-					  struct uds_configuration **uds_config_ptr)
+int
+vdo_index_config_to_uds_configuration(const struct index_config *index_config,
+				      struct uds_configuration **uds_config_ptr)
 {
 	struct uds_configuration *uds_configuration;
 	int result = uds_initialize_configuration(&uds_configuration,
