@@ -201,11 +201,11 @@ class VDOStatistics(StatStruct):
       # number of logical blocks
       Uint64Field("logicalBlocks"),
       Uint64Field("oneKBlocks", derived = "$physicalBlocks * $blockSize // 1024", label = "1K-blocks"),
-      Uint64Field("oneKBlocksUsed", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024", available = "not $inRecoveryMode", label = "1K-blocks used"),
+      Uint64Field("oneKBlocksUsed", available = "not $inRecoveryMode", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024", label = "1K-blocks used"),
       Uint64Field("oneKBlocksAvailable", label = "1K-blocks available", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024", available = "not $inRecoveryMode"),
       Uint8Field("usedPercent", available = "((not $inRecoveryMode) and ($mode != b'read-only'))", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)"),
       Uint8Field("savings", display = False, derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1", available = "not $inRecoveryMode"),
-      Uint8Field("savingPercent", derived = "$savings if ($savings >= 0) else NotAvailable()", available = "((not $inRecoveryMode) and ($mode != b'read-only'))"),
+      Uint8Field("savingPercent", available = "((not $inRecoveryMode) and ($mode != b'read-only'))", derived = "$savings if ($savings >= 0) else NotAvailable()"),
       # Size of the block map page cache, in bytes
       Uint64Field("blockMapCacheSize"),
       # String describing the active write policy of the VDO
@@ -217,11 +217,11 @@ class VDOStatistics(StatStruct):
       # Number of times the VDO has recovered from read-only mode
       Uint64Field("readOnlyRecoveries", label = "read-only recovery count"),
       # String describing the operating mode of the VDO
-      StringField("mode", label = "operating mode", length = 15),
+      StringField("mode", length = 15, label = "operating mode"),
       # Whether the VDO is in recovery mode
       BoolField("inRecoveryMode", display = False),
       # What percentage of recovery mode work has been completed
-      Uint8Field("recoveryPercentage", label = "recovery progress (%)", available = "$inRecoveryMode"),
+      Uint8Field("recoveryPercentage", available = "$inRecoveryMode", label = "recovery progress (%)"),
       # The statistics for the compressed block packer
       PackerStatistics("packer"),
       # Counters for events in the block allocator

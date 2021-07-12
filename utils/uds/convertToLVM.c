@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/convertToLVM.c#12 $
+ * $Id: //eng/uds-releases/jasper/src/uds/convertToLVM.c#14 $
  */
 
 #include "config.h"
@@ -32,10 +32,6 @@
 #include "volumeStore.h"
 
 #include "convertToLVM.h"
-
-enum {
-  LVM_BLOCKS = 512,
-};
 
 /**
  * Move the data for physical chapter 0 to a new physical location.
@@ -91,7 +87,12 @@ static int moveChapter(Volume      *volume,
 static void cleanupSession(struct uds_index_session *session)
 {
   if (session != NULL) {
-    int result = udsDestroyIndexSession(session);
+    // This can produce an error when the index is not open.
+    int result = udsCloseIndex(session);
+    if (result != UDS_SUCCESS) {
+      logWarningWithStringError(result, "Error closing index");
+    }
+    result = udsDestroyIndexSession(session);
     if (result != UDS_SUCCESS) {
       logWarningWithStringError(result, "Error closing index");
     }
@@ -132,6 +133,7 @@ static int reduceIndexPageMap(Volume *volume, uint64_t newPhysical)
 
 /**********************************************************************/
 int udsConvertToLVM(const char       *name,
+                    size_t            freedSpace,
                     UdsConfiguration  config,
                     off_t            *chapterSize)
 {
@@ -172,6 +174,14 @@ int udsConvertToLVM(const char       *name,
   oldest = index->oldestVirtualChapter;
   newest = index->newestVirtualChapter;
   chaptersPerVolume = userConfig->chaptersPerVolume;
+
+  result = ASSERT((freedSpace <= volume->geometry->bytesPerChapter),
+                  "cannot free more than %zu bytes (%zu requested)",
+                  volume->geometry->bytesPerChapter, freedSpace);
+  if (result != UDS_SUCCESS) {
+    cleanupSession(session);
+    return result;
+  }
 
   logInfo("index has chapters %llu to %llu\n",
           (long long) oldest,
@@ -235,7 +245,7 @@ int udsConvertToLVM(const char       *name,
   freeGeometry(geometry);
 
   logDebug("Saving updated layout and writing index configuration");
-  result = updateLayout(layout, userConfig, LVM_BLOCKS,
+  result = updateLayout(layout, userConfig, freedSpace,
                         volume->geometry->bytesPerChapter);
   if (result != UDS_SUCCESS) {
     cleanupSession(session);
@@ -248,5 +258,6 @@ int udsConvertToLVM(const char       *name,
   // Force a save, even though no new requests have been processed, so
   // that the save areas get updated
   router->needToSave = true;
-  return udsDestroyIndexSession(session);
+  cleanupSession(session);
+  return UDS_SUCCESS;
 }

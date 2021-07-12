@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdo2LVM.c#3 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdo2LVM.c#4 $
  */
 
 #include <err.h>
@@ -186,7 +186,8 @@ static int convertUDS(IndexConfig    *indexConfig,
     return ENOMEM;
   }
   
-  result = udsConvertToLVM(indexName, udsConfig, superblockOffset);
+  result = udsConvertToLVM(indexName, vdoByteOffset, udsConfig,
+                           superblockOffset);
   if (result == UDS_SUCCESS) {
     indexConfig->mem = udsConfigurationGetMemory(udsConfig);
   }

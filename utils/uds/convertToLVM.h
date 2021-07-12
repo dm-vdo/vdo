@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/convertToLVM.h#3 $
+ * $Id: //eng/uds-releases/jasper/src/uds/convertToLVM.h#4 $
  */
 
 #include "uds.h"
@@ -39,12 +39,15 @@
  *                     index with optional offset=# where # represents
  *                     an offset from the beginning of the device or
  *                     file to the start of the index.
+ * @param freedSpace   The minimun amount of space to free at the start
+ *                     of the device, in bytes. Must be a multiple of 4K.      
  * @param config       The UDS configuration of the index
  * @param chapterSize  A place to return the size in bytes of the
  *                     chapter that was eliminated
  * @return  UDS_SUCCESS or an error code
  */
 int udsConvertToLVM(const char       *name,
+                    size_t            freedSpace,
                     UdsConfiguration  config,
                     off_t            *chapterSize)
   __attribute__((warn_unused_result));
