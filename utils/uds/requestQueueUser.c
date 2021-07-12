@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#19 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#20 $
  */
 
 #include "requestQueue.h"
@@ -117,7 +117,7 @@ struct uds_request_queue {
  *
  * @param queue  the request queue
  **/
-static void adjust_wait_time(RequestQueue *queue)
+static void adjust_wait_time(struct uds_request_queue *queue)
 {
 	// Adjust the wait time by about 25%.
 	uint64_t delta = queue->wait_nanoseconds / 4;
@@ -141,7 +141,7 @@ static void adjust_wait_time(RequestQueue *queue)
  *
  * @return a pointer the relative wake time, or NULL if there is no timeout
  **/
-static ktime_t *get_wake_time(RequestQueue *queue)
+static ktime_t *get_wake_time(struct uds_request_queue *queue)
 {
 	if (queue->wait_nanoseconds >= MAXIMUM_WAIT_TIME) {
 		if (atomic_read(&queue->dormant)) {
@@ -181,11 +181,11 @@ static Request *remove_head(struct funnel_queue *queue)
  * Poll the underlying lock-free queues for a request to process. Requests in
  * the retry queue have higher priority, so that queue is polled first.
  *
- * @param queue  the RequestQueue being serviced
+ * @param queue  the request queue being serviced
  *
  * @return a dequeued request, or NULL if no request was available
  **/
-static Request *poll_queues(RequestQueue *queue)
+static Request *poll_queues(struct uds_request_queue *queue)
 {
 	Request *request = remove_head(queue->retry_queue);
 	if (request == NULL) {
@@ -203,7 +203,7 @@ static Request *poll_queues(RequestQueue *queue)
  * @return the next request in the queue, or NULL if the queue has been
  *         shut down and the worker thread should exit
  **/
-static Request *dequeue_request(RequestQueue *queue)
+static Request *dequeue_request(struct uds_request_queue *queue)
 {
 	for (;;) {
 		// Assume we'll find a request to return; if not, it'll be
@@ -273,7 +273,7 @@ static Request *dequeue_request(RequestQueue *queue)
 /**********************************************************************/
 static void request_queue_worker(void *arg)
 {
-	RequestQueue *queue = (RequestQueue *) arg;
+	struct uds_request_queue *queue = (struct uds_request_queue *) arg;
 	uds_log_debug("%s queue starting", queue->name);
 	Request *request;
 	while ((request = dequeue_request(queue)) != NULL) {
@@ -285,10 +285,11 @@ static void request_queue_worker(void *arg)
 /**********************************************************************/
 int make_uds_request_queue(const char *queue_name,
 			   uds_request_queue_processor_t *process_one,
-			   RequestQueue **queue_ptr)
+			   struct uds_request_queue **queue_ptr)
 {
-	RequestQueue *queue;
-	int result = UDS_ALLOCATE(1, RequestQueue, __func__, &queue);
+	struct uds_request_queue *queue;
+	int result = UDS_ALLOCATE(1, struct uds_request_queue, __func__,
+				  &queue);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -330,13 +331,14 @@ int make_uds_request_queue(const char *queue_name,
 }
 
 /**********************************************************************/
-static INLINE void wake_up_worker(RequestQueue *queue)
+static INLINE void wake_up_worker(struct uds_request_queue *queue)
 {
 	event_count_broadcast(queue->work_event);
 }
 
 /**********************************************************************/
-void uds_request_queue_enqueue(RequestQueue *queue, Request *request)
+void uds_request_queue_enqueue(struct uds_request_queue *queue,
+			       Request *request)
 {
 	bool unbatched = request->unbatched;
 	funnel_queue_put(request->requeued ? queue->retry_queue :
@@ -354,7 +356,7 @@ void uds_request_queue_enqueue(RequestQueue *queue, Request *request)
 }
 
 /**********************************************************************/
-void uds_request_queue_finish(RequestQueue *queue)
+void uds_request_queue_finish(struct uds_request_queue *queue)
 {
 	if (queue == NULL) {
 		return;
