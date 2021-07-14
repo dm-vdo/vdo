@@ -22,7 +22,7 @@
 """
   vdoStats - Report statistics from a running VDO volume.
 
-  $Id: //eng/linux-vdo/src/python/vdo/vdoStats#6 $
+  $Id: //eng/linux-vdo/src/python/vdo/vdoStats#7 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -277,7 +277,7 @@ def main():
 
   options = parser.parse_args()
   if options.version:
-    print("{0}.{1}".format(CURRENT_RELEASE_VERSION_NUMBER,
+    print("{0}.{1}".format(VDO_CURRENT_RELEASE_VERSION_NUMBER,
                            VDOStatistics.statisticsVersion))
     sys.exit(0)
 
