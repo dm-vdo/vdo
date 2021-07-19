@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/compiler.h#5 $
+ * $Id: //eng/uds-releases/krusty/src/uds/compiler.h#6 $
  */
 
 #ifndef COMMON_COMPILER_H
@@ -60,5 +60,11 @@
 #define likely(expr) __builtin_expect(!!(expr), 1)
 #define unlikely(expr) __builtin_expect(!!(expr), 0)
 
+
+#if __has_attribute(__fallthrough__)
+#define fallthrough	__attribute__((__fallthrough__))
+#else
+#define fallthrough	do {} while (0)  /* fallthrough */
+#endif
 
 #endif /* COMMON_COMPILER_H */
