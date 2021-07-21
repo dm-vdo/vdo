@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdo2LVM.c#4 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdo2LVM.c#5 $
  */
 
 #include <err.h>
@@ -147,6 +147,7 @@ static int openDeviceExclusively(int *descriptorPtr)
   result = fcntl(fd, F_SETFL, O_RDWR | O_EXCL);
   if (result != VDO_SUCCESS) {
     warnx("Unable to clear non-blocking flag for %s", fileName);
+    close(fd);
     return result;
   }
 

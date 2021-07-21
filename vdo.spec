@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.5.62
+Version: 6.2.5.65
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -181,10 +181,6 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Mon Jul 12 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.62-1
-- Removed extraneous fields from the super block of a converted index.
-- Added a parameter to the lvm conversion tool to specify the amount of
-  space to free up.
-- Fixed calculation of the number of expiring chapters in a converted
-  index.
-  
+* Wed Jul 21 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.65-1
+- Fixed Coverity scan issues.
+
