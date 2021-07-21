@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/physicalLayer.h#53 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/physicalLayer.h#54 $
  */
 
 #ifndef PHYSICAL_LAYER_H
@@ -242,9 +242,9 @@ typedef async_data_operation index_updater;
 /**
  * A function to finish flush requests
  *
- * @param vdoFlush  The flush requests
+ * @param vdoFlush  The flush request
  **/
-typedef void flush_complete(struct vdo_flush **vdoFlush);
+typedef void flush_complete(struct vdo_flush *vdoFlush);
 
 /**
  * An abstraction representing the underlying physical layer.
