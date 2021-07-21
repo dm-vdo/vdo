@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/typeDefs.h#2 $
+ * $Id: //eng/uds-releases/krusty/src/uds/typeDefs.h#3 $
  */
 
 #ifndef TYPE_DEFS_H
@@ -27,7 +27,6 @@
  */
 
 #include <stddef.h>
-
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
