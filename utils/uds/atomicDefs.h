@@ -16,12 +16,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/atomicDefs.h#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/atomicDefs.h#1 $
  */
 
 #ifndef ATOMIC_DEFS_H
 #define ATOMIC_DEFS_H
-
 
 #include "compiler.h"
 #include "typeDefs.h"
