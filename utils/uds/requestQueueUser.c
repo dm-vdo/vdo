@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#20 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#21 $
  */
 
 #include "requestQueue.h"
@@ -168,13 +168,13 @@ static ktime_t *get_wake_time(struct uds_request_queue *queue)
 }
 
 /**********************************************************************/
-static Request *remove_head(struct funnel_queue *queue)
+static struct uds_request *remove_head(struct funnel_queue *queue)
 {
 	struct funnel_queue_entry *entry = funnel_queue_poll(queue);
 	if (entry == NULL) {
 		return NULL;
 	}
-	return container_of(entry, Request, request_queue_link);
+	return container_of(entry, struct uds_request, request_queue_link);
 }
 
 /**
@@ -185,9 +185,9 @@ static Request *remove_head(struct funnel_queue *queue)
  *
  * @return a dequeued request, or NULL if no request was available
  **/
-static Request *poll_queues(struct uds_request_queue *queue)
+static struct uds_request *poll_queues(struct uds_request_queue *queue)
 {
-	Request *request = remove_head(queue->retry_queue);
+	struct uds_request *request = remove_head(queue->retry_queue);
 	if (request == NULL) {
 		request = remove_head(queue->main_queue);
 	}
@@ -203,7 +203,7 @@ static Request *poll_queues(struct uds_request_queue *queue)
  * @return the next request in the queue, or NULL if the queue has been
  *         shut down and the worker thread should exit
  **/
-static Request *dequeue_request(struct uds_request_queue *queue)
+static struct uds_request *dequeue_request(struct uds_request_queue *queue)
 {
 	for (;;) {
 		// Assume we'll find a request to return; if not, it'll be
@@ -212,7 +212,7 @@ static Request *dequeue_request(struct uds_request_queue *queue)
 
 		// Fast path: pull an item off a non-blocking queue and return
 		// it.
-		Request *request = poll_queues(queue);
+		struct uds_request *request = poll_queues(queue);
 		if (request != NULL) {
 			return request;
 		}
@@ -275,7 +275,7 @@ static void request_queue_worker(void *arg)
 {
 	struct uds_request_queue *queue = (struct uds_request_queue *) arg;
 	uds_log_debug("%s queue starting", queue->name);
-	Request *request;
+	struct uds_request *request;
 	while ((request = dequeue_request(queue)) != NULL) {
 		queue->process_one(request);
 	}
@@ -338,7 +338,7 @@ static INLINE void wake_up_worker(struct uds_request_queue *queue)
 
 /**********************************************************************/
 void uds_request_queue_enqueue(struct uds_request_queue *queue,
-			       Request *request)
+			       struct uds_request *request)
 {
 	bool unbatched = request->unbatched;
 	funnel_queue_put(request->requeued ? queue->retry_queue :
