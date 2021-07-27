@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/request.c#19 $
+ * $Id: //eng/uds-releases/krusty/src/uds/request.c#21 $
  */
 
 #include "request.h"
@@ -31,11 +31,12 @@
 /**********************************************************************/
 int uds_start_chunk_operation(struct uds_request *request)
 {
-        size_t internal_size;
+	size_t internal_size;
 	int result;
 
 	if (request->callback == NULL) {
-		return UDS_CALLBACK_REQUIRED;
+		uds_log_error("missing required callback");
+		return -EINVAL;
 	}
 	switch (request->type) {
 	case UDS_DELETE:
@@ -44,17 +45,18 @@ int uds_start_chunk_operation(struct uds_request *request)
 	case UDS_UPDATE:
 		break;
 	default:
-		return UDS_INVALID_OPERATION_TYPE;
+		uds_log_error("received invalid callback type");
+		return -EINVAL;
 	}
 
 	// Reset all internal fields before processing.
-        internal_size = sizeof(struct uds_request)
+	internal_size = sizeof(struct uds_request)
 		- offsetof(struct uds_request, zone_number);
 	memset(&request->zone_number, 0, internal_size);
 
 	result = get_index_session(request->session);
 	if (result != UDS_SUCCESS) {
-		return sans_unrecoverable(result);
+		return result;
 	}
 
 	request->found = false;
@@ -222,12 +224,9 @@ void update_request_context_stats(struct uds_request *request)
 /**********************************************************************/
 void enter_callback_stage(struct uds_request *request)
 {
-	if (is_unrecoverable(request->status)) {
-		// Unrecoverable errors must disable the index session
+	if (request->status != UDS_SUCCESS) {
+		// All request errors are considered unrecoverable
 		disable_index_session(request->session);
-		// The unrecoverable state is internal and must not be sent
-		// to the client.
-		request->status = sans_unrecoverable(request->status);
 	}
 
 	// Handle asynchronous client callbacks in the designated thread.
