@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#7 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#8 $
  */
 
 #include <errno.h>
@@ -47,7 +47,7 @@ int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 						       what,
 						       size);
 			}
-			return result;
+			return -result;
 		}
 	} else {
 		p = malloc(size);
@@ -59,7 +59,7 @@ int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 						       what,
 						       size);
 			}
-			return result;
+			return -result;
 		}
 	}
 	memset(p, 0, size);
@@ -82,7 +82,7 @@ int uds_reallocate_memory(void *ptr,
 {
 	char *new = realloc(ptr, size);
 	if ((new == NULL) && (size != 0)) {
-		return uds_log_error_strerror(errno,
+		return uds_log_error_strerror(-errno,
 					      "failed to reallocate %s (%zu bytes)",
 					      what,
 					      size);

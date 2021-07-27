@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#12 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#13 $
  */
 
 #include "threads.h"
@@ -108,11 +108,12 @@ int uds_create_thread(void (*thread_func)(void *),
 
 	result = pthread_create(&thread->thread, NULL, thread_starter, tsi);
 	if (result != 0) {
-		uds_log_error_strerror(errno, "could not create %s thread",
+		result = -errno;
+		uds_log_error_strerror(result, "could not create %s thread",
 				       name);
 		UDS_FREE(thread);
 		UDS_FREE(tsi);
-		return UDS_ENOTHREADS;
+		return result;
 	}
 	*new_thread = thread;
 	return UDS_SUCCESS;
