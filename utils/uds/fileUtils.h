@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.h#5 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.h#6 $
  */
 
 #ifndef FILE_UTILS_H
@@ -75,9 +75,7 @@ int __must_check open_file(const char *path, enum file_access access, int *fd);
  * @param error_message The error message to log if the close fails (if
  *                      <code>NULL</code>, no error will be logged).
  *
- * @return UDS_SUCCESS          on success
- *         UDS_EIO              if there was an I/O error closing the file
- *         UDS_ASSERTION_FAILED if there was any other error
+ * @return UDS_SUCCESS or an error code
  **/
 int close_file(int fd, const char *error_message);
 
@@ -95,10 +93,7 @@ void try_close_file(int fd);
  * @param error_message The error message to log if the close fails (if
  *                      <code>NULL</code>, no error will be logged).
  *
- * @return UDS_SUCCESS          on success
- *         UDS_EIO              if there was an I/O error syncing or closing
- *                              the file
- *         UDS_ASSERTION_FAILED if there was any other error
+ * @return UDS_SUCCESS or an error code
  **/
 int __must_check sync_and_close_file(int fd, const char *error_message);
 
