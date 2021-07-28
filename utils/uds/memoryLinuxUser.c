@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#5 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/memoryLinuxUser.c#8 $
  */
 
 #include <errno.h>
@@ -26,7 +26,7 @@
 #include "stringUtils.h"
 
 /**********************************************************************/
-int allocate_memory(size_t size, size_t align, const char *what, void *ptr)
+int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 {
 	if (ptr == NULL) {
 		return UDS_INVALID_ARGUMENT;
@@ -42,24 +42,24 @@ int allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 		int result = posix_memalign(&p, align, size);
 		if (result != 0) {
 			if (what != NULL) {
-				log_error_strerror(result,
-						   "failed to posix_memalign %s (%zu bytes)",
-						   what,
-						   size);
+				uds_log_error_strerror(result,
+						       "failed to posix_memalign %s (%zu bytes)",
+						       what,
+						       size);
 			}
-			return result;
+			return -result;
 		}
 	} else {
 		p = malloc(size);
 		if (p == NULL) {
 			int result = errno;
 			if (what != NULL) {
-				log_error_strerror(result,
-						   "failed to allocate %s (%zu bytes)",
-						   what,
-						   size);
+				uds_log_error_strerror(result,
+						       "failed to allocate %s (%zu bytes)",
+						       what,
+						       size);
 			}
-			return result;
+			return -result;
 		}
 	}
 	memset(p, 0, size);
@@ -68,24 +68,24 @@ int allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 }
 
 /**********************************************************************/
-void free_memory(void *ptr)
+void uds_free_memory(void *ptr)
 {
 	free(ptr);
 }
 
 /**********************************************************************/
-int reallocate_memory(void *ptr,
-		      size_t old_size,
-		      size_t size,
-		      const char *what,
-		      void *new_ptr)
+int uds_reallocate_memory(void *ptr,
+			  size_t old_size,
+			  size_t size,
+			  const char *what,
+			  void *new_ptr)
 {
 	char *new = realloc(ptr, size);
 	if ((new == NULL) && (size != 0)) {
-		return log_error_strerror(errno,
-					  "failed to reallocate %s (%zu bytes)",
-					  what,
-					  size);
+		return uds_log_error_strerror(-errno,
+					      "failed to reallocate %s (%zu bytes)",
+					      what,
+					      size);
 	}
 
         if (size > old_size) {

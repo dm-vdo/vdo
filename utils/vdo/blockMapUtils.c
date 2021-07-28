@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/blockMapUtils.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/blockMapUtils.c#7 $
  */
 
 #include "blockMapUtils.h"
@@ -59,12 +59,12 @@ static int readAndExaminePage(UserVDO                 *vdo,
 
   result = readBlockMapPage(vdo->layer, pagePBN, vdo->states.vdo.nonce, page);
   if (result != VDO_SUCCESS) {
-    FREE(page);
+    UDS_FREE(page);
     return result;
   }
 
-  if (!is_block_map_page_initialized(page)) {
-    FREE(page);
+  if (!is_vdo_block_map_page_initialized(page)) {
+    UDS_FREE(page);
     return VDO_SUCCESS;
   }
 
@@ -75,28 +75,28 @@ static int readAndExaminePage(UserVDO                 *vdo,
   for (; blockMapSlot.slot < VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
         blockMapSlot.slot++) {
     struct data_location mapped
-      = unpack_block_map_entry(&page->entries[blockMapSlot.slot]);
+      = unpack_vdo_block_map_entry(&page->entries[blockMapSlot.slot]);
 
     result = examiner(blockMapSlot, height, mapped.pbn, mapped.state);
     if (result != VDO_SUCCESS) {
-      FREE(page);
+      UDS_FREE(page);
       return result;
     }
 
-    if (!is_mapped_location(&mapped)) {
+    if (!vdo_is_mapped_location(&mapped)) {
       continue;
     }
 
     if ((height > 0) && isValidDataBlock(vdo, mapped.pbn)) {
       result = readAndExaminePage(vdo, mapped.pbn, height - 1, examiner);
       if (result != VDO_SUCCESS) {
-        FREE(page);
+        UDS_FREE(page);
         return result;
       }
     }
   }
 
-  FREE(page);
+  UDS_FREE(page);
   return VDO_SUCCESS;
 }
 
@@ -154,16 +154,16 @@ static int readSlotFromPage(UserVDO                  *vdo,
 
   result = readBlockMapPage(vdo->layer, pbn, vdo->states.vdo.nonce, page);
   if (result != VDO_SUCCESS) {
-    FREE(page);
+    UDS_FREE(page);
     return result;
   }
 
   struct data_location mapped;
-  if (is_block_map_page_initialized(page)) {
-    mapped = unpack_block_map_entry(&page->entries[slot]);
+  if (is_vdo_block_map_page_initialized(page)) {
+    mapped = unpack_vdo_block_map_entry(&page->entries[slot]);
   } else {
     mapped = (struct data_location) {
-      .state = MAPPING_STATE_UNMAPPED,
+      .state = VDO_MAPPING_STATE_UNMAPPED,
       .pbn   = VDO_ZERO_BLOCK,
     };
   }
@@ -171,7 +171,7 @@ static int readSlotFromPage(UserVDO                  *vdo,
   *mappedStatePtr = mapped.state;
   *mappedPBNPtr   = mapped.pbn;
 
-  FREE(page);
+  UDS_FREE(page);
   return VDO_SUCCESS;
 }
 
@@ -181,8 +181,9 @@ int findLBNPage(UserVDO                 *vdo,
                 physical_block_number_t *pbnPtr)
 {
   if (lbn >= vdo->states.vdo.config.logical_blocks) {
-    warnx("VDO has only %" PRIu64 " logical blocks, cannot dump mapping for"
-          " LBA %" PRIu64, vdo->states.vdo.config.logical_blocks, lbn);
+    warnx("VDO has only %llu logical blocks, cannot dump mapping for LBA %llu",
+          (unsigned long long) vdo->states.vdo.config.logical_blocks,
+          (unsigned long long) lbn);
     return VDO_OUT_OF_RANGE;
   }
 
@@ -204,7 +205,7 @@ int findLBNPage(UserVDO                 *vdo,
     enum block_mapping_state state;
     int result = readSlotFromPage(vdo, pbn, slots[i], &pbn, &state);
     if ((result != VDO_SUCCESS) || (pbn == VDO_ZERO_BLOCK)
-        || (state == MAPPING_STATE_UNMAPPED)) {
+        || (state == VDO_MAPPING_STATE_UNMAPPED)) {
       *pbnPtr = VDO_ZERO_BLOCK;
       return result;
     }
@@ -228,7 +229,7 @@ int findLBNMapping(UserVDO                  *vdo,
 
   if (pagePBN == VDO_ZERO_BLOCK) {
     *pbnPtr   = VDO_ZERO_BLOCK;
-    *statePtr = MAPPING_STATE_UNMAPPED;
+    *statePtr = VDO_MAPPING_STATE_UNMAPPED;
     return VDO_SUCCESS;
   }
 
@@ -245,22 +246,24 @@ int readBlockMapPage(PhysicalLayer            *layer,
   int result = layer->reader(layer, pbn, 1, (char *) page);
   if (result != VDO_SUCCESS) {
     char errBuf[ERRBUF_SIZE];
-    printf("%" PRIu64 " unreadable : %s",
-           pbn, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    printf("%llu unreadable : %s",
+           (unsigned long long) pbn,
+           uds_string_error(result, errBuf, ERRBUF_SIZE));
     return result;
   }
 
   enum block_map_page_validity validity
-    = validate_block_map_page(page, nonce, pbn);
-  if (validity == BLOCK_MAP_PAGE_VALID) {
+    = validate_vdo_block_map_page(page, nonce, pbn);
+  if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
     return VDO_SUCCESS;
   }
 
-  if (validity == BLOCK_MAP_PAGE_BAD) {
-    warnx("Expected page %" PRIu64 " but got page %" PRIu64,
-          pbn, get_block_map_page_pbn(page));
+  if (validity == VDO_BLOCK_MAP_PAGE_BAD) {
+    warnx("Expected page %llu but got page %llu",
+          (unsigned long long) pbn,
+          (unsigned long long) get_vdo_block_map_page_pbn(page));
   }
 
-  mark_block_map_page_initialized(page, false);
+  mark_vdo_block_map_page_initialized(page, false);
   return VDO_SUCCESS;
 }

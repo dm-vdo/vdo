@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoAudit.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoAudit.c#8 $
  */
 
 #include <err.h>
@@ -148,8 +148,9 @@ static void usage(const char *progname, const char *usageOptionsString)
  **/
 static void printErrorCount(uint64_t errorCount, const char *errorName)
 {
-  printf("%" PRIu64" %s%s\n",
-         errorCount, errorName, ((errorCount == 1) ? "" : "s"));
+  printf("%llu%s%s\n",
+         (unsigned long long) errorCount, errorName,
+         ((errorCount == 1) ? "" : "s"));
 }
 
 /**
@@ -180,7 +181,7 @@ static void printSlabErrorHistogram(const SlabAudit *audit)
     }
     // Round up any fraction of a dot to a full dot.
     int width = compute_bucket_count(count * (uint64_t) scale,
-				     audit->badRefCounts);
+                                     audit->badRefCounts);
     printf("  %5d  %8u   %.*s\n", delta, count, width, HISTOGRAM_BAR);
   }
 
@@ -198,9 +199,8 @@ static void printSlabErrorSummary(const SlabAudit *audit)
     return;
   }
 
-  printf("slab %u at PBN %" PRIu64 " had ",
-         audit->slabNumber, audit->slabOrigin);
-
+  printf("slab %u at PBN %llu had ",
+         audit->slabNumber, (unsigned long long) audit->slabOrigin);
 
   if (audit->badRefCounts == 1) {
     printf("1 reference count error in SBN %u", audit->lastError);
@@ -233,9 +233,9 @@ static void printErrorSummary(void)
  **/
 static void freeAuditAllocations(void)
 {
-  FREE(slabSummaryEntries);
+  UDS_FREE(slabSummaryEntries);
   for (slab_count_t i = 0; i < vdo->slabCount; i++) {
-    FREE(slabs[i].refCounts);
+    UDS_FREE(slabs[i].refCounts);
   }
   freeVDOFromFile(&vdo);
 }
@@ -320,14 +320,16 @@ static void reportBlockMapEntry(const char               *message,
     return;
   }
 
-  if (is_compressed(state)) {
-    warnx("Mapping at (page %" PRIu64 ", slot %u) (height %u)"
-          " %s (PBN %" PRIu64 ", state %u)\n",
-          slot.pbn, slot.slot, height, message, pbn, state);
+  if (vdo_is_state_compressed(state)) {
+    warnx("Mapping at (page %llu, slot %u) (height %u)"
+          " %s (PBN %llu, state %u)\n",
+          (unsigned long long) slot.pbn, slot.slot, height, message,
+          (unsigned long long) pbn, state);
   } else {
-    warnx("Mapping at (page %" PRIu64 ", slot %u) (height %u)"
-          " %s (PBN %" PRIu64 ")\n",
-          slot.pbn, slot.slot, height, message, pbn);
+    warnx("Mapping at (page %llu, slot %u) (height %u)"
+          " %s (PBN %llu)\n",
+          (unsigned long long) slot.pbn, slot.slot, height, message,
+          (unsigned long long) pbn);
   }
 }
 
@@ -341,7 +343,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
                                 physical_block_number_t  pbn,
                                 enum block_mapping_state state)
 {
-  if (state == MAPPING_STATE_UNMAPPED) {
+  if (state == VDO_MAPPING_STATE_UNMAPPED) {
     if (pbn != VDO_ZERO_BLOCK) {
       reportBlockMapEntry("is unmapped but has a physical block",
                           slot, height, pbn, state);
@@ -350,7 +352,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
     return VDO_SUCCESS;
   }
 
-  if (is_compressed(state) && (pbn == VDO_ZERO_BLOCK)) {
+  if (vdo_is_state_compressed(state) && (pbn == VDO_ZERO_BLOCK)) {
     reportBlockMapEntry("is compressed but has no physical block",
                         slot, height, pbn, state);
     return VDO_BAD_MAPPING;
@@ -388,7 +390,7 @@ static int examineBlockMapEntry(struct block_map_slot    slot,
     }
 
     // If this interior tree block appears to be compressed, warn.
-    if (is_compressed(state)) {
+    if (vdo_is_state_compressed(state)) {
       reportBlockMapEntry("refers to compressed fragment",
                           slot, height, pbn, state);
     }
@@ -441,10 +443,10 @@ static void reportRefCount(SlabAudit         *audit,
     return;
   }
 
-  warnx("Reference mismatch for%s pbn %" PRIu64 "\n"
+  warnx("Reference mismatch for%s pbn %llu\n"
         "Block map had %u but%s slab %u had %u\n",
         (treePage ? " tree page" : ""),
-        audit->slabOrigin + sbn,
+        (unsigned long long) audit->slabOrigin + sbn,
         auditedReferences,
         (pristine ? " (uninitialized)" : ""),
         audit->slabNumber,
@@ -559,9 +561,10 @@ static void verifySummaryHint(slab_count_t  slabNumber,
       || (freeBlocks >= (freeBlockHint + hintError))) {
     badSummaryHints++;
     if (verbose) {
-      warnx("Slab summary reports roughly %" PRIu64 " free blocks in\n"
-            "slab %u, instead of %" PRIu64 " blocks",
-            freeBlockHint, slabNumber, freeBlocks);
+      warnx("Slab summary reports roughly %llu free blocks in\n"
+            "slab %u, instead of %llu blocks",
+            (unsigned long long) freeBlockHint, slabNumber,
+            (unsigned long long) freeBlocks);
     }
   }
 }
@@ -643,7 +646,7 @@ static int verifyPBNRefCounts(void)
     return result;
   }
 
-  hintShift = get_slab_summary_hint_shift(vdo->slabSizeShift);
+  hintShift = get_vdo_slab_summary_hint_shift(vdo->slabSizeShift);
   for (slab_count_t slabNumber = 0; slabNumber < vdo->slabCount;
        slabNumber++) {
     result = verifySlab(slabNumber, buffer);
@@ -652,7 +655,7 @@ static int verifyPBNRefCounts(void)
     }
   }
 
-  FREE(buffer);
+  UDS_FREE(buffer);
   return result;
 }
 
@@ -690,10 +693,12 @@ static bool auditVDO(void)
   block_count_t savedLBNCount
     = vdo->states.recovery_journal.logical_blocks_used;
   if (lbnCount == savedLBNCount) {
-    warnx("Logical block count matched at %" PRIu64, savedLBNCount);
+    warnx("Logical block count matched at %llu",
+          (unsigned long long) savedLBNCount);
   } else {
-    warnx("Logical block count mismatch! Expected %" PRIu64 ", got %" PRIu64,
-          savedLBNCount, lbnCount);
+    warnx("Logical block count mismatch! Expected %llu, got %llu",
+          (unsigned long long) savedLBNCount,
+          (unsigned long long) lbnCount);
   }
 
   // Now confirm the stored references of all physical blocks.
@@ -712,7 +717,7 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));
@@ -732,9 +737,9 @@ int main(int argc, char *argv[])
   struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
   physical_block_number_t slabOrigin = depot.first_block;
   slabDataBlocks = depot.slab_config.data_blocks;
-  slab_count_t slabCount = compute_slab_count(depot.first_block,
-                                              depot.last_block,
-                                              vdo->slabSizeShift);
+  slab_count_t slabCount = compute_vdo_slab_count(depot.first_block,
+                                                  depot.last_block,
+                                                  vdo->slabSizeShift);
   for (slab_count_t i = 0; i < slabCount; i++) {
     SlabAudit *audit = &slabs[i];
     audit->slabNumber = i;
@@ -743,11 +748,13 @@ int main(int argc, char *argv[])
     // So firstError = min(firstError, x) will always do the right thing.
     audit->firstError = (slab_block_number) -1;
 
-    result = ALLOCATE(slabDataBlocks, uint8_t, __func__, &audit->refCounts);
+    result
+      = UDS_ALLOCATE(slabDataBlocks, uint8_t, __func__, &audit->refCounts);
     if (result != VDO_SUCCESS) {
       freeAuditAllocations();
-      errx(1, "Could not allocate %" PRIu64 " reference counts: %s",
-           slabDataBlocks, uds_string_error(result, errBuf, ERRBUF_SIZE));
+      errx(1, "Could not allocate %llu reference counts: %s",
+           (unsigned long long) slabDataBlocks,
+           uds_string_error(result, errBuf, ERRBUF_SIZE));
     }
   }
 

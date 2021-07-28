@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/stringUtils.c#6 $
+ * $Id: //eng/uds-releases/krusty/src/uds/stringUtils.c#11 $
  */
 
 #include "stringUtils.h"
@@ -28,14 +28,15 @@
 #include "uds.h"
 
 /**********************************************************************/
-int alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
+int uds_alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 {
+	va_list args;
+	int result;
 	if (strp == NULL) {
 		return UDS_INVALID_ARGUMENT;
 	}
-	va_list args;
 	va_start(args, fmt);
-	int result = vasprintf(strp, fmt, args) == -1 ? ENOMEM : UDS_SUCCESS;
+	result = vasprintf(strp, fmt, args) == -1 ? -ENOMEM : UDS_SUCCESS;
 	va_end(args);
 	if ((result != UDS_SUCCESS) && (what != NULL)) {
 		uds_log_error("cannot allocate %s", what);
@@ -44,57 +45,59 @@ int alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 }
 
 /**********************************************************************/
-int wrap_vsnprintf(const char *what,
-		   char *buf,
-		   size_t buf_size,
-		   int error,
-		   const char *fmt,
-		   va_list ap,
-		   size_t *needed)
+int uds_wrap_vsnprintf(const char *what,
+		       char *buf,
+		       size_t buf_size,
+		       int error,
+		       const char *fmt,
+		       va_list ap,
+		       size_t *needed)
 {
+	int n;
 	if (buf == NULL) {
 		static char nobuf[1];
 		buf = nobuf;
 		buf_size = 0;
 	}
-	int n = vsnprintf(buf, buf_size, fmt, ap);
+	n = vsnprintf(buf, buf_size, fmt, ap);
 	if (n < 0) {
-		return log_error_strerror(UDS_UNEXPECTED_RESULT,
-					  "%s: vsnprintf failed", what);
+		return uds_log_error_strerror(UDS_UNEXPECTED_RESULT,
+					      "%s: vsnprintf failed", what);
 	}
 	if (needed) {
 		*needed = n;
 	}
 	if (((size_t) n >= buf_size) && (buf != NULL) &&
 	    (error != UDS_SUCCESS)) {
-		return log_error_strerror(error,
-					  "%s: string too long", what);
+		return uds_log_error_strerror(error,
+					      "%s: string too long", what);
 	}
 	return UDS_SUCCESS;
 }
 
 /**********************************************************************/
-int fixed_sprintf(const char *what,
-		  char *buf,
-		  size_t buf_size,
-		  int error,
-		  const char *fmt,
-		  ...)
+int uds_fixed_sprintf(const char *what,
+		      char *buf,
+		      size_t buf_size,
+		      int error,
+		      const char *fmt,
+		      ...)
 {
+	va_list args;
+	int result;
 	if (buf == NULL) {
 		return UDS_INVALID_ARGUMENT;
 	}
-	va_list args;
 	va_start(args, fmt);
-	int result =
-		wrap_vsnprintf(what, buf, buf_size, error, fmt, args, NULL);
+	result = uds_wrap_vsnprintf(what, buf, buf_size, error, fmt, args,
+				    NULL);
 	va_end(args);
 	return result;
 }
 
 /**********************************************************************/
-char *
-v_append_to_buffer(char *buffer, char *buf_end, const char *fmt, va_list args)
+char *uds_v_append_to_buffer(char *buffer, char *buf_end, const char *fmt,
+			     va_list args)
 {
 	size_t n = vsnprintf(buffer, buf_end - buffer, fmt, args);
 	if (n >= (size_t)(buf_end - buffer)) {
@@ -106,21 +109,22 @@ v_append_to_buffer(char *buffer, char *buf_end, const char *fmt, va_list args)
 }
 
 /**********************************************************************/
-char *append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
+char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
 {
 	va_list ap;
+	char *pos;
 
 	va_start(ap, fmt);
-	char *pos = v_append_to_buffer(buffer, buf_end, fmt, ap);
+	pos = uds_v_append_to_buffer(buffer, buf_end, fmt, ap);
 	va_end(ap);
 	return pos;
 }
 
 /**********************************************************************/
-int string_to_signed_int(const char *nptr, int *num)
+int uds_string_to_signed_int(const char *nptr, int *num)
 {
 	long value;
-	int result = string_to_signed_long(nptr, &value);
+	int result = uds_string_to_signed_long(nptr, &value);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -132,10 +136,10 @@ int string_to_signed_int(const char *nptr, int *num)
 }
 
 /**********************************************************************/
-int string_to_unsigned_int(const char *nptr, unsigned int *num)
+int uds_string_to_unsigned_int(const char *nptr, unsigned int *num)
 {
 	unsigned long value;
-	int result = string_to_unsigned_long(nptr, &value);
+	int result = uds_string_to_unsigned_long(nptr, &value);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}

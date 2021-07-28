@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/threads.h#11 $
+ * $Id: //eng/uds-releases/krusty/src/uds/threads.h#12 $
  */
 
 #ifndef THREADS_H
@@ -52,12 +52,12 @@ struct barrier {
 };
 
 #ifndef NDEBUG
-#define MUTEX_INITIALIZER PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
+#define UDS_MUTEX_INITIALIZER PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
 #else
-#define MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+#define UDS_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 #endif
 
-extern const bool DO_ASSERTIONS;
+extern const bool UDS_DO_ASSERTIONS;
 
 
 /**
@@ -70,10 +70,10 @@ extern const bool DO_ASSERTIONS;
  *
  * @return       success or failure indication
  **/
-int __must_check create_thread(void (*thread_func)(void *),
-			       void *thread_data,
-			       const char *name,
-			       struct thread **new_thread);
+int __must_check uds_create_thread(void (*thread_func)(void *),
+				   void *thread_data,
+				   const char *name,
+				   struct thread **new_thread);
 
 /**
  * Retrieve the current numbers of cores.
@@ -83,21 +83,21 @@ int __must_check create_thread(void (*thread_func)(void *),
  *
  * @return      number of cores
  **/
-unsigned int get_num_cores(void);
+unsigned int uds_get_num_cores(void);
 
 /**
  * Return the id of the current thread.
  *
  * @return the thread id
  **/
-pid_t __must_check get_thread_id(void);
+pid_t __must_check uds_get_thread_id(void);
 
 /**
  * Get the name of the current thread.
  *
  * @param name   a buffer of size at least 16 to write the name to
  **/
-void get_thread_name(char *name);
+void uds_get_thread_name(char *name);
 
 /**
  * Wait for termination of another thread.
@@ -107,7 +107,7 @@ void get_thread_name(char *name);
  *
  * @return               UDS_SUCCESS or error code
  **/
-int join_threads(struct thread *th);
+int uds_join_threads(struct thread *th);
 
 
 /**
@@ -119,8 +119,8 @@ int join_threads(struct thread *th);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check initialize_barrier(struct barrier *barrier,
-				    unsigned int thread_count);
+int __must_check uds_initialize_barrier(struct barrier *barrier,
+					unsigned int thread_count);
 
 /**
  * Destroy a thread synchronization barrier.
@@ -129,7 +129,7 @@ int __must_check initialize_barrier(struct barrier *barrier,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int destroy_barrier(struct barrier *barrier);
+int uds_destroy_barrier(struct barrier *barrier);
 
 /**
  * Enter a thread synchronization barrier, waiting for the configured number
@@ -142,7 +142,7 @@ int destroy_barrier(struct barrier *barrier);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int enter_barrier(struct barrier *barrier, bool *winner);
+int uds_enter_barrier(struct barrier *barrier, bool *winner);
 
 /**
  * Initialize a condition variable with default attributes.
@@ -151,7 +151,7 @@ int enter_barrier(struct barrier *barrier, bool *winner);
  *
  * @return           UDS_SUCCESS or error code
  **/
-int __must_check init_cond(struct cond_var *cond);
+int __must_check uds_init_cond(struct cond_var *cond);
 
 /**
  * Signal a condition variable.
@@ -160,7 +160,7 @@ int __must_check init_cond(struct cond_var *cond);
  *
  * @return      UDS_SUCCESS or error code
  **/
-int signal_cond(struct cond_var *cond);
+int uds_signal_cond(struct cond_var *cond);
 
 /**
  * Broadcast a condition variable.
@@ -169,7 +169,7 @@ int signal_cond(struct cond_var *cond);
  *
  * @return      UDS_SUCCESS or error code
  **/
-int broadcast_cond(struct cond_var *cond);
+int uds_broadcast_cond(struct cond_var *cond);
 
 /**
  * Wait on a condition variable.
@@ -179,7 +179,7 @@ int broadcast_cond(struct cond_var *cond);
  *
  * @return        UDS_SUCCESS or error code
  **/
-int wait_cond(struct cond_var *cond, struct mutex *mutex);
+int uds_wait_cond(struct cond_var *cond, struct mutex *mutex);
 
 /**
  * Wait on a condition variable with a timeout.
@@ -190,9 +190,9 @@ int wait_cond(struct cond_var *cond, struct mutex *mutex);
  *
  * @return error code (ETIMEDOUT if the deadline is hit)
  **/
-int timed_wait_cond(struct cond_var *cond,
-		    struct mutex *mutex,
-		    ktime_t timeout);
+int uds_timed_wait_cond(struct cond_var *cond,
+			struct mutex *mutex,
+			ktime_t timeout);
 
 /**
  * Destroy a condition variable.
@@ -201,7 +201,7 @@ int timed_wait_cond(struct cond_var *cond,
  *
  * @return      UDS_SUCCESS or error code
  **/
-int destroy_cond(struct cond_var *cond);
+int uds_destroy_cond(struct cond_var *cond);
 
 /**
  * Initialize a mutex, optionally asserting if the mutex initialization fails.
@@ -214,7 +214,7 @@ int destroy_cond(struct cond_var *cond);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int initialize_mutex(struct mutex *mutex, bool assert_on_error);
+int uds_initialize_mutex(struct mutex *mutex, bool assert_on_error);
 
 /**
  * Initialize the default type (error-checking during development) mutex.
@@ -223,7 +223,7 @@ int initialize_mutex(struct mutex *mutex, bool assert_on_error);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check init_mutex(struct mutex *mutex);
+int __must_check uds_init_mutex(struct mutex *mutex);
 
 /**
  * Destroy a mutex (with error checking during development).
@@ -232,21 +232,21 @@ int __must_check init_mutex(struct mutex *mutex);
  *
  * @return UDS_SUCCESS or error code
  **/
-int destroy_mutex(struct mutex *mutex);
+int uds_destroy_mutex(struct mutex *mutex);
 
 /**
  * Lock a mutex, with optional error checking during development.
  *
  * @param mutex mutex to lock
  **/
-void lock_mutex(struct mutex *mutex);
+void uds_lock_mutex(struct mutex *mutex);
 
 /**
  * Unlock a mutex, with optional error checking during development.
  *
  * @param mutex mutex to unlock
  **/
-void unlock_mutex(struct mutex *mutex);
+void uds_unlock_mutex(struct mutex *mutex);
 
 /**
  * Initialize a semaphore used among threads in the same process.
@@ -256,8 +256,8 @@ void unlock_mutex(struct mutex *mutex);
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check initialize_semaphore(struct semaphore *semaphore,
-				      unsigned int value);
+int __must_check uds_initialize_semaphore(struct semaphore *semaphore,
+					  unsigned int value);
 
 /**
  * Destroy a semaphore used among threads in the same process.
@@ -266,14 +266,14 @@ int __must_check initialize_semaphore(struct semaphore *semaphore,
  *
  * @return UDS_SUCCESS or an error code
  **/
-int destroy_semaphore(struct semaphore *semaphore);
+int uds_destroy_semaphore(struct semaphore *semaphore);
 
 /**
  * Acquire a permit from a semaphore, waiting if none are currently available.
  *
  * @param semaphore the semaphore to acquire
  **/
-void acquire_semaphore(struct semaphore *semaphore);
+void uds_acquire_semaphore(struct semaphore *semaphore);
 
 /**
  * Attempt to acquire a permit from a semaphore.
@@ -289,22 +289,22 @@ void acquire_semaphore(struct semaphore *semaphore);
  *
  * @return true if a permit was acquired, otherwise false
  **/
-bool __must_check attempt_semaphore(struct semaphore *semaphore,
-				    ktime_t timeout);
+bool __must_check uds_attempt_semaphore(struct semaphore *semaphore,
+					ktime_t timeout);
 
 /**
  * Release a semaphore, incrementing the number of available permits.
  *
  * @param semaphore the semaphore to increment
  **/
-void release_semaphore(struct semaphore *semaphore);
+void uds_release_semaphore(struct semaphore *semaphore);
 
 /**
  * Yield the time slice in the given thread.
  *
  * @return UDS_SUCCESS or an error code
  **/
-int yield_scheduler(void);
+int uds_yield_scheduler(void);
 
 /**
  * Allocate a thread specific key for thread specific data.
@@ -314,7 +314,7 @@ int yield_scheduler(void);
  *
  * @return               UDS_SUCCESS or error code
  **/
-int create_thread_key(pthread_key_t *key, void (*destr_function)(void *));
+int uds_create_thread_key(pthread_key_t *key, void (*destr_function)(void *));
 
 /**
  * Delete a thread specific key for thread specific data.
@@ -323,7 +323,7 @@ int create_thread_key(pthread_key_t *key, void (*destr_function)(void *));
  *
  * @return     UDS_SUCCESS or error code
  **/
-int delete_thread_key(pthread_key_t key);
+int uds_delete_thread_key(pthread_key_t key);
 
 /**
  * Set pointer for thread specific data.
@@ -333,13 +333,13 @@ int delete_thread_key(pthread_key_t key);
  *
  * @return         UDS_SUCCESS or error code
  **/
-int set_thread_specific(pthread_key_t key, const void *pointer);
+int uds_set_thread_specific(pthread_key_t key, const void *pointer);
 
 /**
  * Get pointer for thread specific data.
  *
  * @param key  key identifying the thread specific data
  **/
-void *get_thread_specific(pthread_key_t key);
+void *uds_get_thread_specific(pthread_key_t key);
 
 #endif /* THREADS_H */

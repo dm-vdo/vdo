@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/config.c#7 $
+ * $Id: //eng/uds-releases/krusty/src/uds/config.c#10 $
  */
 
 #include "config.h"
@@ -32,9 +32,9 @@ void free_index_location(struct index_location *loc)
 		return;
 	}
 
-	FREE(loc->host);
-	FREE(loc->port);
-	FREE(loc->directory);
+	UDS_FREE(loc->host);
+	UDS_FREE(loc->port);
+	UDS_FREE(loc->directory);
 }
 
 /**********************************************************************/
@@ -85,9 +85,9 @@ bool are_uds_configurations_equal(struct uds_configuration *a,
 		result = false;
 	}
 	if (a->nonce != b->nonce) {
-		uds_log_error("Nonce (%" PRIu64 ") does not match (%" PRIu64 ")",
-			      a->nonce,
-			      b->nonce);
+		uds_log_error("Nonce (%llu) does not match (%llu)",
+			      (unsigned long long) a->nonce,
+			      (unsigned long long) b->nonce);
 		result = false;
 	}
 	return result;
@@ -96,18 +96,21 @@ bool are_uds_configurations_equal(struct uds_configuration *a,
 /**********************************************************************/
 void log_uds_configuration(struct uds_configuration *conf)
 {
-	log_debug("Configuration:");
-	log_debug("  Record pages per chapter:   %10u",
-		  conf->record_pages_per_chapter);
-	log_debug("  Chapters per volume:        %10u",
-		  conf->chapters_per_volume);
-	log_debug("  Sparse chapters per volume: %10u",
-		  conf->sparse_chapters_per_volume);
-	log_debug("  Cache size (chapters):      %10u", conf->cache_chapters);
-	log_debug("  Volume index mean delta:    %10u",
-		  conf->volume_index_mean_delta);
-	log_debug("  Bytes per page:             %10u", conf->bytes_per_page);
-	log_debug("  Sparse sample rate:         %10u",
-		  conf->sparse_sample_rate);
-	log_debug("  Nonce:                      %" PRIu64, conf->nonce);
+	uds_log_debug("Configuration:");
+	uds_log_debug("  Record pages per chapter:   %10u",
+		      conf->record_pages_per_chapter);
+	uds_log_debug("  Chapters per volume:        %10u",
+		      conf->chapters_per_volume);
+	uds_log_debug("  Sparse chapters per volume: %10u",
+		      conf->sparse_chapters_per_volume);
+	uds_log_debug("  Cache size (chapters):      %10u",
+		      conf->cache_chapters);
+	uds_log_debug("  Volume index mean delta:    %10u",
+		      conf->volume_index_mean_delta);
+	uds_log_debug("  Bytes per page:             %10u",
+		      conf->bytes_per_page);
+	uds_log_debug("  Sparse sample rate:         %10u",
+		      conf->sparse_sample_rate);
+	uds_log_debug("  Nonce:                      %llu",
+		      (unsigned long long) conf->nonce);
 }

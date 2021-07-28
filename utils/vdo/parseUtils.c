@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/parseUtils.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/parseUtils.c#2 $
  */
 
 #include "parseUtils.h"
@@ -114,7 +114,7 @@ static int parseMem(char *string, uint32_t *sizePtr)
     mem = UDS_MEMORY_CONFIG_768MB;
   } else {
     unsigned long number;
-    if (string_to_unsigned_long(string, &number) != UDS_SUCCESS) {
+    if (uds_string_to_unsigned_long(string, &number) != UDS_SUCCESS) {
       return -EINVAL;
     }
     mem = number;
@@ -145,8 +145,9 @@ int parseIndexConfig(UdsConfigStrings    *configStrings,
 
   if (configStrings->checkpointFrequency != NULL) {
     unsigned long number;
-    int result = string_to_unsigned_long(configStrings->checkpointFrequency,
-                                         &number);
+    int result
+      = uds_string_to_unsigned_long(configStrings->checkpointFrequency,
+                                    &number);
     if (result != UDS_SUCCESS) {
       return result;
     }

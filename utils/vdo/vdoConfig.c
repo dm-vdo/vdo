@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoConfig.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoConfig.c#10 $
  */
 
 #include <uuid/uuid.h>
@@ -54,11 +54,12 @@ int makeFixedLayoutFromConfig(const struct vdo_config  *config,
                               physical_block_number_t   startingOffset,
                               struct fixed_layout     **layoutPtr)
 {
-  return make_vdo_fixed_layout(config->physical_blocks, startingOffset,
-                               DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
-                               config->recovery_journal_size,
-                               get_slab_summary_size(VDO_BLOCK_SIZE),
-                               layoutPtr);
+  return make_partitioned_vdo_fixed_layout(config->physical_blocks,
+                                           startingOffset,
+                                           DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
+                                           config->recovery_journal_size,
+                                           get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
+                                           layoutPtr);
 }
 
 struct recovery_journal_state_7_0 __must_check configureRecoveryJournal(void)
@@ -86,10 +87,8 @@ computeForestSize(block_count_t logicalBlocks,
                   root_count_t  rootCount)
 {
   struct boundary newSizes;
-  block_count_t approximateNonLeaves = compute_new_forest_pages(rootCount,
-                                                                NULL,
-                                                                logicalBlocks,
-                                                                &newSizes);
+  block_count_t approximateNonLeaves
+    = vdo_compute_new_forest_pages(rootCount, NULL, logicalBlocks, &newSizes);
 
   // Exclude the tree roots since those aren't allocated from slabs,
   // and also exclude the super-roots, which only exist in memory.
@@ -98,7 +97,7 @@ computeForestSize(block_count_t logicalBlocks,
                  newSizes.levels[VDO_BLOCK_MAP_TREE_HEIGHT - 1]);
 
   block_count_t approximateLeaves =
-    compute_block_map_page_count(logicalBlocks - approximateNonLeaves);
+    compute_vdo_block_map_page_count(logicalBlocks - approximateNonLeaves);
 
   // This can be a slight over-estimate since the tree will never have to
   // address these blocks, so it might be a tiny bit smaller.
@@ -118,8 +117,8 @@ static int __must_check configureVDO(UserVDO *vdo)
 
   // The layout starts 1 block past the beginning of the data region, as the
   // data region contains the super block but the layout does not.
-  physical_block_number_t startingOffset =
-    get_data_region_offset(vdo->geometry) + 1;
+  physical_block_number_t startingOffset
+    = vdo_get_data_region_start(vdo->geometry) + 1;
   int result = makeFixedLayoutFromConfig(config, startingOffset,
                                          &vdo->states.layout);
   if (result != VDO_SUCCESS) {
@@ -129,9 +128,9 @@ static int __must_check configureVDO(UserVDO *vdo)
   vdo->states.recovery_journal = configureRecoveryJournal();
 
   struct slab_config slabConfig;
-  result = configure_slab(config->slab_size,
-                          config->slab_journal_blocks,
-                          &slabConfig);
+  result = configure_vdo_slab(config->slab_size,
+                              config->slab_journal_blocks,
+                              &slabConfig);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -143,9 +142,12 @@ static int __must_check configureVDO(UserVDO *vdo)
     return result;
   }
 
-  result = configure_slab_depot(get_fixed_layout_partition_size(partition),
-                                get_fixed_layout_partition_offset(partition),
-                                slabConfig, 0, &vdo->states.slab_depot);
+  physical_block_number_t partitionOffset
+    = get_vdo_fixed_layout_partition_offset(partition);
+  result
+    = configure_vdo_slab_depot(get_vdo_fixed_layout_partition_size(partition),
+                               partitionOffset,
+                               slabConfig, 0, &vdo->states.slab_depot);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -163,7 +165,7 @@ static int __must_check configureVDO(UserVDO *vdo)
   vdo->states.block_map = (struct block_map_state_2_0) {
     .flat_page_origin = VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN,
     .flat_page_count = 0,
-    .root_origin = get_fixed_layout_partition_offset(partition),
+    .root_origin = get_vdo_fixed_layout_partition_offset(partition),
     .root_count = DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
   };
 
@@ -195,7 +197,7 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 
   block_count_t indexSize = 0;
   if (indexConfig != NULL) {
-    int result = compute_index_blocks(indexConfig, &indexSize);
+    int result = vdo_compute_index_blocks(indexConfig, &indexSize);
     if (result != VDO_SUCCESS) {
       return result;
     }
@@ -203,7 +205,7 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 
   block_count_t blockMapBlocks = DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT;
   block_count_t journalBlocks  = config->recovery_journal_size;
-  block_count_t summaryBlocks  = get_slab_summary_size(VDO_BLOCK_SIZE);
+  block_count_t summaryBlocks  = get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
   block_count_t slabBlocks     = config->slab_size;
 
   // The +2 takes into account the super block and geometry block.
@@ -226,13 +228,14 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 static int __must_check clearPartition(UserVDO *vdo, enum partition_id id)
 {
   struct partition *partition;
-  int result = get_partition(vdo->states.layout, id, &partition);
+  int result = vdo_get_partition(vdo->states.layout, id, &partition);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  block_count_t size = get_fixed_layout_partition_size(partition);
-  physical_block_number_t start = get_fixed_layout_partition_offset(partition);
+  block_count_t size = get_vdo_fixed_layout_partition_size(partition);
+  physical_block_number_t start
+    = get_vdo_fixed_layout_partition_offset(partition);
 
   block_count_t bufferBlocks = 1;
   for (block_count_t n = size;
@@ -255,7 +258,7 @@ static int __must_check clearPartition(UserVDO *vdo, enum partition_id id)
     result = vdo->layer->writer(vdo->layer, pbn, bufferBlocks, zeroBuffer);
   }
 
-  FREE(zeroBuffer);
+  UDS_FREE(zeroBuffer);
   return result;
 }
 
@@ -274,13 +277,13 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
                                 nonce_t                    nonce,
                                 uuid_t                    *uuid)
 {
-  int result = initialize_volume_geometry(nonce, uuid, indexConfig,
-                                          &vdo->geometry);
+  int result = vdo_initialize_volume_geometry(nonce, uuid, indexConfig,
+                                              &vdo->geometry);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  result = clear_volume_geometry(vdo->layer);
+  result = vdo_clear_volume_geometry(vdo->layer);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -295,13 +298,13 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
 
   result = clearPartition(vdo, BLOCK_MAP_PARTITION);
   if (result != VDO_SUCCESS) {
-    return log_error_strerror(result, "cannot clear block map partition");
+    return uds_log_error_strerror(result, "cannot clear block map partition");
   }
 
   result = clearPartition(vdo, RECOVERY_JOURNAL_PARTITION);
   if (result != VDO_SUCCESS) {
-    return log_error_strerror(result,
-                              "cannot clear recovery journal partition");
+    return uds_log_error_strerror(result,
+                                  "cannot clear recovery journal partition");
   }
 
   return saveVDO(vdo, true);
@@ -314,7 +317,7 @@ int formatVDOWithNonce(const struct vdo_config   *config,
                        nonce_t                    nonce,
                        uuid_t                    *uuid)
 {
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -369,8 +372,8 @@ int forceVDORebuild(PhysicalLayer *layer)
 {
   int result = updateVDOSuperBlockState(layer, true, VDO_FORCE_REBUILD);
   if (result == VDO_NOT_READ_ONLY) {
-    return log_error_strerror(VDO_NOT_READ_ONLY,
-                              "Can't force rebuild on a normal VDO");
+    return uds_log_error_strerror(VDO_NOT_READ_ONLY,
+                                  "Can't force rebuild on a normal VDO");
   }
 
   return result;

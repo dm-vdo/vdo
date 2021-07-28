@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#11 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#16 $
  */
 
 #include <fcntl.h>
@@ -33,7 +33,7 @@
 #include "threads.h"
 #include "timeUtils.h"
 
-static struct mutex mutex = { .mutex = MUTEX_INITIALIZER };
+static struct mutex mutex = { .mutex = UDS_MUTEX_INITIALIZER };
 
 static int log_socket = -1;
 
@@ -82,10 +82,10 @@ static void open_socket_locked(void)
 /**********************************************************************/
 void mini_openlog(const char *ident, int option, int facility)
 {
-	lock_mutex(&mutex);
+	uds_lock_mutex(&mutex);
 	close_locked();
-	FREE(log_ident);
-	if (duplicate_string(ident, NULL, &log_ident) != UDS_SUCCESS) {
+	UDS_FREE(log_ident);
+	if (uds_duplicate_string(ident, NULL, &log_ident) != UDS_SUCCESS) {
 		// on failure, NULL is okay
 		log_ident = NULL;
 	}
@@ -94,7 +94,7 @@ void mini_openlog(const char *ident, int option, int facility)
 	if (log_option & LOG_NDELAY) {
 		open_socket_locked();
 	}
-	unlock_mutex(&mutex);
+	uds_unlock_mutex(&mutex);
 }
 
 /**********************************************************************/
@@ -119,14 +119,15 @@ static bool __must_check write_msg(int fd, const char *msg)
 }
 
 /**********************************************************************/
-__attribute__((format(printf, 3, 0))) static void log_it(int priority,
-							 const char *prefix,
-							 const char *format1,
-							 va_list args1,
-							 const char *format2,
-							 va_list args2)
+__printf(3, 0)
+static void log_it(int priority,
+		   const char *prefix,
+		   const char *format1,
+		   va_list args1,
+		   const char *format2,
+		   va_list args2)
 {
-	const char *priority_str = priority_to_string(priority);
+	const char *priority_str = uds_log_priority_to_string(priority);
 	char buffer[1024];
 	char *buf_end = buffer + sizeof(buffer);
 	char *bufp = buffer;
@@ -146,29 +147,30 @@ __attribute__((format(printf, 3, 0))) static void log_it(int priority,
 		priority |= default_facility;
 	}
 
-	bufp = append_to_buffer(bufp, buf_end, "<%d>%s", priority, timestamp);
+	bufp = uds_append_to_buffer(bufp, buf_end, "<%d>%s", priority,
+				    timestamp);
 	const char *stderr_msg = bufp;
-	bufp = append_to_buffer(bufp, buf_end, " %s",
-				log_ident == NULL ? "" : log_ident);
+	bufp = uds_append_to_buffer(bufp, buf_end, " %s",
+				    log_ident == NULL ? "" : log_ident);
 
 	if (log_option & LOG_PID) {
 		char tname[16];
-		get_thread_name(tname);
-		bufp = append_to_buffer(bufp,
-					buf_end,
-					"[%u]: %-6s (%s/%d) ",
-					getpid(),
-					priority_str,
-					tname,
-					get_thread_id());
+		uds_get_thread_name(tname);
+		bufp = uds_append_to_buffer(bufp,
+					    buf_end,
+					    "[%u]: %-6s (%s/%d) ",
+					    getpid(),
+					    priority_str,
+					    tname,
+					    uds_get_thread_id());
 	} else {
-		bufp = append_to_buffer(bufp, buf_end, ": ");
+		bufp = uds_append_to_buffer(bufp, buf_end, ": ");
 	}
 	if ((bufp + sizeof("...")) >= buf_end) {
 		return;
 	}
 	if (prefix != NULL) {
-		bufp = append_to_buffer(bufp, buf_end, "%s", prefix);
+		bufp = uds_append_to_buffer(bufp, buf_end, "%s", prefix);
 	}
 	if (format1 != NULL) {
 		int ret = vsnprintf(bufp, buf_end - bufp, format1, args1);
@@ -217,27 +219,27 @@ void mini_syslog_pack(int priority,
 		      const char *fmt2,
 		      va_list args2)
 {
-	lock_mutex(&mutex);
+	uds_lock_mutex(&mutex);
 	log_it(priority, prefix, fmt1, args1, fmt2, args2);
-	unlock_mutex(&mutex);
+	uds_unlock_mutex(&mutex);
 }
 
 void mini_vsyslog(int priority, const char *format, va_list ap)
 {
 	va_list dummy;
 	memset(&dummy, 0, sizeof(dummy));
-	lock_mutex(&mutex);
+	uds_lock_mutex(&mutex);
 	log_it(priority, NULL, format, ap, NULL, dummy);
-	unlock_mutex(&mutex);
+	uds_unlock_mutex(&mutex);
 }
 
 void mini_closelog(void)
 {
-	lock_mutex(&mutex);
+	uds_lock_mutex(&mutex);
 	close_locked();
-	FREE(log_ident);
+	UDS_FREE(log_ident);
 	log_ident = NULL;
 	log_option = 0;
 	default_facility = LOG_USER;
-	unlock_mutex(&mutex);
+	uds_unlock_mutex(&mutex);
 }

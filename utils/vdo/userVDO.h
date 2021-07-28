@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/userVDO.h#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/userVDO.h#2 $
  */
 
 #ifndef USER_VDO_H
@@ -157,7 +157,7 @@ int __must_check getSlabBlockNumber(const UserVDO           *vdo,
 
 /**
  * Check whether a given PBN is a valid PBN for a data block. This
- * recapitulates is_physical_data_block().
+ * recapitulates vdo_is_physical_data_block().
  *
  * @param vdo  The vdo
  * @param pbn  The PBN to check

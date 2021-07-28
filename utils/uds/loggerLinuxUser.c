@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#22 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/loggerLinuxUser.c#27 $
  */
 
 #include "logger.h"
@@ -47,9 +47,9 @@ static void init_logger(void)
 {
 	const char *uds_log_level = getenv("UDS_LOG_LEVEL");
 	if (uds_log_level != NULL) {
-		set_log_level(string_to_priority(uds_log_level));
+		set_uds_log_level(uds_log_string_to_priority(uds_log_level));
 	} else {
-		set_log_level(LOG_INFO);
+		set_uds_log_level(UDS_LOG_INFO);
 	}
 
 	char *timestamps_string = getenv(TIMESTAMPS_ENVIRONMENT_VARIABLE);
@@ -72,7 +72,7 @@ static void init_logger(void)
 		fp = fopen(log_file, "a");
 		if (fp != NULL) {
 			if (is_abs_path) {
-				FREE(log_file);
+				UDS_FREE(log_file);
 			}
 			opened = 1;
 			return;
@@ -81,11 +81,11 @@ static void init_logger(void)
 	}
 
 	char *identity;
-	if (alloc_sprintf(NULL, &identity, "%s/%s", IDENTITY,
-			  program_invocation_short_name) == UDS_SUCCESS) {
+	if (uds_alloc_sprintf(NULL, &identity, "%s/%s", IDENTITY,
+			      program_invocation_short_name) == UDS_SUCCESS) {
 		mini_openlog(identity, LOG_PID | LOG_NDELAY | LOG_CONS,
 			     LOG_USER);
-		FREE(identity);
+		UDS_FREE(identity);
 	} else {
 		mini_openlog(IDENTITY, LOG_PID | LOG_NDELAY | LOG_CONS,
 			     LOG_USER);
@@ -93,18 +93,18 @@ static void init_logger(void)
 	}
 
 	if (error != 0) {
-		log_error_strerror(error, "Couldn't open log file %s",
-				   log_file);
+		uds_log_error_strerror(error, "Couldn't open log file %s",
+				       log_file);
 	}
 
 	if (is_abs_path) {
-		FREE(log_file);
+		UDS_FREE(log_file);
 	}
 	opened = 1;
 }
 
 /**********************************************************************/
-void open_logger(void)
+void open_uds_logger(void)
 {
 	perform_once(&logger_once, init_logger);
 }
@@ -147,8 +147,8 @@ void uds_log_message_pack(int priority,
 			  const char *fmt2,
 			  va_list args2)
 	{
-	open_logger();
-	if (priority > get_log_level()) {
+	open_uds_logger();
+	if (priority > get_uds_log_level()) {
 		return;
 	}
 
@@ -160,7 +160,7 @@ void uds_log_message_pack(int priority,
 		mini_syslog_pack(priority, prefix, fmt1, args1, fmt2, args2);
 	} else {
 		char tname[16];
-		get_thread_name(tname);
+		uds_get_thread_name(tname);
 		flockfile(fp);
 
 		if (timestamps) {
@@ -175,10 +175,11 @@ void uds_log_message_pack(int priority,
 			fprintf(fp, "[%u]", getpid());
 		}
 
-		fprintf(fp, ": %-6s (%s", priority_to_string(priority), tname);
+		fprintf(fp, ": %-6s (%s", uds_log_priority_to_string(priority),
+			tname);
 
 		if (ids) {
-			fprintf(fp, "/%d", get_thread_id());
+			fprintf(fp, "/%d", uds_get_thread_id());
 		}
 
 		fputs(") ", fp);
@@ -242,7 +243,7 @@ static void log_proc_maps(int priority)
 enum { NUM_STACK_FRAMES = 32 };
 
 /**********************************************************************/
-void log_backtrace(int priority)
+void uds_log_backtrace(int priority)
 {
 	uds_log_message(priority, "[Call Trace:]");
 	void *trace[NUM_STACK_FRAMES];
@@ -261,7 +262,7 @@ void log_backtrace(int priority)
 }
 
 /**********************************************************************/
-void pause_for_logger(void)
+void uds_pause_for_logger(void)
 {
 	// User-space logger can't be overrun, so this is a no-op.
 }

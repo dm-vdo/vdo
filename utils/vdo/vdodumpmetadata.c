@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDumpMetadata.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDumpMetadata.c#10 $
  */
 
 #include <err.h>
@@ -113,8 +113,8 @@ static void freeAllocations(void)
 {
   freeVDOFromFile(&vdo);
   try_sync_and_close_file(outputFD);
-  FREE(buffer);
-  FREE(lbns);
+  UDS_FREE(buffer);
+  UDS_FREE(lbns);
   buffer = NULL;
 }
 
@@ -146,7 +146,7 @@ static void processArgs(int argc, char *argv[])
       }
 
       noBlockMap = true;
-      int result = parse_uint64(optarg, &lbns[lbnCount++]);
+      int result = uds_parse_uint64(optarg, &lbns[lbnCount++]);
       if (result != VDO_SUCCESS) {
         warnx("Cannot parse LBN as a number");
         usage(argv[0]);
@@ -221,14 +221,14 @@ static int copyPage(struct block_map_slot    slot __attribute__((unused)),
                     enum block_mapping_state state)
 {
   if ((height == 0) || !isValidDataBlock(vdo, pbn)
-      || (state == MAPPING_STATE_UNMAPPED)) {
+      || (state == VDO_MAPPING_STATE_UNMAPPED)) {
     // Nothing to add to the dump.
     return VDO_SUCCESS;
   }
 
   int result = copyBlocks(pbn, 1);
   if (result != VDO_SUCCESS) {
-    warnx("Could not copy block map page %" PRIu64, pbn);
+    warnx("Could not copy block map page %llu", (unsigned long long) pbn);
   }
   return result;
 }
@@ -247,13 +247,13 @@ static void dumpGeometryBlock(void)
 static void dumpSuperBlock(void)
 {
   struct volume_geometry geometry;
-  int result = load_volume_geometry(vdo->layer, &geometry);
+  int result = vdo_load_volume_geometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load geometry");
   }
 
   // Copy the super block.
-  result = copyBlocks(get_data_region_offset(geometry), 1);
+  result = copyBlocks(vdo_get_data_region_start(geometry), 1);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy super block");
   }
@@ -280,7 +280,8 @@ static void dumpBlockMap(void)
       physical_block_number_t pagePBN;
       int result = findLBNPage(vdo, lbns[i], &pagePBN);
       if (result != VDO_SUCCESS) {
-        errx(1, "Could not read block map for LBN %" PRIu64, lbns[i]);
+        errx(1, "Could not read block map for LBN %llu",
+             (unsigned long long) lbns[i]);
       }
 
       if (pagePBN == VDO_ZERO_BLOCK) {
@@ -289,7 +290,8 @@ static void dumpBlockMap(void)
         result = copyBlocks(pagePBN, 1);
       }
       if (result != VDO_SUCCESS) {
-        errx(1, "Could not copy block map for LBN %" PRIu64, lbns[i]);
+        errx(1, "Could not copy block map for LBN %llu",
+             (unsigned long long) lbns[i]);
       }
     }
   }
@@ -321,7 +323,7 @@ static void dumpRecoveryJournal(void)
   const struct partition *partition
     = getPartition(vdo, RECOVERY_JOURNAL_PARTITION,
                    "Could not copy recovery journal, no partition");
-  int result = copyBlocks(get_fixed_layout_partition_offset(partition),
+  int result = copyBlocks(get_vdo_fixed_layout_partition_offset(partition),
                           vdo->states.vdo.config.recovery_journal_size);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy recovery journal");
@@ -335,8 +337,8 @@ static void dumpSlabSummary(void)
   const struct partition *partition
     = getPartition(vdo, SLAB_SUMMARY_PARTITION,
                    "Could not copy slab summary, no partition");
-  int result = copyBlocks(get_fixed_layout_partition_offset(partition),
-                          get_slab_summary_size(VDO_BLOCK_SIZE));
+  int result = copyBlocks(get_vdo_fixed_layout_partition_offset(partition),
+                          get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy slab summary");
   }
@@ -347,15 +349,15 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
-  result = ALLOCATE(MAX_LBNS, physical_block_number_t, __func__, &lbns);
+  result = UDS_ALLOCATE(MAX_LBNS, physical_block_number_t, __func__, &lbns);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not allocate %" PRIu64 " bytes",
+    errx(1, "Could not allocate %zu bytes",
          sizeof(physical_block_number_t) * MAX_LBNS);
   }
 

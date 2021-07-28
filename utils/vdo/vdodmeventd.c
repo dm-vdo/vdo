@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDMEventd.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDMEventd.c#3 $
  */
 
 #include <dlfcn.h>
@@ -218,8 +218,8 @@ static int registerVDO(char * devName) {
     return result;
   }
 
-  log_info("VDO device %s is now registered with dmeventd "
-           "for monitoring", devName);
+  uds_log_info("VDO device %s is now registered with dmeventd for monitoring",
+               devName);
 
   return 0;
 }
@@ -256,8 +256,7 @@ static int unregisterVDO(char * devName) {
     return result;
   }
 
-  log_info("VDO device %s is now unregistered from dmeventd",
-           devName);
+  uds_log_info("VDO device %s is now unregistered from dmeventd", devName);
 
   return 0;
 }
@@ -285,7 +284,7 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));

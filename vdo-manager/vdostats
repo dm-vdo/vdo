@@ -22,7 +22,7 @@
 """
   vdoStats - Report statistics from a running VDO volume.
 
-  $Id: //eng/vdo-releases/sulfur/src/python/vdo/vdoStats#1 $
+  $Id: //eng/vdo-releases/sulfur/src/python/vdo/vdoStats#3 $
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -56,7 +56,7 @@ parser.add_argument("--verbose", "-v", action="store_true", dest="verbose",
 parser.add_argument("--version", "-V", action="store_true", dest="version",
                     help=_("Print the vdostats version number and exit"))
 parser.add_argument("devices", metavar="DEVICE", help="a VDO device", nargs="*")
-                    
+
 
 UNITS = [ 'B', 'K', 'M', 'G', 'T' ]
 
@@ -277,7 +277,7 @@ def main():
 
   options = parser.parse_args()
   if options.version:
-    print("{0}.{1}".format(CURRENT_RELEASE_VERSION_NUMBER,
+    print("{0}.{1}".format(VDO_CURRENT_RELEASE_VERSION_NUMBER,
                            VDOStatistics.statisticsVersion))
     sys.exit(0)
 
@@ -288,10 +288,7 @@ def main():
 
   dedupeFormatter = makeDedupeFormatter(options)
 
-  if options.verbose:
-    statsTypes = [VDOStatistics(), KernelStatistics()]
-  else:
-    statsTypes = [VDOStatistics()]
+  statsTypes = [VDOStatistics()]
 
   exitStatus = 0
   try:

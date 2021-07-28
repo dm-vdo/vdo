@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#9 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#13 $
  */
 
 #include "fileUtils.h"
@@ -92,19 +92,19 @@ int open_file(const char *path, enum file_access access, int *fd)
 		mode = 0666;
 		break;
 	default:
-		return log_warning_strerror(UDS_INVALID_ARGUMENT,
-					    "invalid access mode opening file %s",
-					    path);
+		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
+						"invalid access mode opening file %s",
+						path);
 	}
 
 	do {
 		ret_fd = open(path, flags, mode);
 	} while ((ret_fd == -1) && (errno == EINTR));
 	if (ret_fd < 0) {
-		return log_error_strerror(errno,
-					  "open_file(): failed opening %s with file access: %d",
-					  path,
-					  access);
+		return uds_log_error_strerror(errno,
+					      "open_file(): failed opening %s with file access: %d",
+					      path,
+					      access);
 	}
 	*fd = ret_fd;
 	return UDS_SUCCESS;
@@ -123,7 +123,7 @@ void try_close_file(int fd)
 	int result = close_file(fd, __func__);
 	errno = old_errno;
 	if (result != UDS_SUCCESS) {
-		log_debug_strerror(result, "error closing file");
+		uds_log_debug_strerror(result, "error closing file");
 	}
 }
 
@@ -143,8 +143,8 @@ void try_sync_and_close_file(int fd)
 {
 	int result = sync_and_close_file(fd, __func__);
 	if (result != UDS_SUCCESS) {
-		log_debug_strerror(result,
-				   "error syncing and closing file");
+		uds_log_debug_strerror(result,
+				       "error syncing and closing file");
 	}
 }
 
@@ -163,8 +163,8 @@ int read_buffer(int fd, void *buffer, unsigned int length)
 		}
 
 		if (bytes_read == 0) {
-			return log_warning_strerror(UDS_CORRUPT_FILE,
-						    "unexpected end of file while reading");
+			return uds_log_warning_strerror(UDS_CORRUPT_FILE,
+							"unexpected end of file while reading");
 		}
 
 		ptr += bytes_read;
@@ -226,8 +226,8 @@ int write_buffer(int fd, const void *buffer, unsigned int length)
 		if (written == 0) {
 			// this should not happen, but if it does, errno won't
 			// be defined, so we need to return our own error
-			return log_error_strerror(UDS_UNKNOWN_ERROR,
-						  "wrote 0 bytes");
+			return uds_log_error_strerror(UDS_UNKNOWN_ERROR,
+						      "wrote 0 bytes");
 		}
 		bytes_to_write -= written;
 		ptr += written;
@@ -239,7 +239,7 @@ int write_buffer(int fd, const void *buffer, unsigned int length)
 int write_buffer_at_offset(int fd,
 			   off_t offset,
 			   const void *buffer,
-			   unsigned int length)
+			   size_t length)
 {
 	size_t bytes_to_write = length;
 	const byte *ptr = buffer;
@@ -260,8 +260,8 @@ int write_buffer_at_offset(int fd,
 		if (written == 0) {
 			// this should not happen, but if it does, errno won't
 			// be defined, so we need to return our own error
-			return log_error_strerror(UDS_UNKNOWN_ERROR,
-						  "impossible write error");
+			return uds_log_error_strerror(UDS_UNKNOWN_ERROR,
+						      "impossible write error");
 		}
 
 		bytes_to_write -= written;
@@ -291,8 +291,8 @@ int remove_file(const char *file_name)
 	if (result == 0 || errno == ENOENT) {
 		return UDS_SUCCESS;
 	}
-	return log_warning_strerror(errno, "Failed to remove %s",
-				    file_name);
+	return uds_log_warning_strerror(errno, "Failed to remove %s",
+					file_name);
 }
 
 /**********************************************************************/
@@ -314,14 +314,14 @@ int make_abs_path(const char *path, char **abs_path)
 	char *tmp;
 	int result = UDS_SUCCESS;
 	if (path[0] == '/') {
-		result = duplicate_string(path, __func__, &tmp);
+		result = uds_duplicate_string(path, __func__, &tmp);
 	} else {
 		char *cwd = get_current_dir_name();
 		if (cwd == NULL) {
 			return errno;
 		}
-		result = alloc_sprintf(__func__, &tmp, "%s/%s", cwd, path);
-		FREE(cwd);
+		result = uds_alloc_sprintf(__func__, &tmp, "%s/%s", cwd, path);
+		UDS_FREE(cwd);
 	}
 	if (result == UDS_SUCCESS) {
 	*abs_path = tmp;
@@ -335,8 +335,8 @@ int logging_stat(const char *path, struct stat *buf, const char *context)
 	if (stat(path, buf) == 0) {
 		return UDS_SUCCESS;
 	}
-	return log_error_strerror(errno, "%s failed in %s for path %s",
-				  __func__, context, path);
+	return uds_log_error_strerror(errno, "%s failed in %s for path %s",
+				      __func__, context, path);
 }
 
 /**********************************************************************/
@@ -350,8 +350,8 @@ int logging_stat_missing_ok(const char *path,
 	if (errno == ENOENT) {
 		return errno;
 	}
-	return log_error_strerror(errno, "%s failed in %s for path %s",
-				  __func__, context, path);
+	return uds_log_error_strerror(errno, "%s failed in %s for path %s",
+				      __func__, context, path);
 }
 
 /**********************************************************************/

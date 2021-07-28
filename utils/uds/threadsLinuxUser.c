@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#7 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadsLinuxUser.c#13 $
  */
 
 #include "threads.h"
@@ -32,12 +32,12 @@
 #include "syscalls.h"
 
 /**********************************************************************/
-unsigned int get_num_cores(void)
+unsigned int uds_get_num_cores(void)
 {
 	cpu_set_t cpu_set;
 	if (sched_getaffinity(0, sizeof(cpu_set), &cpu_set) != 0) {
-		log_warning_strerror(errno,
-				     "sched_getaffinity() failed, using 1 as number of cores.");
+		uds_log_warning_strerror(errno,
+					 "sched_getaffinity() failed, using 1 as number of cores.");
 		return 1;
 	}
 
@@ -49,13 +49,13 @@ unsigned int get_num_cores(void)
 }
 
 /**********************************************************************/
-void get_thread_name(char *name)
+void uds_get_thread_name(char *name)
 {
 	process_control(PR_GET_NAME, (unsigned long) name, 0, 0, 0);
 }
 
 /**********************************************************************/
-pid_t get_thread_id(void)
+pid_t uds_get_thread_id(void)
 {
 	return syscall(SYS_gettid);
 }
@@ -78,19 +78,19 @@ static void *thread_starter(void *arg)
 	 * care much if this fails.
 	 */
 	process_control(PR_SET_NAME, (unsigned long) tsi->name, 0, 0, 0);
-	FREE(tsi);
+	UDS_FREE(tsi);
 	thread_func(thread_data);
 	return NULL;
 }
 
 /**********************************************************************/
-int create_thread(void (*thread_func)(void *),
-		  void *thread_data,
-		  const char *name,
-		  struct thread **new_thread)
+int uds_create_thread(void (*thread_func)(void *),
+		      void *thread_data,
+		      const char *name,
+		      struct thread **new_thread)
 {
 	struct thread_start_info *tsi;
-	int result = ALLOCATE(1, struct thread_start_info, __func__, &tsi);
+	int result = UDS_ALLOCATE(1, struct thread_start_info, __func__, &tsi);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -99,37 +99,38 @@ int create_thread(void (*thread_func)(void *),
 	tsi->name = name;
 
 	struct thread *thread;
-	result = ALLOCATE(1, struct thread, __func__, &thread);
+	result = UDS_ALLOCATE(1, struct thread, __func__, &thread);
 	if (result != UDS_SUCCESS) {
-		log_warning("Error allocating memory for %s", name);
-		FREE(tsi);
+		uds_log_warning("Error allocating memory for %s", name);
+		UDS_FREE(tsi);
 		return result;
 	}
 
 	result = pthread_create(&thread->thread, NULL, thread_starter, tsi);
 	if (result != 0) {
-		log_error_strerror(errno, "could not create %s thread",
-				   name);
-		FREE(thread);
-		FREE(tsi);
-		return UDS_ENOTHREADS;
+		result = -errno;
+		uds_log_error_strerror(result, "could not create %s thread",
+				       name);
+		UDS_FREE(thread);
+		UDS_FREE(tsi);
+		return result;
 	}
 	*new_thread = thread;
 	return UDS_SUCCESS;
 }
 
 /**********************************************************************/
-int join_threads(struct thread *th)
+int uds_join_threads(struct thread *th)
 {
 	int result = pthread_join(th->thread, NULL);
 	pthread_t pthread = th->thread;
-	FREE(th);
-	return ASSERT_WITH_ERROR_CODE((result == 0), result, "th: %zu",
-				      pthread);
+	UDS_FREE(th);
+	return ASSERT_WITH_ERROR_CODE((result == 0), result, "th: %p",
+				      (void *)pthread);
 }
 
 /**********************************************************************/
-int create_thread_key(pthread_key_t *key, void (*destr_function)(void *))
+int uds_create_thread_key(pthread_key_t *key, void (*destr_function)(void *))
 {
 	int result = pthread_key_create(key, destr_function);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -137,7 +138,7 @@ int create_thread_key(pthread_key_t *key, void (*destr_function)(void *))
 }
 
 /**********************************************************************/
-int delete_thread_key(pthread_key_t key)
+int uds_delete_thread_key(pthread_key_t key)
 {
 	int result = pthread_key_delete(key);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -145,7 +146,7 @@ int delete_thread_key(pthread_key_t key)
 }
 
 /**********************************************************************/
-int set_thread_specific(pthread_key_t key, const void *pointer)
+int uds_set_thread_specific(pthread_key_t key, const void *pointer)
 {
 	int result = pthread_setspecific(key, pointer);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -153,13 +154,13 @@ int set_thread_specific(pthread_key_t key, const void *pointer)
 }
 
 /**********************************************************************/
-void *get_thread_specific(pthread_key_t key)
+void *uds_get_thread_specific(pthread_key_t key)
 {
 	return pthread_getspecific(key);
 }
 
 /**********************************************************************/
-int initialize_barrier(struct barrier *barrier, unsigned int thread_count)
+int uds_initialize_barrier(struct barrier *barrier, unsigned int thread_count)
 {
 	int result =
 		pthread_barrier_init(&barrier->barrier, NULL, thread_count);
@@ -168,7 +169,7 @@ int initialize_barrier(struct barrier *barrier, unsigned int thread_count)
 }
 
 /**********************************************************************/
-int destroy_barrier(struct barrier *barrier)
+int uds_destroy_barrier(struct barrier *barrier)
 {
 	int result = pthread_barrier_destroy(&barrier->barrier);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -176,7 +177,7 @@ int destroy_barrier(struct barrier *barrier)
 }
 
 /**********************************************************************/
-int enter_barrier(struct barrier *barrier, bool *winner)
+int uds_enter_barrier(struct barrier *barrier, bool *winner)
 {
 	int result = pthread_barrier_wait(&barrier->barrier);
 
@@ -197,11 +198,11 @@ int enter_barrier(struct barrier *barrier, bool *winner)
 }
 
 /**********************************************************************/
-int yield_scheduler(void)
+int uds_yield_scheduler(void)
 {
 	int result = sched_yield();
 	if (result != 0) {
-		return log_error_strerror(errno, "sched_yield failed");
+		return uds_log_error_strerror(errno, "sched_yield failed");
 	}
 
 	return UDS_SUCCESS;

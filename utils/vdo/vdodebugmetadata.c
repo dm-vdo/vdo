@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDebugMetadata.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDebugMetadata.c#13 $
  */
 
 #include <err.h>
@@ -158,7 +158,7 @@ static int processArgs(int argc, char *argv[], char **filename)
         errx(1, "Cannot specify more than %u PBNs", MAX_PBNS);
       }
 
-      int result = parse_uint64(optarg, &pbns[pbnCount++]);
+      int result = uds_parse_uint64(optarg, &pbns[pbnCount++]);
       if (result != VDO_SUCCESS) {
         warnx("Cannot parse PBN as a number");
         usage(argv[0], usageString);
@@ -171,7 +171,7 @@ static int processArgs(int argc, char *argv[], char **filename)
         errx(1, "Cannot specify more than %u search LBNs", MAX_SEARCH_LBNS);
       }
 
-      int result = parse_uint64(optarg, &searchLBNs[searchLBNCount++]);
+      int result = uds_parse_uint64(optarg, &searchLBNs[searchLBNCount++]);
       if (result != VDO_SUCCESS) {
         warnx("Cannot parse search LBN as a number");
         usage(argv[0], usageString);
@@ -192,7 +192,7 @@ static int processArgs(int argc, char *argv[], char **filename)
 /**
  * This function provides an easy place to set a breakpoint.
  **/
-__attribute__((noinline)) static void doNothing(void)
+__attribute__((__noinline__)) static void doNothing(void)
 {
   __asm__("");
 }
@@ -228,20 +228,20 @@ static void freeState(SlabState *state)
 
   if (state->slabJournalBlocks != NULL) {
     for (block_count_t i = 0; i < slabConfig->slab_journal_blocks; i++) {
-      FREE(state->slabJournalBlocks[i]);
+      UDS_FREE(state->slabJournalBlocks[i]);
       state->slabJournalBlocks[i] = NULL;
     }
   }
 
   if (state->referenceBlocks != NULL) {
     for (block_count_t i = 0; i < slabConfig->reference_count_blocks; i++) {
-      FREE(state->referenceBlocks[i]);
+      UDS_FREE(state->referenceBlocks[i]);
       state->referenceBlocks[i] = NULL;
     }
   }
 
-  FREE(state->slabJournalBlocks);
-  FREE(state->referenceBlocks);
+  UDS_FREE(state->slabJournalBlocks);
+  UDS_FREE(state->referenceBlocks);
 }
 
 /**
@@ -251,17 +251,17 @@ static void freeState(SlabState *state)
  **/
 static int allocateState(SlabState *state)
 {
-  int result = ALLOCATE(slabConfig->slab_journal_blocks,
-                        struct packed_slab_journal_block *, __func__,
-                        &state->slabJournalBlocks);
+  int result = UDS_ALLOCATE(slabConfig->slab_journal_blocks,
+                            struct packed_slab_journal_block *, __func__,
+                            &state->slabJournalBlocks);
   if (result != VDO_SUCCESS) {
     freeState(state);
     return result;
   }
 
-  result = ALLOCATE(slabConfig->reference_count_blocks,
-                    struct packed_reference_block *,
-                    __func__, &state->referenceBlocks);
+  result = UDS_ALLOCATE(slabConfig->reference_count_blocks,
+                        struct packed_reference_block *,
+                        __func__, &state->referenceBlocks);
   if (result != VDO_SUCCESS) {
     freeState(state);
     return result;
@@ -298,7 +298,7 @@ static int allocateState(SlabState *state)
 static int allocateMetadataSpace(void)
 {
   slabConfig = &vdo->states.slab_depot.slab_config;
-  int result = ALLOCATE(vdo->slabCount, SlabState, __func__, &slabs);
+  int result = UDS_ALLOCATE(vdo->slabCount, SlabState, __func__, &slabs);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %u slab state pointers", slabCount);
   }
@@ -318,31 +318,33 @@ static int allocateMetadataSpace(void)
   result = layer->allocateIOBuffer(layer, journalBytes,
                                    "recovery journal", &rawJournalBytes);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not allocate %" PRIu64" bytes for the journal",
-         journalBytes);
+    errx(1, "Could not allocate %llu bytes for the journal",
+         (unsigned long long) journalBytes);
   }
 
-  result = ALLOCATE(config->recovery_journal_size, UnpackedJournalBlock,
-                    __func__, &recoveryJournal);
+  result = UDS_ALLOCATE(config->recovery_journal_size, UnpackedJournalBlock,
+                        __func__, &recoveryJournal);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not allocate %" PRIu64 " journal block structures",
-         config->recovery_journal_size);
+    errx(1, "Could not allocate %llu journal block structures",
+         (unsigned long long) config->recovery_journal_size);
   }
 
-  result = ALLOCATE(get_slab_summary_size(VDO_BLOCK_SIZE),
-                    struct slab_summary_entry *,
-                    __func__, &slabSummary);
+  result = UDS_ALLOCATE(get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
+                        struct slab_summary_entry *,
+                        __func__, &slabSummary);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not allocate %" PRIu64 " slab summary block pointers",
-         get_slab_summary_size(VDO_BLOCK_SIZE));
+    errx(1, "Could not allocate %llu slab summary block pointers",
+         (unsigned long long) get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
   }
 
-  for (block_count_t i = 0; i < get_slab_summary_size(VDO_BLOCK_SIZE); i++) {
+  for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+       i++) {
     char *buffer;
     result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
                                      "slab summary block", &buffer);
     if (result != VDO_SUCCESS) {
-      errx(1, "Could not allocate slab summary block %" PRIu64, i);
+      errx(1, "Could not allocate slab summary block %llu",
+	   (unsigned long long) i);
     }
     slabSummary[i] = (struct slab_summary_entry *) buffer;
   }
@@ -360,23 +362,24 @@ static void freeMetadataSpace(void)
     }
   }
 
-  FREE(slabs);
+  UDS_FREE(slabs);
   slabs = NULL;
 
-  FREE(rawJournalBytes);
+  UDS_FREE(rawJournalBytes);
   rawJournalBytes = NULL;
 
-  FREE(recoveryJournal);
+  UDS_FREE(recoveryJournal);
   recoveryJournal = NULL;
 
   if (slabSummary != NULL) {
-    for (block_count_t i = 0; i < get_slab_summary_size(VDO_BLOCK_SIZE); i++) {
-      FREE(slabSummary[i]);
+    for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+         i++) {
+      UDS_FREE(slabSummary[i]);
       slabSummary[i] = NULL;
     }
   }
 
-  FREE(slabSummary);
+  UDS_FREE(slabSummary);
   slabSummary = NULL;
 }
 
@@ -398,7 +401,7 @@ static void readMetadata(void)
   block_count_t totalNonBlockMapMetadataBlocks
     = ((metadataBlocksPerSlab * slabCount)
        + config->recovery_journal_size
-       + get_slab_summary_size(VDO_BLOCK_SIZE));
+       + get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
 
   nextBlock
     = (vdo->layer->getBlockCount(vdo->layer) - totalNonBlockMapMetadataBlocks);
@@ -408,7 +411,8 @@ static void readMetadata(void)
     for (block_count_t j = 0; j < slabConfig->reference_count_blocks; j++) {
       int result = readBlocks(1, (char *) slab->referenceBlocks[j]);
       if (result != VDO_SUCCESS) {
-        errx(1, "Could not read reference block %" PRIu64 " for slab %u", j,
+        errx(1, "Could not read reference block %llu for slab %u",
+	     (unsigned long long) j,
              i);
       }
     }
@@ -416,8 +420,8 @@ static void readMetadata(void)
     for (block_count_t j = 0; j < slabConfig->slab_journal_blocks; j++) {
       int result = readBlocks(1, (char *) slab->slabJournalBlocks[j]);
       if (result != VDO_SUCCESS) {
-        errx(1, "Could not read slab journal block %" PRIu64 " for slab %u",
-             j, i);
+        errx(1, "Could not read slab journal block %llu for slab %u",
+             (unsigned long long) j, i);
       }
     }
   }
@@ -431,13 +435,15 @@ static void readMetadata(void)
     UnpackedJournalBlock *block = &recoveryJournal[i];
     struct packed_journal_header *packedHeader
       = (struct packed_journal_header *) &rawJournalBytes[i * VDO_BLOCK_SIZE];
-    unpack_recovery_block_header(packedHeader, &block->header);
+    unpack_vdo_recovery_block_header(packedHeader, &block->header);
     for (uint8_t sector = 1; sector < VDO_SECTORS_PER_BLOCK; sector++) {
-      block->sectors[sector] = get_journal_block_sector(packedHeader, sector);
+      block->sectors[sector]
+        = get_vdo_journal_block_sector(packedHeader, sector);
     }
   }
 
-  for (block_count_t i = 0; i < get_slab_summary_size(VDO_BLOCK_SIZE); i++) {
+  for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+       i++) {
     readBlocks(1, (char *) slabSummary[i]);
   }
 }
@@ -449,7 +455,7 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
 {
   struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
   if ((pbn < depot.first_block) || (pbn > depot.last_block)) {
-    printf("PBN %" PRIu64 " out of range; skipping.\n", pbn);
+    printf("PBN %llu out of range; skipping.\n", (unsigned long long) pbn);
     return;
   }
 
@@ -457,8 +463,8 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
   slab_count_t      slabNumber = offset >> vdo->slabSizeShift;
   slab_block_number slabOffset = offset & vdo->slabOffsetMask;
 
-  printf("PBN %" PRIu64 " is offset %d in slab %d\n",
-         pbn, slabOffset, slabNumber);
+  printf("PBN %llu is offset %d in slab %d\n",
+         (unsigned long long) pbn, slabOffset, slabNumber);
   for (block_count_t i = 0; i < depot.slab_config.slab_journal_blocks; i++) {
     struct packed_slab_journal_block *block
       = slabs[slabNumber].slabJournalBlocks[i];
@@ -468,11 +474,12 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
          entryIndex < entryCount;
          entryIndex++) {
       struct slab_journal_entry entry
-        = decode_slab_journal_entry(block, entryIndex);
+        = decode_vdo_slab_journal_entry(block, entryIndex);
       if (slabOffset == entry.sbn) {
-        printf("PBN %" PRIu64 " (%" PRIu64 ", %d) %s\n",
-               pbn, (uint64_t) __le64_to_cpu(block->header.sequence_number),
-               entryIndex, get_journal_operation_name(entry.operation));
+        printf("PBN %llu (%llu, %d) %s\n",
+               (unsigned long long) pbn,
+	       (unsigned long long) __le64_to_cpu(block->header.sequence_number),
+               entryIndex, get_vdo_journal_operation_name(entry.operation));
       }
     }
   }
@@ -513,8 +520,8 @@ isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 {
   block_count_t journal_size = vdo->states.vdo.config.recovery_journal_size;
   physical_block_number_t expectedOffset
-    = compute_recovery_journal_block_number(journal_size,
-                                            header->sequence_number);
+    = compute_vdo_recovery_journal_block_number(journal_size,
+                                                header->sequence_number);
   return (expectedOffset == offset);
 }
 
@@ -524,8 +531,8 @@ isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 static void findRecoveryJournalEntries(logical_block_number_t lbn)
 {
   struct block_map_slot desiredSlot = (struct block_map_slot) {
-    .pbn  = compute_page_number(lbn),
-    .slot = compute_slot(lbn),
+    .pbn  = vdo_compute_page_number(lbn),
+    .slot = vdo_compute_slot(lbn),
   };
   for (block_count_t i = 0;
        i < vdo->states.vdo.config.recovery_journal_size;
@@ -537,7 +544,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
 
       for (journal_entry_count_t k = 0; k < sector->entry_count; k++) {
         struct recovery_journal_entry entry
-          = unpack_recovery_journal_entry(&sector->entries[k]);
+          = unpack_vdo_recovery_journal_entry(&sector->entries[k]);
 
         if ((desiredSlot.pbn == entry.slot.pbn)
             && (desiredSlot.slot == entry.slot.slot)) {
@@ -545,17 +552,19 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
           bool isSequenceNumberPossible
             = isSequenceNumberPossibleForOffset(&block.header, i);
           bool isSectorValid
-            = is_valid_recovery_journal_sector(&block.header, sector);
+            = is_valid_vdo_recovery_journal_sector(&block.header, sector);
 
-          printf("found LBN %" PRIu64 " at offset %" PRIu64
-                 " (block %svalid, sequence number %" PRIu64 " %spossible), "
+          printf("found LBN %llu at offset %llu"
+                 " (block %svalid, sequence number %llu %spossible), "
                  "sector %u (sector %svalid), entry %u "
-                 ": PBN %" PRIu64 ", %s, mappingState %u\n",
-                 lbn, i, (isValidJournalBlock ? "" : "not "),
-                 block.header.sequence_number,
+                 ": PBN %llu, %s, mappingState %u\n",
+                 (unsigned long long) lbn, (unsigned long long) i,
+		 (isValidJournalBlock ? "" : "not "),
+                 (unsigned long long) block.header.sequence_number,
                  (isSequenceNumberPossible ? "" : "not "),
                  j, (isSectorValid ? "" : "not "), k,
-                 entry.mapping.pbn, get_journal_operation_name(entry.operation),
+                 (unsigned long long) entry.mapping.pbn,
+                 get_vdo_journal_operation_name(entry.operation),
                  entry.mapping.state);
         }
       }
@@ -585,7 +594,7 @@ readVDOFromDump(const char *filename)
 
   // Load the geometry and tweak it to match the dump.
   struct volume_geometry geometry;
-  result = load_volume_geometry(layer, &geometry);
+  result = vdo_load_volume_geometry(layer, &geometry);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
     char errBuf[ERRBUF_SIZE];
@@ -604,23 +613,23 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));
   }
 
   char *filename;
-  result = ALLOCATE(MAX_PBNS, physical_block_number_t, __func__, &pbns);
+  result = UDS_ALLOCATE(MAX_PBNS, physical_block_number_t, __func__, &pbns);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not allocate %" PRIu64 " bytes",
+    errx(1, "Could not allocate %zu bytes",
          sizeof(physical_block_number_t) * MAX_PBNS);
   }
 
-  result = ALLOCATE(MAX_SEARCH_LBNS, logical_block_number_t, __func__,
-                    &searchLBNs);
+  result = UDS_ALLOCATE(MAX_SEARCH_LBNS, logical_block_number_t, __func__,
+                        &searchLBNs);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not allocate %" PRIu64 " bytes",
+    errx(1, "Could not allocate %zu bytes",
          sizeof(logical_block_number_t) * MAX_SEARCH_LBNS);
   }
 
@@ -640,7 +649,7 @@ int main(int argc, char *argv[])
   readMetadata();
 
   // Print the nonce for this dump.
-  printf("Nonce value: %" PRIu64 "\n", vdo->states.vdo.nonce);
+  printf("Nonce value: %llu\n", (unsigned long long) vdo->states.vdo.nonce);
 
   // For any PBNs specified, process them.
   for (uint8_t i = 0; i < pbnCount; i++) {

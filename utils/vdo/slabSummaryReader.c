@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/slabSummaryReader.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/slabSummaryReader.c#4 $
  */
 
 #include "slabSummaryReader.h"
@@ -43,7 +43,8 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   }
 
   struct slab_summary_entry *entries;
-  block_count_t summary_blocks = get_slab_summary_zone_size(VDO_BLOCK_SIZE);
+  block_count_t summary_blocks
+    = get_vdo_slab_summary_zone_size(VDO_BLOCK_SIZE);
   int result = vdo->layer->allocateIOBuffer(vdo->layer,
                                             summary_blocks * VDO_BLOCK_SIZE,
                                             "slab summary entries",
@@ -54,20 +55,20 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   }
 
   struct partition *slab_summary_partition;
-  result = get_partition(vdo->states.layout, SLAB_SUMMARY_PARTITION,
-                         &slab_summary_partition);
+  result = vdo_get_partition(vdo->states.layout, SLAB_SUMMARY_PARTITION,
+                             &slab_summary_partition);
   if (result != VDO_SUCCESS) {
     warnx("Could not find slab summary partition");
     return result;
   }
 
   physical_block_number_t origin
-    = get_fixed_layout_partition_offset(slab_summary_partition);
+    = get_vdo_fixed_layout_partition_offset(slab_summary_partition);
   result = vdo->layer->reader(vdo->layer, origin, summary_blocks,
                               (char *) entries);
   if (result != VDO_SUCCESS) {
     warnx("Could not read summary data");
-    FREE(entries);
+    UDS_FREE(entries);
     return result;
   }
 
@@ -81,7 +82,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
                                           (char **) &buffer);
     if (result != VDO_SUCCESS) {
       warnx("Could not create slab summary buffer");
-      FREE(entries);
+      UDS_FREE(entries);
       return result;
     }
 
@@ -91,8 +92,8 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
                                   (char *) buffer);
       if (result != VDO_SUCCESS) {
         warnx("Could not read summary data");
-        FREE(buffer);
-        FREE(entries);
+        UDS_FREE(buffer);
+        UDS_FREE(entries);
         return result;
       }
 
@@ -103,7 +104,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
       }
     }
 
-    FREE(buffer);
+    UDS_FREE(buffer);
   }
 
   *entriesPtr = entries;

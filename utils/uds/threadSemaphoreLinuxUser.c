@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadSemaphoreLinuxUser.c#7 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/threadSemaphoreLinuxUser.c#8 $
  */
 
 #include <errno.h>
@@ -27,14 +27,14 @@
 #include "timeUtils.h"
 
 /**********************************************************************/
-int initialize_semaphore(struct semaphore *semaphore, unsigned int value)
+int uds_initialize_semaphore(struct semaphore *semaphore, unsigned int value)
 {
 	int result = sem_init(&semaphore->semaphore, false, value);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result, "sem_init error");
 }
 
 /**********************************************************************/
-int destroy_semaphore(struct semaphore *semaphore)
+int uds_destroy_semaphore(struct semaphore *semaphore)
 {
 	int result = sem_destroy(&semaphore->semaphore);
 	return ASSERT_WITH_ERROR_CODE((result == 0), result,
@@ -42,7 +42,7 @@ int destroy_semaphore(struct semaphore *semaphore)
 }
 
 /**********************************************************************/
-void acquire_semaphore(struct semaphore *semaphore)
+void uds_acquire_semaphore(struct semaphore *semaphore)
 {
 	int result;
 	do {
@@ -55,7 +55,7 @@ void acquire_semaphore(struct semaphore *semaphore)
 }
 
 /**********************************************************************/
-bool attempt_semaphore(struct semaphore *semaphore, ktime_t timeout)
+bool uds_attempt_semaphore(struct semaphore *semaphore, ktime_t timeout)
 {
 	if (timeout > 0) {
 		struct timespec ts = future_time(timeout);
@@ -83,7 +83,7 @@ bool attempt_semaphore(struct semaphore *semaphore, ktime_t timeout)
 }
 
 /**********************************************************************/
-void release_semaphore(struct semaphore *semaphore)
+void uds_release_semaphore(struct semaphore *semaphore)
 {
 	int result __attribute__((unused)) = sem_post(&semaphore->semaphore);
 #ifndef NDEBUG

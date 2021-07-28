@@ -18,7 +18,7 @@
 #
 # $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/vdo/Makefile#1 $
 
-VDO_VERSION = 8.1.0.1
+VDO_VERSION = 8.1.0.264
 
 UDS_DIR      = ../uds
 

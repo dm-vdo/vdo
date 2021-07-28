@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/stringLinuxUser.c#3 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/stringLinuxUser.c#4 $
  */
 
 #include <limits.h>
@@ -29,7 +29,7 @@
 #include "uds.h"
 
 /**********************************************************************/
-int string_to_signed_long(const char *nptr, long *num)
+int uds_string_to_signed_long(const char *nptr, long *num)
 {
 	if (nptr == NULL || *nptr == '\0') {
 		return UDS_INVALID_ARGUMENT;
@@ -44,7 +44,7 @@ int string_to_signed_long(const char *nptr, long *num)
 }
 
 /**********************************************************************/
-int string_to_unsigned_long(const char *nptr, unsigned long *num)
+int uds_string_to_unsigned_long(const char *nptr, unsigned long *num)
 {
 	if (nptr == NULL || *nptr == '\0') {
 		return UDS_INVALID_ARGUMENT;
@@ -59,13 +59,13 @@ int string_to_unsigned_long(const char *nptr, unsigned long *num)
 }
 
 /**********************************************************************/
-char *next_token(char *str, const char *delims, char **state)
+char *uds_next_token(char *str, const char *delims, char **state)
 {
 	return strtok_r(str, delims, state);
 }
 
 /**********************************************************************/
-int parse_uint64(const char *str, uint64_t *num)
+int uds_parse_uint64(const char *str, uint64_t *num)
 {
 	char *end;
 	errno = 0;

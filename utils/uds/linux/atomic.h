@@ -16,19 +16,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/opaqueTypes.h#5 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/linux/atomic.h#1 $
  */
 
-#ifndef OPAQUE_TYPES_H
-#define OPAQUE_TYPES_H
-
-/*
- * This file contains structure declarations internal to the UDS library
- * for which many users of those structures do not need to know the details
- * of the structures themselves.
- */
-struct index_router;
-typedef struct internal_request Request;
-typedef struct uds_request_queue RequestQueue;
-
-#endif /* OPAQUE_TYPES_H */
+#ifndef LINUX_ATOMIC_DEFS_H
+#define LINUX_ATOMIC_DEFS_H
+#include "atomicDefs.h"
+#endif /* LINUX_ATOMIC_DEFS_H */

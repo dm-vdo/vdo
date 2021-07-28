@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.h#2 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.h#3 $
  */
 
 #ifndef MINISYSLOG_H
@@ -24,6 +24,8 @@
 
 #include <syslog.h>
 #include <stdarg.h>
+
+#include "compiler.h"
 
 /**
  * @file
@@ -48,7 +50,7 @@ void mini_openlog(const char *ident, int option, int facility);
  * @param format   A printf style message format
  **/
 void mini_syslog(int priority, const char *format, ...)
-	__attribute__((format(printf, 2, 3)));
+	__printf(2, 3);
 
 /**
  * Log a message. This function mimics the vsyslog() c-library function.
@@ -58,7 +60,7 @@ void mini_syslog(int priority, const char *format, ...)
  * @param ap       An argument list obtained from stdarg()
  **/
 void mini_vsyslog(int priority, const char *format, va_list ap)
-	__attribute__((format(printf, 2, 0)));
+	__printf(2, 0);
 
 /**
  * Log a message pack consisting of multiple variable sections.
@@ -76,7 +78,7 @@ void mini_syslog_pack(int priority,
 		      va_list args1,
 		      const char *fmt2,
 		      va_list args2)
-	__attribute__((format(printf, 3, 0), format(printf, 5, 0)));
+	__printf(3, 0) __printf(5, 0);
 
 /**
  * Close a logger. This function mimics the closelog() c-library function.

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/userVDO.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/userVDO.c#8 $
  */
 
 #include "userVDO.h"
@@ -36,12 +36,12 @@
 int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
 {
   UserVDO *vdo;
-  int result = ALLOCATE(1, UserVDO, __func__, &vdo);
+  int result = UDS_ALLOCATE(1, UserVDO, __func__, &vdo);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  result = initialize_super_block_codec(&vdo->superBlockCodec);
+  result = initialize_vdo_super_block_codec(&vdo->superBlockCodec);
   if (result != VDO_SUCCESS) {
     freeUserVDO(&vdo);
     return result;
@@ -60,9 +60,9 @@ void freeUserVDO(UserVDO **vdoPtr)
     return;
   }
 
-  destroy_component_states(&vdo->states);
-  destroy_super_block_codec(&vdo->superBlockCodec);
-  FREE(vdo);
+  destroy_vdo_component_states(&vdo->states);
+  destroy_vdo_super_block_codec(&vdo->superBlockCodec);
+  UDS_FREE(vdo);
   *vdoPtr = NULL;
 }
 
@@ -71,13 +71,13 @@ int __must_check loadSuperBlock(UserVDO *vdo)
 {
   int result
     = vdo->layer->reader(vdo->layer,
-                         get_data_region_offset(vdo->geometry), 1,
+                         vdo_get_data_region_start(vdo->geometry), 1,
                          (char *) vdo->superBlockCodec.encoded_super_block);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  return decode_super_block(&vdo->superBlockCodec);
+  return decode_vdo_super_block(&vdo->superBlockCodec);
 }
 
 /**********************************************************************/
@@ -99,16 +99,17 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
     return result;
   }
 
-  result = decode_component_states(vdo->superBlockCodec.component_buffer,
-                                   geometry->release_version, &vdo->states);
+  result = decode_vdo_component_states(vdo->superBlockCodec.component_buffer,
+                                       geometry->release_version,
+                                       &vdo->states);
   if (result != VDO_SUCCESS) {
     freeUserVDO(&vdo);
     return result;
   }
 
   if (validateConfig) {
-    result = validate_component_states(&vdo->states, geometry->nonce,
-                                       layer->getBlockCount(layer));
+    result = validate_vdo_component_states(&vdo->states, geometry->nonce,
+                                           layer->getBlockCount(layer));
     if (result != VDO_SUCCESS) {
       freeUserVDO(&vdo);
       return result;
@@ -125,7 +126,7 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
 int loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr)
 {
   struct volume_geometry geometry;
-  int result = load_volume_geometry(layer, &geometry);
+  int result = vdo_load_volume_geometry(layer, &geometry);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -136,12 +137,13 @@ int loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr)
 /**********************************************************************/
 int saveSuperBlock(UserVDO *vdo)
 {
-  int result = encode_super_block(&vdo->superBlockCodec);
+  int result = encode_vdo_super_block(&vdo->superBlockCodec);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  return vdo->layer->writer(vdo->layer, get_data_region_offset(vdo->geometry),
+  return vdo->layer->writer(vdo->layer,
+                            vdo_get_data_region_start(vdo->geometry),
                             1,
                             (char *) vdo->superBlockCodec.encoded_super_block);
 }
@@ -149,8 +151,9 @@ int saveSuperBlock(UserVDO *vdo)
 /**********************************************************************/
 int saveVDO(UserVDO *vdo, bool saveGeometry)
 {
-  int result = encode_component_states(vdo->superBlockCodec.component_buffer,
-                                       &vdo->states);
+  int result
+    = encode_vdo_component_states(vdo->superBlockCodec.component_buffer,
+                                  &vdo->states);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -164,16 +167,16 @@ int saveVDO(UserVDO *vdo, bool saveGeometry)
     return VDO_SUCCESS;
   }
 
-  return write_volume_geometry(vdo->layer, &vdo->geometry);
+  return vdo_write_volume_geometry(vdo->layer, &vdo->geometry);
 }
 
 /**********************************************************************/
 void setDerivedSlabParameters(UserVDO *vdo)
 {
   vdo->slabSizeShift = log_base_two(vdo->states.vdo.config.slab_size);
-  vdo->slabCount = compute_slab_count(vdo->states.slab_depot.first_block,
-                                      vdo->states.slab_depot.last_block,
-                                      vdo->slabSizeShift);
+  vdo->slabCount = compute_vdo_slab_count(vdo->states.slab_depot.first_block,
+                                          vdo->states.slab_depot.last_block,
+                                          vdo->slabSizeShift);
   vdo->slabOffsetMask = (1ULL << vdo->slabSizeShift) - 1;
 }
 
@@ -224,7 +227,7 @@ getPartition(const UserVDO     *vdo,
              const char        *errorMessage)
 {
   struct partition *partition;
-  int result = get_partition(vdo->states.layout, id, &partition);
+  int result = vdo_get_partition(vdo->states.layout, id, &partition);
   if (result != VDO_SUCCESS) {
     errx(1, "%s", errorMessage);
   }

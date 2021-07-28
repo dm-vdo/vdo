@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoListMetadata.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoListMetadata.c#7 $
  */
 
 #include <err.h>
@@ -131,14 +131,14 @@ static void listIndex(void)
 {
   // The index is all blocks from the geometry block to the super block,
   // exclusive.
-  listBlocks("index", 1, get_data_region_offset(vdo->geometry) - 1);
+  listBlocks("index", 1, vdo_get_data_region_start(vdo->geometry) - 1);
 }
 
 /**********************************************************************/
 static void listSuperBlock(void)
 {
   // The SuperBlock is a single block at the start of the data region.
-  listBlocks("super block", get_data_region_offset(vdo->geometry), 1);
+  listBlocks("super block", vdo_get_data_region_start(vdo->geometry), 1);
 }
 
 /**********************************************************************/
@@ -164,8 +164,8 @@ static void listSlabs(void)
 
     // List the slab's journal blocks.
     sprintf(buffer, "slab %u journal", slab);
-    listBlocks(buffer, get_slab_journal_start_block(&depot.slab_config,
-                                                    slabOrigin),
+    listBlocks(buffer, get_vdo_slab_journal_start_block(&depot.slab_config,
+                                                        slabOrigin),
                depot.slab_config.slab_journal_blocks);
 
     slabOrigin += vdo->states.vdo.config.slab_size;
@@ -178,7 +178,8 @@ static void listRecoveryJournal(void)
   const struct partition *partition
     = getPartition(vdo, RECOVERY_JOURNAL_PARTITION,
                    "no recovery journal partition");
-  listBlocks("recovery journal", get_fixed_layout_partition_offset(partition),
+  listBlocks("recovery journal",
+             get_vdo_fixed_layout_partition_offset(partition),
              vdo->states.vdo.config.recovery_journal_size);
 }
 
@@ -187,8 +188,8 @@ static void listSlabSummary(void)
 {
   const struct partition *partition
     = getPartition(vdo, SLAB_SUMMARY_PARTITION, "no slab summary partition");
-  listBlocks("slab summary", get_fixed_layout_partition_offset(partition),
-             get_slab_summary_size(VDO_BLOCK_SIZE));
+  listBlocks("slab summary", get_vdo_fixed_layout_partition_offset(partition),
+             get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
 }
 
 /**********************************************************************/
@@ -196,7 +197,7 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));

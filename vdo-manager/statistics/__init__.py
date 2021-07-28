@@ -20,14 +20,13 @@
 """
   __init__ file for statistics package
 
-  $Id: //eng/vdo-releases/sulfur/src/python/vdo/statistics/__init__.py#1 $
+  $Id: //eng/vdo-releases/sulfur/src/python/vdo/statistics/__init__.py#2 $
 """
 import gettext
 gettext.install('statistics')
 
 from .Command import *
 from .Field import *
-from .KernelStatistics import *
 from .LabeledValue import LabeledValue
 from .StatFormatter import *
 from .StatStruct import StatStruct

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDumpConfig.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDumpConfig.c#4 $
  */
 
 #include <err.h>
@@ -123,7 +123,7 @@ static void readVDOConfig(const char             *vdoBacking,
 
   *configPtr = vdo->states.vdo.config;
 
-  result = load_volume_geometry(vdo->layer, geometryPtr);
+  result = vdo_load_volume_geometry(vdo->layer, geometryPtr);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not read VDO geometry from '%s'", vdoBacking);
   }
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));
@@ -154,18 +154,22 @@ int main(int argc, char *argv[])
   // This output must be valid YAML.
   printf("VDOConfig:\n");
   printf("  blockSize: %d\n", VDO_BLOCK_SIZE);
-  printf("  logicalBlocks: %" PRIu64 "\n", config.logical_blocks);
-  printf("  physicalBlocks: %" PRIu64 "\n", config.physical_blocks);
-  printf("  slabSize: %" PRIu64 "\n", config.slab_size);
-  printf("  recoveryJournalSize: %" PRIu64 "\n", config.recovery_journal_size);
-  printf("  slabJournalBlocks: %" PRIu64 "\n", config.slab_journal_blocks);
+  printf("  logicalBlocks: %llu\n",
+         (unsigned long long) config.logical_blocks);
+  printf("  physicalBlocks: %llu\n",
+         (unsigned long long) config.physical_blocks);
+  printf("  slabSize: %llu\n", (unsigned long long) config.slab_size);
+  printf("  recoveryJournalSize: %llu\n",
+         (unsigned long long) config.recovery_journal_size);
+  printf("  slabJournalBlocks: %llu\n",
+         (unsigned long long) config.slab_journal_blocks);
   printf("UUID: %s\n", uuid);
   printf("ReleaseVersion: %u\n", geometry.release_version);
-  printf("Nonce: %" PRIu64 "\n", geometry.nonce);
-  printf("IndexRegion: %" PRIu64 "\n",
-         geometry.regions[INDEX_REGION].start_block);
-  printf("DataRegion: %" PRIu64 "\n",
-         geometry.regions[DATA_REGION].start_block);
+  printf("Nonce: %llu\n", (unsigned long long) geometry.nonce);
+  printf("IndexRegion: %llu\n",
+         (unsigned long long) geometry.regions[INDEX_REGION].start_block);
+  printf("DataRegion: %llu\n",
+         (unsigned long long) geometry.regions[DATA_REGION].start_block);
   printf("IndexConfig:\n");
   printf("  memory: %u\n", geometry.index_config.mem);
   printf("  checkpointFrequency: %u\n",

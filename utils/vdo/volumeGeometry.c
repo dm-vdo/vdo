@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/base/volumeGeometry.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/base/volumeGeometry.c#15 $
  */
 
 #include "volumeGeometry.h"
@@ -37,31 +37,43 @@
 
 enum {
 	MAGIC_NUMBER_SIZE = 8,
+	DEFAULT_GEOMETRY_BLOCK_VERSION = 4,
 };
 
 struct geometry_block {
 	char magic_number[MAGIC_NUMBER_SIZE];
 	struct header header;
-	struct volume_geometry geometry;
 	crc32_checksum_t checksum;
 } __packed;
 
+static const struct header GEOMETRY_BLOCK_HEADER_5_0 = {
+	.id = VDO_GEOMETRY_BLOCK,
+	.version = {
+		.major_version = 5,
+		.minor_version = 0,
+	},
+	// Note: this size isn't just the payload size following the header,
+	// like it is everywhere else in VDO.
+	.size = sizeof(struct geometry_block) + sizeof(struct volume_geometry),
+};
+
 static const struct header GEOMETRY_BLOCK_HEADER_4_0 = {
-	.id = GEOMETRY_BLOCK,
+	.id = VDO_GEOMETRY_BLOCK,
 	.version = {
 		.major_version = 4,
 		.minor_version = 0,
 	},
 	// Note: this size isn't just the payload size following the header,
 	// like it is everywhere else in VDO.
-	.size = sizeof(struct geometry_block),
+	.size = sizeof(struct geometry_block) +
+		sizeof(struct volume_geometry_4_0),
 };
 
 static const byte MAGIC_NUMBER[MAGIC_NUMBER_SIZE + 1] = "dmvdo001";
 
 static const release_version_number_t COMPATIBLE_RELEASE_VERSIONS[] = {
-	MAGNESIUM_RELEASE_VERSION_NUMBER,
-	ALUMINUM_RELEASE_VERSION_NUMBER,
+	VDO_MAGNESIUM_RELEASE_VERSION_NUMBER,
+	VDO_ALUMINUM_RELEASE_VERSION_NUMBER,
 };
 
 /**
@@ -75,7 +87,7 @@ static const release_version_number_t COMPATIBLE_RELEASE_VERSIONS[] = {
 static inline bool is_loadable_release_version(release_version_number_t version)
 {
 	unsigned int i;
-	if (version == CURRENT_RELEASE_VERSION_NUMBER) {
+	if (version == VDO_CURRENT_RELEASE_VERSION_NUMBER) {
 		return true;
 	}
 
@@ -203,15 +215,18 @@ static int encode_volume_region(const struct volume_region *region,
  *
  * @param buffer    A buffer positioned at the start of the encoding
  * @param geometry  The structure to receive the decoded fields
+ * @param version   The geometry block version to decode
  *
  * @return UDS_SUCCESS or an error
  **/
 static int decode_volume_geometry(struct buffer *buffer,
-				  struct volume_geometry *geometry)
+				  struct volume_geometry *geometry,
+				  uint32_t version)
 {
 	release_version_number_t release_version;
 	enum volume_region_id id;
 	nonce_t nonce;
+	block_count_t bio_offset;
 	int result = get_uint32_le_from_buffer(buffer, &release_version);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -231,6 +246,15 @@ static int decode_volume_geometry(struct buffer *buffer,
 		return result;
 	}
 
+	bio_offset = 0;
+	if (version > 4) {
+		result = get_uint64_le_from_buffer(buffer, &bio_offset);
+		if (result != VDO_SUCCESS) {
+			return result;
+		}
+	}
+	geometry->bio_offset = bio_offset;
+
 	for (id = 0; id < VOLUME_REGION_COUNT; id++) {
 		result = decode_volume_region(buffer, &geometry->regions[id]);
 		if (result != VDO_SUCCESS) {
@@ -246,11 +270,13 @@ static int decode_volume_geometry(struct buffer *buffer,
  *
  * @param geometry  The geometry to encode
  * @param buffer    A buffer positioned at the start of the encoding
+ * @param version   The geometry block version to encode
  *
  * @return UDS_SUCCESS or an error
  **/
 static int encode_volume_geometry(const struct volume_geometry *geometry,
-				  struct buffer *buffer)
+				  struct buffer *buffer,
+				  uint32_t version)
 {
 	enum volume_region_id id;
 	int result = put_uint32_le_into_buffer(buffer, geometry->release_version);
@@ -267,6 +293,15 @@ static int encode_volume_geometry(const struct volume_geometry *geometry,
 			   (unsigned char *) &geometry->uuid);
 	if (result != VDO_SUCCESS) {
 		return result;
+	}
+
+
+	if (version >= 5) {
+		result = put_uint64_le_into_buffer(buffer,
+						   geometry->bio_offset);
+		if (result != VDO_SUCCESS) {
+			return result;
+		}
 	}
 
 	for (id = 0; id < VOLUME_REGION_COUNT; id++) {
@@ -308,13 +343,19 @@ static int decode_geometry_block(struct buffer *buffer,
 		return result;
 	}
 
-	result = validate_vdo_header(&GEOMETRY_BLOCK_HEADER_4_0, &header,
-				     true, __func__);
+	if (header.version.major_version <= 4) {
+		result = validate_vdo_header(&GEOMETRY_BLOCK_HEADER_4_0,
+					     &header, true, __func__);
+	} else {
+		result = validate_vdo_header(&GEOMETRY_BLOCK_HEADER_5_0,
+					     &header, true, __func__);
+	}
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 
-	result = decode_volume_geometry(buffer, geometry);
+	result = decode_volume_geometry(buffer, geometry,
+					header.version.major_version);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -326,84 +367,13 @@ static int decode_geometry_block(struct buffer *buffer,
 }
 
 /**
- * Encode the on-disk representation of a geometry block, up to but not
- * including the checksum, into a buffer.
+ * Decode and validate an encoded geometry block.
  *
- * @param geometry  The volume geometry to encode into the block
- * @param buffer    A buffer positioned at the start of the block
- *
- * @return UDS_SUCCESS or an error
- **/
-static int encode_geometry_block(const struct volume_geometry *geometry,
-				 struct buffer *buffer)
-{
-	int result = put_bytes(buffer, MAGIC_NUMBER_SIZE, MAGIC_NUMBER);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	result = encode_vdo_header(&GEOMETRY_BLOCK_HEADER_4_0, buffer);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	result = encode_volume_geometry(geometry, buffer);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	// Leave the CRC for the caller to compute and encode.
-	return ASSERT(GEOMETRY_BLOCK_HEADER_4_0.size ==
-			      (content_length(buffer) +
-			       sizeof(crc32_checksum_t)),
-		      "should have decoded up to the geometry checksum");
-}
-
-/**
- * Allocate a block-size buffer to read the geometry from the physical layer,
- * read the block, and return the buffer.
- *
- * @param [in]  layer      The physical layer containing the block to read
- * @param [out] block_ptr  A pointer to receive the allocated buffer
- *
- * @return VDO_SUCCESS or an error code
+ * @param block     The encoded geometry block
+ * @param geometry  The structure to receive the decoded fields
  **/
 static int __must_check
-read_geometry_block(PhysicalLayer *layer, byte **block_ptr)
-{
-	char *block;
-	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
-					     "geometry block", &block);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	result = layer->reader(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
-	if (result != VDO_SUCCESS) {
-		FREE(block);
-		return result;
-	}
-
-	*block_ptr = (byte *) block;
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
-int load_volume_geometry(PhysicalLayer *layer, struct volume_geometry *geometry)
-{
-	byte *block;
-	int result = read_geometry_block(layer, &block);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	result = parse_geometry_block(block, geometry);
-	FREE(block);
-	return result;
-}
-
-/**********************************************************************/
-int parse_geometry_block(byte *block, struct volume_geometry *geometry)
+vdo_parse_geometry_block(byte *block, struct volume_geometry *geometry)
 {
 	crc32_checksum_t checksum, saved_checksum;
 	struct buffer *buffer;
@@ -416,58 +386,119 @@ int parse_geometry_block(byte *block, struct volume_geometry *geometry)
 
 	result = decode_geometry_block(buffer, geometry);
 	if (result != VDO_SUCCESS) {
-		free_buffer(&buffer);
+		free_buffer(UDS_FORGET(buffer));
 		return result;
 	}
 
 	// Checksum everything decoded so far.
-	checksum = update_crc32(INITIAL_CHECKSUM, block,
-				uncompacted_amount(buffer));
+	checksum = vdo_update_crc32(VDO_INITIAL_CHECKSUM, block,
+				    uncompacted_amount(buffer));
 	result = get_uint32_le_from_buffer(buffer, &saved_checksum);
 	if (result != VDO_SUCCESS) {
-		free_buffer(&buffer);
+		free_buffer(UDS_FORGET(buffer));
 		return result;
 	}
 
 	// Finished all decoding. Everything that follows is validation code.
-	free_buffer(&buffer);
+	free_buffer(UDS_FORGET(buffer));
 
 	if (!is_loadable_release_version(geometry->release_version)) {
-		return log_error_strerror(VDO_UNSUPPORTED_VERSION,
-					  "release version %d cannot be loaded",
-					  geometry->release_version);
+		return uds_log_error_strerror(VDO_UNSUPPORTED_VERSION,
+					      "release version %d cannot be loaded",
+					      geometry->release_version);
 	}
 
 	return ((checksum == saved_checksum) ? VDO_SUCCESS :
 					      VDO_CHECKSUM_MISMATCH);
 }
 
+/**
+ * Encode the on-disk representation of a geometry block, up to but not
+ * including the checksum, into a buffer.
+ *
+ * @param geometry  The volume geometry to encode into the block
+ * @param buffer    A buffer positioned at the start of the block
+ * @param version   The geometry block version to encode
+ *
+ * @return UDS_SUCCESS or an error
+ **/
+static int encode_geometry_block(const struct volume_geometry *geometry,
+				 struct buffer *buffer,
+				 uint32_t version)
+{
+	const struct header *header;
+
+	int result = put_bytes(buffer, MAGIC_NUMBER_SIZE, MAGIC_NUMBER);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	header = ((version <= 4) ? &GEOMETRY_BLOCK_HEADER_4_0
+				 : &GEOMETRY_BLOCK_HEADER_5_0);
+	result = encode_vdo_header(header, buffer);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	result = encode_volume_geometry(geometry, buffer, version);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	// Leave the CRC for the caller to compute and encode.
+	return ASSERT(header->size ==
+		      (content_length(buffer) + sizeof(crc32_checksum_t)),
+		      "should have decoded up to the geometry checksum");
+}
+
+/**********************************************************************/
+int vdo_load_volume_geometry(PhysicalLayer *layer,
+			     struct volume_geometry *geometry)
+{
+	char *block;
+	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
+					     "geometry block", &block);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	result = layer->reader(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
+	if (result != VDO_SUCCESS) {
+		UDS_FREE(block);
+		return result;
+	}
+
+	result = vdo_parse_geometry_block((byte *) block, geometry);
+	UDS_FREE(block);
+	return result;
+}
+
 /************************************************************************/
-int compute_index_blocks(const struct index_config *index_config,
-			 block_count_t *index_blocks_ptr)
+int vdo_compute_index_blocks(const struct index_config *index_config,
+			     block_count_t *index_blocks_ptr)
 {
 	uint64_t index_bytes;
 	block_count_t index_blocks;
 	struct uds_configuration *uds_configuration = NULL;
-	int result = index_config_to_uds_configuration(index_config,
-						       &uds_configuration);
+	int result = vdo_index_config_to_uds_configuration(index_config,
+							   &uds_configuration);
 	if (result != UDS_SUCCESS) {
-		return log_error_strerror(result,
-					  "error creating index config");
+		return uds_log_error_strerror(result,
+					      "error creating index config");
 	}
 
 	result = uds_compute_index_size(uds_configuration, 0, &index_bytes);
 	uds_free_configuration(uds_configuration);
 	if (result != UDS_SUCCESS) {
-		return log_error_strerror(result,
-					  "error computing index size");
+		return uds_log_error_strerror(result,
+					      "error computing index size");
 	}
 
 	index_blocks = index_bytes / VDO_BLOCK_SIZE;
 	if ((((uint64_t) index_blocks) * VDO_BLOCK_SIZE) != index_bytes) {
-		return log_error_strerror(VDO_PARAMETER_MISMATCH,
-					  "index size must be a multiple of block size %d",
-					  VDO_BLOCK_SIZE);
+		return uds_log_error_strerror(VDO_PARAMETER_MISMATCH,
+					      "index size must be a multiple of block size %d",
+					      VDO_BLOCK_SIZE);
 	}
 
 	*index_blocks_ptr = index_blocks;
@@ -475,22 +506,23 @@ int compute_index_blocks(const struct index_config *index_config,
 }
 
 /**********************************************************************/
-int initialize_volume_geometry(nonce_t nonce,
-			       uuid_t *uuid,
-			       const struct index_config *index_config,
-			       struct volume_geometry *geometry)
+int vdo_initialize_volume_geometry(nonce_t nonce,
+				   uuid_t *uuid,
+				   const struct index_config *index_config,
+				   struct volume_geometry *geometry)
 {
 	block_count_t index_size = 0;
 	if (index_config != NULL) {
-		int result = compute_index_blocks(index_config, &index_size);
+		int result = vdo_compute_index_blocks(index_config, &index_size);
 		if (result != VDO_SUCCESS) {
 			return result;
 		}
 	}
 
 	*geometry = (struct volume_geometry) {
-		.release_version = CURRENT_RELEASE_VERSION_NUMBER,
+		.release_version = VDO_CURRENT_RELEASE_VERSION_NUMBER,
 		.nonce = nonce,
+		.bio_offset = 0,
 		.regions = {
 			[INDEX_REGION] = {
 				.id = INDEX_REGION,
@@ -513,7 +545,7 @@ int initialize_volume_geometry(nonce_t nonce,
 }
 
 /**********************************************************************/
-int clear_volume_geometry(PhysicalLayer *layer)
+int vdo_clear_volume_geometry(PhysicalLayer *layer)
 {
 	char *block;
 	int result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
@@ -523,13 +555,23 @@ int clear_volume_geometry(PhysicalLayer *layer)
 	}
 
 	result = layer->writer(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
-	FREE(block);
+	UDS_FREE(block);
 	return result;
 }
 
 /**********************************************************************/
-int write_volume_geometry(PhysicalLayer *layer,
-			  struct volume_geometry *geometry)
+int vdo_write_volume_geometry(PhysicalLayer *layer,
+			      struct volume_geometry *geometry)
+{
+	return vdo_write_volume_geometry_with_version(
+			layer, geometry, DEFAULT_GEOMETRY_BLOCK_VERSION);
+}
+
+/**********************************************************************/
+int __must_check
+vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
+				       struct volume_geometry *geometry,
+				       uint32_t version)
 {
 	char *block;
 	struct buffer *buffer;
@@ -543,44 +585,45 @@ int write_volume_geometry(PhysicalLayer *layer,
 
 	result = wrap_buffer((byte *) block, VDO_BLOCK_SIZE, 0, &buffer);
 	if (result != VDO_SUCCESS) {
-		FREE(block);
+		UDS_FREE(block);
 		return result;
 	}
 
-	result = encode_geometry_block(geometry, buffer);
+	result = encode_geometry_block(geometry, buffer, version);
 	if (result != VDO_SUCCESS) {
-		free_buffer(&buffer);
-		FREE(block);
+		free_buffer(UDS_FORGET(buffer));
+		UDS_FREE(block);
 		return result;
 	}
 
 	// Checksum everything encoded so far and then encode the checksum.
-	checksum = update_crc32(INITIAL_CHECKSUM, (byte *) block,
-				content_length(buffer));
+	checksum = vdo_update_crc32(VDO_INITIAL_CHECKSUM, (byte *) block,
+				    content_length(buffer));
 	result = put_uint32_le_into_buffer(buffer, checksum);
 	if (result != VDO_SUCCESS) {
-		free_buffer(&buffer);
-		FREE(block);
+		free_buffer(UDS_FORGET(buffer));
+		UDS_FREE(block);
 		return result;
 	}
 
 	// Write it.
 	result = layer->writer(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
-	free_buffer(&buffer);
-	FREE(block);
+	free_buffer(UDS_FORGET(buffer));
+	UDS_FREE(block);
 	return result;
 }
 
 /************************************************************************/
-int index_config_to_uds_configuration(const struct index_config *index_config,
+int
+vdo_index_config_to_uds_configuration(const struct index_config *index_config,
 				      struct uds_configuration **uds_config_ptr)
 {
 	struct uds_configuration *uds_configuration;
 	int result = uds_initialize_configuration(&uds_configuration,
 						  index_config->mem);
 	if (result != UDS_SUCCESS) {
-		return log_error_strerror(result,
-					  "error initializing configuration");
+		return uds_log_error_strerror(result,
+					      "error initializing configuration");
 	}
 
 	uds_configuration_set_sparse(uds_configuration, index_config->sparse);
@@ -589,8 +632,8 @@ int index_config_to_uds_configuration(const struct index_config *index_config,
 }
 
 /************************************************************************/
-void index_config_to_uds_parameters(const struct index_config *index_config,
-				    struct uds_parameters *user_params)
+void vdo_index_config_to_uds_parameters(const struct index_config *index_config,
+					struct uds_parameters *user_params)
 {
 	user_params->checkpoint_frequency = index_config->checkpoint_frequency;
 }

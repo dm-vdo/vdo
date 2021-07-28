@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#9 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedReader.c#13 $
  */
 
 #include "bufferedReader.h"
@@ -52,7 +52,7 @@ int make_buffered_reader(struct io_region *region,
 			 struct buffered_reader **reader_ptr)
 {
 	byte *data;
-	int result = ALLOCATE_IO_ALIGNED(
+	int result = UDS_ALLOCATE_IO_ALIGNED(
 		UDS_BLOCK_SIZE, byte, "buffer writer buffer", &data);
 	if (result != UDS_SUCCESS) {
 		return result;
@@ -60,9 +60,10 @@ int make_buffered_reader(struct io_region *region,
 
 	struct buffered_reader *reader = NULL;
 	result =
-		ALLOCATE(1, struct buffered_reader, "buffered reader", &reader);
+		UDS_ALLOCATE(1, struct buffered_reader, "buffered reader",
+			     &reader);
 	if (result != UDS_SUCCESS) {
-		FREE(data);
+		UDS_FREE(data);
 		return result;
 	}
 
@@ -85,8 +86,8 @@ void free_buffered_reader(struct buffered_reader *br)
 		return;
 	}
 	put_io_region(br->br_region);
-	FREE(br->br_start);
-	FREE(br);
+	UDS_FREE(br->br_start);
+	UDS_FREE(br);
 }
 
 /**********************************************************************/
@@ -100,7 +101,7 @@ position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
 					      UDS_BLOCK_SIZE,
 					      NULL);
 		if (result != UDS_SUCCESS) {
-			log_warning_strerror(
+			uds_log_warning_strerror(
 				result,
 				"%s got read_from_region error",
 				__func__);
@@ -127,6 +128,7 @@ int read_from_buffered_reader(struct buffered_reader *br,
 {
 	byte *dp = data;
 	int result = UDS_SUCCESS;
+	size_t avail, chunk;
 	while (length > 0) {
 		if (bytes_remaining_in_read_buffer(br) == 0) {
 			sector_t block_number = br->br_block_number;
@@ -139,8 +141,8 @@ int read_from_buffered_reader(struct buffered_reader *br,
 			}
 		}
 
-		size_t avail = bytes_remaining_in_read_buffer(br);
-		size_t chunk = min(length, avail);
+		avail = bytes_remaining_in_read_buffer(br);
+		chunk = min(length, avail);
 		memcpy(dp, br->br_pointer, chunk);
 		length -= chunk;
 		dp += chunk;
@@ -159,6 +161,8 @@ int verify_buffered_data(struct buffered_reader *br,
 			 const void *value,
 			 size_t length)
 {
+	int result;
+	size_t avail,chunk;
 	const byte *vp = value;
 	sector_t starting_block_number = br->br_block_number;
 	int starting_offset = br->br_pointer - br->br_start;
@@ -168,7 +172,7 @@ int verify_buffered_data(struct buffered_reader *br,
 			if (br->br_pointer != NULL) {
 				++block_number;
 			}
-			int result = position_reader(br, block_number, 0);
+			result = position_reader(br, block_number, 0);
 			if (result != UDS_SUCCESS) {
 				position_reader(br,
 						starting_block_number,
@@ -177,8 +181,8 @@ int verify_buffered_data(struct buffered_reader *br,
 			}
 		}
 
-		size_t avail = bytes_remaining_in_read_buffer(br);
-		size_t chunk = min(length, avail);
+		avail = bytes_remaining_in_read_buffer(br);
+		chunk = min(length, avail);
 		if (memcmp(vp, br->br_pointer, chunk) != 0) {
 			position_reader(
 				br, starting_block_number, starting_offset);

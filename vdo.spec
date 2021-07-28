@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 8.1.0.1
+Version: 8.1.0.264
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -98,7 +98,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %dir %{python3_sitelib}/%{name}/statistics/
 %{python3_sitelib}/%{name}/statistics/Command.py
 %{python3_sitelib}/%{name}/statistics/Field.py
-%{python3_sitelib}/%{name}/statistics/KernelStatistics.py
 %{python3_sitelib}/%{name}/statistics/LabeledValue.py
 %{python3_sitelib}/%{name}/statistics/StatFormatter.py
 %{python3_sitelib}/%{name}/statistics/StatStruct.py
@@ -179,6 +178,7 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Tue May 04 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.1.0.1-1
+* Wed Jul 28 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.1.0.264-1
 - Rebased to upstream candidate.
+- Addressed a Coverity scan false positive.
   

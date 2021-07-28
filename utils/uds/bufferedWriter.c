@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#11 $
+ * $Id: //eng/uds-releases/krusty/src/uds/bufferedWriter.c#15 $
  */
 
 #include "bufferedWriter.h"
@@ -50,17 +50,18 @@ int make_buffered_writer(struct io_region *region,
 			 struct buffered_writer **writer_ptr)
 {
 	byte *data;
-	int result = ALLOCATE_IO_ALIGNED(UDS_BLOCK_SIZE, byte,
-					 "buffer writer buffer", &data);
+	int result = UDS_ALLOCATE_IO_ALIGNED(UDS_BLOCK_SIZE, byte,
+					     "buffer writer buffer", &data);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
 	struct buffered_writer *writer;
 	result =
-		ALLOCATE(1, struct buffered_writer, "buffered writer", &writer);
+		UDS_ALLOCATE(1, struct buffered_writer, "buffered writer",
+			     &writer);
 	if (result != UDS_SUCCESS) {
-		FREE(data);
+		UDS_FREE(data);
 		return result;
 	}
 
@@ -81,18 +82,18 @@ int make_buffered_writer(struct io_region *region,
 /**********************************************************************/
 void free_buffered_writer(struct buffered_writer *bw)
 {
+	int result;
 	if (bw == NULL) {
 		return;
 	}
-	int result = sync_region_contents(bw->bw_region);
+	result = sync_region_contents(bw->bw_region);
 	if (result != UDS_SUCCESS) {
-		log_warning_strerror(result,
-				     "%s cannot sync storage", __func__);
-			
+		uds_log_warning_strerror(result,
+				         "%s cannot sync storage", __func__);
 	}
 	put_io_region(bw->bw_region);
-	FREE(bw->bw_start);
-	FREE(bw);
+	UDS_FREE(bw->bw_start);
+	UDS_FREE(bw);
 }
 
 /**********************************************************************/
@@ -112,16 +113,17 @@ int write_to_buffered_writer(struct buffered_writer *bw,
 			     const void *data,
 			     size_t len)
 {
+	const byte *dp = data;
+	int result = UDS_SUCCESS;
+	size_t avail, chunk;
 	if (bw->bw_error != UDS_SUCCESS) {
 		return bw->bw_error;
 	}
 
-	const byte *dp = data;
-	int result = UDS_SUCCESS;
 	while ((len > 0) && (result == UDS_SUCCESS)) {
 
-		size_t avail = space_remaining_in_write_buffer(bw);
-		size_t chunk = min(len, avail);
+		avail = space_remaining_in_write_buffer(bw);
+		chunk = min(len, avail);
 		memcpy(bw->bw_pointer, dp, chunk);
 		len -= chunk;
 		dp += chunk;
@@ -139,15 +141,16 @@ int write_to_buffered_writer(struct buffered_writer *bw,
 /**********************************************************************/
 int write_zeros_to_buffered_writer(struct buffered_writer *bw, size_t len)
 {
+	int result = UDS_SUCCESS;
+	size_t avail, chunk;
 	if (bw->bw_error != UDS_SUCCESS) {
 		return bw->bw_error;
 	}
 
-	int result = UDS_SUCCESS;
 	while ((len > 0) && (result == UDS_SUCCESS)) {
 
-		size_t avail = space_remaining_in_write_buffer(bw);
-		size_t chunk = min(len, avail);
+		avail = space_remaining_in_write_buffer(bw);
+		chunk = min(len, avail);
 		memset(bw->bw_pointer, 0, chunk);
 		len -= chunk;
 		bw->bw_pointer += chunk;

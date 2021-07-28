@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#10 $
+ * $Id: //eng/uds-releases/krusty/src/uds/volumeStore.c#14 $
  */
 
 #include "geometry.h"
@@ -38,7 +38,7 @@ void close_volume_store(struct volume_store *volume_store)
 /**********************************************************************/
 void destroy_volume_page(struct volume_page *volume_page)
 {
-	FREE(volume_page->vp_data);
+	UDS_FREE(volume_page->vp_data);
 	volume_page->vp_data = NULL;
 }
 
@@ -46,8 +46,8 @@ void destroy_volume_page(struct volume_page *volume_page)
 int initialize_volume_page(const struct geometry *geometry,
 			   struct volume_page *volume_page)
 {
-	return ALLOCATE_IO_ALIGNED(geometry->bytes_per_page,
-				   byte, __func__, &volume_page->vp_data);
+	return UDS_ALLOCATE_IO_ALIGNED(geometry->bytes_per_page,
+				       byte, __func__, &volume_page->vp_data);
 
 }
 
@@ -58,7 +58,7 @@ int open_volume_store(struct volume_store *volume_store,
 		      size_t bytes_per_page)
 {
 	volume_store->vs_bytes_per_page = bytes_per_page;
-	return open_volume_region(layout, &volume_store->vs_region);
+	return open_uds_volume_region(layout, &volume_store->vs_region);
 }
 
 /**********************************************************************/
@@ -92,10 +92,9 @@ int read_volume_page(const struct volume_store *volume_store,
 				      volume_store->vs_bytes_per_page,
 				      NULL);
 	if (result != UDS_SUCCESS) {
-		return log_warning_strerror(result,
-					    "error reading physical page %u",
-					    physical_page);
-			
+		return uds_log_warning_strerror(result,
+						"error reading physical page %u",
+						physical_page);
 	}
 	return UDS_SUCCESS;
 }
@@ -120,8 +119,8 @@ int sync_volume_store(const struct volume_store *volume_store)
 {
 	int result = sync_region_contents(volume_store->vs_region);
 	if (result != UDS_SUCCESS) {
-		return log_error_strerror(result,
-					  "cannot sync chapter to volume");
+		return uds_log_error_strerror(result,
+					      "cannot sync chapter to volume");
 	}
 	return UDS_SUCCESS;
 }

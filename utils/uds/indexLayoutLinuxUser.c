@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#10 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/indexLayoutLinuxUser.c#16 $
  */
 
 #include "errors.h"
@@ -28,10 +28,10 @@
 #include "uds.h"
 
 /**********************************************************************/
-int make_index_layout(const char *name,
-		      bool new_layout,
-		      const struct uds_configuration *config,
-		      struct index_layout **layout_ptr)
+int make_uds_index_layout(const char *name,
+			  bool new_layout,
+			  const struct uds_configuration *config,
+			  struct index_layout **layout_ptr)
 {
 	char *file = NULL;
 	uint64_t offset = 0;
@@ -41,43 +41,44 @@ int make_index_layout(const char *name,
 		{ "file", LP_STRING | LP_DEFAULT, { .str = &file }, false },
 		{ "size", LP_UINT64, { .num = &size }, false },
 		{ "offset", LP_UINT64, { .num = &offset }, false },
+		LP_NULL_PARAMETER,
 	};
 
 	char *params = NULL;
-	int result = duplicate_string(name, "make_index_layout parameters",
-				      &params);
+	int result = uds_duplicate_string(name,
+					  "make_uds_index_layout parameters",
+					  &params);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
 	// note file will be set to memory owned by params
-	result = parse_layout_string(params,
-				     parameter_table,
-				     COUNT_OF(parameter_table));
+	result = parse_layout_string(params, parameter_table);
 	if (result != UDS_SUCCESS) {
-		FREE(params);
+		UDS_FREE(params);
 		return result;
 	}
 
 	if (!file) {
-		FREE(params);
-		return log_error_strerror(UDS_INDEX_NAME_REQUIRED,
-					  "no index specified");
+		UDS_FREE(params);
+		uds_log_error("no index specified");
+		return -EINVAL;
 	}
 
 	struct io_factory *factory = NULL;
 	result =
-		make_io_factory(file,
-				new_layout ? FU_CREATE_READ_WRITE : FU_READ_WRITE,
-				&factory);
-	FREE(params);
+		make_uds_io_factory(file,
+				    new_layout ? FU_CREATE_READ_WRITE
+				    	       : FU_READ_WRITE,
+				    &factory);
+	UDS_FREE(params);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 	struct index_layout *layout;
-	result = make_index_layout_from_factory(
+	result = make_uds_index_layout_from_factory(
 		factory, offset, size, new_layout, config, &layout);
-	put_io_factory(factory);
+	put_uds_io_factory(factory);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}

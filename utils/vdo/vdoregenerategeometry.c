@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoRegenerateGeometry.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoRegenerateGeometry.c#8 $
  */
 
 #include <err.h>
@@ -110,7 +110,7 @@ static void usage(const char *programName)
  **/
 static void processArgs(int argc, char *argv[])
 {
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errorBuffer, ERRBUF_SIZE));
@@ -204,8 +204,9 @@ static int generateGeometry(const uds_memory_config_size_t memory, bool sparse)
     return result;
   }
 
-  result = initialize_volume_geometry(current_time_us(), &uuid, &indexConfig,
-                                      &candidate->geometry);
+  result = vdo_initialize_volume_geometry(current_time_us(), &uuid,
+                                          &indexConfig,
+                                          &candidate->geometry);
   if (result != VDO_SUCCESS) {
     warnx("failed to generate geometry for memory %s%s: %s",
           candidate->memoryString, (sparse ? ", sparse" : ""),
@@ -233,7 +234,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
   }
 
   if ((offset != 0)
-      && (get_data_region_offset(candidate->geometry) != offset)) {
+      && (vdo_get_data_region_start(candidate->geometry) != offset)) {
     return false;
   }
 
@@ -253,19 +254,20 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     int result = fileLayer->reader(fileLayer, map.root_origin + root, 1,
                                    blockBuffer);
     if (result != VDO_SUCCESS) {
-      warnx("candidate block map root at %" PRIu64 " unreadable: %s",
-            map.root_origin + root, resultString(result));
+      warnx("candidate block map root at %llu unreadable: %s",
+            (unsigned long long) (map.root_origin + root),
+            resultString(result));
       return false;
     }
 
     enum block_map_page_validity validity
-      = validate_block_map_page((struct block_map_page *) blockBuffer,
-                                candidate->vdo->states.vdo.nonce,
-                                map.root_origin + root);
-    if (validity == BLOCK_MAP_PAGE_VALID) {
-      printf("Found candidate super block at block %" PRIu64
+      = validate_vdo_block_map_page((struct block_map_page *) blockBuffer,
+                                    candidate->vdo->states.vdo.nonce,
+                                    map.root_origin + root);
+    if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
+      printf("Found candidate super block at block %llu"
              " (index memory %sGB%s)\n",
-             get_data_region_offset(candidate->geometry),
+             (unsigned long long) vdo_get_data_region_start(candidate->geometry),
              candidate->memoryString, (sparse ? ", sparse" : ""));
       return true;
     }
@@ -291,13 +293,15 @@ static void findSuperBlocks(void)
     Candidate *candidate = &candidates[candidateCount];
     if (tryUDSConfig(memory, false)) {
       candidateCount++;
-    } else if (get_data_region_offset(candidate->geometry) > physicalSize) {
+    } else if (vdo_get_data_region_start(candidate->geometry)
+               > physicalSize) {
       return;
     }
 
     if (trySparse && tryUDSConfig(memory, true)) {
       candidateCount++;
-    } else if (get_data_region_offset(candidate->geometry) > physicalSize) {
+    } else if (vdo_get_data_region_start(candidate->geometry)
+               > physicalSize) {
       trySparse = false;
     }
   }
@@ -313,7 +317,7 @@ static void rewriteGeometry(Candidate *candidate)
   candidate->geometry.nonce = candidate->vdo->states.vdo.nonce;
   freeUserVDO(&candidate->vdo);
 
-  int result = write_volume_geometry(fileLayer, &candidate->geometry);
+  int result = vdo_write_volume_geometry(fileLayer, &candidate->geometry);
   if (result != VDO_SUCCESS) {
     errx(result, "Failed to write new geometry: %s", resultString(result));
   }
@@ -322,7 +326,7 @@ static void rewriteGeometry(Candidate *candidate)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  int result = register_status_codes();
+  int result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errorBuffer, ERRBUF_SIZE));
@@ -345,8 +349,8 @@ int main(int argc, char *argv[])
   physicalSize = fileLayer->getBlockCount(fileLayer);
 
   if (offset > physicalSize) {
-    errx(1, "Specified super block offset %" PRIu64
-         " is beyond the end of the device", offset);
+    errx(1, "Specified super block offset %llu"
+         " is beyond the end of the device", (unsigned long long) offset);
   }
 
   uuid_generate(uuid);
@@ -359,8 +363,8 @@ int main(int argc, char *argv[])
     printf("Found multiple candidate super blocks:\n");
     for (int i = 0; i < candidateCount; i++) {
       Candidate *candidate = &candidates[i];
-      printf("offset: %" PRIu64 ", index memory %s%s\n",
-             get_data_region_offset(candidate->geometry) * VDO_BLOCK_SIZE,
+      printf("offset: %llu, index memory %s%s\n",
+             (unsigned long long) vdo_get_data_region_start(candidate->geometry) * VDO_BLOCK_SIZE,
              candidate->memoryString, (candidate->sparse ?  ", sparse" : ""));
       freeUserVDO(&candidate->vdo);
     }
@@ -370,7 +374,7 @@ int main(int argc, char *argv[])
            "\na candidate\n");
   }
 
-  FREE(blockBuffer);
+  UDS_FREE(blockBuffer);
   fileLayer->destroy(&fileLayer);
 
   if (candidateCount == 0) {
