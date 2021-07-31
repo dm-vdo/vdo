@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#21 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/requestQueueUser.c#22 $
  */
 
 #include "requestQueue.h"
@@ -26,7 +26,7 @@
 #include "logger.h"
 #include "request.h"
 #include "memoryAlloc.h"
-#include "threads.h"
+#include "uds-threads.h"
 #include "timeUtils.h"
 #include "util/eventCount.h"
 #include "util/funnelQueue.h"

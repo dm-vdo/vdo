@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/stringUtils.c#10 $
+ * $Id: //eng/uds-releases/krusty/src/uds/stringUtils.c#11 $
  */
 
 #include "stringUtils.h"
@@ -36,7 +36,7 @@ int uds_alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 		return UDS_INVALID_ARGUMENT;
 	}
 	va_start(args, fmt);
-	result = vasprintf(strp, fmt, args) == -1 ? ENOMEM : UDS_SUCCESS;
+	result = vasprintf(strp, fmt, args) == -1 ? -ENOMEM : UDS_SUCCESS;
 	va_end(args);
 	if ((result != UDS_SUCCESS) && (what != NULL)) {
 		uds_log_error("cannot allocate %s", what);
