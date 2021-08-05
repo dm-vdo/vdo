@@ -4,17 +4,19 @@ vdostats \- Display configuration and statistics of VDO volumes
 
 .SH SYNOPSIS
 .B vdostats
-[\fI\,OPTION\/\fR]... [\fI\,DEVICE\/\fR]...
+[\fI\,options ...\/\fR] [\fI\,device [device ...]\/\fR]
 
 .SH DESCRIPTION
 \fBvdostats\fR displays configuration and statistics information for the
 given VDO devices. If no devices are given, it displays information
 about all VDO devices.
-
+.TP
+The VDO devices must be running in order for configuration and statistics
+information to be reported.
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
-Show help message and exit
+Show help message and exit.
 .TP
 \fB\-a\fR, \fB\-\-all\fR
 This option is only for backwards compatibility. It is now

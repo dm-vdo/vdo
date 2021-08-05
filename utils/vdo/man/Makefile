@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/man/Makefile#8 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/man/Makefile#9 $
 
 INSTALLFILES= \
         vdoaudit.8               \
@@ -30,7 +30,8 @@ INSTALLFILES= \
 	vdolistmetadata.8        \
 	vdoreadonly.8            \
 	vdoregenerategeometry.8  \
-        vdosetuuid.8
+	vdosetuuid.8             \
+        vdostats.8
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
