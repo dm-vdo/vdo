@@ -250,12 +250,12 @@ class VDOStatistics(StatStruct):
 			Uint64Field("physicalBlocks"),
 			# number of logical blocks
 			Uint64Field("logicalBlocks"),
-			Uint64Field("oneKBlocks", label = "1K-blocks", derived = "$physicalBlocks * $blockSize // 1024"),
-			Uint64Field("oneKBlocksUsed", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024", label = "1K-blocks used"),
+			Uint64Field("oneKBlocks", derived = "$physicalBlocks * $blockSize // 1024", label = "1K-blocks"),
+			Uint64Field("oneKBlocksUsed", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024", label = "1K-blocks used", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))"),
 			Uint64Field("oneKBlocksAvailable", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))", label = "1K-blocks available", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024"),
-			Uint8Field("usedPercent", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)"),
-			IntegerField("savings", available = "not $inRecoveryMode", display = False, derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1"),
-			Uint8Field("savingPercent", derived = "$savings if ($savings >= 0) else NotAvailable()", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))"),
+			Uint8Field("usedPercent", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))"),
+			IntegerField("savings", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))", display = False, derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1"),
+			Uint8Field("savingPercent", available = "((not $inRecoveryMode) and ($mode != \"read-only\"))", derived = "$savings if ($savings >= 0) else NotAvailable()"),
 			# Size of the block map page cache, in bytes
 			Uint64Field("blockMapCacheSize"),
 			# The physical block size
@@ -269,7 +269,7 @@ class VDOStatistics(StatStruct):
 			# Whether the VDO is in recovery mode
 			BoolField("inRecoveryMode", display = False),
 			# What percentage of recovery mode work has been completed
-			Uint8Field("recoveryPercentage", label = "recovery progress (%)", available = "$inRecoveryMode"),
+			Uint8Field("recoveryPercentage", available = "$inRecoveryMode", label = "recovery progress (%)"),
 			# The statistics for the compressed block packer
 			PackerStatistics("packer"),
 			# Counters for events in the block allocator
@@ -290,7 +290,7 @@ class VDOStatistics(StatStruct):
 			ErrorStatistics("errors"),
 			# The VDO instance
 			Uint32Field("instance"),
-			StringField("fiveTwelveByteEmulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'", label = "512 byte emulation"),
+			StringField("fiveTwelveByteEmulation", label = "512 byte emulation", derived = "'on' if ($logicalBlockSize == 512) else 'off'"),
 			# Current number of active VIOs
 			Uint32Field("currentVIOsInProgress", label = "current VDO IO requests in progress"),
 			# Maximum number of active VIOs
