@@ -16,14 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadSemaphoreLinuxUser.c#8 $
+ * $Id: //eng/uds-releases/krusty-rhel9.0-beta/userLinux/uds/threadSemaphoreLinuxUser.c#1 $
  */
 
 #include <errno.h>
 
 #include "logger.h"
 #include "permassert.h"
-#include "threads.h"
+#include "uds-threads.h"
 #include "timeUtils.h"
 
 /**********************************************************************/

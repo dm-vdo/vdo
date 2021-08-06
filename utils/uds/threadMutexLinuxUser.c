@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/threadMutexLinuxUser.c#7 $
+ * $Id: //eng/uds-releases/krusty-rhel9.0-beta/userLinux/uds/threadMutexLinuxUser.c#1 $
  */
 
 #include <errno.h>
@@ -25,7 +25,7 @@
 #include "permassert.h"
 #include "stringUtils.h"
 #include "threadOnce.h"
-#include "threads.h"
+#include "uds-threads.h"
 
 static enum mutex_kind {
 	fast_adaptive,

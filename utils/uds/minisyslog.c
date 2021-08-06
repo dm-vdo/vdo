@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.c#16 $
+ * $Id: //eng/uds-releases/krusty-rhel9.0-beta/userLinux/uds/minisyslog.c#1 $
  */
 
 #include <fcntl.h>
@@ -30,7 +30,7 @@
 #include "memoryAlloc.h"
 #include "minisyslog.h"
 #include "stringUtils.h"
-#include "threads.h"
+#include "uds-threads.h"
 #include "timeUtils.h"
 
 static struct mutex mutex = { .mutex = UDS_MUTEX_INITIALIZER };

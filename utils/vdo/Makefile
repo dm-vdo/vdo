@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/vdo/Makefile#1 $
+# $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/packaging/src-dist/user/utils/vdo/Makefile#1 $
 
-VDO_VERSION = 8.1.0.264
+VDO_VERSION = 8.1.0.316
 
 UDS_DIR      = ../uds
 
@@ -91,7 +91,10 @@ PROGS = vdoaudit               \
         vdolistmetadata        \
         vdoreadonly            \
         vdoregenerategeometry  \
-        vdosetuuid
+        vdosetuuid             \
+        vdostats
+
+COMPLETIONS=vdostats
 
 PROG_SOURCES := $(PROGS:%=%.c)
 C_FILES      := $(filter-out $(PROG_SOURCES),$(wildcard *.c))
@@ -117,6 +120,7 @@ INSTALL = install
 INSTALLOWNER ?= -o root -g root
 bindir ?= /usr/bin
 INSTALLDIR=$(DESTDIR)$(bindir)
+COMPLETIONINSTALLDIR=$(DESTDIR)$(sysconfdir)/bash_completion.d
 
 .PHONY: install
 install:
@@ -125,6 +129,11 @@ install:
 	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(INSTALLDIR); \
 	done
 	$(MAKE) -C man install
+	$(INSTALL) $(INSTALLOWNER) -d $(COMPLETIONINSTALLDIR)
+	for c in $(COMPLETIONS); do                            \
+	  $(INSTALL) $(INSTALLOWNER) -m 644 $$c.bash           \
+	         $(COMPLETIONINSTALLDIR)/$$c;                  \
+	done
 
 ########################################################################
 # Dependency processing

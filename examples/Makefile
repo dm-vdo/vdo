@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/examples/Makefile#1 $
+# $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/packaging/src-dist/user/examples/Makefile#1 $
 
-SUBDIRS = ansible monitor systemd udev
+SUBDIRS = ansible monitor
 
 .PHONY: all clean install
 all clean install:

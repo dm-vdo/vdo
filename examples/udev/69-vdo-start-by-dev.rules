@@ -1,1 +1,0 @@
-ENV{ID_FS_TYPE}=="vdo",  ENV{SYSTEMD_WANTS}+="vdo-start-by-dev@%k"

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#6 $
+ * $Id: //eng/uds-releases/krusty-rhel9.0-beta/userLinux/uds/syscalls.h#1 $
  */
 
 #ifndef SYSCALLS_H
@@ -25,9 +25,9 @@
 #include <errno.h>
 
 #include "compiler.h"
+#include "errors.h"
 #include "logger.h"
 #include "typeDefs.h"
-#include "uds-error.h"
 
 /**
  * Wrap the read(2) system call, looping as long as errno is EINTR.

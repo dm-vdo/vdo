@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/minisyslog.h#3 $
+ * $Id: //eng/uds-releases/krusty-rhel9.0-beta/userLinux/uds/minisyslog.h#1 $
  */
 
 #ifndef MINISYSLOG_H

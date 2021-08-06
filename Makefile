@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/Makefile#1 $
+# $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/packaging/src-dist/user/Makefile#1 $
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
@@ -24,7 +24,7 @@ defaultdocdir ?= /usr/share/doc
 name ?= vdo
 INSTALLDIR=$(DESTDIR)/$(defaultdocdir)/$(name)
 
-SUBDIRS = examples utils vdo-manager
+SUBDIRS = examples utils
 
 .PHONY: all clean install
 all clean:

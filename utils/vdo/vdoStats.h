@@ -16,32 +16,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/src/uds/indexVersion.h#4 $
+ * $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/c++/vdo/user/vdoStats.h#1 $
+ *
  */
 
-#ifndef INDEX_VERSION_H
-#define INDEX_VERSION_H
+#ifndef VDO_STATS_H
+#define VDO_STATS_H
 
-#include "typeDefs.h"
-
-struct index_version {
-	bool chapter_index_header_native_endian;
-};
-
-enum {
-	SUPER_VERSION_MINIMUM = 1,
-	SUPER_VERSION_CURRENT = 3,
-	SUPER_VERSION_MAXIMUM = 7,
-};
+#include "types.h"
 
 /**
- * Initialize the version parameters that we normally learn when loading the
- * index but need to use during index operation.
+ * Read vdo statistics from a buffer
  *
- * @param version        The version parameters
- * @param super_version  The SuperBlock version number
- **/
-void initialize_index_version(struct index_version *version,
-			      uint32_t super_version);
+ * @param buf     pointer to the buffer
+ * @param stats   pointer to the statistics
+ * 
+ * @return VDO_SUCCESS or an error
+ */
+int read_vdo_stats(char *buf, struct vdo_statistics *stats);
 
-#endif // INDEX_VERSION_H
+/**
+ * Write vdo statistics to stdout
+ *
+ * @param stats   pointer to the statistics
+ * 
+ * @return VDO_SUCCESS or an error
+ */
+int write_vdo_stats(struct vdo_statistics *stats);
+
+#endif  /* VDO_STATS_H */
