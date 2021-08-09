@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.h#28 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.h#29 $
  */
 
 #ifndef VOLUME_GEOMETRY_H
@@ -30,7 +30,7 @@
 #include "types.h"
 
 enum {
-	GEOMETRY_BLOCK_LOCATION = 0,
+	VDO_GEOMETRY_BLOCK_LOCATION = 0,
 };
 
 struct index_config {
@@ -40,9 +40,9 @@ struct index_config {
 } __packed;
 
 enum volume_region_id {
-	INDEX_REGION = 0,
-	DATA_REGION = 1,
-	VOLUME_REGION_COUNT,
+	VDO_INDEX_REGION = 0,
+	VDO_DATA_REGION = 1,
+	VDO_VOLUME_REGION_COUNT,
 };
 
 struct volume_region {
@@ -65,7 +65,7 @@ struct volume_geometry {
 	/** The block offset to be applied to bios */
 	block_count_t bio_offset;
 	/** The regions in ID order */
-	struct volume_region regions[VOLUME_REGION_COUNT];
+	struct volume_region regions[VDO_VOLUME_REGION_COUNT];
 	/** The index config */
 	struct index_config index_config;
 } __packed;
@@ -79,7 +79,7 @@ struct volume_geometry_4_0 {
 	/** The uuid of this volume */
 	uuid_t uuid;
 	/** The regions in ID order */
-	struct volume_region regions[VOLUME_REGION_COUNT];
+	struct volume_region regions[VDO_VOLUME_REGION_COUNT];
 	/** The index config */
 	struct index_config index_config;
 } __packed;
@@ -94,7 +94,7 @@ struct volume_geometry_4_0 {
 static inline physical_block_number_t __must_check
 vdo_get_index_region_start(struct volume_geometry geometry)
 {
-	return geometry.regions[INDEX_REGION].start_block;
+	return geometry.regions[VDO_INDEX_REGION].start_block;
 }
 
 /**
@@ -107,7 +107,7 @@ vdo_get_index_region_start(struct volume_geometry geometry)
 static inline physical_block_number_t __must_check
 vdo_get_data_region_start(struct volume_geometry geometry)
 {
-	return geometry.regions[DATA_REGION].start_block;
+	return geometry.regions[VDO_DATA_REGION].start_block;
 }
 
 /**

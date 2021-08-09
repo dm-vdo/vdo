@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#53 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#54 $
  */
 
 #include "volumeGeometry.h"
@@ -255,7 +255,7 @@ static int decode_volume_geometry(struct buffer *buffer,
 	}
 	geometry->bio_offset = bio_offset;
 
-	for (id = 0; id < VOLUME_REGION_COUNT; id++) {
+	for (id = 0; id < VDO_VOLUME_REGION_COUNT; id++) {
 		result = decode_volume_region(buffer, &geometry->regions[id]);
 		if (result != VDO_SUCCESS) {
 			return result;
@@ -304,7 +304,7 @@ static int encode_volume_geometry(const struct volume_geometry *geometry,
 		}
 	}
 
-	for (id = 0; id < VOLUME_REGION_COUNT; id++) {
+	for (id = 0; id < VDO_VOLUME_REGION_COUNT; id++) {
 		result = encode_volume_region(&geometry->regions[id], buffer);
 		if (result != VDO_SUCCESS) {
 			return result;
@@ -462,7 +462,7 @@ int vdo_load_volume_geometry(PhysicalLayer *layer,
 		return result;
 	}
 
-	result = layer->reader(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
+	result = layer->reader(layer, VDO_GEOMETRY_BLOCK_LOCATION, 1, block);
 	if (result != VDO_SUCCESS) {
 		UDS_FREE(block);
 		return result;
@@ -524,12 +524,12 @@ int vdo_initialize_volume_geometry(nonce_t nonce,
 		.nonce = nonce,
 		.bio_offset = 0,
 		.regions = {
-			[INDEX_REGION] = {
-				.id = INDEX_REGION,
+			[VDO_INDEX_REGION] = {
+				.id = VDO_INDEX_REGION,
 				.start_block = 1,
 			},
-			[DATA_REGION] = {
-				.id = DATA_REGION,
+			[VDO_DATA_REGION] = {
+				.id = VDO_DATA_REGION,
 				.start_block = 1 + index_size,
 			}
 		}
@@ -554,7 +554,7 @@ int vdo_clear_volume_geometry(PhysicalLayer *layer)
 		return result;
 	}
 
-	result = layer->writer(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
+	result = layer->writer(layer, VDO_GEOMETRY_BLOCK_LOCATION, 1, block);
 	UDS_FREE(block);
 	return result;
 }
@@ -607,7 +607,7 @@ vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 	}
 
 	// Write it.
-	result = layer->writer(layer, GEOMETRY_BLOCK_LOCATION, 1, block);
+	result = layer->writer(layer, VDO_GEOMETRY_BLOCK_LOCATION, 1, block);
 	free_buffer(UDS_FORGET(buffer));
 	UDS_FREE(block);
 	return result;

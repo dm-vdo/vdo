@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#18 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#19 $
  */
 
 #include <err.h>
@@ -167,9 +167,9 @@ int main(int argc, char *argv[])
   printf("ReleaseVersion: %u\n", geometry.release_version);
   printf("Nonce: %llu\n", (unsigned long long) geometry.nonce);
   printf("IndexRegion: %llu\n",
-         (unsigned long long) geometry.regions[INDEX_REGION].start_block);
+         (unsigned long long) geometry.regions[VDO_INDEX_REGION].start_block);
   printf("DataRegion: %llu\n",
-         (unsigned long long) geometry.regions[DATA_REGION].start_block);
+         (unsigned long long) geometry.regions[VDO_DATA_REGION].start_block);
   printf("IndexConfig:\n");
   printf("  memory: %u\n", geometry.index_config.mem);
   printf("  checkpointFrequency: %u\n",

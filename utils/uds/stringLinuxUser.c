@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/stringLinuxUser.c#4 $
+ * $Id: //eng/uds-releases/lisa/userLinux/uds/stringLinuxUser.c#1 $
  */
 
 #include <limits.h>

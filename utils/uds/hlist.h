@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/hlist.h#2 $
+ * $Id: //eng/uds-releases/lisa/userLinux/uds/hlist.h#1 $
  */
 
 #ifndef HLIST_H

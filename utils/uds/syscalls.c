@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.c#2 $
+ * $Id: //eng/uds-releases/lisa/userLinux/uds/syscalls.c#1 $
  */
 
 #include "syscalls.h"

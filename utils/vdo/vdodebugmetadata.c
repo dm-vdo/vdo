@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#65 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#66 $
  */
 
 #include <err.h>
@@ -602,7 +602,7 @@ readVDOFromDump(const char *filename)
           filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
     return result;
   }
-  geometry.regions[DATA_REGION].start_block = 1;
+  geometry.regions[VDO_DATA_REGION].start_block = 1;
 
   // Create the VDO.
   return loadVDOWithGeometry(layer, &geometry, false, &vdo);
