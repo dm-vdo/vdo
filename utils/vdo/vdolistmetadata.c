@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#33 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoListMetadata.c#34 $
  */
 
 #include <err.h>
@@ -176,7 +176,7 @@ static void listSlabs(void)
 static void listRecoveryJournal(void)
 {
   const struct partition *partition
-    = getPartition(vdo, RECOVERY_JOURNAL_PARTITION,
+    = getPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION,
                    "no recovery journal partition");
   listBlocks("recovery journal",
              get_vdo_fixed_layout_partition_offset(partition),
@@ -187,7 +187,8 @@ static void listRecoveryJournal(void)
 static void listSlabSummary(void)
 {
   const struct partition *partition
-    = getPartition(vdo, SLAB_SUMMARY_PARTITION, "no slab summary partition");
+    = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION,
+                   "no slab summary partition");
   listBlocks("slab summary", get_vdo_fixed_layout_partition_offset(partition),
              get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
 }

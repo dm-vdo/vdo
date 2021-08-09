@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#57 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#58 $
  */
 
 #include <uuid/uuid.h>
@@ -135,9 +135,9 @@ static int __must_check configureVDO(UserVDO *vdo)
     return result;
   }
 
-  const struct partition *partition = getPartition(vdo,
-                                                   BLOCK_ALLOCATOR_PARTITION,
-                                                   "no allocator partition");
+  const struct partition *partition
+    = getPartition(vdo, VDO_BLOCK_ALLOCATOR_PARTITION,
+                   "no allocator partition");
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -161,7 +161,8 @@ static int __must_check configureVDO(UserVDO *vdo)
                                        DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT);
   }
 
-  partition = getPartition(vdo, BLOCK_MAP_PARTITION, "no block map partition");
+  partition
+    = getPartition(vdo, VDO_BLOCK_MAP_PARTITION, "no block map partition");
   vdo->states.block_map = (struct block_map_state_2_0) {
     .flat_page_origin = VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN,
     .flat_page_count = 0,
@@ -296,12 +297,12 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
     return result;
   }
 
-  result = clearPartition(vdo, BLOCK_MAP_PARTITION);
+  result = clearPartition(vdo, VDO_BLOCK_MAP_PARTITION);
   if (result != VDO_SUCCESS) {
     return uds_log_error_strerror(result, "cannot clear block map partition");
   }
 
-  result = clearPartition(vdo, RECOVERY_JOURNAL_PARTITION);
+  result = clearPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION);
   if (result != VDO_SUCCESS) {
     return uds_log_error_strerror(result,
                                   "cannot clear recovery journal partition");
