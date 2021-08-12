@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/lisa/src/uds/permassert.c#1 $
+ * $Id: //eng/uds-releases/lisa/src/uds/permassert.c#2 $
  */
 
 #include "permassert.h"
@@ -32,6 +32,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <strings.h> // for strcasecmp()
 #include <syslog.h>
 
 #include "common.h"

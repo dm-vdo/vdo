@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/lisa/src/uds/stringUtils.h#1 $
+ * $Id: //eng/uds-releases/lisa/src/uds/stringUtils.h#2 $
  */
 
 #ifndef STRING_UTILS_H
@@ -26,7 +26,6 @@
 #include <stdio.h> // for vsnprintf
 #include <stdlib.h> // for strtol
 #include <string.h>
-#include <strings.h>
 
 #include "compiler.h"
 #include "typeDefs.h"
