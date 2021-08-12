@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#54 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#55 $
  */
 
 #include "volumeGeometry.h"
@@ -87,6 +87,7 @@ static const release_version_number_t COMPATIBLE_RELEASE_VERSIONS[] = {
 static inline bool is_loadable_release_version(release_version_number_t version)
 {
 	unsigned int i;
+
 	if (version == VDO_CURRENT_RELEASE_VERSION_NUMBER) {
 		return true;
 	}
@@ -115,6 +116,7 @@ static int decode_index_config(struct buffer *buffer,
 	uint32_t checkpoint_frequency;
 	bool sparse;
 	int result = get_uint32_le_from_buffer(buffer, &mem);
+
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -149,6 +151,7 @@ static int encode_index_config(const struct index_config *config,
 			       struct buffer *buffer)
 {
 	int result = put_uint32_le_into_buffer(buffer, config->mem);
+
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -175,6 +178,7 @@ static int decode_volume_region(struct buffer *buffer,
 	physical_block_number_t start_block;
 	enum volume_region_id id;
 	int result = get_uint32_le_from_buffer(buffer, &id);
+
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -203,6 +207,7 @@ static int encode_volume_region(const struct volume_region *region,
 				struct buffer *buffer)
 {
 	int result = put_uint32_le_into_buffer(buffer, region->id);
+
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -228,6 +233,7 @@ static int decode_volume_geometry(struct buffer *buffer,
 	nonce_t nonce;
 	block_count_t bio_offset;
 	int result = get_uint32_le_from_buffer(buffer, &release_version);
+
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -280,6 +286,7 @@ static int encode_volume_geometry(const struct volume_geometry *geometry,
 {
 	enum volume_region_id id;
 	int result = put_uint32_le_into_buffer(buffer, geometry->release_version);
+
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -429,6 +436,7 @@ static int encode_geometry_block(const struct volume_geometry *geometry,
 	const struct header *header;
 
 	int result = put_bytes(buffer, MAGIC_NUMBER_SIZE, MAGIC_NUMBER);
+
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -512,8 +520,10 @@ int vdo_initialize_volume_geometry(nonce_t nonce,
 				   struct volume_geometry *geometry)
 {
 	block_count_t index_size = 0;
+
 	if (index_config != NULL) {
 		int result = vdo_compute_index_blocks(index_config, &index_size);
+
 		if (result != VDO_SUCCESS) {
 			return result;
 		}
