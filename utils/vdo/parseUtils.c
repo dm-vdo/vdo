@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#9 $
  */
 
 #include "parseUtils.h"
@@ -24,7 +24,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
+
+#include "stringUtils.h"
 
 #include "statusCodes.h"
 
