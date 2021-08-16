@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#34 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#35 $
  */
 
 #include <blkid/blkid.h>
@@ -30,8 +30,6 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
-
-#include "uds.h"
 
 #include "errors.h"
 #include "fileUtils.h"

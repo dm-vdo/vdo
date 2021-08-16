@@ -16,15 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#22 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#23 $
  */
 
 #include <err.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
 
+#include "errors.h"
 #include "memoryAlloc.h"
-#include "uds.h"
 #include "timeUtils.h"
 
 #include "constants.h"

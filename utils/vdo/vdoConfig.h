@@ -16,13 +16,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#14 $
  */
 
 #ifndef VDO_CONFIG_H
 #define VDO_CONFIG_H
 
-#include "uds.h"
+#include "errors.h"
 
 #include "fixedLayout.h"
 #include "recoveryJournalFormat.h"
