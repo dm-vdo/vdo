@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#4 $
  */
 
 #include <err.h>
@@ -410,7 +410,7 @@ int main(int argc, char *argv[])
   result = register_vdo_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         string_error(result, err_buf, ERRBUF_SIZE));
+         uds_string_error(result, err_buf, ERRBUF_SIZE));
   }
 
   process_args(argc, argv);
