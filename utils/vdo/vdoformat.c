@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#33 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#34 $
  */
 
 #include <blkid/blkid.h>
@@ -102,9 +102,6 @@ static const char helpString[] =
   "      as small as possible, given the eventual maximal size of the\n"
   "      volume.\n"
   "\n"
-  "    --uds-checkpoint-frequency=<frequency>\n"
-  "       Specify the frequency of checkpoints. The default is never.\n"
-  "\n"
   "    --uds-memory-size=<gigabytes>\n"
   "       Specify the amount of memory, in gigabytes, to devote to the\n"
   "       index. Accepted options are .25, .5, .75, and all positive\n"
@@ -122,18 +119,17 @@ static const char helpString[] =
 
 // N.B. the option array must be in sync with the option string.
 static struct option options[] = {
-  { "force",                    no_argument,       NULL, 'f' },
-  { "help",                     no_argument,       NULL, 'h' },
-  { "logical-size",             required_argument, NULL, 'l' },
-  { "slab-bits",                required_argument, NULL, 'S' },
-  { "uds-checkpoint-frequency", required_argument, NULL, 'c' },
-  { "uds-memory-size",          required_argument, NULL, 'm' },
-  { "uds-sparse",               no_argument,       NULL, 's' },
-  { "verbose",                  no_argument,       NULL, 'v' },
-  { "version",                  no_argument,       NULL, 'V' },
-  { NULL,                       0,                 NULL,  0  },
+  { "force",           no_argument,       NULL, 'f' },
+  { "help",            no_argument,       NULL, 'h' },
+  { "logical-size",    required_argument, NULL, 'l' },
+  { "slab-bits",       required_argument, NULL, 'S' },
+  { "uds-memory-size", required_argument, NULL, 'm' },
+  { "uds-sparse",      no_argument,       NULL, 's' },
+  { "verbose",         no_argument,       NULL, 'v' },
+  { "version",         no_argument,       NULL, 'V' },
+  { NULL,              0,                 NULL,  0  },
 };
-static char optionString[] = "fhil:S:c:m:svV";
+static char optionString[] = "fhil:S:m:svV";
 
 static void usage(const char *progname, const char *usageOptionsString)
 {
@@ -461,10 +457,6 @@ int main(int argc, char *argv[])
               MIN_SLAB_BITS, MAX_VDO_SLAB_BITS);
         usage(argv[0], usageString);
       }
-      break;
-
-    case 'c':
-      configStrings.checkpointFrequency = optarg;
       break;
 
     case 'm':

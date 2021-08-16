@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#19 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpConfig.c#20 $
  */
 
 #include <err.h>
@@ -172,8 +172,6 @@ int main(int argc, char *argv[])
          (unsigned long long) geometry.regions[VDO_DATA_REGION].start_block);
   printf("IndexConfig:\n");
   printf("  memory: %u\n", geometry.index_config.mem);
-  printf("  checkpointFrequency: %u\n",
-         geometry.index_config.checkpoint_frequency);
   printf("  sparse: %s\n", geometry.index_config.sparse ? "true" : "false");
   exit(0);
 }

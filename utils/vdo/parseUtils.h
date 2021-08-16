@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.h#3 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.h#4 $
  */
 
 #ifndef PARSE_UTILS_H
@@ -30,7 +30,6 @@
 typedef struct {
   char *sparse;
   char *memorySize;
-  char *checkpointFrequency;
 } UdsConfigStrings;
 
 /**

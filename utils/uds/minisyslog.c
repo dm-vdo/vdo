@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/lisa/userLinux/uds/minisyslog.c#1 $
+ * $Id: //eng/uds-releases/lisa/userLinux/uds/minisyslog.c#2 $
  */
 
 #include <fcntl.h>
@@ -120,6 +120,11 @@ static bool __must_check write_msg(int fd, const char *msg)
 
 /**********************************************************************/
 __printf(3, 0)
+#ifdef __clang__ 
+// Clang insists on annotating both printf style format strings, but
+// gcc doesn't understand the second.
+__printf(5, 0) 
+#endif //__clang__
 static void log_it(int priority,
 		   const char *prefix,
 		   const char *format1,
