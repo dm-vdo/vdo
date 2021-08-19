@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#22 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#23 $
  */
 
 #include "fileLayer.h"
@@ -140,7 +140,10 @@ static int performIO(FileLayer               *layer,
       if (n == 0) {
         errno = VDO_UNEXPECTED_EOF;
       }
-      return uds_log_error_strerror(errno, "pread %s", layer->name);
+      return uds_log_error_strerror(errno, "p%s %s @%zd",
+                                    (read ? "read" : "write"),
+                                    layer->name,
+                                    offset);
     }
 
     offset += n;
