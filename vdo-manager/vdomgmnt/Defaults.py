@@ -20,7 +20,7 @@
 """
   Defaults - manage Albireo/VDO defaults
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#10 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/Defaults.py#11 $
 
 """
 from __future__ import absolute_import
@@ -72,6 +72,7 @@ class Defaults(object):
   blockMapPeriodMin = 1
   cfreq = 0
   confFile = os.getenv('VDO_CONF_DIR', '/etc') + '/vdoconf.yml'
+  conversionUtilityDir = os.getenv('VDO_CONVERSION_UTILITY_DIR', '/usr/libexec')
   compression = Constants.enabled
   deduplication = Constants.enabled
   cpuThreads = 2

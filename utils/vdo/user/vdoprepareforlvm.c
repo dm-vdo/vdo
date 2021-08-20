@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdo2LVM.c#5 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#1 $
  */
 
 #include <err.h>
@@ -47,22 +47,22 @@ static const char usageString[] =
   " [--help] [--version] filename";
 
 static const char helpString[] =
-  "vdo2lvm - Converts a VDO device for use with LVM\n"
+  "vdoprepareforlvm - Converts a VDO device for use with LVM\n"
   "\n"
   "SYNOPSIS\n"
-  "  vdo2lvm <filename>\n"
+  "  vdoprepareforlvm <filename>\n"
   "\n"
   "DESCRIPTION\n"
-  "  vdo2lvm converts the VDO block device named by <filename> for use with\n"
-  "  LVM. The VDO device to be converted must not be running, and should not\n"
-  "  already be an LVM VDO.\n"
+  "  vdoprepareforlvm converts the VDO block device named by <filename> for\n"
+  "  use with LVM. The VDO device to be converted must not be running, and\n"
+  "  should not already be an LVM VDO.\n"
   "\n"
   "OPTIONS\n"
   "    --help\n"
   "       Print this help message and exit.\n"
   "\n"
   "    --version\n"
-  "       Show the version of vdo2lvm.\n"
+  "       Show the version of vdoprepareforlvm.\n"
   "\n";
 
 static struct option options[] = {

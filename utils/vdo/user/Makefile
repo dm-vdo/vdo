@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#14 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#16 $
 
-VDO_VERSION = 6.2.5.65
+VDO_VERSION = 6.2.5.74
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -81,11 +81,7 @@ USER_OBJS   = blockMapUtils.o  \
               vdoConfig.o      \
               vdoVolumeUtils.o
 
-# To add a new program X, add X to the variable PROGS (and possibly
-# also DIST_PROGS).
-
-PROGS = vdo2lvm                \
-	vdoaudit               \
+PROGS = vdoaudit               \
         vdodebugmetadata       \
         vdodmeventd            \
         vdodumpblockmap        \
@@ -98,10 +94,14 @@ PROGS = vdo2lvm                \
         vdoregenerategeometry  \
         vdosetuuid
 
+LIBPROGS = vdoprepareforlvm
+
+ALLPROGS = $(PROGS) $(LIBPROGS)
+
 DMEVENT_LIB = libdevmapper-event-lvm2vdo.so
 
 .PHONY: all
-all: $(PROGS)
+all: $(ALLPROGS)
 	$(MAKE) -C man all
 
 .PHONY: clean
@@ -109,7 +109,7 @@ clean:
 	$(MAKE) -C man clean
 	rm -f *.a *.so *.o core*
 	rm -fr $(DEPDIR) tmpdir
-	rm -f  $(PROGS)
+	rm -f  $(ALLPROGS)
 
 libuser.a: $(USER_OBJS)
 	$(RM) $@
@@ -118,13 +118,19 @@ libuser.a: $(USER_OBJS)
 INSTALL = install
 INSTALLOWNER ?= -o root -g root
 bindir ?= /usr/bin
+libexecdir ?= /usr/libexec
 INSTALLDIR=$(DESTDIR)$(bindir)
+LIBEXECINSTALLDIR=$(DESTDIR)$(libexecdir)
 
 .PHONY: install
 install:
 	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
+	$(INSTALL) $(INSTALLOWNER) -d $(LIBEXECINSTALLDIR)
 	for i in $(PROGS); do \
 	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(INSTALLDIR); \
+	done
+	for i in $(LIBPROGS); do \
+	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(LIBEXECINSTALLDIR); \
 	done
 	$(MAKE) -C man install
 
@@ -147,7 +153,7 @@ $(DEPDIR)/%.d: %.c
 	$(CC) $(CFLAGS) -MM -MF $@ -MP -MT $*.o $<
 
 .SECONDEXPANSION:
-$(PROGS): $$@.o libuser.a $(DEPLIBS)
+$(ALLPROGS): $$@.o libuser.a $(DEPLIBS)
 	echo "Building $@ from $^"
 	$(CC) $(LDFLAGS) $^ $(LDPRFLAGS) -o $@
 

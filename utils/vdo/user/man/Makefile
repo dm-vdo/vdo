@@ -16,22 +16,22 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#10 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/man/Makefile#11 $
 
 INSTALLFILES= \
-	vdo2lvm.8                \
-        vdoaudit.8               \
-	vdodebugmetadata.8       \
-        vdodmeventd.8            \
-        vdodumpblockmap.8        \
-        vdodumpconfig.8          \
-	vdodumpmetadata.8        \
-	vdoforcerebuild.8        \
-	vdoformat.8              \
-	vdolistmetadata.8        \
-	vdoreadonly.8            \
-	vdoregenerategeometry.8  \
-        vdosetuuid.8
+              vdoaudit.8               \
+              vdodebugmetadata.8       \
+              vdodmeventd.8            \
+              vdodumpblockmap.8        \
+              vdodumpconfig.8          \
+              vdodumpmetadata.8        \
+              vdoforcerebuild.8        \
+              vdoformat.8              \
+              vdolistmetadata.8        \
+              vdoprepareforlvm.8       \
+              vdoreadonly.8            \
+              vdoregenerategeometry.8  \
+              vdosetuuid.8
 
 INSTALL = install
 INSTALLOWNER ?= -o root -g root

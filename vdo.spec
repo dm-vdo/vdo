@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.5.65
+Version: 6.2.5.74
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -51,10 +51,11 @@ This package provides the user-space management tools for VDO.
 make
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
-  defaultdocdir=%{_defaultdocdir} name=%{name} \
-  python3_sitelib=/%{python3_sitelib} mandir=%{_mandir} \
-  unitdir=%{_unitdir} presetdir=%{_presetdir} sysconfdir=%{_sysconfdir}
+make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= name=%{name} \
+  bindir=%{_bindir} defaultdocdir=%{_defaultdocdir} libexecdir=%{_libexecdir} \
+  mandir=%{_mandir} presetdir=%{_presetdir} \
+  python3_sitelib=/%{python3_sitelib} sysconfdir=%{_sysconfdir} \
+  unitdir=%{_unitdir}
 
 %post
 %systemd_post vdo.service
@@ -68,14 +69,14 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %files
 #defattr(-,root,root)
 %{_bindir}/vdo
-%{_bindir}/vdo2lvm
 %{_bindir}/vdo-by-dev
-%{_bindir}/vdostats
 %{_bindir}/vdodmeventd
 %{_bindir}/vdodumpconfig
 %{_bindir}/vdoforcerebuild
 %{_bindir}/vdoformat
 %{_bindir}/vdosetuuid
+%{_bindir}/vdostats
+%{_libexecdir}/vdoprepareforlvm
 %dir %{python3_sitelib}/%{name}
 %{python3_sitelib}/%{name}/__pycache__/*
 %{python3_sitelib}/%{name}/__init__.py
@@ -133,13 +134,13 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %dir %{_defaultdocdir}/%{name}/examples/systemd
 %doc %{_defaultdocdir}/%{name}/examples/systemd/VDO.mount.example
 %{_mandir}/man8/vdo.8.gz
-%{_mandir}/man8/vdo2lvm.8.gz
-%{_mandir}/man8/vdostats.8.gz
 %{_mandir}/man8/vdodmeventd.8.gz
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
+%{_mandir}/man8/vdoprepareforlvm.8.gz
 %{_mandir}/man8/vdosetuuid.8.gz
+%{_mandir}/man8/vdostats.8.gz
 %dir %{_sysconfdir}/bash_completion.d
 %{_sysconfdir}/bash_completion.d/vdo
 %{_sysconfdir}/bash_completion.d/vdostats
@@ -181,6 +182,7 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Wed Jul 21 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.65-1
-- Fixed Coverity scan issues.
-
+* Fri Aug 20 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.5.74-1
+- Renamed vdo2LVM to vdopreparelvm and moved its installation location to
+  /usr/libexec so that it is not in common default paths as this utility is
+  intended to be called from LVM, not directly by users.

@@ -20,7 +20,7 @@
 """
   VDOService - manages the VDO service on the local node
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#39 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOService.py#41 $
 
 """
 from __future__ import absolute_import
@@ -302,12 +302,12 @@ class VDOService(Service):
       self.stop()
       transaction.addUndoStage(self.start)
       
-    # vdo2lvm will do the actual conversion and print info about
+    # vdoprepareforlvm will do the actual conversion and print info about
     # where the new geometry block is located.
     transaction.setMessage(self.log.error,
                            _("Device {0} could not be converted").format(
                               self.getName()))
-    output = runCommand(["vdo2lvm", self.device]).strip()
+    output = runCommand([Defaults.conversionUtilityDir + '/vdoprepareforlvm', self.device]).strip()
     transaction.setMessage(None)
     if output != "":
       self._announce(textwrap.indent(output, "      "))
