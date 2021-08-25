@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#18 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#19 $
  */
 
 #include "userVDO.h"
@@ -108,8 +108,10 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
   }
 
   if (validateConfig) {
-    result = validate_vdo_component_states(&vdo->states, geometry->nonce,
-                                           layer->getBlockCount(layer));
+    result = validate_vdo_component_states(&vdo->states,
+                                           geometry->nonce,
+                                           layer->getBlockCount(layer),
+                                           0);
     if (result != VDO_SUCCESS) {
       freeUserVDO(&vdo);
       return result;

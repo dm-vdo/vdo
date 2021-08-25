@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#23 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoRegenerateGeometry.c#24 $
  */
 
 #include <err.h>
@@ -243,8 +243,9 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     return false;
   }
 
-  if (validate_vdo_config(&candidate->vdo->states.vdo.config, physicalSize,
-                          true) != VDO_SUCCESS) {
+  if (validate_vdo_config(&candidate->vdo->states.vdo.config,
+                          physicalSize,
+                          0) != VDO_SUCCESS) {
     freeUserVDO(&candidate->vdo);
     return false;
   }
