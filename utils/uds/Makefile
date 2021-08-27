@@ -16,12 +16,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#25 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#26 $
 
-# UDS_INTERNAL_VERSION is the short version name, which is used to version the
-# UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
-# version name used in distribution builds.  We extract these values from the
-# traditional location.
 UDS_VERSION      = 8.2.0.13
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
@@ -68,8 +64,6 @@ LDFLAGS = $(RPM_LD_FLAGS) $(MY_LDFLAGS)
 MY_FLAGS    =
 MY_CFLAGS   = $(MY_FLAGS)
 MY_LDFLAGS  =
-
-IMPORTED_SYMBOLS = libuds.imported
 
 vpath %.c .
 vpath %.c ./murmur
@@ -146,8 +140,7 @@ all: libuds.a
 
 .PHONY: clean
 clean:
-	rm -f *.o *.a *.s *.so lib*.so.* wrapped-symbols
-	rm -rf doxygen $(DEPDIR)
+	rm -rf *.o *.a $(DEPDIR)
 
 .PHONY: install
 install:;
