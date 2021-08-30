@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#4 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#5 $
  */
 
 #include <err.h>
@@ -155,18 +155,17 @@ static DFStats getDFStats(struct vdo_statistics *stats)
 static void printSizeAsHumanReadable(const int      aFieldWidth,
                                      const uint64_t aSize)
 {
-  double  size          = (double) aSize;
-  int     divisor       = si ? 1000 : 1024;
-  char    unitArray[5]  = { 'B', 'K', 'M', 'G', 'T' };
+  static const char UNITS[] = { 'B', 'K', 'M', 'G', 'T' };
+  double size               = (double) aSize;
+  int    divisor            = si ? 1000 : 1024;
 
-  unsigned int  i = 0;
-  while ((size >= divisor) &&
-         (i < (sizeof(unitArray) / sizeof(unitArray[0])))) {
+  unsigned int i = 0;
+  while ((size >= divisor) && (i < (COUNT_OF(UNITS) - 1))) {
     size /= divisor;
-    i ++;
+    i++;
   }
 
-  printf("%*.1f%c ", aFieldWidth - 1, size, unitArray[i]);
+  printf("%*.1f%c ", aFieldWidth - 1, size, UNITS[i]);
 }
 
 /**********************************************************************
