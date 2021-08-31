@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#23 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#24 $
  */
 
 #include "fileLayer.h"
@@ -246,11 +246,6 @@ static int isBlockDevice(const char *path, bool *device)
   return result;
 }
 
-/**********************************************************************/
-static void vacuousFlush(struct vdo_flush *vdoFlush __attribute__((unused)))
-{
-}
-
 /**
  * Free a FileLayer and NULL out the reference to it.
  *
@@ -377,7 +372,6 @@ static int setupFileLayer(const char     *name,
   layer->common.allocateIOBuffer = allocateIOBuffer;
   layer->common.reader           = fileReader;
   layer->common.writer           = readOnly ? noWriter : fileWriter;
-  layer->common.completeFlush    = vacuousFlush;
 
   *layerPtr = &layer->common;
   return VDO_SUCCESS;
