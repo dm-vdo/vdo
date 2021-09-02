@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#7 $
  */
 
 #include <err.h>
@@ -171,7 +171,7 @@ static void printSizeAsHumanReadable(const int      aFieldWidth,
   int    divisor            = si ? 1000 : 1024;
 
   unsigned int i = 0;
-  while ((size >= divisor) && (i < (COUNT_OF(UNITS) - 1))) {
+  while ((size >= divisor) && (i < (ARRAY_SIZE(UNITS) - 1))) {
     size /= divisor;
     i++;
   }

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/lisa/src/uds/compiler.h#1 $
+ * $Id: //eng/uds-releases/lisa/src/uds/compiler.h#2 $
  */
 
 #ifndef COMMON_COMPILER_H
@@ -25,7 +25,7 @@
 
 // Count the elements in a static array while attempting to catch some type
 // errors. (See http://stackoverflow.com/a/1598827 for an explanation.)
-#define COUNT_OF(x)					\
+#define ARRAY_SIZE(x)					\
 	((sizeof(x) / sizeof(0 [x])) /			\
 	 ((size_t)(!(sizeof(x) % sizeof(0 [x])))))
 

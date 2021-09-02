@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#35 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoFormat.c#36 $
  */
 
 #include <blkid/blkid.h>
@@ -139,7 +139,7 @@ static void printReadableSize(size_t size)
 {
   const char *UNITS[] = { "B", "KB", "MB", "GB", "TB", "PB" };
   unsigned int unit = 0;
-  while ((size >= 1024) && (unit < COUNT_OF(UNITS) - 1)) {
+  while ((size >= 1024) && (unit < ARRAY_SIZE(UNITS) - 1)) {
     size /= 1024;
     unit++;
   };
