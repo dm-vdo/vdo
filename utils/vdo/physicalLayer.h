@@ -16,13 +16,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/physicalLayer.h#55 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/physicalLayer.h#56 $
  */
 
 #ifndef PHYSICAL_LAYER_H
 #define PHYSICAL_LAYER_H
 
 #include "types.h"
+
+typedef struct physicalLayer PhysicalLayer;
 
 /**
  * A function to destroy a physical layer and NULL out the reference to it.
