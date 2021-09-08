@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#7 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#8 $
  */
 
 #include <err.h>
@@ -333,7 +333,7 @@ static void freeAllocations(void)
 static void process_device(const char *original, const char *name)
 {
   struct vdo_statistics stats;
-
+  
   char dmCommand[256];
   sprintf(dmCommand, "dmsetup message %s 0 stats", name);
   FILE* fp = popen(dmCommand, "r");
@@ -341,7 +341,7 @@ static void process_device(const char *original, const char *name)
     freeAllocations();
     err(ENOENT, "'%s': Could not retrieve VDO device stats information", name);
   }
-
+  
   char statsBuf[8192];
   if (fgets(statsBuf, sizeof(statsBuf), fp) != NULL) {
     read_vdo_stats(statsBuf, &stats);
@@ -352,7 +352,7 @@ static void process_device(const char *original, const char *name)
 
       case STYLE_YAML:
         printf("%s : \n", original);
-        write_vdo_stats(&stats);
+	write_vdo_stats(&stats);
         break;
 
       default:
@@ -394,7 +394,7 @@ static VDOPath *transformDevice(char *device)
     char buf[PATH_MAX];
     char *path = realpath(device, buf);
     if (path == NULL) {
-      return NULL;
+      continue;
     }
     if (strcmp(buf, vdoPaths[i].resolvedPath) == 0) {
       return &vdoPaths[i];

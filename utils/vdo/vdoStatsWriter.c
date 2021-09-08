@@ -23,10 +23,14 @@
 #include "statusCodes.h"
 #include "vdoStats.h"
 
+#define MAX_STATS 240
+#define MAX_STAT_LENGTH 80
+
 int fieldCount = 0;
 int maxLabelLength = 0;
-char labels[240][80];
-char values[240][80];
+
+char labels[MAX_STATS][MAX_STAT_LENGTH];
+char values[MAX_STATS][MAX_STAT_LENGTH];
 
 
 /**********************************************************************/
@@ -40,6 +44,23 @@ static int write_uint8_t(char *label, uint8_t value)
 	maxLabelLength = max(maxLabelLength, (int) strlen(label));
 
 	count = sprintf(values[fieldCount++], "%hhu", value);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+static int write_double(char *label, double value)
+{
+	int count = sprintf(labels[fieldCount], "%s", label);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+
+	maxLabelLength = max(maxLabelLength, (int) strlen(label));
+
+	count = sprintf(values[fieldCount++], "%.2f", value);
 	if (count < 0) {
 		return VDO_UNEXPECTED_EOF;
 	}
@@ -81,23 +102,6 @@ static int write_string(char *label, char *value)
 }
 
 /**********************************************************************/
-static int write_uint32_t(char *label, uint32_t value)
-{
-	int count = sprintf(labels[fieldCount], "%s", label);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-
-	maxLabelLength = max(maxLabelLength, (int) strlen(label));
-
-	count = sprintf(values[fieldCount++], "%u", value);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
 static int write_block_count_t(char *label, block_count_t value)
 {
 	int count = sprintf(labels[fieldCount], "%s", label);
@@ -115,7 +119,7 @@ static int write_block_count_t(char *label, block_count_t value)
 }
 
 /**********************************************************************/
-static int write_double(char *label, double value)
+static int write_uint32_t(char *label, uint32_t value)
 {
 	int count = sprintf(labels[fieldCount], "%s", label);
 	if (count < 0) {
@@ -124,7 +128,7 @@ static int write_double(char *label, double value)
 
 	maxLabelLength = max(maxLabelLength, (int) strlen(label));
 
-	count = sprintf(values[fieldCount++], "%.2f", value);
+	count = sprintf(values[fieldCount++], "%u", value);
 	if (count < 0) {
 		return VDO_UNEXPECTED_EOF;
 	}
@@ -1448,6 +1452,12 @@ static int write_vdo_statistics(char *prefix,
 /**********************************************************************/
 int write_vdo_stats(struct vdo_statistics *stats)
 {
+	fieldCount = 0;
+	maxLabelLength = 0;
+
+	memset(labels, '\0', MAX_STATS * MAX_STAT_LENGTH);
+	memset(values, '\0', MAX_STATS * MAX_STAT_LENGTH);
+
 	int result = write_vdo_statistics(" ", stats);
 	if (result != VDO_SUCCESS) {
 		return result;
