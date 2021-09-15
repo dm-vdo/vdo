@@ -18,7 +18,7 @@
 #
 # $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#27 $
 
-UDS_VERSION      = 8.2.0.26
+UDS_VERSION      = 8.2.0.27
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
