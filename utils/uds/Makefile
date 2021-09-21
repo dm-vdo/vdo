@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#28 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#29 $
 
-UDS_VERSION      = 8.2.0.32
+UDS_VERSION      = 8.2.0.34
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -130,8 +130,7 @@ UDS_OBJECTS =	murmurhash3.o			\
 		timeUtils.o			\
 		udsMain.o			\
 		volume.o			\
-		volumeStore.o			\
-		zone.o
+		volumeStore.o
 
 .PHONY: all
 all: libuds.a
