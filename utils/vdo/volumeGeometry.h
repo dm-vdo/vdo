@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.h#31 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.h#32 $
  */
 
 #ifndef VOLUME_GEOMETRY_H
@@ -185,18 +185,6 @@ int __must_check
 vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 				       struct volume_geometry *geometry,
 				       uint32_t version);
-
-/**
- * Convert an index config to a UDS configuration, which can be used by UDS.
- *
- * @param index_config    The index config to convert
- * @param uds_config_ptr  A pointer to return the UDS configuration
- *
- * @return VDO_SUCCESS or an error
- **/
-int __must_check
-vdo_index_config_to_uds_configuration(const struct index_config *index_config,
-				      struct uds_configuration **uds_config_ptr);
 
 /**
  * Compute the index size in blocks from the index_config.

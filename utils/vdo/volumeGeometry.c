@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#57 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/volumeGeometry.c#58 $
  */
 
 #include "volumeGeometry.h"
@@ -483,18 +483,15 @@ int vdo_load_volume_geometry(PhysicalLayer *layer,
 int vdo_compute_index_blocks(const struct index_config *index_config,
 			     block_count_t *index_blocks_ptr)
 {
+	int result;
 	uint64_t index_bytes;
 	block_count_t index_blocks;
-	struct uds_configuration *uds_configuration = NULL;
-	int result = vdo_index_config_to_uds_configuration(index_config,
-							   &uds_configuration);
-	if (result != UDS_SUCCESS) {
-		return uds_log_error_strerror(result,
-					      "error creating index config");
-	}
+	struct uds_parameters uds_parameters = {
+		.memory_size = index_config->mem,
+		.sparse = index_config->sparse,
+	};
 
-	result = uds_compute_index_size(uds_configuration, &index_bytes);
-	uds_free_configuration(uds_configuration);
+	result = uds_compute_index_size(&uds_parameters, &index_bytes);
 	if (result != UDS_SUCCESS) {
 		return uds_log_error_strerror(result,
 					      "error computing index size");
@@ -619,22 +616,4 @@ vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 	free_buffer(UDS_FORGET(buffer));
 	UDS_FREE(block);
 	return result;
-}
-
-/************************************************************************/
-int
-vdo_index_config_to_uds_configuration(const struct index_config *index_config,
-				      struct uds_configuration **uds_config_ptr)
-{
-	struct uds_configuration *uds_configuration;
-	int result = uds_initialize_configuration(&uds_configuration,
-						  index_config->mem);
-	if (result != UDS_SUCCESS) {
-		return uds_log_error_strerror(result,
-					      "error initializing configuration");
-	}
-
-	uds_configuration_set_sparse(uds_configuration, index_config->sparse);
-	*uds_config_ptr = uds_configuration;
-	return VDO_SUCCESS;
 }
