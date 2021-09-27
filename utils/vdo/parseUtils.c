@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#9 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#10 $
  */
 
 #include "parseUtils.h"
@@ -115,16 +115,13 @@ static int parseMem(char *string, uint32_t *sizePtr)
   } else if (strcmp(string, "0.75") == 0) {
     mem = UDS_MEMORY_CONFIG_768MB;
   } else {
-    unsigned long number;
-    if (uds_string_to_unsigned_long(string, &number) != UDS_SUCCESS) {
+    int number;
+    if (uds_string_to_signed_int(string, &number) != UDS_SUCCESS) {
       return -EINVAL;
     }
     mem = number;
-    if (mem != number) {
-      return -EINVAL;
-    }
   }
-  *sizePtr = mem;
+  *sizePtr = (uint32_t) mem;
   return UDS_SUCCESS;
 }
 
