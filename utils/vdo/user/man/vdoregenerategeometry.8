@@ -1,0 +1,34 @@
+.TH VDOREGENERATEGEOMETRY 8 "2020-05-09" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdoregenerategeometry \- regenerate a VDO whose first few blocks have been wiped
+.SH SYNOPSIS
+.B vdoregenerategeometry
+.RI [ options... ]
+.I filename
+.SH DESCRIPTION
+.B vdoregenerategeometry
+will attempt to regenerate the geometry block of a VDO device in the event that
+the beginning of the backing store was wiped. This tool will fail if enough of
+the device was wiped that the VDO super block was also erased, or if there are
+multiple valid super block candidates on the volume.
+.PP
+If the super block location is known, or to select one of the candidate
+super blocks in the event that multiple candidates were found, the
+.B \-\-offset
+option can be used to specify the location (in bytes) of the
+super block on the backing store.
+.SH OPTIONS
+.TP
+.B \-\-help
+Print this help message and exit.
+.TP
+.B \-\-offset
+Specify the location (in bytes) of the super block.
+.TP
+.B \-\-version
+Show the version of vdoregenerategeometry.
+.
+.\" .SH EXAMPLES
+.\" .SH NOTES
+.SH SEE ALSO
+.BR vdo (8).

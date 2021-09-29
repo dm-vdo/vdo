@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#5 $
+# $Id: //eng/vdo-releases/magnesium/src/packaging/src-dist/user/utils/vdo/user/Makefile#6 $
 
-VDO_VERSION = 6.1.3.23
+VDO_VERSION = 6.1.3.40
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -83,12 +83,13 @@ USER_OBJS   = blockMapUtils.o  \
 # To add a new program X, add X to the variable PROGS (and possibly
 # also DIST_PROGS).
 
-PROGS = vdodmeventd        \
-        vdodumpconfig      \
-        vdoforcerebuild    \
-        vdoformat          \
-        vdoprepareupgrade  \
-        vdoreadonly
+PROGS = vdodmeventd            \
+        vdodumpconfig          \
+        vdoforcerebuild        \
+        vdoformat              \
+        vdoprepareupgrade      \
+        vdoreadonly            \
+        vdoregenerategeometry
 
 DMEVENT_LIB = libdevmapper-event-lvm2vdo.so
 

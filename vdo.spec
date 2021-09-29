@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.1.3.23
+Version: 6.1.3.40
 Release: %{spec_release}
 License: GPLv2
 Source: %{name}-%{version}.tgz
@@ -74,6 +74,7 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_bindir}/vdoformat
 %{_bindir}/vdoprepareupgrade
 %{_bindir}/vdoreadonly
+%{_bindir}/vdoregenerategeometry
 %dir %{python_sitelib}/%{name}
 %dir %{python_sitelib}/%{name}/vdomgmnt/
 %{python_sitelib}/%{name}/vdomgmnt/CommandLock.py
@@ -194,8 +195,11 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %{_mandir}/man8/vdodumpconfig.8.gz
 %{_mandir}/man8/vdoforcerebuild.8.gz
 %{_mandir}/man8/vdoformat.8.gz
+%{_mandir}/man8/vdoregenerategeometry.8.gz
 %{_sysconfdir}/udev/rules.d/69-vdo-start-by-dev.rules
 
 %changelog
-* Thu Apr 09 2020 - J. corwin Coburn <corwin@redhat.com> - 6.1.3.23-1
-HASH(0xc49bf8)
+* Wed Sep 29 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.1.3.40-1
+- Added a new utility, vdoregenerategeometry, which can be used to
+  recover a VDO whose initial blocks have been overwritten
+  accidentaly.
