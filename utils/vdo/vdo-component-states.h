@@ -16,19 +16,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/vdoComponentStates.h#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/vdo-component-states.h#1 $
  */
 
 #ifndef VDO_COMPONENT_STATES_H
 #define VDO_COMPONENT_STATES_H
 
-#include "blockMapFormat.h"
-#include "fixedLayout.h"
-#include "recoveryJournalFormat.h"
-#include "slabDepotFormat.h"
+#include "block-map-format.h"
+#include "fixed-layout.h"
+#include "recovery-journal-format.h"
+#include "slab-depot-format.h"
 #include "types.h"
-#include "vdoComponent.h"
-#include "vdoState.h"
+#include "vdo-component.h"
+#include "vdo-state.h"
 
 /**
  * The version of the on-disk format of a VDO volume. This should be

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/packedRecoveryJournalBlock.h#21 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/packed-recovery-journal-block.h#1 $
  */
 
 #ifndef PACKED_RECOVERY_JOURNAL_BLOCK_H
@@ -25,7 +25,7 @@
 #include "numeric.h"
 
 #include "constants.h"
-#include "recoveryJournalEntry.h"
+#include "recovery-journal-entry.h"
 #include "types.h"
 
 struct recovery_block_header {

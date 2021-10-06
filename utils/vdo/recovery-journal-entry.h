@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/recoveryJournalEntry.h#17 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/recovery-journal-entry.h#1 $
  */
 
 #ifndef RECOVERY_JOURNAL_ENTRY_H
@@ -24,8 +24,8 @@
 
 #include "numeric.h"
 
-#include "blockMapEntry.h"
-#include "journalPoint.h"
+#include "block-map-entry.h"
+#include "journal-point.h"
 #include "types.h"
 
 /**

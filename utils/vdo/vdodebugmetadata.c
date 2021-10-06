@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#66 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDebugMetadata.c#67 $
  */
 
 #include <err.h>
@@ -30,17 +30,17 @@
 #include "stringUtils.h"
 #include "syscalls.h"
 
-#include "blockMapFormat.h"
-#include "numUtils.h"
-#include "packedRecoveryJournalBlock.h"
-#include "packedReferenceBlock.h"
-#include "recoveryJournalEntry.h"
-#include "recoveryJournalFormat.h"
-#include "slabJournalFormat.h"
+#include "block-map-format.h"
+#include "num-utils.h"
+#include "packed-recovery-journal-block.h"
+#include "packed-reference-block.h"
+#include "recovery-journal-entry.h"
+#include "recovery-journal-format.h"
+#include "slab-journal-format.h"
 
-#include "statusCodes.h"
+#include "status-codes.h"
 #include "types.h"
-#include "volumeGeometry.h"
+#include "volume-geometry.h"
 
 #include "fileLayer.h"
 #include "userVDO.h"

@@ -17,18 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#8 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#9 $
  */
 
 #ifndef USER_VDO_H
 #define USER_VDO_H
 
-#include "physicalLayer.h"
-#include "slabSummaryFormat.h"
-#include "superBlockCodec.h"
+#include "physical-layer.h"
+#include "slab-summary-format.h"
+#include "super-block-codec.h"
 #include "types.h"
-#include "vdoComponentStates.h"
-#include "volumeGeometry.h"
+#include "vdo-component-states.h"
+#include "volume-geometry.h"
 
 /**
  * A representation of a VDO for use by user space tools.

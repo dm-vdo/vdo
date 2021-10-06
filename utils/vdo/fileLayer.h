@@ -16,13 +16,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.h#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.h#7 $
  */
 
 #ifndef FILE_LAYER_H
 #define FILE_LAYER_H
 
-#include "physicalLayer.h"
+#include "physical-layer.h"
 
 /**
  * Make a file layer implementation of a physical layer.

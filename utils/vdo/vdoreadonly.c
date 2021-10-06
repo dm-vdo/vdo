@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoReadOnly.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoReadOnly.c#7 $
  */
 
 #include <err.h>
@@ -29,8 +29,8 @@
 #include "logger.h"
 
 #include "constants.h"
-#include "physicalLayer.h"
-#include "statusCodes.h"
+#include "physical-layer.h"
+#include "status-codes.h"
 
 #include "fileLayer.h"
 #include "vdoConfig.h"

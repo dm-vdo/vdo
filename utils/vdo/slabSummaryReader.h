@@ -16,13 +16,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.h#2 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.h#3 $
  */
 
 #ifndef SLAB_SUMMARY_READER_H
 #define SLAB_SUMMARY_READER_H
 
-#include "slabSummaryFormat.h"
+#include "slab-summary-format.h"
 #include "types.h"
 
 #include "userVDO.h"

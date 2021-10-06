@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#48 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoDumpMetadata.c#49 $
  */
 
 #include <err.h>
@@ -28,15 +28,15 @@
 #include "stringUtils.h"
 #include "syscalls.h"
 
-#include "blockMapFormat.h"
-#include "fixedLayout.h"
-#include "numUtils.h"
-#include "physicalLayer.h"
-#include "slabDepotFormat.h"
-#include "slabSummaryFormat.h"
-#include "statusCodes.h"
+#include "block-map-format.h"
+#include "fixed-layout.h"
+#include "num-utils.h"
+#include "physical-layer.h"
+#include "slab-depot-format.h"
+#include "slab-summary-format.h"
+#include "status-codes.h"
 #include "types.h"
-#include "volumeGeometry.h"
+#include "volume-geometry.h"
 
 #include "blockMapUtils.h"
 #include "fileLayer.h"

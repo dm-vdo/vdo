@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#58 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoAudit.c#59 $
  */
 
 #include <err.h>
@@ -34,14 +34,14 @@
 #include "memoryAlloc.h"
 #include "syscalls.h"
 
-#include "numUtils.h"
-#include "packedReferenceBlock.h"
-#include "recoveryJournalFormat.h"
-#include "slabDepotFormat.h"
-#include "slabSummaryFormat.h"
-#include "statusCodes.h"
+#include "num-utils.h"
+#include "packed-reference-block.h"
+#include "recovery-journal-format.h"
+#include "slab-depot-format.h"
+#include "slab-summary-format.h"
+#include "status-codes.h"
 #include "types.h"
-#include "vdoState.h"
+#include "vdo-state.h"
 
 #include "blockMapUtils.h"
 #include "slabSummaryReader.h"

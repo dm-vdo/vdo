@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#10 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/parseUtils.c#11 $
  */
 
 #include "parseUtils.h"
@@ -28,7 +28,7 @@
 
 #include "stringUtils.h"
 
-#include "statusCodes.h"
+#include "status-codes.h"
 
 /**********************************************************************/
 int parseUInt(const char   *arg,

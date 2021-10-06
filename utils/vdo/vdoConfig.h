@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#14 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.h#15 $
  */
 
 #ifndef VDO_CONFIG_H
@@ -24,10 +24,10 @@
 
 #include "errors.h"
 
-#include "fixedLayout.h"
-#include "recoveryJournalFormat.h"
+#include "fixed-layout.h"
+#include "recovery-journal-format.h"
 #include "types.h"
-#include "volumeGeometry.h"
+#include "volume-geometry.h"
 
 // The vdo_config structure is fully declared in types.h
 

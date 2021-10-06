@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#19 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.c#20 $
  */
 
 #include "userVDO.h"
@@ -25,12 +25,12 @@
 
 #include "memoryAlloc.h"
 
-#include "numUtils.h"
-#include "physicalLayer.h"
-#include "statusCodes.h"
+#include "num-utils.h"
+#include "physical-layer.h"
+#include "status-codes.h"
 #include "types.h"
-#include "superBlockCodec.h"
-#include "vdoComponentStates.h"
+#include "super-block-codec.h"
+#include "vdo-component-states.h"
 
 /**********************************************************************/
 int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)

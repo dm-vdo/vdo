@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#24 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/fileLayer.c#25 $
  */
 
 #include "fileLayer.h"
@@ -33,7 +33,7 @@
 #include "syscalls.h"
 
 #include "constants.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 
 typedef struct fileLayer {
   PhysicalLayer common;

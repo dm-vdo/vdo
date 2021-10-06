@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoForceRebuild.c#6 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoForceRebuild.c#7 $
  */
 
 #include <err.h>
@@ -28,7 +28,7 @@
 #include "logger.h"
 
 #include "constants.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 #include "types.h"
 #include "vdoConfig.h"
 

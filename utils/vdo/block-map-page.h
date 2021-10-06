@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/blockMapPage.h#21 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/block-map-page.h#1 $
  */
 
 #ifndef BLOCK_MAP_PAGE_H
@@ -24,7 +24,7 @@
 
 #include "numeric.h"
 
-#include "blockMapEntry.h"
+#include "block-map-entry.h"
 #include "header.h"
 #include "types.h"
 

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#59 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoConfig.c#60 $
  */
 
 #include <uuid/uuid.h>
@@ -28,19 +28,19 @@
 #include "permassert.h"
 #include "timeUtils.h"
 
-#include "blockMapFormat.h"
+#include "block-map-format.h"
 #include "constants.h"
-#include "fixedLayout.h"
-#include "numUtils.h"
-#include "physicalLayer.h"
-#include "recoveryJournalFormat.h"
-#include "releaseVersions.h"
-#include "slabDepotFormat.h"
-#include "slabSummaryFormat.h"
-#include "statusCodes.h"
-#include "vdoComponentStates.h"
-#include "vdoState.h"
-#include "volumeGeometry.h"
+#include "fixed-layout.h"
+#include "num-utils.h"
+#include "physical-layer.h"
+#include "recovery-journal-format.h"
+#include "release-versions.h"
+#include "slab-depot-format.h"
+#include "slab-summary-format.h"
+#include "status-codes.h"
+#include "vdo-component-states.h"
+#include "vdo-state.h"
+#include "volume-geometry.h"
 
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"

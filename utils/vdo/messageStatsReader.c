@@ -18,7 +18,7 @@
  */
 
 #include "statistics.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 #include "vdoStats.h"
 
 /*********************************************************************/

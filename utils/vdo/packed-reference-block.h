@@ -16,14 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/base/packedReferenceBlock.h#5 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/base/packed-reference-block.h#1 $
  */
 
 #ifndef PACKED_REFERENCE_BLOCK_H
 #define PACKED_REFERENCE_BLOCK_H
 
 #include "constants.h"
-#include "journalPoint.h"
+#include "journal-point.h"
 #include "types.h"
 
 /**

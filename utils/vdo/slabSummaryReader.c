@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#13 $
+ * $Id: //eng/linux-vdo/src/c++/vdo/user/slabSummaryReader.c#14 $
  */
 
 #include "slabSummaryReader.h"
@@ -25,12 +25,12 @@
 
 #include "memoryAlloc.h"
 
-#include "physicalLayer.h"
-#include "slabDepotFormat.h"
-#include "slabSummaryFormat.h"
-#include "statusCodes.h"
+#include "physical-layer.h"
+#include "slab-depot-format.h"
+#include "slab-summary-format.h"
+#include "status-codes.h"
 #include "types.h"
-#include "vdoComponentStates.h"
+#include "vdo-component-states.h"
 
 #include "userVDO.h"
 
