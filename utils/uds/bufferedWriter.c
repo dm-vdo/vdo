@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/lisa/src/uds/bufferedWriter.c#2 $
+ * $Id: //eng/uds-releases/lisa/src/uds/bufferedWriter.c#3 $
  */
 
 #include "bufferedWriter.h"
@@ -41,6 +41,19 @@ struct buffered_writer {
 	// Error code
 	int bw_error;
 };
+
+/**********************************************************************/
+static INLINE size_t space_used_in_buffer(struct buffered_writer *bw)
+{
+	return bw->bw_pointer - bw->bw_start;
+}
+
+/**********************************************************************/
+static
+size_t space_remaining_in_write_buffer(struct buffered_writer *bw)
+{
+	return UDS_BLOCK_SIZE - space_used_in_buffer(bw);
+}
 
 
 /**********************************************************************/
@@ -91,18 +104,6 @@ void free_buffered_writer(struct buffered_writer *bw)
 	put_io_region(bw->bw_region);
 	UDS_FREE(bw->bw_start);
 	UDS_FREE(bw);
-}
-
-/**********************************************************************/
-static INLINE size_t space_used_in_buffer(struct buffered_writer *bw)
-{
-	return bw->bw_pointer - bw->bw_start;
-}
-
-/**********************************************************************/
-size_t space_remaining_in_write_buffer(struct buffered_writer *bw)
-{
-	return UDS_BLOCK_SIZE - space_used_in_buffer(bw);
 }
 
 /**********************************************************************/
