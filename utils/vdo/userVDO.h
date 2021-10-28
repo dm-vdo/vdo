@@ -16,8 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/userVDO.h#9 $
  */
 
 #ifndef USER_VDO_H

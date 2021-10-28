@@ -15,9 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.h#1 $
- *
  */
 
 #ifndef VDO_STATS_H
@@ -30,7 +27,7 @@
  *
  * @param buf     pointer to the buffer
  * @param stats   pointer to the statistics
- * 
+ *
  * @return VDO_SUCCESS or an error
  */
 int read_vdo_stats(char *buf, struct vdo_statistics *stats);
@@ -39,7 +36,7 @@ int read_vdo_stats(char *buf, struct vdo_statistics *stats);
  * Write vdo statistics to stdout
  *
  * @param stats   pointer to the statistics
- * 
+ *
  * @return VDO_SUCCESS or an error
  */
 int write_vdo_stats(struct vdo_statistics *stats);

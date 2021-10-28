@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/linux-vdo/src/c++/vdo/user/vdoStats.c#10 $
  */
 
 #include <err.h>
@@ -333,7 +331,7 @@ static void freeAllocations(void)
 static void process_device(const char *original, const char *name)
 {
   struct vdo_statistics stats;
-  
+
   char dmCommand[256];
   sprintf(dmCommand, "dmsetup message %s 0 stats", name);
   FILE* fp = popen(dmCommand, "r");
@@ -341,7 +339,7 @@ static void process_device(const char *original, const char *name)
     freeAllocations();
     err(ENOENT, "'%s': Could not retrieve VDO device stats information", name);
   }
-  
+
   char statsBuf[8192];
   if (fgets(statsBuf, sizeof(statsBuf), fp) != NULL) {
     read_vdo_stats(statsBuf, &stats);
