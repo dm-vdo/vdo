@@ -195,4 +195,4 @@ vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 int __must_check vdo_compute_index_blocks(const struct index_config *index_config,
 					  block_count_t *index_blocks_ptr);
 
-#endif // VOLUME_GEOMETRY_H
+#endif /* VOLUME_GEOMETRY_H */

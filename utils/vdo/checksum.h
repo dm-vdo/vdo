@@ -50,4 +50,4 @@ static inline crc32_checksum_t vdo_update_crc32(crc32_checksum_t crc,
 	return crc32(crc, buffer, length);
 }
 
-#endif // CHECKSUM_H
+#endif /* CHECKSUM_H */

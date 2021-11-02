@@ -92,17 +92,17 @@ typedef int extent_writer(PhysicalLayer *layer,
  * An abstraction representing the underlying physical layer.
  **/
 struct physicalLayer {
-	// Management interface
+	/* Management interface */
 	layer_destructor *destroy;
 
-	// Synchronous interface
+	/* Synchronous interface */
 	block_count_getter *getBlockCount;
 
-	// Synchronous IO interface
+	/* Synchronous IO interface */
 	buffer_allocator *allocateIOBuffer;
 	extent_reader *reader;
 	extent_writer *writer;
 
 };
 
-#endif // PHYSICAL_LAYER_H
+#endif /* PHYSICAL_LAYER_H */

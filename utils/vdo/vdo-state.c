@@ -37,7 +37,7 @@ const char *get_vdo_state_name(enum vdo_state state)
 {
 	int result;
 
-	// Catch if a state has been added without updating the name array.
+	/* Catch if a state has been added without updating the name array. */
 	STATIC_ASSERT(ARRAY_SIZE(VDO_STATE_NAMES) == VDO_STATE_COUNT);
 
 	result = ASSERT(state < ARRAY_SIZE(VDO_STATE_NAMES),
@@ -53,7 +53,7 @@ const char *get_vdo_state_name(enum vdo_state state)
 /**********************************************************************/
 const char *describe_vdo_state(enum vdo_state state)
 {
-	// These strings should all fit in the 15 chars of VDOStatistics.mode.
+	/* These strings should all fit in the 15 chars of VDOStatistics.mode. */
 	switch (state) {
 	case VDO_RECOVERING:
 		return "recovering";

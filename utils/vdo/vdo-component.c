@@ -277,8 +277,10 @@ int validate_vdo_config(const struct vdo_config *config,
 		return VDO_OUT_OF_RANGE;
 	}
 
-	// This can't check equality because FileLayer et al can only known
-	// about the storage size, which may not match the super block size.
+	/*
+	 * This can't check equality because FileLayer et al can only known 
+	 * about the storage size, which may not match the super block size. 
+	 */
 	if (physical_block_count < config->physical_blocks) {
 		uds_log_error("A physical size of %llu blocks was specified, but that is smaller than the %llu blocks configured in the vdo super block",
 			      (unsigned long long) physical_block_count,
