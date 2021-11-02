@@ -50,6 +50,13 @@ int __must_check uds_allocate_memory(size_t size,
 void uds_free_memory(void *ptr);
 
 /**
+ * Free memory allocated with UDS_ALLOCATE().
+ *
+ * @param PTR  Pointer to the memory to free
+ **/
+#define UDS_FREE(PTR) uds_free_memory(PTR)
+
+/**
  * Null out a reference and return a copy of the referenced object.
  *
  * @param ptr_ptr  A pointer to the reference to NULL out
@@ -201,16 +208,6 @@ int __must_check uds_reallocate_memory(void *ptr,
 	UDS_ALLOCATE(COUNT, TYPE, WHAT, PTR)
 
 /**
- * Free memory allocated with UDS_ALLOCATE().
- *
- * @param ptr    Pointer to the memory to free
- **/
-static INLINE void UDS_FREE(void *ptr)
-{
-	uds_free_memory(ptr);
-}
-
-/**
  * Allocate memory starting on a cache line boundary, logging an error if the
  * allocation fails. The memory will be zeroed.
  *
@@ -227,6 +224,29 @@ static INLINE int __must_check uds_allocate_cache_aligned(size_t size,
 	return uds_allocate_memory(size, CACHE_LINE_BYTES, what, ptr);
 }
 
+/**
+ * Allocate storage based on memory size, failing immediately if the required
+ * memory is not available.  The memory will be zeroed.
+ *
+ * @param size  The size of an object.
+ * @param what  What is being allocated (for error logging)
+ *
+ * @return pointer to the allocated memory, or NULL if the required space is
+ *         not available.
+ **/
+void *__must_check uds_allocate_memory_nowait(size_t size, const char *what);
+
+/**
+ * Allocate one element of the indicated type immediately, failing if the
+ * required memory is not immediately available.
+ *
+ * @param TYPE   The type of objects to allocate
+ * @param WHAT   What is being allocated (for error logging)
+ *
+ * @return pointer to the memory, or NULL if the memory is not available.
+ **/
+#define UDS_ALLOCATE_NOWAIT(TYPE, WHAT) \
+	uds_allocate_memory_nowait(sizeof(TYPE), WHAT)
 
 /**
  * Duplicate a string.
@@ -240,21 +260,6 @@ static INLINE int __must_check uds_allocate_cache_aligned(size_t size,
 int __must_check uds_duplicate_string(const char *string,
 				      const char *what,
 				      char **new_string);
-
-/**
- * Duplicate a buffer, logging an error if the allocation fails.
- *
- * @param ptr      The buffer to copy
- * @param size     The size of the buffer
- * @param what     What is being duplicated (for error logging)
- * @param dup_ptr  A pointer to hold the allocated array
- *
- * @return UDS_SUCCESS or -ENOMEM
- **/
-int __must_check uds_memdup(const void *ptr,
-			    size_t size,
-			    const char *what,
-			    void *dup_ptr);
 
 /**
  * Wrapper which permits freeing a const pointer.

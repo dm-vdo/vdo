@@ -66,6 +66,14 @@ int uds_allocate_memory(size_t size, size_t align, const char *what, void *ptr)
 }
 
 /**********************************************************************/
+void *uds_allocate_memory_nowait(size_t size, const char *what) {
+	void *p = NULL;
+
+	UDS_ALLOCATE(size, char *, what, &p);
+	return p;
+}
+
+/**********************************************************************/
 void uds_free_memory(void *ptr)
 {
 	free(ptr);
@@ -86,10 +94,26 @@ int uds_reallocate_memory(void *ptr,
 					      size);
 	}
 
-        if (size > old_size) {
-          memset(new + old_size, 0, size - old_size);
-        }
+	if (size > old_size) {
+		memset(new + old_size, 0, size - old_size);
+	}
 
 	*((void **) new_ptr) = new;
+	return UDS_SUCCESS;
+}
+
+/**********************************************************************/
+int uds_duplicate_string(const char *string,
+			 const char *what,
+			 char **new_string)
+{
+	byte *dup = NULL;
+	int result = UDS_ALLOCATE(strlen(string) + 1, byte, what, &dup);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
+
+	memcpy(dup, string, strlen(string) + 1);
+	*new_string = (char *) dup;
 	return UDS_SUCCESS;
 }

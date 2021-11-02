@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#33 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#34 $
 
-UDS_VERSION      = 8.2.0.62
+UDS_VERSION      = 8.2.0.63
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -99,7 +99,6 @@ UDS_OBJECTS =	murmurhash3.o			\
 		loadType.o			\
 		logger.o			\
 		loggerLinuxUser.o		\
-		memoryAlloc.o			\
 		memoryLinuxUser.o		\
 		minisyslog.o			\
 		nonce.o				\
