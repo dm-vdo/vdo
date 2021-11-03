@@ -21,12 +21,48 @@
 
 #include <execinfo.h>
 #include <stdio.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include "fileUtils.h"
 #include "memoryAlloc.h"
 #include "stringUtils.h"
 #include "uds-threads.h"
+
+typedef struct {
+	const char *name;
+	const int priority;
+} PriorityName;
+
+static const PriorityName PRIORITIES[] = {
+	{ "ALERT", UDS_LOG_ALERT },
+	{ "CRITICAL", UDS_LOG_CRIT },
+	{ "CRIT", UDS_LOG_CRIT },
+	{ "DEBUG", UDS_LOG_DEBUG },
+	{ "EMERGENCY", UDS_LOG_EMERG },
+	{ "EMERG", UDS_LOG_EMERG },
+	{ "ERROR", UDS_LOG_ERR },
+	{ "ERR", UDS_LOG_ERR },
+	{ "INFO", UDS_LOG_INFO },
+	{ "NOTICE", UDS_LOG_NOTICE },
+	{ "PANIC", UDS_LOG_EMERG },
+	{ "WARN", UDS_LOG_WARNING },
+	{ "WARNING", UDS_LOG_WARNING },
+	{ NULL, -1 },
+};
+
+static const char *const PRIORITY_STRINGS[] = {
+	"EMERGENCY",
+	"ALERT",
+	"CRITICAL",
+	"ERROR",
+	"WARN",
+	"NOTICE",
+	"INFO",
+	"DEBUG",
+};
+
+static int log_level = UDS_LOG_INFO;
 
 const char TIMESTAMPS_ENVIRONMENT_VARIABLE[] = "UDS_LOG_TIMESTAMPS";
 const char IDS_ENVIRONMENT_VARIABLE[] = "UDS_LOG_IDS";
@@ -39,6 +75,41 @@ static unsigned int opened = 0;
 static FILE *fp = NULL;
 static bool timestamps = true;
 static bool ids = true;
+
+
+/**********************************************************************/
+int get_uds_log_level(void)
+{
+	return log_level;
+}
+
+/**********************************************************************/
+void set_uds_log_level(int new_log_level)
+{
+	log_level = new_log_level;
+}
+
+/**********************************************************************/
+int uds_log_string_to_priority(const char *string)
+{
+	int i;
+	for (i = 0; PRIORITIES[i].name != NULL; i++) {
+		if (strcasecmp(string, PRIORITIES[i].name) == 0) {
+			return PRIORITIES[i].priority;
+		}
+	}
+	return UDS_LOG_INFO;
+}
+
+/**********************************************************************/
+const char *uds_log_priority_to_string(int priority)
+{
+	if ((priority < 0) ||
+	    (priority >= (int) ARRAY_SIZE(PRIORITY_STRINGS))) {
+		return "unknown";
+	}
+	return PRIORITY_STRINGS[priority];
+}
 
 /**********************************************************************/
 static void init_logger(void)
@@ -198,6 +269,56 @@ void uds_log_message_pack(int priority,
 
 	// Reset errno
 	errno = error;
+}
+
+/**********************************************************************/
+void uds_log_embedded_message(int priority,
+			      const char *module,
+			      const char *prefix,
+			      const char *fmt1,
+			      va_list args1,
+			      const char *fmt2,
+			      ...)
+{
+	va_list ap;
+	va_start(ap, fmt2);
+	uds_log_message_pack(priority, module, prefix, fmt1, args1, fmt2, ap);
+	va_end(ap);
+}
+
+/**********************************************************************/
+int uds_vlog_strerror(int priority,
+		      int errnum,
+		      const char *module,
+		      const char *format,
+		      va_list args)
+{
+	char errbuf[ERRBUF_SIZE];
+        const char *message = uds_string_error(errnum, errbuf, sizeof(errbuf));
+	uds_log_embedded_message(priority,
+				 module,
+				 NULL,
+				 format,
+				 args,
+				 ": %s (%u)",
+				 message,
+				 errnum);
+	return errnum;
+}
+
+/**********************************************************************/
+int __uds_log_strerror(int priority,
+		       int errnum,
+		       const char *module,
+		       const char *format,
+		       ...)
+{
+	va_list args;
+
+	va_start(args, format);
+	uds_vlog_strerror(priority, errnum, module, format, args);
+	va_end(args);
+	return errnum;
 }
 
 /**********************************************************************/
