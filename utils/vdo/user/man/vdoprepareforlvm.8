@@ -1,8 +1,9 @@
-.TH VDOPREPAREFORLVM 8 "2020-09-23" "Red Hat" \" -*- nroff -*-
+.TH VDOPREPAREFORLVM 8 "2020-10-15" "Red Hat" \" -*- nroff -*-
 .SH NAME
 vdoprepareforlvm \- Converts a VDO device for use with LVM
 .SH SYNOPSIS
 .B vdoprepareforlvm
+.RI [ options... ]
 .I filename
 .SH DESCRIPTION
 .B vdoprepareforlvm
@@ -15,8 +16,21 @@ already be an LVM VDO.
 .B \-\-help
 Print this help message and exit.
 .TP
+.B \-\-check
+Check if the specified device has been converted.
+.TP
 .B \-\-version
 Show the version of vdoprepareforlvm.
+.
+.SH EXIT STATUS
+.IP -1
+Not a VDO block device.
+.IP 0
+Successful conversion/Already converted.
+.IP 1
+Not a converted VDO device (\fI--check\fP only).
+.IP 2
+Error converting/checking the device.
 .
 .SH SEE ALSO
 .BR vdo (8).

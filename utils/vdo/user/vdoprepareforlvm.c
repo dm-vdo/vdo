@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#1 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#2 $
  */
 
 #include <err.h>
@@ -44,13 +44,13 @@
 #include "fileLayer.h"
 
 static const char usageString[] =
-  " [--help] [--version] filename";
+  " [--help] [--version] [--check] filename";
 
 static const char helpString[] =
   "vdoprepareforlvm - Converts a VDO device for use with LVM\n"
   "\n"
   "SYNOPSIS\n"
-  "  vdoprepareforlvm <filename>\n"
+  "  vdoprepareforlvm [options...] <filename>\n"
   "\n"
   "DESCRIPTION\n"
   "  vdoprepareforlvm converts the VDO block device named by <filename> for\n"
@@ -61,19 +61,34 @@ static const char helpString[] =
   "    --help\n"
   "       Print this help message and exit.\n"
   "\n"
+  "    --check\n"
+  "       Checks if the specified device has already been converted.\n"
+  "\n"
   "    --version\n"
   "       Show the version of vdoprepareforlvm.\n"
+  "\n"
+  "EXIT STATUS\n"
+  "\n"
+  "    -1   Not a VDO block device.\n"
+  "\n"
+  "     0   Successful conversion/Already converted.\n"
+  "\n"
+  "     1   Not a converted VDO device (--check only).\n"
+  "\n"
+  "     2   Error converting/checking the device.\n"
   "\n";
 
 static struct option options[] = {
   { "help",    no_argument, NULL, 'h' },
+  { "check",   no_argument, NULL, 'c' },
   { "version", no_argument, NULL, 'V' },
   { NULL,      0,           NULL,  0  },
 };
 
-static char optionString[] = "hV";
+static char optionString[] = "chV";
 
 static const char *fileName;
+static bool checkPreparationState      = false;
 static const off_t vdoByteOffset       = (1024 * 1024) * 2;
 static const BlockCount vdoBlockOffset = vdoByteOffset / VDO_BLOCK_SIZE;
 
@@ -95,6 +110,10 @@ static const char *processArgs(int argc, char *argv[])
   int c;
   while ((c = getopt_long(argc, argv, optionString, options, NULL)) != -1) {
     switch (c) {
+    case 'c':
+      checkPreparationState = true;
+      break;
+
     case 'h':
       printf("%s", helpString);
       exit(0);
@@ -180,13 +199,13 @@ static int convertUDS(IndexConfig    *indexConfig,
 
   udsConfigurationSetNonce(udsConfig, geometry.nonce);
 
-  off_t startByte = geometry.regions[INDEX_REGION].startBlock * VDO_BLOCK_SIZE; 
+  off_t startByte = geometry.regions[INDEX_REGION].startBlock * VDO_BLOCK_SIZE;
   result = asprintf(&indexName, "%s offset=%ld", fileName, startByte);
   if (result == -1) {
     udsFreeConfiguration(udsConfig);
     return ENOMEM;
   }
-  
+
   result = udsConvertToLVM(indexName, vdoByteOffset, udsConfig,
                            superblockOffset);
   if (result == UDS_SUCCESS) {
@@ -242,7 +261,7 @@ static int convertVDO(VDO            *vdo,
     warnx("Failed to write the converted volume geometry");
     return result;
   }
-  
+
   result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
                                         "zero buffer", &zeroBuf);
   if (result != VDO_SUCCESS) {
@@ -261,7 +280,7 @@ static int convertVDO(VDO            *vdo,
 }
 
 /**
- * Clean up and free memory before exiting.
+ * Clean up and free memory.
  *
  **/
 static void cleanup(VDO *vdo, PhysicalLayer *layer)
@@ -273,33 +292,133 @@ static void cleanup(VDO *vdo, PhysicalLayer *layer)
   }
 }
 
-/**********************************************************************/
-int main(int argc, char *argv[])
+/**
+ * Convert the result from performDeviceCheck() to the appropriate
+ * exit status.
+ *
+ * @param[in] result        The result to convert to an exit status
+ * @param[in] preConversion Is the result from pre- or post-conversion VDO?
+ *
+ * @return exit status      -1 => not a VDO device
+ *                           0 => a post-conversion VDO device
+ *                           1 => a pre-conversion VDO device
+ **/
+static int deviceCheckResultToExitStatus(int result, bool preConversion)
+{
+  int exit_status;
+
+  if ((result != VDO_SUCCESS) && (result != VDO_BAD_MAGIC)) {
+    char errBuf[ERRBUF_SIZE];
+    errx(2, "Unexpected error accessing '%s' : %s",
+         fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  if (result == VDO_BAD_MAGIC) {
+    exit_status = -1;
+  } else if (preConversion) {
+    exit_status = 1;
+  } else {
+    exit_status = 0;
+  }
+
+  return exit_status;
+}
+
+/**
+ * Check if the device has already been converted.
+ *
+ * @return exit status      -1 => not a VDO device
+ *                           0 => a post-conversion VDO device
+ *                           1 => a pre-conversion VDO device
+ **/
+static int performDeviceCheck(void)
+{
+  int result;
+
+  PhysicalLayer *layer;
+  result = makeFileLayer(fileName, 0, &layer);
+  if (result != VDO_SUCCESS) {
+    return result;
+  }
+
+  /**
+   * If we can load the geometry the device is likely a non-converted VDO
+   * else the load would have failed with VDO_BAD_MAGIC.
+   * In the case of a succesful load we additionally check that the VDO
+   * superblock can also be loaded before claiming the device is actually a
+   * a non-converted VDO.
+   **/
+  VolumeGeometry geometry;
+  result = loadVolumeGeometry(layer, &geometry);
+  if ((result != VDO_SUCCESS) && (result != VDO_BAD_MAGIC)) {
+    cleanup(NULL, layer);
+    return deviceCheckResultToExitStatus(result, true);
+  }
+  if (result == VDO_SUCCESS) {
+    // Load the superblock as an additional check the device is really a vdo.
+    VDO *vdo;
+    result = loadVDOSuperblock(layer, &geometry, false, NULL, &vdo);
+    if (result != VDO_SUCCESS) {
+      vdo = NULL;
+      result = VDO_BAD_MAGIC; // Not a vdo.
+    }
+    cleanup(vdo, layer);
+    return deviceCheckResultToExitStatus(result, true);
+  }
+
+  /**
+   * Getting here the device is either a post-conversion VDO or not a VDO.
+   * Attempt to load the geometry from its post-conversion location.  If the
+   * device is not a VDO the load will fail with VDO_BAD_MAGIC.
+   */
+  result = loadVolumeGeometryAtBlock(layer, vdoBlockOffset, &geometry);
+  if (result != VDO_SUCCESS) {
+    cleanup(NULL, layer);
+    return deviceCheckResultToExitStatus(result, false);
+  }
+
+  // Load the superblock as an additional check the device is really a vdo.
+  VDO *vdo;
+  result = loadVDOSuperblock(layer, &geometry, false, NULL, &vdo);
+  if (result != VDO_SUCCESS) {
+    vdo = NULL;
+    result = VDO_BAD_MAGIC; // Not a vdo.
+  }
+  cleanup(vdo, layer);
+  return deviceCheckResultToExitStatus(result, false);
+}
+
+/**
+ * Perform the device conversion.
+ *
+ **/
+static int performDeviceConversion(void)
 {
   char errBuf[ERRBUF_SIZE];
   int result, fd;
 
-  result = registerStatusCodes();
-  if (result != VDO_SUCCESS) {
-    errx(1, "Could not register status codes: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
-  }
-
-  fileName = processArgs(argc, argv);
-  openLogger();
-
   printf("Opening %s exclusively\n", fileName);
   result = openDeviceExclusively(&fd);
   if (result != VDO_SUCCESS) {
-    errx(1, "Failed to open '%s' exclusively : %s",
+    errx(2, "Failed to open '%s' exclusively : %s",
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  int exit_status = performDeviceCheck();
+  if ((exit_status == 0) || (exit_status == -1)) {
+    close(fd);
+    if (exit_status == 0) {
+      errx(exit_status, "'%s' is already converted", fileName);
+    }
+    errx(exit_status, "'%s' is not a VDO device", fileName);
   }
 
   printf("Loading the VDO superblock and volume geometry\n");
   PhysicalLayer *layer;
   result = makeFileLayer(fileName, 0, &layer);
   if (result != VDO_SUCCESS) {
-    errx(1, "Failed to make FileLayer from '%s' : %s",
+    close(fd);
+    errx(2, "Failed to make FileLayer from '%s' : %s",
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
@@ -307,7 +426,8 @@ int main(int argc, char *argv[])
   result = loadVolumeGeometry(layer, &geometry);
   if (result != VDO_SUCCESS) {
     cleanup(NULL, layer);
-    errx(1, "Failed to load geometry from '%s' : %s",
+    close(fd);
+    errx(2, "Failed to load geometry from '%s' : %s",
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
@@ -315,18 +435,21 @@ int main(int argc, char *argv[])
   result = loadVDOSuperblock(layer, &geometry, false, NULL, &vdo);
   if (result != VDO_SUCCESS) {
     cleanup(vdo, layer);
-    errx(1, "Failed to load superblock from '%s' : %s",
+    close(fd);
+    errx(2, "Failed to load superblock from '%s' : %s",
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
   printf("Checking the VDO state\n");
   if (vdo->loadState == VDO_NEW) {
     cleanup(vdo, layer);
-    errx(1, "Conversion not recommended for VDO with state NEW.\n"
+    close(fd);
+    errx(2, "Conversion not recommended for VDO with state NEW.\n"
          "Remove the new VDO and recreate it using LVM.");
   } else if (vdo->loadState != VDO_CLEAN) {
     cleanup(vdo, layer);
-    errx(1, "The VDO is not in a clean state (state '%s' detected).\nPlease"
+    close(fd);
+    errx(2, "The VDO is not in a clean state (state '%s' detected).\nPlease"
          " get the volume to a clean state and then re-attempt conversion.",
          getVDOStateName(vdo->loadState));
   }
@@ -334,11 +457,12 @@ int main(int argc, char *argv[])
   printf("Converting the UDS index\n");
   IndexConfig config = geometry.indexConfig;
   off_t superblockOffset = 0;
-  
+
   result = convertUDS(&config, geometry, &superblockOffset);
   if (result != UDS_SUCCESS) {
     cleanup(vdo, layer);
-    errx(1, "Failed to convert the UDS index for usage with LVM: %s",
+    close(fd);
+    errx(2, "Failed to convert the UDS index for usage with LVM: %s",
          stringError(result, errBuf, ERRBUF_SIZE));
   }
 
@@ -349,7 +473,8 @@ int main(int argc, char *argv[])
                       (superblockOffset / VDO_BLOCK_SIZE));
   if (result != VDO_SUCCESS) {
     cleanup(vdo, layer);
-    errx(1, "Failed to convert VDO volume '%s': %s",
+    close(fd);
+    errx(2, "Failed to convert VDO volume '%s': %s",
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
@@ -358,4 +483,30 @@ int main(int argc, char *argv[])
 
   printf("Conversion completed for '%s': VDO is now offset by %ld bytes\n",
          fileName, vdoByteOffset);
+
+  return result;
+}
+
+/**********************************************************************/
+int main(int argc, char *argv[])
+{
+  int exit_status;
+  char errBuf[ERRBUF_SIZE];
+
+  exit_status = registerStatusCodes();
+  if (exit_status != VDO_SUCCESS) {
+    errx(2, "Could not register status codes: %s",
+         stringError(exit_status, errBuf, ERRBUF_SIZE));
+  }
+
+  fileName = processArgs(argc, argv);
+  openLogger();
+
+  if (checkPreparationState) {
+    exit_status = performDeviceCheck();
+  } else {
+    exit_status = performDeviceConversion();
+  }
+
+  exit(exit_status);
 }
