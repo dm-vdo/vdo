@@ -137,19 +137,6 @@ char *uds_v_append_to_buffer(char *buffer, char *buf_end, const char *fmt,
 	__printf(3, 0);
 
 /**
- * Our version of strtok_r, since some platforma apparently don't define it.
- *
- * @param str           On first call, the string to tokenize. On subsequent
- *                      calls, NULL.
- * @param delims        The set of delimiter characters.
- * @param state_ptr     The address of a variable which holds the state of
- *                      the tokenization between calls to uds_next_token.
- *
- * @return the next token if any, or NULL
- **/
-char *uds_next_token(char *str, const char *delims, char **state_ptr);
-
-/**
  * Parse a string representing a decimal uint64_t.
  *
  * @param str           The string.

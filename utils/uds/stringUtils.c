@@ -147,3 +147,54 @@ int uds_string_to_unsigned_int(const char *nptr, unsigned int *num)
 	*num = (unsigned int) value;
 	return UDS_SUCCESS;
 }
+
+/**********************************************************************/
+int uds_string_to_signed_long(const char *nptr, long *num)
+{
+	if (nptr == NULL || *nptr == '\0') {
+		return UDS_INVALID_ARGUMENT;
+	}
+	errno = 0;
+	char *endptr;
+	*num = strtol(nptr, &endptr, 10);
+	if (*endptr != '\0') {
+		return UDS_INVALID_ARGUMENT;
+	}
+	return errno;
+}
+
+/**********************************************************************/
+int uds_string_to_unsigned_long(const char *nptr, unsigned long *num)
+{
+	if (nptr == NULL || *nptr == '\0') {
+		return UDS_INVALID_ARGUMENT;
+	}
+	errno = 0;
+	char *endptr;
+	*num = strtoul(nptr, &endptr, 10);
+	if (*endptr != '\0') {
+		return UDS_INVALID_ARGUMENT;
+	}
+	return errno;
+}
+
+/**********************************************************************/
+int uds_parse_uint64(const char *str, uint64_t *num)
+{
+	char *end;
+	errno = 0;
+	unsigned long long temp = strtoull(str, &end, 10);
+	// strtoull will always set end. On error, it could set errno to ERANGE
+	// or EINVAL.  (It also returns ULLONG_MAX when setting errno to
+	// ERANGE.)
+	if ((errno == ERANGE) || (errno == EINVAL) || (*end != '\0')) {
+		return UDS_INVALID_ARGUMENT;
+	}
+	uint64_t n = temp;
+	if (temp != (unsigned long long) n) {
+		return UDS_INVALID_ARGUMENT;
+	}
+
+	*num = n;
+	return UDS_SUCCESS;
+}
