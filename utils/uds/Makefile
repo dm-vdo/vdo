@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#36 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#37 $
 
-UDS_VERSION      = 8.2.0.65
+UDS_VERSION      = 8.2.0.66
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -68,62 +68,62 @@ MY_LDFLAGS  =
 vpath %.c .
 vpath %.c ./murmur
 
-UDS_OBJECTS =	murmurhash3.o			\
-		bits.o				\
-		buffer.o			\
-		bufferedReader.o		\
-		bufferedWriter.o		\
-		cacheCounters.o			\
-		cachedChapterIndex.o		\
-		chapterIndex.o			\
-		chapterWriter.o			\
-		config.o			\
-		deltaIndex.o			\
-		deltaMemory.o			\
-		errors.o			\
-		eventCount.o			\
-		fileIORegion.o			\
-		fileUtils.o			\
-		funnelQueue.o			\
-		geometry.o			\
-		hashUtils.o			\
-		index.o				\
-		indexComponent.o		\
-		indexLayout.o			\
-		indexPageMap.o			\
-		indexSession.o			\
-		indexState.o			\
-		indexStateData.o		\
-		indexZone.o			\
-		ioFactoryLinuxUser.o		\
-		loadType.o			\
-		loggerLinuxUser.o		\
-		memoryLinuxUser.o		\
-		minisyslog.o			\
-		nonce.o				\
-		openChapter.o			\
-		openChapterZone.o		\
-		pageCache.o			\
-		permassert.o			\
-		radixSort.o			\
-		random.o			\
-		recordPage.o			\
-		request.o			\
-		requestQueueUser.o		\
-		searchList.o			\
-		sparseCache.o			\
-		stringUtils.o			\
-		syscalls.o			\
-		threadCondVarLinuxUser.o	\
-		threadsLinuxUser.o		\
-		threadMutexLinuxUser.o		\
-		threadSemaphoreLinuxUser.o	\
-		threadOnce.o			\
-		timeUtils.o			\
-		volume.o			\
-		volumeIndex005.o		\
-		volumeIndex006.o		\
-		volumeIndexOps.o		\
+UDS_OBJECTS =	murmurhash3.o		\
+		bits.o			\
+		buffer.o		\
+		bufferedReader.o	\
+		bufferedWriter.o	\
+		cacheCounters.o		\
+		cachedChapterIndex.o	\
+		chapterIndex.o		\
+		chapterWriter.o		\
+		config.o		\
+		deltaIndex.o		\
+		deltaMemory.o		\
+		errors.o		\
+		eventCount.o		\
+		fileIORegion.o		\
+		fileUtils.o		\
+		funnelQueue.o		\
+		geometry.o		\
+		hashUtils.o		\
+		index.o			\
+		indexComponent.o	\
+		indexLayout.o		\
+		indexPageMap.o		\
+		indexSession.o		\
+		indexState.o		\
+		indexStateData.o	\
+		indexZone.o		\
+		ioFactory.o		\
+		loadType.o		\
+		logger.o		\
+		memoryAlloc.o		\
+		minisyslog.o		\
+		nonce.o			\
+		openChapter.o		\
+		openChapterZone.o	\
+		pageCache.o		\
+		permassert.o		\
+		radixSort.o		\
+		random.o		\
+		recordPage.o		\
+		request.o		\
+		requestQueueUser.o	\
+		searchList.o		\
+		sparseCache.o		\
+		stringUtils.o		\
+		syscalls.o		\
+		threadCondVar.o		\
+		threadMutex.o		\
+		threadSemaphore.o	\
+		threadOnce.o		\
+		timeUtils.o		\
+		uds-threads.o		\
+		volume.o		\
+		volumeIndex005.o	\
+		volumeIndex006.o	\
+		volumeIndexOps.o	\
 		volumeStore.o
 
 .PHONY: all

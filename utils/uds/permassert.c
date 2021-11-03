@@ -22,7 +22,7 @@
 #include "errors.h"
 #include "logger.h"
 
-// Here begins a large block of userspace-only stuff.
+/* Here begins a large block of userspace-only stuff. */
 #ifdef NDEBUG
 #define DEBUGGING_OFF
 #undef NDEBUG
@@ -30,7 +30,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <strings.h> // for strcasecmp()
+#include <strings.h> /* for strcasecmp() */
 #include <syslog.h>
 
 #include "common.h"
@@ -74,7 +74,7 @@ bool set_exit_on_assertion_failure(bool should_exit)
 	return previous_setting;
 }
 
-// Here ends large block of userspace stuff.
+/* Here ends large block of userspace stuff. */
 
 /**********************************************************************/
 int uds_assertion_failed(const char *expression_string,

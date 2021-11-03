@@ -34,13 +34,13 @@
 #define sector_t uint64_t
 
 struct buffered_reader {
-	// Region to read from
+	/* Region to read from */
 	struct io_region *br_region;
-	// Number of the current block
+	/* Number of the current block */
 	uint64_t br_block_number;
-	// Start of the buffer
+	/* Start of the buffer */
 	byte *br_start;
-	// End of the data read from the buffer
+	/* End of the data read from the buffer */
 	byte *br_pointer;
 };
 

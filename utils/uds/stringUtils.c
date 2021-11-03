@@ -184,9 +184,11 @@ int uds_parse_uint64(const char *str, uint64_t *num)
 	char *end;
 	errno = 0;
 	unsigned long long temp = strtoull(str, &end, 10);
-	// strtoull will always set end. On error, it could set errno to ERANGE
-	// or EINVAL.  (It also returns ULLONG_MAX when setting errno to
-	// ERANGE.)
+	/*
+	 * strtoull will always set end. On error, it could set errno to ERANGE
+	 * or EINVAL.  (It also returns ULLONG_MAX when setting errno to
+	 * ERANGE.)
+	 */
 	if ((errno == ERANGE) || (errno == EINVAL) || (*end != '\0')) {
 		return UDS_INVALID_ARGUMENT;
 	}

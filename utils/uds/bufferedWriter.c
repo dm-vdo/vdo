@@ -28,15 +28,15 @@
 
 
 struct buffered_writer {
-	// Region to write to
+	/* Region to write to */
 	struct io_region *bw_region;
-	// Number of the current block
+	/* Number of the current block */
 	uint64_t bw_block_number;
-	// Start of the buffer
+	/* Start of the buffer */
 	byte *bw_start;
-	// End of the data written to the buffer
+	/* End of the data written to the buffer */
 	byte *bw_pointer;
-	// Error code
+	/* Error code */
 	int bw_error;
 };
 

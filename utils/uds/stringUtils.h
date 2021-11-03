@@ -21,8 +21,8 @@
 #define STRING_UTILS_H
 
 #include <stdarg.h>
-#include <stdio.h> // for vsnprintf
-#include <stdlib.h> // for strtol
+#include <stdio.h> /* for vsnprintf */
+#include <stdlib.h> /* for strtol */
 #include <string.h>
 
 #include "compiler.h"

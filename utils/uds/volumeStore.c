@@ -63,7 +63,7 @@ void prefetch_volume_pages(const struct volume_store *vs __maybe_unused,
 			   unsigned int physical_page __maybe_unused,
 			   unsigned int page_count __maybe_unused)
 {
-	// Nothing to do in user mode
+	/* Nothing to do in user mode */
 }
 
 /**********************************************************************/
@@ -73,7 +73,7 @@ int prepare_to_write_volume_page(const struct volume_store *volume_store
 				 struct volume_page *volume_page
 				 __maybe_unused)
 {
-	// Nothing to do in user mode
+	/* Nothing to do in user mode */
 	return UDS_SUCCESS;
 }
 
@@ -99,7 +99,7 @@ int read_volume_page(const struct volume_store *volume_store,
 /**********************************************************************/
 void release_volume_page(struct volume_page *volume_page __maybe_unused)
 {
-	// Nothing to do in user mode
+	/* Nothing to do in user mode */
 }
 
 /**********************************************************************/

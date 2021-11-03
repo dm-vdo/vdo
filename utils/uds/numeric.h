@@ -34,7 +34,7 @@
 #define TYPECHECK(x, y) (!!(sizeof((typeof(x) *) 1 == (typeof(y) *) 1)))
 #define CONSTCHECK(x, y) (__builtin_constant_p(x) && __builtin_constant_p(y))
 
-// It takes two levels of macro expansion to compose the unique temp names.
+/* It takes two levels of macro expansion to compose the unique temp names. */
 #define CONCAT_(a, b) a##b
 #define CONCAT(a, b) CONCAT_(a, b)
 #define UNIQUE_ID(a) CONCAT(_UNIQUE_, CONCAT(a, __COUNTER__))
