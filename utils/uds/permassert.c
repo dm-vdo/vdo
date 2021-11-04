@@ -46,7 +46,7 @@ static bool exit_on_assertion_failure = true;
 static const char *EXIT_ON_ASSERTION_FAILURE_VARIABLE =
 	"UDS_EXIT_ON_ASSERTION_FAILURE";
 
-static once_state_t init_once = ONCE_STATE_INITIALIZER;
+static atomic_t init_once = ATOMIC_INIT(0);
 static struct mutex mutex = { .mutex = UDS_MUTEX_INITIALIZER };
 
 /**********************************************************************/

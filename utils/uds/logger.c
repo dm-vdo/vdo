@@ -69,7 +69,7 @@ const char IDS_ENVIRONMENT_VARIABLE[] = "UDS_LOG_IDS";
 
 static const char IDENTITY[] = "UDS";
 
-static once_state_t logger_once = ONCE_STATE_INITIALIZER;
+static atomic_t logger_once = ATOMIC_INIT(0);
 
 static unsigned int opened = 0;
 static FILE *fp = NULL;

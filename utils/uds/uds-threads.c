@@ -29,6 +29,12 @@
 #include "permassert.h"
 #include "syscalls.h"
 
+enum {
+	ONCE_NOT_DONE = 0,
+	ONCE_IN_PROGRESS = 1,
+	ONCE_COMPLETE = 2,
+};
+
 /**********************************************************************/
 unsigned int uds_get_num_cores(void)
 {
@@ -64,6 +70,26 @@ struct thread_start_info {
 	void *thread_data;
 	const char *name;
 };
+
+/**********************************************************************/
+void perform_once(atomic_t *once, void (*function)(void))
+{
+	for (;;) {
+		switch (atomic_cmpxchg(once, ONCE_NOT_DONE, ONCE_IN_PROGRESS)) {
+		case ONCE_NOT_DONE:
+			function();
+			atomic_set_release(once, ONCE_COMPLETE);
+			return;
+		case ONCE_IN_PROGRESS:
+			uds_yield_scheduler();
+			break;
+		case ONCE_COMPLETE:
+			return;
+		default:
+			return;
+		}
+	}
+}
 
 /**********************************************************************/
 static void *thread_starter(void *arg)

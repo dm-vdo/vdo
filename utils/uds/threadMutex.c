@@ -22,7 +22,6 @@
 
 #include "permassert.h"
 #include "stringUtils.h"
-#include "threadOnce.h"
 #include "uds-threads.h"
 
 static enum mutex_kind {
@@ -61,10 +60,8 @@ static void initialize_mutex_kind(void)
 /**********************************************************************/
 static enum mutex_kind get_mutex_kind(void)
 {
-	static once_state_t once_state = ONCE_STATE_INITIALIZER;
-
+        static atomic_t once_state = ATOMIC_INIT(0);
 	perform_once(&once_state, initialize_mutex_kind);
-
 	return hidden_mutex_kind;
 }
 
