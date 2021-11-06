@@ -459,7 +459,12 @@ static int encode_geometry_block(const struct volume_geometry *geometry,
 		      "should have decoded up to the geometry checksum");
 }
 
-/**********************************************************************/
+/**
+ * Load the volume geometry from a layer.
+ *
+ * @param layer     The layer to read and parse the geometry from
+ * @param geometry  The structure to receive the decoded fields
+ **/
 int vdo_load_volume_geometry(PhysicalLayer *layer,
 			     struct volume_geometry *geometry)
 {
@@ -481,7 +486,14 @@ int vdo_load_volume_geometry(PhysicalLayer *layer,
 	return result;
 }
 
-/************************************************************************/
+/**
+ * Compute the index size in blocks from the index_config.
+ *
+ * @param index_config      The index config
+ * @param index_blocks_ptr  A pointer to return the index size in blocks
+ *
+ * @return VDO_SUCCESS or an error
+ **/
 int vdo_compute_index_blocks(const struct index_config *index_config,
 			     block_count_t *index_blocks_ptr)
 {
@@ -510,7 +522,16 @@ int vdo_compute_index_blocks(const struct index_config *index_config,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
+/**
+ * Initialize a volume_geometry for a VDO.
+ *
+ * @param nonce         The nonce for the VDO
+ * @param uuid          The uuid for the VDO
+ * @param index_config  The index config of the VDO
+ * @param geometry      The geometry being initialized
+ *
+ * @return VDO_SUCCESS or an error
+ **/
 int vdo_initialize_volume_geometry(nonce_t nonce,
 				   uuid_t *uuid,
 				   const struct index_config *index_config,
@@ -551,7 +572,13 @@ int vdo_initialize_volume_geometry(nonce_t nonce,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
+/**
+ * Zero out the geometry on a layer.
+ *
+ * @param layer  The layer to clear
+ *
+ * @return VDO_SUCCESS or an error
+ **/
 int vdo_clear_volume_geometry(PhysicalLayer *layer)
 {
 	char *block;
@@ -566,7 +593,14 @@ int vdo_clear_volume_geometry(PhysicalLayer *layer)
 	return result;
 }
 
-/**********************************************************************/
+/**
+ * Write a geometry block for a VDO.
+ *
+ * @param layer     The layer on which to write
+ * @param geometry  The volume_geometry to be written
+ *
+ * @return VDO_SUCCESS or an error
+ **/
 int vdo_write_volume_geometry(PhysicalLayer *layer,
 			      struct volume_geometry *geometry)
 {
@@ -574,7 +608,15 @@ int vdo_write_volume_geometry(PhysicalLayer *layer,
 			layer, geometry, DEFAULT_GEOMETRY_BLOCK_VERSION);
 }
 
-/**********************************************************************/
+/**
+ * Write a specific version of geometry block for a VDO.
+ *
+ * @param layer     The layer on which to write
+ * @param geometry  The VolumeGeometry to be written
+ * @param version   The version of VolumeGeometry to write
+ *
+ * @return VDO_SUCCESS or an error
+ **/
 int __must_check
 vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 				       struct volume_geometry *geometry,

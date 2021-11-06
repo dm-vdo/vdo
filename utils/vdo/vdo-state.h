@@ -40,22 +40,8 @@ enum vdo_state {
 	VDO_STATE_COUNT
 };
 
-/**
- * Get the name of a VDO state code for logging purposes.
- *
- * @param state  The state code
- *
- * @return The name of the state code
- **/
 const char * __must_check get_vdo_state_name(enum vdo_state state);
 
-/**
- * Return a user-visible string describing the current VDO state.
- *
- * @param state  The VDO state to describe
- *
- * @return A string constant describing the state
- **/
 const char * __must_check describe_vdo_state(enum vdo_state state);
 
 #endif /* VDO_STATE_H */

@@ -32,7 +32,13 @@ static const char *VDO_STATE_NAMES[] = {
 	[VDO_REPLAYING] = "REPLAYING",
 };
 
-/**********************************************************************/
+/**
+ * Get the name of a VDO state code for logging purposes.
+ *
+ * @param state  The state code
+ *
+ * @return The name of the state code
+ **/
 const char *get_vdo_state_name(enum vdo_state state)
 {
 	int result;
@@ -50,7 +56,13 @@ const char *get_vdo_state_name(enum vdo_state state)
 	return VDO_STATE_NAMES[state];
 }
 
-/**********************************************************************/
+/**
+ * Return a user-visible string describing the current VDO state.
+ *
+ * @param state  The VDO state to describe
+ *
+ * @return A string constant describing the state
+ **/
 const char *describe_vdo_state(enum vdo_state state)
 {
 	/* These strings should all fit in the 15 chars of VDOStatistics.mode. */

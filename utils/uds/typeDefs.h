@@ -32,6 +32,4 @@
 #include <sys/types.h>
 
 typedef unsigned char byte;
-
-
 #endif /* TYPE_DEFS_H */
