@@ -162,7 +162,7 @@ static void listSlabs(void)
 
     // List the slab's journal blocks.
     sprintf(buffer, "slab %u journal", slab);
-    listBlocks(buffer, get_vdo_slab_journal_start_block(&depot.slab_config,
+    listBlocks(buffer, vdo_get_slab_journal_start_block(&depot.slab_config,
                                                         slabOrigin),
                depot.slab_config.slab_journal_blocks);
 
@@ -188,7 +188,7 @@ static void listSlabSummary(void)
     = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION,
                    "no slab summary partition");
   listBlocks("slab summary", get_vdo_fixed_layout_partition_offset(partition),
-             get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
+             vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
 }
 
 /**********************************************************************/

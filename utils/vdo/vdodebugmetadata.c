@@ -327,15 +327,15 @@ static int allocateMetadataSpace(void)
          (unsigned long long) config->recovery_journal_size);
   }
 
-  result = UDS_ALLOCATE(get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
+  result = UDS_ALLOCATE(vdo_get_slab_summary_size(VDO_BLOCK_SIZE),
                         struct slab_summary_entry *,
                         __func__, &slabSummary);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %llu slab summary block pointers",
-         (unsigned long long) get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
+         (unsigned long long) vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
   }
 
-  for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+  for (block_count_t i = 0; i < vdo_get_slab_summary_size(VDO_BLOCK_SIZE);
        i++) {
     char *buffer;
     result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
@@ -370,7 +370,7 @@ static void freeMetadataSpace(void)
   recoveryJournal = NULL;
 
   if (slabSummary != NULL) {
-    for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+    for (block_count_t i = 0; i < vdo_get_slab_summary_size(VDO_BLOCK_SIZE);
          i++) {
       UDS_FREE(slabSummary[i]);
       slabSummary[i] = NULL;
@@ -399,7 +399,7 @@ static void readMetadata(void)
   block_count_t totalNonBlockMapMetadataBlocks
     = ((metadataBlocksPerSlab * slabCount)
        + config->recovery_journal_size
-       + get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
+       + vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
 
   nextBlock
     = (vdo->layer->getBlockCount(vdo->layer) - totalNonBlockMapMetadataBlocks);
@@ -433,14 +433,14 @@ static void readMetadata(void)
     UnpackedJournalBlock *block = &recoveryJournal[i];
     struct packed_journal_header *packedHeader
       = (struct packed_journal_header *) &rawJournalBytes[i * VDO_BLOCK_SIZE];
-    unpack_vdo_recovery_block_header(packedHeader, &block->header);
+    unvdo_pack_recovery_block_header(packedHeader, &block->header);
     for (uint8_t sector = 1; sector < VDO_SECTORS_PER_BLOCK; sector++) {
       block->sectors[sector]
-        = get_vdo_journal_block_sector(packedHeader, sector);
+        = vdo_get_journal_block_sector(packedHeader, sector);
     }
   }
 
-  for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+  for (block_count_t i = 0; i < vdo_get_slab_summary_size(VDO_BLOCK_SIZE);
        i++) {
     readBlocks(1, (char *) slabSummary[i]);
   }
@@ -518,7 +518,7 @@ isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 {
   block_count_t journal_size = vdo->states.vdo.config.recovery_journal_size;
   physical_block_number_t expectedOffset
-    = compute_vdo_recovery_journal_block_number(journal_size,
+    = vdo_compute_recovery_journal_block_number(journal_size,
                                                 header->sequence_number);
   return (expectedOffset == offset);
 }
@@ -542,7 +542,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
 
       for (journal_entry_count_t k = 0; k < sector->entry_count; k++) {
         struct recovery_journal_entry entry
-          = unpack_vdo_recovery_journal_entry(&sector->entries[k]);
+          = unvdo_pack_recovery_journal_entry(&sector->entries[k]);
 
         if ((desiredSlot.pbn == entry.slot.pbn)
             && (desiredSlot.slot == entry.slot.slot)) {
@@ -550,7 +550,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
           bool isSequenceNumberPossible
             = isSequenceNumberPossibleForOffset(&block.header, i);
           bool isSectorValid
-            = is_valid_vdo_recovery_journal_sector(&block.header, sector);
+            = vdo_is_valid_recovery_journal_sector(&block.header, sector);
 
           printf("found LBN %llu at offset %llu"
                  " (block %svalid, sequence number %llu %spossible), "

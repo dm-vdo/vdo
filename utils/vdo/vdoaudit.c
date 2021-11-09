@@ -643,7 +643,7 @@ static int verifyPBNRefCounts(void)
     return result;
   }
 
-  hintShift = get_vdo_slab_summary_hint_shift(vdo->slabSizeShift);
+  hintShift = vdo_get_slab_summary_hint_shift(vdo->slabSizeShift);
   for (slab_count_t slabNumber = 0; slabNumber < vdo->slabCount;
        slabNumber++) {
     result = verifySlab(slabNumber, buffer);

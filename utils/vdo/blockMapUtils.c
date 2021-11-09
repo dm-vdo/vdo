@@ -62,7 +62,7 @@ static int readAndExaminePage(UserVDO                 *vdo,
     return result;
   }
 
-  if (!is_vdo_block_map_page_initialized(page)) {
+  if (!vdo_is_block_map_page_initialized(page)) {
     UDS_FREE(page);
     return VDO_SUCCESS;
   }
@@ -74,7 +74,7 @@ static int readAndExaminePage(UserVDO                 *vdo,
   for (; blockMapSlot.slot < VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
         blockMapSlot.slot++) {
     struct data_location mapped
-      = unpack_vdo_block_map_entry(&page->entries[blockMapSlot.slot]);
+      = vdo_unpack_block_map_entry(&page->entries[blockMapSlot.slot]);
 
     result = examiner(blockMapSlot, height, mapped.pbn, mapped.state);
     if (result != VDO_SUCCESS) {
@@ -158,8 +158,8 @@ static int readSlotFromPage(UserVDO                  *vdo,
   }
 
   struct data_location mapped;
-  if (is_vdo_block_map_page_initialized(page)) {
-    mapped = unpack_vdo_block_map_entry(&page->entries[slot]);
+  if (vdo_is_block_map_page_initialized(page)) {
+    mapped = vdo_unpack_block_map_entry(&page->entries[slot]);
   } else {
     mapped = (struct data_location) {
       .state = VDO_MAPPING_STATE_UNMAPPED,
@@ -260,9 +260,9 @@ int readBlockMapPage(PhysicalLayer            *layer,
   if (validity == VDO_BLOCK_MAP_PAGE_BAD) {
     warnx("Expected page %llu but got page %llu",
           (unsigned long long) pbn,
-          (unsigned long long) get_vdo_block_map_page_pbn(page));
+          (unsigned long long) vdo_get_block_map_page_pbn(page));
   }
 
-  mark_vdo_block_map_page_initialized(page, false);
+  vdo_mark_block_map_page_initialized(page, false);
   return VDO_SUCCESS;
 }
