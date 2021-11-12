@@ -227,7 +227,8 @@ getPartition(const UserVDO     *vdo,
              const char        *errorMessage)
 {
   struct partition *partition;
-  int result = vdo_get_partition(vdo->states.layout, id, &partition);
+  int result = vdo_get_fixed_layout_partition(vdo->states.layout, id,
+					      &partition);
   if (result != VDO_SUCCESS) {
     errx(1, "%s", errorMessage);
   }

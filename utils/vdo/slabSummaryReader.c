@@ -53,8 +53,9 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   }
 
   struct partition *slab_summary_partition;
-  result = vdo_get_partition(vdo->states.layout, VDO_SLAB_SUMMARY_PARTITION,
-                             &slab_summary_partition);
+  result = vdo_get_fixed_layout_partition(vdo->states.layout,
+					  VDO_SLAB_SUMMARY_PARTITION,
+					  &slab_summary_partition);
   if (result != VDO_SUCCESS) {
     warnx("Could not find slab summary partition");
     return result;
