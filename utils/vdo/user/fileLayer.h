@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/fileLayer.h#2 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/fileLayer.h#3 $
  */
 
 #ifndef FILE_LAYER_H
@@ -54,14 +54,14 @@ int makeReadOnlyFileLayer(const char *name, PhysicalLayer **layerPtr)
  *
  * @param [in]  name        the name of the underlying file
  * @param [in]  blockCount  the span of the file, in blocks
- * @param [in]  fileOffset  the block offset to apply to I/O operations
+ * @param [in]  blockOffset the block offset to apply to I/O operations
  * @param [out] layerPtr    the pointer to hold the result
  *
  * @return a success or error code
  **/
 int makeOffsetFileLayer(const char     *name,
                         BlockCount      blockCount,
-                        BlockCount      fileOffset,
+                        off_t           blockOffset,
                         PhysicalLayer **layerPtr)
   __attribute__((warn_unused_result));
 

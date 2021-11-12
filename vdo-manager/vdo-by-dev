@@ -32,10 +32,10 @@ import subprocess
 
 # Fix up the path to address layout changes
 for dir in sys.path:
-  vdoDir = os.path.join(dir, 'vdo')
-  if os.path.isdir(vdoDir):
-    sys.path.append(vdoDir)
-    break
+    vdoDir = os.path.join(dir, 'vdo')
+    if os.path.isdir(vdoDir):
+        sys.path.append(vdoDir)
+        break
 
 from vdomgmnt import *
 
@@ -46,8 +46,16 @@ conf = Configuration("/etc/vdoconf.yml")
 rdev = os.stat('/dev/' + sys.argv[1]).st_rdev
 
 # Loop through each VDO in the config and determine whether its backing device
-# matches the one provided by the udev trigger (argv[1])
+# matches the one provided by the udev trigger (argv[1]).  If so, execute
+# the specified operation (argv[2]) against the VDO.
 for vdo in conf.getAllVdos().values():
-    if os.stat(vdo.device).st_rdev == rdev:
-        subprocess.check_call([ "vdo" ] + sys.argv[2:] + [ "--name", vdo.getName() ])
+    try:
+        stats = os.stat(vdo.device)
+    except FileNotFoundError:
+        # Tolerate that the device of a VDO from the config file may not yet
+        # be present in the system.
+        pass
+    else:
+        if stats.st_rdev == rdev:
+            subprocess.check_call([ "vdo" ] + sys.argv[2:] + [ "--name", vdo.getName() ])
 

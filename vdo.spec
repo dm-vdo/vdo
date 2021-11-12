@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.6.3
+Version: 6.2.6.7
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -182,7 +182,8 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Wed Nov 03 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.6.3-1
-- Added a check to vdopreparelvm to determine whether it has already been
-  converted.
-  
+* Fri Nov 12 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.6.7-1
+- Fixed bugs in the vdopreparelvm check to determine whether a device has
+  already been converted.
+- Fixed an issue in the vdo-by-dev tool which could result in a failure to
+  start vdo devices when some devices in the vdo config file do not exist.

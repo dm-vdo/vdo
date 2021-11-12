@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#2 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#4 $
  */
 
 #include <err.h>
@@ -88,9 +88,9 @@ static struct option options[] = {
 static char optionString[] = "chV";
 
 static const char *fileName;
-static bool checkPreparationState      = false;
-static const off_t vdoByteOffset       = (1024 * 1024) * 2;
-static const BlockCount vdoBlockOffset = vdoByteOffset / VDO_BLOCK_SIZE;
+static bool checkPreparationState = false;
+static const off_t vdoByteOffset  = (1024 * 1024) * 2;
+static const off_t vdoBlockOffset = vdoByteOffset / VDO_BLOCK_SIZE;
 
 static void usage(const char *progname, const char *usageOptionsString)
 {
@@ -342,11 +342,13 @@ static int performDeviceCheck(void)
   }
 
   /**
-   * If we can load the geometry the device is likely a non-converted VDO
-   * else the load would have failed with VDO_BAD_MAGIC.
+   * If we can load the geometry the device is either an lvm-created VDO, a
+   * non-converted VDO or a post-conversion VDO instantiated by lvm.  Anything
+   * else would have failed the load with VDO_BAD_MAGIC.
+   *
    * In the case of a succesful load we additionally check that the VDO
    * superblock can also be loaded before claiming the device is actually a
-   * a non-converted VDO.
+   * VDO.
    **/
   VolumeGeometry geometry;
   result = loadVolumeGeometry(layer, &geometry);
@@ -358,16 +360,43 @@ static int performDeviceCheck(void)
     // Load the superblock as an additional check the device is really a vdo.
     VDO *vdo;
     result = loadVDOSuperblock(layer, &geometry, false, NULL, &vdo);
+    if (result == VDO_SUCCESS) {
+      cleanup(vdo, layer);
+      return deviceCheckResultToExitStatus(result, true);
+    }
+
+    /**
+     * The device could be a post-conversion VDO instantiated by lvm.
+     * These devices have a geometry from their pre-conversion existence
+     * which will cause the loading of the superblock to fail using a default
+     * file layer.
+     * We try to load the superblock again accounting for the conversion.
+     **/
+    PhysicalLayer *offsetLayer;
+    result = makeOffsetFileLayer(fileName, 0, -vdoBlockOffset, &offsetLayer);
+    if (result != VDO_SUCCESS) {
+      cleanup(NULL, layer);
+      return result;
+    }
+
+    result = loadVDOSuperblock(offsetLayer, &geometry, false, NULL, &vdo);
     if (result != VDO_SUCCESS) {
       vdo = NULL;
       result = VDO_BAD_MAGIC; // Not a vdo.
     }
+    offsetLayer->destroy(&offsetLayer);
     cleanup(vdo, layer);
+    /**
+     * Report these devices as pre-conversion in order to present in the
+     * same way as lvm-created vdos.
+     **/
     return deviceCheckResultToExitStatus(result, true);
   }
 
   /**
-   * Getting here the device is either a post-conversion VDO or not a VDO.
+   * Getting here the device is either not a VDO or is a post-conversion VDO
+   * specified by the pre-conversion device; i.e., not an lvm instantiated VDO.
+   *
    * Attempt to load the geometry from its post-conversion location.  If the
    * device is not a VDO the load will fail with VDO_BAD_MAGIC.
    */
