@@ -321,7 +321,7 @@ static void dumpRecoveryJournal(void)
   const struct partition *partition
     = getPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION,
                    "Could not copy recovery journal, no partition");
-  int result = copyBlocks(get_vdo_fixed_layout_partition_offset(partition),
+  int result = copyBlocks(vdo_get_fixed_layout_partition_offset(partition),
                           vdo->states.vdo.config.recovery_journal_size);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy recovery journal");
@@ -335,7 +335,7 @@ static void dumpSlabSummary(void)
   const struct partition *partition
     = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION,
                    "Could not copy slab summary, no partition");
-  int result = copyBlocks(get_vdo_fixed_layout_partition_offset(partition),
+  int result = copyBlocks(vdo_get_fixed_layout_partition_offset(partition),
                           vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy slab summary");
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));

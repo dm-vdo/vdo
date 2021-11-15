@@ -39,7 +39,7 @@ static const char *VDO_STATE_NAMES[] = {
  *
  * @return The name of the state code
  **/
-const char *get_vdo_state_name(enum vdo_state state)
+const char *vdo_get_state_name(enum vdo_state state)
 {
 	int result;
 
@@ -63,7 +63,7 @@ const char *get_vdo_state_name(enum vdo_state state)
  *
  * @return A string constant describing the state
  **/
-const char *describe_vdo_state(enum vdo_state state)
+const char *vdo_describe_state(enum vdo_state state)
 {
 	/* These strings should all fit in the 15 chars of VDOStatistics.mode. */
 	switch (state) {

@@ -62,7 +62,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   }
 
   physical_block_number_t origin
-    = get_vdo_fixed_layout_partition_offset(slab_summary_partition);
+    = vdo_get_fixed_layout_partition_offset(slab_summary_partition);
   result = vdo->layer->reader(vdo->layer, origin, summary_blocks,
                               (char *) entries);
   if (result != VDO_SUCCESS) {

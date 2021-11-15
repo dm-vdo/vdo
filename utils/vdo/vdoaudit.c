@@ -671,7 +671,7 @@ static bool auditVDO(void)
 
   if (vdo->states.vdo.state != VDO_CLEAN) {
     warnx("WARNING: The VDO was not cleanly shut down (it has state '%s')",
-          get_vdo_state_name(vdo->states.vdo.state));
+          vdo_get_state_name(vdo->states.vdo.state));
   }
 
   // Get logical block count and populate observed slab reference counts.
@@ -714,7 +714,7 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));
@@ -734,7 +734,7 @@ int main(int argc, char *argv[])
   struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
   physical_block_number_t slabOrigin = depot.first_block;
   slabDataBlocks = depot.slab_config.data_blocks;
-  slab_count_t slabCount = compute_vdo_slab_count(depot.first_block,
+  slab_count_t slabCount = vdo_compute_slab_count(depot.first_block,
                                                   depot.last_block,
                                                   vdo->slabSizeShift);
   for (slab_count_t i = 0; i < slabCount; i++) {

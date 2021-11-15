@@ -252,7 +252,7 @@ int readBlockMapPage(PhysicalLayer            *layer,
   }
 
   enum block_map_page_validity validity
-    = validate_vdo_block_map_page(page, nonce, pbn);
+    = vdo_validate_block_map_page(page, nonce, pbn);
   if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
     return VDO_SUCCESS;
   }

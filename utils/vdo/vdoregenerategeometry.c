@@ -108,7 +108,7 @@ static void usage(const char *programName)
  **/
 static void processArgs(int argc, char *argv[])
 {
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errorBuffer, ERRBUF_SIZE));
@@ -241,7 +241,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     return false;
   }
 
-  if (validate_vdo_config(&candidate->vdo->states.vdo.config,
+  if (vdo_validate_config(&candidate->vdo->states.vdo.config,
                           physicalSize,
                           0) != VDO_SUCCESS) {
     freeUserVDO(&candidate->vdo);
@@ -260,7 +260,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     }
 
     enum block_map_page_validity validity
-      = validate_vdo_block_map_page((struct block_map_page *) blockBuffer,
+      = vdo_validate_block_map_page((struct block_map_page *) blockBuffer,
                                     candidate->vdo->states.vdo.nonce,
                                     map.root_origin + root);
     if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
@@ -325,7 +325,7 @@ static void rewriteGeometry(Candidate *candidate)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errorBuffer, ERRBUF_SIZE));

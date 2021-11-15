@@ -350,7 +350,7 @@ static void process_device(const char *original, const char *name)
 
       case STYLE_YAML:
         printf("%s : \n", original);
-	write_vdo_stats(&stats);
+	vdo_write_stats(&stats);
         break;
 
       default:
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
   char errBuf[ERRBUF_SIZE];
   int result;
 
-  result = register_vdo_status_codes();
+  result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));

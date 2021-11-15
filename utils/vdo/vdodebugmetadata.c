@@ -433,7 +433,7 @@ static void readMetadata(void)
     UnpackedJournalBlock *block = &recoveryJournal[i];
     struct packed_journal_header *packedHeader
       = (struct packed_journal_header *) &rawJournalBytes[i * VDO_BLOCK_SIZE];
-    unvdo_pack_recovery_block_header(packedHeader, &block->header);
+    vdo_unpack_recovery_block_header(packedHeader, &block->header);
     for (uint8_t sector = 1; sector < VDO_SECTORS_PER_BLOCK; sector++) {
       block->sectors[sector]
         = vdo_get_journal_block_sector(packedHeader, sector);
@@ -472,12 +472,12 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
          entryIndex < entryCount;
          entryIndex++) {
       struct slab_journal_entry entry
-        = decode_vdo_slab_journal_entry(block, entryIndex);
+        = vdo_decode_slab_journal_entry(block, entryIndex);
       if (slabOffset == entry.sbn) {
         printf("PBN %llu (%llu, %d) %s\n",
                (unsigned long long) pbn,
 	       (unsigned long long) __le64_to_cpu(block->header.sequence_number),
-               entryIndex, get_vdo_journal_operation_name(entry.operation));
+               entryIndex, vdo_get_journal_operation_name(entry.operation));
       }
     }
   }
@@ -542,7 +542,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
 
       for (journal_entry_count_t k = 0; k < sector->entry_count; k++) {
         struct recovery_journal_entry entry
-          = unvdo_pack_recovery_journal_entry(&sector->entries[k]);
+          = vdo_unpack_recovery_journal_entry(&sector->entries[k]);
 
         if ((desiredSlot.pbn == entry.slot.pbn)
             && (desiredSlot.slot == entry.slot.slot)) {
@@ -562,7 +562,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
                  (isSequenceNumberPossible ? "" : "not "),
                  j, (isSectorValid ? "" : "not "), k,
                  (unsigned long long) entry.mapping.pbn,
-                 get_vdo_journal_operation_name(entry.operation),
+                 vdo_get_journal_operation_name(entry.operation),
                  entry.mapping.state);
         }
       }
@@ -611,7 +611,7 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));

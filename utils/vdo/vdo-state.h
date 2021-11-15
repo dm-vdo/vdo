@@ -43,8 +43,8 @@ enum vdo_state {
 	VDO_STATE_COUNT
 };
 
-const char * __must_check get_vdo_state_name(enum vdo_state state);
+const char * __must_check vdo_get_state_name(enum vdo_state state);
 
-const char * __must_check describe_vdo_state(enum vdo_state state);
+const char * __must_check vdo_describe_state(enum vdo_state state);
 
 #endif /* VDO_STATE_H */

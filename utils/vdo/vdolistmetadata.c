@@ -177,7 +177,7 @@ static void listRecoveryJournal(void)
     = getPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION,
                    "no recovery journal partition");
   listBlocks("recovery journal",
-             get_vdo_fixed_layout_partition_offset(partition),
+             vdo_get_fixed_layout_partition_offset(partition),
              vdo->states.vdo.config.recovery_journal_size);
 }
 
@@ -187,7 +187,7 @@ static void listSlabSummary(void)
   const struct partition *partition
     = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION,
                    "no slab summary partition");
-  listBlocks("slab summary", get_vdo_fixed_layout_partition_offset(partition),
+  listBlocks("slab summary", vdo_get_fixed_layout_partition_offset(partition),
              vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
 }
 
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 {
   static char errBuf[ERRBUF_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
          uds_string_error(result, errBuf, ERRBUF_SIZE));
