@@ -39,6 +39,6 @@ int read_vdo_stats(char *buf, struct vdo_statistics *stats);
  *
  * @return VDO_SUCCESS or an error
  */
-int write_vdo_stats(struct vdo_statistics *stats);
+int vdo_write_stats(struct vdo_statistics *stats);
 
 #endif  /* VDO_STATS_H */
