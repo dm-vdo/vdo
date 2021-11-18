@@ -22,9 +22,9 @@
 #include "vdoConfig.h"
 
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "permassert.h"
-#include "timeUtils.h"
+#include "time-utils.h"
 
 #include "block-map-format.h"
 #include "constants.h"

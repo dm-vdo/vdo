@@ -30,7 +30,7 @@
 
 #include "errors.h"
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "statistics.h"
 #include "status-codes.h"
 #include "vdoStats.h"

@@ -22,8 +22,8 @@
 #include <uuid/uuid.h>
 
 #include "errors.h"
-#include "memoryAlloc.h"
-#include "timeUtils.h"
+#include "memory-alloc.h"
+#include "time-utils.h"
 
 #include "constants.h"
 #include "block-map-format.h"

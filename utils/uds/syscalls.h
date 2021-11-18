@@ -25,7 +25,7 @@
 #include "compiler.h"
 #include "errors.h"
 #include "logger.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 /**
  * Wrap the read(2) system call, looping as long as errno is EINTR.

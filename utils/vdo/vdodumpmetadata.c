@@ -22,8 +22,8 @@
 
 #include "errors.h"
 #include "fileUtils.h"
-#include "memoryAlloc.h"
-#include "stringUtils.h"
+#include "memory-alloc.h"
+#include "string-utils.h"
 #include "syscalls.h"
 
 #include "block-map-format.h"

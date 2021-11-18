@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 #include "permassert.h"
-#include "stringUtils.h"
+#include "string-utils.h"
 #include "uds-threads.h"
 
 static enum mutex_kind {

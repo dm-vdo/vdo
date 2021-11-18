@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#38 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#39 $
 
-UDS_VERSION      = 8.2.0.69
+UDS_VERSION      = 8.2.0.72
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -71,59 +71,59 @@ vpath %.c ./murmur
 UDS_OBJECTS =	murmurhash3.o		\
 		bits.o			\
 		buffer.o		\
-		bufferedReader.o	\
-		bufferedWriter.o	\
-		cacheCounters.o		\
-		cachedChapterIndex.o	\
-		chapterIndex.o		\
-		chapterWriter.o		\
+		buffered-reader.o	\
+		buffered-writer.o	\
+		cache-counters.o	\
+		cached-chapter-index.o	\
+		chapter-index.o		\
+		chapter-writer.o	\
 		config.o		\
-		deltaIndex.o		\
-		deltaMemory.o		\
+		delta-index.o		\
+		delta-memory.o		\
 		errors.o		\
-		eventCount.o		\
+		event-count.o		\
 		fileIORegion.o		\
 		fileUtils.o		\
-		funnelQueue.o		\
+		funnel-queue.o		\
 		geometry.o		\
-		hashUtils.o		\
+		hash-utils.o		\
 		index.o			\
-		indexComponent.o	\
-		indexLayout.o		\
-		indexPageMap.o		\
-		indexSession.o		\
-		indexState.o		\
-		indexStateData.o	\
-		indexZone.o		\
+		index-component.o	\
+		index-layout.o		\
+		index-page-map.o	\
+		index-session.o		\
+		index-state.o		\
+		index-state-data.o	\
+		index-zone.o		\
 		ioFactory.o		\
-		loadType.o		\
+		load-type.o		\
 		logger.o		\
 		memoryAlloc.o		\
 		minisyslog.o		\
 		nonce.o			\
-		openChapter.o		\
-		openChapterZone.o	\
-		pageCache.o		\
+		open-chapter.o		\
+		open-chapter-zone.o	\
+		page-cache.o		\
 		permassert.o		\
-		radixSort.o		\
+		radix-sort.o		\
 		random.o		\
-		recordPage.o		\
+		record-page.o		\
 		request.o		\
 		requestQueueUser.o	\
-		searchList.o		\
-		sparseCache.o		\
-		stringUtils.o		\
+		search-list.o		\
+		sparse-cache.o		\
+		string-utils.o		\
 		syscalls.o		\
 		threadCondVar.o		\
 		threadMutex.o		\
 		threadSemaphore.o	\
-		timeUtils.o		\
+		time-utils.o		\
 		uds-threads.o		\
 		volume.o		\
-		volumeIndex005.o	\
-		volumeIndex006.o	\
-		volumeIndexOps.o	\
-		volumeStore.o
+		volume-index005.o	\
+		volume-index006.o	\
+		volume-index-ops.o	\
+		volume-store.o
 
 .PHONY: all
 all: libuds.a

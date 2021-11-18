@@ -23,7 +23,7 @@
 
 #include "errors.h"
 #include "syscalls.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 
 #include "block-map-format.h"
 #include "block-map-page.h"

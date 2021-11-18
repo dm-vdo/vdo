@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #include "compiler.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 /**
  * Get random unsigned integer in a given range

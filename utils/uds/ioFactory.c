@@ -19,8 +19,8 @@
 
 #include "atomicDefs.h"
 #include "fileIORegion.h"
-#include "ioFactory.h"
-#include "memoryAlloc.h"
+#include "io-factory.h"
+#include "memory-alloc.h"
 
 /*
  * A user mode IOFactory object controls access to an index stored in a file.

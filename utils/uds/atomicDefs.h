@@ -21,7 +21,7 @@
 #define ATOMIC_DEFS_H
 
 #include "compiler.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 // The atomic interfaces are chosen to exactly match those interfaces defined
 // by the Linux kernel.  The rest of this file is the matching user-mode

@@ -21,7 +21,7 @@
 
 #include <err.h>
 
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 
 #include "num-utils.h"
 #include "physical-layer.h"

@@ -34,7 +34,7 @@
 #include <syslog.h>
 
 #include "common.h"
-#include "stringUtils.h"
+#include "string-utils.h"
 #include "uds-threads.h"
 
 #ifdef DEBUGGING_OFF

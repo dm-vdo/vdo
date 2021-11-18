@@ -36,7 +36,7 @@
 #include <time.h>
 
 #include "compiler.h"
-#include "funnelQueue.h"
+#include "funnel-queue.h"
 
 /**
  * Valid request types.

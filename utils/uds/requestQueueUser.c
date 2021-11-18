@@ -17,17 +17,17 @@
  * 02110-1301, USA. 
  */
 
-#include "requestQueue.h"
+#include "request-queue.h"
 
 #include "atomicDefs.h"
 #include "compiler.h"
-#include "eventCount.h"
-#include "funnelQueue.h"
+#include "event-count.h"
+#include "funnel-queue.h"
 #include "logger.h"
 #include "request.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "uds-threads.h"
-#include "timeUtils.h"
+#include "time-utils.h"
 
 /*
  * Ordering:

@@ -32,9 +32,9 @@
 #include "errors.h"
 #include "fileUtils.h"
 #include "logger.h"
-#include "stringUtils.h"
+#include "string-utils.h"
 #include "syscalls.h"
-#include "timeUtils.h"
+#include "time-utils.h"
 
 #include "constants.h"
 #include "status-codes.h"

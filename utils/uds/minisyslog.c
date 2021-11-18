@@ -25,11 +25,11 @@
 #include <unistd.h>
 
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "minisyslog.h"
-#include "stringUtils.h"
+#include "string-utils.h"
 #include "uds-threads.h"
-#include "timeUtils.h"
+#include "time-utils.h"
 
 static struct mutex mutex = { .mutex = UDS_MUTEX_INITIALIZER };
 

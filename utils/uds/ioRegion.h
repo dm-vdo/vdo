@@ -22,7 +22,7 @@
 
 #include "atomicDefs.h"
 #include "compiler.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 /**
  * The IO region type is an abstraction which represents a specific

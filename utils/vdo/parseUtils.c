@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "stringUtils.h"
+#include "string-utils.h"
 
 #include "status-codes.h"
 

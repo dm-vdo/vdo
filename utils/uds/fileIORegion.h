@@ -20,7 +20,7 @@
 #ifndef FILE_IO_REGION_H
 #define FILE_IO_REGION_H
 
-#include "ioFactory.h"
+#include "io-factory.h"
 #include "ioRegion.h"
 #include "fileUtils.h"
 

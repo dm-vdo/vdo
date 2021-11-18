@@ -21,7 +21,7 @@
 
 #include <err.h>
 
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 
 #include "physical-layer.h"
 #include "slab-depot-format.h"

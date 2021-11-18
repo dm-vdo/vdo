@@ -20,9 +20,9 @@
 #include "fileIORegion.h"
 
 #include "compiler.h"
-#include "ioFactory.h"
+#include "io-factory.h"
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "permassert.h"
 
 

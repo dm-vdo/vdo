@@ -22,7 +22,7 @@
 #include "logger.h"
 #include "permassert.h"
 #include "uds-threads.h"
-#include "timeUtils.h"
+#include "time-utils.h"
 
 /**********************************************************************/
 int uds_initialize_semaphore(struct semaphore *semaphore, unsigned int value)

@@ -23,7 +23,7 @@
 #include "compiler.h"
 
 #include "numericDefs.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 /*
  * Type safe comparison macros, similar to the ones in linux/kernel.h.

@@ -27,7 +27,7 @@
 
 #include "compiler.h"
 #include "errors.h"
-#include "timeUtils.h"
+#include "time-utils.h"
 
 struct cond_var {
 	pthread_cond_t condition;
