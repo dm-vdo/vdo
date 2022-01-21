@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/c++/vdo/user/vdoStats.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoStats.c#11 $
  */
 
 #include <err.h>
@@ -32,6 +32,7 @@
 
 #include "errors.h"
 #include "logger.h"
+#include "memoryAlloc.h"
 #include "statistics.h"
 #include "statusCodes.h"
 #include "vdoStats.h"
@@ -114,11 +115,21 @@ typedef struct dfFieldLengths {
   int savingPercent;
 } DFFieldLengths;
 
+typedef struct vdoPath {
+  char name[NAME_MAX];
+  char resolvedName[NAME_MAX];
+  char resolvedPath[PATH_MAX];
+} VDOPath;
+
+static VDOPath *vdoPaths = NULL;
+
+static int pathCount = 0;
+
 /**********************************************************************
  * Obtain the VDO device statistics.
  *
  * @param stats  The device statistics
- * 
+ *
  * @return  A DFStats structure of device statistics
  *
  **/
@@ -155,18 +166,17 @@ static DFStats getDFStats(struct vdo_statistics *stats)
 static void printSizeAsHumanReadable(const int      aFieldWidth,
                                      const uint64_t aSize)
 {
-  double  size          = (double) aSize;
-  int     divisor       = si ? 1000 : 1024;
-  char    unitArray[5]  = { 'B', 'K', 'M', 'G', 'T' };
+  static const char UNITS[] = { 'B', 'K', 'M', 'G', 'T' };
+  double size               = (double) aSize;
+  int    divisor            = si ? 1000 : 1024;
 
-  unsigned int  i = 0;
-  while ((size >= divisor) &&
-         (i < (sizeof(unitArray) / sizeof(unitArray[0])))) {
+  unsigned int i = 0;
+  while ((size >= divisor) && (i < (COUNT_OF(UNITS) - 1))) {
     size /= divisor;
-    i ++;
+    i++;
   }
 
-  printf("%*.1f%c ", aFieldWidth - 1, size, unitArray[i]);
+  printf("%*.1f%c ", aFieldWidth - 1, size, UNITS[i]);
 }
 
 /**********************************************************************
@@ -182,9 +192,10 @@ static void displayDFStyle(const char *path, struct vdo_statistics *stats)
   char dfName[field_length.name + 1];
   DFStats dfStats = getDFStats(stats);
 
-  // Extract the device name
-  char *name_start = strrchr(path, '/') + 1;
-  strcpy(dfName, name_start);
+  // Extract the device name. Use strdup for non const string.
+  char *devicePath = strdup(path);
+  strcpy(dfName, basename(devicePath));
+  free(devicePath);
 
   // Display the device statistics
   if (!header_printed) {
@@ -197,7 +208,7 @@ static void displayDFStyle(const char *path, struct vdo_statistics *stats)
            field_length.savingPercent, "Space saving%");
     header_printed = true;
   }
-  
+
   if (stats->in_recovery_mode) {
     printf("%-*s %*" PRIu64 " %*s %*s %*s %*s\n",
            field_length.name, dfName,
@@ -269,7 +280,7 @@ static void process_args(int argc, char *argv[])
   while ((c = getopt_long(argc, argv, option_string, options, NULL)) != -1) {
     switch (c) {
     case 'h':
-      printf("%s", help_string);      
+      printf("%s", help_string);
       exit(0);
       break;
 
@@ -302,28 +313,33 @@ static void process_args(int argc, char *argv[])
   }
 }
 
+
+/**********************************************************************
+ * Free the allocated paths
+ *
+ **/
+static void freeAllocations(void)
+{
+  UDS_FREE(vdoPaths);
+}
+
 /**********************************************************************
  * Process the VDO stats for a single device.
  *
- * @param path  The device path
- * @param name  The dmsetup name
+ * @param original The orignal name passed into vdostats
+ * @param name     The name of the vdo device to use in dmsetup message
  *
  **/
-static void process_device(const char *path, const char *name)
+static void process_device(const char *original, const char *name)
 {
-  int fd = open(path, O_RDONLY);
-  if (fd < 0) {
-    warn("open failure on %s", path);
-    return;
-  }
-  
   struct vdo_statistics stats;
   
   char dmCommand[256];
   sprintf(dmCommand, "dmsetup message %s 0 stats", name);
   FILE* fp = popen(dmCommand, "r");
   if (fp == NULL) {
-    err(2, "Could not retrieve VDO device volume information");
+    freeAllocations();
+    err(ENOENT, "'%s': Could not retrieve VDO device stats information", name);
   }
   
   char statsBuf[8192];
@@ -331,19 +347,61 @@ static void process_device(const char *path, const char *name)
     read_vdo_stats(statsBuf, &stats);
     switch (style) {
       case STYLE_DF:
-        displayDFStyle(path, &stats);
+        displayDFStyle(original, &stats);
         break;
 
       case STYLE_YAML:
-        printf("%s : \n", path);
-        write_vdo_stats(&stats);
+        printf("%s : \n", original);
+	write_vdo_stats(&stats);
         break;
 
       default:
-        err(2, "unknown style %d", style);
+        pclose(fp);
+        freeAllocations();
+        err(1, "unknown style %d", style);
     }
   }
-  pclose(fp);
+
+  int result = pclose(fp);
+  if ((WIFEXITED(result))) {
+    result = WEXITSTATUS(result);
+  }
+  if (result != 0) {
+    freeAllocations();
+    err(result, "'%s': Could not retrieve VDO device stats information", name);
+  }
+}
+
+/**********************************************************************
+ * Transform device into a known vdo path and name, if possible.
+ *
+ * @param device The device name to search for.
+ *
+ * @return struct containing name and path if found, otherwise NULL.
+ *
+ **/
+static VDOPath *transformDevice(char *device)
+{
+
+  for (int i = 0; i < pathCount; i++) {
+    if (strcmp(device, vdoPaths[i].name) == 0) {
+      return &vdoPaths[i];
+    }
+    if (strcmp(device, vdoPaths[i].resolvedName) == 0) {
+      return &vdoPaths[i];
+    }
+
+    char buf[PATH_MAX];
+    char *path = realpath(device, buf);
+    if (path == NULL) {
+      continue;
+    }
+    if (strcmp(buf, vdoPaths[i].resolvedPath) == 0) {
+      return &vdoPaths[i];
+    }
+  }
+
+  return NULL;
 }
 
 /**********************************************************************
@@ -355,50 +413,85 @@ static void enumerate_devices(void)
   FILE *fp;
   size_t line_size = 0;
   char *dmsetup_line = NULL;
-  
-  fp = popen("dmsetup status --target vdo", "r");
+
+  fp = popen("dmsetup ls --target vdo", "r");
   if (fp == NULL) {
     err(2, "Could not retrieve VDO device status information");
   }
 
+  pathCount = 0;
   while ((getline(&dmsetup_line, &line_size, fp)) > 0) {
-    maxDeviceNameLength =
-      (((int) strlen(strtok(dmsetup_line, ":")) > maxDeviceNameLength)
-       ? (int) strlen(strtok(dmsetup_line, ":"))
-       : maxDeviceNameLength);
-  }
-  pclose(fp);
-  
-  fp = popen("dmsetup ls --target vdo", "r");
-  if (fp == NULL) {
-    err(2, "Could not retrieve VDO device volume information");
+    pathCount++;
   }
 
-  char lineBuf[256];
-  while (fgets(lineBuf, sizeof(lineBuf), fp) != NULL) {
-    char *tok = strtok(lineBuf, " \t\n\r");
-    if (tok == NULL) {
+  int result = pclose(fp);
+  if ((WIFEXITED(result))) {
+    result = WEXITSTATUS(result);
+  }
+  if (result != 0) {
+    err(result, "Could not retrieve VDO device status information");
+  }
+
+  result = UDS_ALLOCATE(pathCount, struct vdoPath, __func__, &vdoPaths);
+  if (result != VDO_SUCCESS) {
+    err(ENOMEM, "Could not allocate vdo path structure");
+  }
+
+  fp = popen("dmsetup ls --target vdo", "r");
+  if (fp == NULL) {
+    freeAllocations();
+    err(2, "Could not retrieve VDO device status information");
+  }
+
+  line_size = 0;
+  dmsetup_line = NULL;
+
+  int major, minor;
+
+  int count = 0;
+  while ((getline(&dmsetup_line, &line_size, fp)) > 0) {
+    int items = sscanf(dmsetup_line, "%s (%d, %d)",
+                       vdoPaths[count].name, &major, &minor);
+    if (items != 3) {
       pclose(fp);
+      freeAllocations();
       err(2, "could not parse device mapper information");
     }
 
-    char *path;
-    if (asprintf(&path, "/dev/mapper/%s", tok) == -1) {
-      err(1, "Failed to allocate device path buffer");
+    if (major != 253) {
+      pclose(fp);
+      freeAllocations();
+      err(2, "Major device number incorrect");
     }
 
-    // Check whether the VDO device exists with the expected pathname.
-    // This is primarily used to handle the lack of any configured
-    // VDO devices.  The "dmsetup ls" command varies in its response
-    // to this condition on different Linux distributions.
-    struct stat buf;
-    if (stat(path, &buf) == 0) {
-      process_device(path, tok);
-    }
-    free(path);
+    sprintf(vdoPaths[count].resolvedName, "dm-%d", minor);
+    sprintf(vdoPaths[count].resolvedPath, "/dev/%s",
+            vdoPaths[count].resolvedName);
+    count++;
   }
 
-  pclose(fp);
+  result = pclose(fp);
+  if ((WIFEXITED(result))) {
+    result = WEXITSTATUS(result);
+  }
+  if (result != 0) {
+    freeAllocations();
+    err(result, "Could not retrieve VDO device status information");
+  }
+}
+
+/**********************************************************************
+ * Calculate max device name length to display
+ *
+ * @param name The name to get the length for
+ *
+ */
+static void calculateMaxDeviceName(char *name)
+{
+  int name_length = strlen(name);
+  maxDeviceNameLength = ((name_length > maxDeviceNameLength)
+                         ? name_length
+                         : maxDeviceNameLength);
 }
 
 /**********************************************************************/
@@ -419,50 +512,40 @@ int main(int argc, char *argv[])
     style = STYLE_YAML;
   }
 
+  // Build a list of known vdo devices that we can validate against.
+  enumerate_devices();
+  if (vdoPaths == NULL) {
+    err(2, "Could not collect list of known vdo devices");
+  }
+
   int num_devices = argc - optind;
 
-  // Process each device
   if (num_devices == 0) {
-    enumerate_devices();
+    // Set maxDeviceNameLength
+    for (int i = 0; i < pathCount; i++) {
+      calculateMaxDeviceName(vdoPaths[i].name);
+    }
+
+    // Process all VDO devices
+    for (int i = 0; i < pathCount; i++) {
+      process_device(vdoPaths[i].name, vdoPaths[i].name);
+    }
   } else {
     // Set maxDeviceNameLength
     for (int i = optind; i < argc; i++) {
-      char *name_start = strrchr(argv[i], '/');
-      int name_length = 0;
-
-      if (name_start == NULL) {
-        name_length = (int) strlen(argv[i]);
-      } else {
-        name_start++;
-        name_length = (int) strlen(name_start);
-      }
-
-      maxDeviceNameLength = ((name_length > maxDeviceNameLength)
-                             ? name_length
-                             : maxDeviceNameLength);
+      calculateMaxDeviceName(basename(argv[i]));
     }
 
     // Process the input devices
-    for (int i = 1; i < argc; i++) {
-      if (argv[i][0] == '-') {
-        continue;
-      }
-      // Check whether the VDO device exists. It may be input as a full path or
-      // with the device name only.
-      struct stat buf;
-      if (stat(argv[i], &buf) == 0) {
-        process_device(argv[i], basename(argv[i]));
+    for (int i = optind; i < argc; i++) {
+      VDOPath *path = transformDevice(argv[i]);
+      if (path != NULL) {
+        process_device(argv[i], path->name);
       } else {
-        char *device_path;
-        if (asprintf(&device_path, "/dev/mapper/%s", argv[i]) == -1) {
-          err(1, "Failed to allocate device path buffer");
-        }
-        if (stat(device_path, &buf) == 0) {
-          process_device(device_path, argv[i]);
-        }
-        
-        free(device_path);
+        freeAllocations();
+        errx(2, "'%s': Not a valid running VDO device", argv[i]);
       }
     }
   }
+  freeAllocations();
 }

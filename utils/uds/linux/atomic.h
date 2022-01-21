@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/krusty-rhel9.0-beta/userLinux/uds/linux/atomic.h#1 $
+ * $Id: //eng/uds-releases/krusty/userLinux/uds/linux/atomic.h#2 $
  */
 
 #ifndef LINUX_ATOMIC_DEFS_H

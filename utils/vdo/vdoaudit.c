@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/c++/vdo/user/vdoAudit.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoAudit.c#11 $
  */
 
 #include <err.h>
@@ -553,9 +553,8 @@ verifyRefCountBlock(SlabAudit                     *audit,
 static void verifySummaryHint(slab_count_t  slabNumber,
                               block_count_t freeBlocks)
 {
-  block_count_t freeBlockHint
-    = slabSummaryEntries[slabNumber].fullness_hint << hintShift;
-
+  block_count_t fullnessHint = slabSummaryEntries[slabNumber].fullness_hint;
+  block_count_t freeBlockHint = fullnessHint << hintShift;
   block_count_t hintError = (1ULL << hintShift);
   if ((freeBlocks < max(freeBlockHint, hintError) - hintError)
       || (freeBlocks >= (freeBlockHint + hintError))) {

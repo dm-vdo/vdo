@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 8.1.0.316
+Version: 8.1.1.287
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -113,10 +113,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Fri Aug 06 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.1.0.316-1
-- Rebased to upstream candidate.
-- Removed support for UDS super block version 6 which can only exist in
-  versions of the index which the current code does not support.
-- Removed all python based tools. vdostats is now a C program, and all
-  management should be done with LVM.
-
+* Fri Jan 21 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.1.1.287-1
+- See https://github.com/dm-vdo/vdo.git

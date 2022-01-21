@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/c++/vdo/user/slabSummaryReader.c#1 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/slabSummaryReader.c#7 $
  */
 
 #include "slabSummaryReader.h"

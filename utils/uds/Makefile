@@ -16,13 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/packaging/src-dist/user/utils/uds/Makefile#1 $
+# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/uds/Makefile#20 $
 
-# UDS_INTERNAL_VERSION is the short version name, which is used to version the
-# UDS interfaces exported from libuds.so.  DISTRIBUTION_VERSION is the long
-# version name used in distribution builds.  We extract these values from the
-# traditional location.
-UDS_VERSION      = 8.1.0.351
+UDS_VERSION      = 8.1.1.58
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 
@@ -69,8 +65,6 @@ MY_FLAGS    =
 MY_CFLAGS   = $(MY_FLAGS)
 MY_LDFLAGS  =
 
-IMPORTED_SYMBOLS = libuds.imported
-
 vpath %.c .
 vpath %.c ./murmur
 vpath %.c ./util
@@ -110,9 +104,6 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		loadType.o			\
 		logger.o			\
 		loggerLinuxUser.o		\
-		masterIndex005.o		\
-		masterIndex006.o		\
-		masterIndexOps.o		\
 		memoryAlloc.o			\
 		memoryLinuxUser.o		\
 		minisyslog.o			\
@@ -139,6 +130,9 @@ UDS_OBJECTS =	MurmurHash3.o			\
 		timeUtils.o			\
 		udsMain.o			\
 		volume.o			\
+		volumeIndex005.o		\
+		volumeIndex006.o		\
+		volumeIndexOps.o		\
 		volumeStore.o			\
 		zone.o
 
@@ -147,8 +141,7 @@ all: libuds.a
 
 .PHONY: clean
 clean:
-	rm -f *.o *.a *.s *.so lib*.so.* wrapped-symbols
-	rm -rf doxygen $(DEPDIR)
+	rm -rf *.o *.a $(DEPDIR)
 
 .PHONY: install
 install:;

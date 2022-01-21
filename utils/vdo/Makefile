@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur-rhel9.0-beta/src/packaging/src-dist/user/utils/vdo/Makefile#1 $
+# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/vdo/Makefile#2 $
 
-VDO_VERSION = 8.1.0.316
+VDO_VERSION = 8.1.1.287
 
 UDS_DIR      = ../uds
 
