@@ -1,0 +1,142 @@
+#!/bin/bash
+#
+# Copyright (C) 2021 Red Hat, Inc. All rights reserved.
+#
+# This copyrighted material is made available to anyone wishing to use,
+# modify, copy, or redistribute it subject to the terms and conditions
+# of the GNU General Public License v.2.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+#
+# Author: Andy Walsh <awalsh@redhat.com>
+#
+# Script for marking an LVMVDO backing volume as Read/Write
+#
+
+set -euE -o pipefail
+
+TOOL=$(basename $0)
+
+LVM_EXTRA_ARGS=${EXTRA_LVM_ARGS:-}
+
+BACKINGTABLE=
+DEV_VG_LV=
+DM_VPOOL=
+LV=
+LVMVDO=
+OPERATION=
+VG=
+VPOOL_NAME=
+
+# Expand the arguments provided into the necessary parameters to operate on
+# setRO or setRW.
+# Make sure that we actually received the arguments we need and exit if we didn't.
+applyConversion() {
+  if [ -z "$1" ] || [ -z "$2" ]; then
+    printUsage
+  fi
+
+  OPERATION=$1
+  LVMVDO=$2
+
+  # Break apart the LVMVDO argument into separate components for use later as
+  # well as the full R/O device path.
+  LV=$(echo ${LVMVDO} | awk -F/ '{print $2}')
+  VG=$(echo ${LVMVDO} | awk -F/ '{print $1}')
+
+  DEV_VG_LV=/dev/${VG}/${LV}
+
+  echo "Found LV: ${LV}"
+  echo "Found VG: ${VG}"
+  echo "Found VPOOL_NAME: ${VPOOL_NAME}"
+
+  case "$OPERATION" in
+    "setro"|"setRO")
+      setRO
+      ;;
+    "setrw"|"setRW")
+      setRW
+      ;;
+    *)
+      echo "Invalid operation requested"
+      printUsage
+      ;;
+  esac
+}
+
+printUsage() {
+  echo "${TOOL}: Mark the backing storage for a LVMVDO volume as read only or read write"
+  echo
+  echo "${TOOL} [ setRO | setRW ] <volume_group>/<logical_volume>"
+  echo
+  echo "  Options:"
+  echo "     setRO         Revert a R/W LVMVDO volume to its original R/O configuration"
+  echo "     setRW         Modify an LVMVDO volume to present the backing store as R/W"
+  echo
+  exit
+}
+
+# Disassemble the temporary Read/Write volume and re-activate the original volume.
+setRO() {
+  dmsetup remove ${VG}-${LV}
+  lvchange -ay ${LVM_EXTRA_ARGS} ${VG}/${LV}
+
+  if [ -b ${DEV_VG_LV} ]; then
+    echo "LVMVDO volume re-activated at ${DEV_VG_LV}"
+  else
+    echo "There was a problem re-activating ${DEV_VG_LV}"
+  fi
+
+  exit 0
+}
+
+# Disassemble the original Read/Only volume and start a temporary Read/Write
+# volume in /dev/mapper
+setRW() {
+  if [ ! -b "${DEV_VG_LV}" ]; then
+    echo "${DEV_VG_LV} is not a block device"
+    printUsage
+  fi
+
+  VPOOL_NAME=$(lvdisplay ${LVMVDO} | awk '/LV VDO Pool name/ {print $NF}')
+  DM_VPOOL="${VG}-${VPOOL_NAME}"
+  DM_VDATA="${VG}-${VPOOL_NAME}_vdata"
+
+  # Look in the list of dm devices and find the appropriate backing device
+  # If we don't find one, then there's something wrong, it's best to just exit.
+  if [ "$(dmsetup ls | grep -q "${DM_VDATA}")" != "" ]; then
+    echo "vdata device not found, is this an LVMVDO volume?"
+    exit
+  fi
+
+  # Capture the DM table for the backing device so we can reuse it on the
+  # temporary device.
+  BACKINGTABLE="$(dmsetup table ${DM_VDATA})"
+
+  # Deactivate the existing volume so that it is only being used from one
+  # place.
+  lvchange -an ${LVM_EXTRA_ARGS} ${DEV_VG_LV}
+
+  # Create the temporary device with the name containing the parameters we need
+  # to undo this operation later.
+  dmsetup create ${VG}-${LV} --table "${BACKINGTABLE}"
+
+  echo "Writable backing device is now available at /dev/mapper/${VG}-${LV}"
+  echo "To undo this operation, run ${TOOL} setro ${VG}/${LV}"
+
+  exit 0
+}
+
+###############################################################################
+# main()
+trap "cleanup 2" 2
+
+test "$#" -ne 2 && printUsage
+
+echo "Received extra LVM Args '${LVM_EXTRA_ARGS}'"
+
+applyConversion $1 $2
+
+exit

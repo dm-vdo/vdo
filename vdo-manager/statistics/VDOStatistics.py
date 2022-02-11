@@ -200,9 +200,9 @@ class VDOStatistics(StatStruct):
       Uint64Field("physicalBlocks"),
       # number of logical blocks
       Uint64Field("logicalBlocks"),
-      Uint64Field("oneKBlocks", derived = "$physicalBlocks * $blockSize // 1024", label = "1K-blocks"),
-      Uint64Field("oneKBlocksUsed", available = "not $inRecoveryMode", label = "1K-blocks used", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024"),
-      Uint64Field("oneKBlocksAvailable", available = "not $inRecoveryMode", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024", label = "1K-blocks available"),
+      Uint64Field("oneKBlocks", label = "1K-blocks", derived = "$physicalBlocks * $blockSize // 1024"),
+      Uint64Field("oneKBlocksUsed", label = "1K-blocks used", available = "not $inRecoveryMode", derived = "($dataBlocksUsed + $overheadBlocksUsed) * $blockSize // 1024"),
+      Uint64Field("oneKBlocksAvailable", derived = "($physicalBlocks - $dataBlocksUsed - $overheadBlocksUsed) * $blockSize // 1024", available = "not $inRecoveryMode", label = "1K-blocks available"),
       Uint8Field("usedPercent", derived = "int((100 * ($dataBlocksUsed + $overheadBlocksUsed) // $physicalBlocks) + 0.5)", available = "((not $inRecoveryMode) and ($mode != b'read-only'))"),
       Uint8Field("savings", display = False, available = "not $inRecoveryMode", derived = "int(100 * ($logicalBlocksUsed - $dataBlocksUsed) // $logicalBlocksUsed) if ($logicalBlocksUsed > 0) else -1"),
       Uint8Field("savingPercent", derived = "$savings if ($savings >= 0) else NotAvailable()", available = "((not $inRecoveryMode) and ($mode != b'read-only'))"),
@@ -221,7 +221,7 @@ class VDOStatistics(StatStruct):
       # Whether the VDO is in recovery mode
       BoolField("inRecoveryMode", display = False),
       # What percentage of recovery mode work has been completed
-      Uint8Field("recoveryPercentage", available = "$inRecoveryMode", label = "recovery progress (%)"),
+      Uint8Field("recoveryPercentage", label = "recovery progress (%)", available = "$inRecoveryMode"),
       # The statistics for the compressed block packer
       PackerStatistics("packer"),
       # Counters for events in the block allocator

@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#21 $
+.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#22 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -331,9 +331,14 @@ with root privileges. Applicable options include:
 Creates a VDO volume from an existing VDO formatted storage
 device by importing it into VDO manager for use.
 
+NOTE: The following values are not stored on the device and
+must be reset via command line parameters if you changed them
+from the default value during create: block map cache size,
+block map period, compression state, deduplication state,
+512 emulation, maximum discard size, and thread configurations.
 If \fB\-\-activate=disabled\fP is specified the VDO volume is
 imported but not made available. This command must be run with
-root privileges. Applicaable options include:
+root privileges. Applicable options include:
 .startOptionList
 \-\-name=\fIvolume\fP\fR (required)\fP
 \-\-device=\fIdevice\fP\fR (required)\fP

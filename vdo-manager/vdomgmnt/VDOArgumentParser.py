@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#17 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#18 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -353,10 +353,15 @@ suffix is optional""").format(options
     highLevelHelp = _("""
       Creates a VDO volume from an existing VDO formatted storage device by
       importing it into VDO manager for use.
-                      """)
+                      """)    
     description = _("""
-      {0} If --activate={1} is specified the VDO volume is created but not made
-      available. This command must be run with root privileges.
+      {0} NOTE: The following values are not stored on the device and
+      must be reset via command line parameters if you changed them 
+      from the default value during create: block map cache size, 
+      block map period, compression state, deduplication state, 
+      512 emulation, maximum discard size, and thread configurations. 
+      If --activate={1} is specified the VDO volume is created but not 
+      made available. This command must be run with root privileges.
                     """).format(highLevelHelp, Constants.disabled)
 
     self._importCommandParser = subparserAdder.add_parser(

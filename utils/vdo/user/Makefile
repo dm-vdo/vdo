@@ -17,9 +17,9 @@
 # 02110-1301, USA. 
 #
 
-# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#16 $
+# $Id: //eng/vdo-releases/aluminum/src/packaging/src-dist/user/utils/vdo/user/Makefile#17 $
 
-VDO_VERSION = 6.2.6.7
+VDO_VERSION = 6.2.6.14
 
 UDS_DIR      = ../../uds
 VDO_BASE_DIR = ../base
@@ -97,11 +97,12 @@ PROGS = vdoaudit               \
 LIBPROGS = vdoprepareforlvm
 
 ALLPROGS = $(PROGS) $(LIBPROGS)
+NOBUILDPROGS = adaptLVMVDO.sh
 
 DMEVENT_LIB = libdevmapper-event-lvm2vdo.so
 
 .PHONY: all
-all: $(ALLPROGS)
+all: $(ALLPROGS) $(NOBUILDPROGS)
 	$(MAKE) -C man all
 
 .PHONY: clean
@@ -131,6 +132,9 @@ install:
 	done
 	for i in $(LIBPROGS); do \
 	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(LIBEXECINSTALLDIR); \
+	done
+	for i in $(NOBUILDPROGS); do \
+	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(INSTALLDIR); \
 	done
 	$(MAKE) -C man install
 

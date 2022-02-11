@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.6.7
+Version: 6.2.6.14
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -166,6 +166,7 @@ block-level deduplication, compression, and thin provisioning.
 This package provides the user-space support tools for VDO.
 
 %files support
+%{_bindir}/adaptLVMVDO.sh
 %{_bindir}/vdoaudit
 %{_bindir}/vdodebugmetadata
 %{_bindir}/vdodumpblockmap
@@ -173,6 +174,7 @@ This package provides the user-space support tools for VDO.
 %{_bindir}/vdolistmetadata
 %{_bindir}/vdoreadonly
 %{_bindir}/vdoregenerategeometry
+%{_mandir}/man8/adaptlvm.8.gz
 %{_mandir}/man8/vdoaudit.8.gz
 %{_mandir}/man8/vdodebugmetadata.8.gz
 %{_mandir}/man8/vdodumpblockmap.8.gz
@@ -182,8 +184,8 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Fri Nov 12 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.6.7-1
-- Fixed bugs in the vdopreparelvm check to determine whether a device has
-  already been converted.
-- Fixed an issue in the vdo-by-dev tool which could result in a failure to
-  start vdo devices when some devices in the vdo config file do not exist.
+* Thu Feb 10 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.6.14-1
+- Updated the vdo man page to explain issues with import.
+- Added a tool to make LVMVDO pools read/write so that support and
+  debugging tools may access them.
+  
