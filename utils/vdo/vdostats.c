@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoStats.c#11 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoStats.c#15 $
  */
 
 #include <err.h>
@@ -339,7 +339,7 @@ static void process_device(const char *original, const char *name)
   FILE* fp = popen(dmCommand, "r");
   if (fp == NULL) {
     freeAllocations();
-    err(ENOENT, "'%s': Could not retrieve VDO device stats information", name);
+    errx(1, "'%s': Could not retrieve VDO device stats information", name);
   }
   
   char statsBuf[8192];
@@ -358,7 +358,7 @@ static void process_device(const char *original, const char *name)
       default:
         pclose(fp);
         freeAllocations();
-        err(1, "unknown style %d", style);
+        errx(1, "unknown style %d", style);
     }
   }
 
@@ -368,7 +368,7 @@ static void process_device(const char *original, const char *name)
   }
   if (result != 0) {
     freeAllocations();
-    err(result, "'%s': Could not retrieve VDO device stats information", name);
+    errx(1, "'%s': Could not retrieve VDO device stats information", name);
   }
 }
 
@@ -416,7 +416,7 @@ static void enumerate_devices(void)
 
   fp = popen("dmsetup ls --target vdo", "r");
   if (fp == NULL) {
-    err(2, "Could not retrieve VDO device status information");
+    errx(1, "Could not retrieve VDO device status information");
   }
 
   pathCount = 0;
@@ -429,18 +429,22 @@ static void enumerate_devices(void)
     result = WEXITSTATUS(result);
   }
   if (result != 0) {
-    err(result, "Could not retrieve VDO device status information");
+    errx(1, "Could not retrieve VDO device status information");
   }
 
+  if (pathCount == 0) {
+    errx(1, "Could not find any VDO devices");
+  }
+  
   result = UDS_ALLOCATE(pathCount, struct vdoPath, __func__, &vdoPaths);
   if (result != VDO_SUCCESS) {
-    err(ENOMEM, "Could not allocate vdo path structure");
+    errx(1, "Could not allocate vdo path structure");
   }
 
   fp = popen("dmsetup ls --target vdo", "r");
   if (fp == NULL) {
     freeAllocations();
-    err(2, "Could not retrieve VDO device status information");
+    errx(1, "Could not retrieve VDO device status information");
   }
 
   line_size = 0;
@@ -455,13 +459,7 @@ static void enumerate_devices(void)
     if (items != 3) {
       pclose(fp);
       freeAllocations();
-      err(2, "could not parse device mapper information");
-    }
-
-    if (major != 253) {
-      pclose(fp);
-      freeAllocations();
-      err(2, "Major device number incorrect");
+      errx(1, "Could not parse device mapper information");
     }
 
     sprintf(vdoPaths[count].resolvedName, "dm-%d", minor);
@@ -476,7 +474,7 @@ static void enumerate_devices(void)
   }
   if (result != 0) {
     freeAllocations();
-    err(result, "Could not retrieve VDO device status information");
+    errx(1, "Could not retrieve VDO device status information");
   }
 }
 
@@ -515,7 +513,7 @@ int main(int argc, char *argv[])
   // Build a list of known vdo devices that we can validate against.
   enumerate_devices();
   if (vdoPaths == NULL) {
-    err(2, "Could not collect list of known vdo devices");
+    errx(2, "Could not collect list of known vdo devices");
   }
 
   int num_devices = argc - optind;
@@ -543,7 +541,7 @@ int main(int argc, char *argv[])
         process_device(argv[i], path->name);
       } else {
         freeAllocations();
-        errx(2, "'%s': Not a valid running VDO device", argv[i]);
+        errx(1, "'%s': Not a valid running VDO device", argv[i]);
       }
     }
   }

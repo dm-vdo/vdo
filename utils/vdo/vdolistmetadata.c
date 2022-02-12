@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoListMetadata.c#10 $
+ * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoListMetadata.c#15 $
  */
 
 #include <err.h>

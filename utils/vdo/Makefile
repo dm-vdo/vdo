@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/vdo/Makefile#2 $
+# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/vdo/Makefile#3 $
 
-VDO_VERSION = 8.1.1.287
+VDO_VERSION = 8.1.1.360
 
 UDS_DIR      = ../uds
 
@@ -96,6 +96,7 @@ PROGS = vdoaudit               \
 
 COMPLETIONS=vdostats
 
+NOBUILDPROGS = adaptLVMVDO.sh
 PROG_SOURCES := $(PROGS:%=%.c)
 C_FILES      := $(filter-out $(PROG_SOURCES),$(wildcard *.c))
 LIB_OBJECTS  := $(C_FILES:%.c=%.o)
@@ -125,7 +126,7 @@ COMPLETIONINSTALLDIR=$(DESTDIR)$(sysconfdir)/bash_completion.d
 .PHONY: install
 install:
 	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
-	for i in $(PROGS); do \
+	for i in $(PROGS) $(NOBUILDPROGS); do \
 	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(INSTALLDIR); \
 	done
 	$(MAKE) -C man install

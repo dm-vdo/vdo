@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/uds/Makefile#20 $
+# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/uds/Makefile#23 $
 
-UDS_VERSION      = 8.1.1.58
+UDS_VERSION      = 8.1.1.66
 BUILD_VERSION    = $(UDS_VERSION)
 DISTRO_CODENAME := $(shell lsb_release -s -c)
 

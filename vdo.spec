@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 8.1.1.287
+Version: 8.1.1.360
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -97,6 +97,7 @@ block-level deduplication, compression, and thin provisioning.
 This package provides the user-space support tools for VDO.
 
 %files support
+%{_bindir}/adaptLVMVDO.sh
 %{_bindir}/vdoaudit
 %{_bindir}/vdodebugmetadata
 %{_bindir}/vdodumpblockmap
@@ -104,6 +105,7 @@ This package provides the user-space support tools for VDO.
 %{_bindir}/vdolistmetadata
 %{_bindir}/vdoreadonly
 %{_bindir}/vdoregenerategeometry
+%{_mandir}/man8/adaptlvm.8.gz
 %{_mandir}/man8/vdoaudit.8.gz
 %{_mandir}/man8/vdodebugmetadata.8.gz
 %{_mandir}/man8/vdodumpblockmap.8.gz
@@ -113,5 +115,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Fri Jan 21 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.1.1.287-1
+* Fri Feb 11 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.1.1.360-1
 - See https://github.com/dm-vdo/vdo.git
