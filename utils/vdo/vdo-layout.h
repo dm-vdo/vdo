@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -17,10 +18,23 @@
  * 02110-1301, USA. 
  */
 
-#ifndef FIXED_LAYOUT_H
-#define FIXED_LAYOUT_H
+/**
+ * vdo_layout is an object which manages the layout of a VDO. It wraps
+ * fixed_layout, but includes the knowledge of exactly which partitions a VDO
+ * is expected to have. Because of this knowledge, the vdo_layout validates
+ * the fixed_layout encoded in the super block at load time, obviating the
+ * need for subsequent error checking when other modules need to get
+ * partitions from the layout.
+ *
+ * The vdo_layout also manages the preparation and growth of the layout for
+ * grow physical operations.
+ **/
+
+#ifndef VDO_LAYOUT_H
+#define VDO_LAYOUT_H
 
 #include "buffer.h"
+
 
 #include "types.h"
 
@@ -99,4 +113,46 @@ vdo_make_partitioned_fixed_layout(block_count_t physical_blocks,
 				  block_count_t summary_blocks,
 				  struct fixed_layout **layout_ptr);
 
-#endif /* FIXED_LAYOUT_H */
+/*-----------------------------------------------------------------*/
+
+struct vdo_layout {
+	/* The current layout of the VDO */
+	struct fixed_layout *layout;
+	/* The next layout of the VDO */
+	struct fixed_layout *next_layout;
+	/* The previous layout of the VDO */
+	struct fixed_layout *previous_layout;
+	/* The first block in the layouts */
+	physical_block_number_t starting_offset;
+	/* A pointer to the copy completion (if there is one) */
+	struct dm_kcopyd_client *copier;
+};
+
+int __must_check vdo_decode_layout(struct fixed_layout *layout,
+				   struct vdo_layout **vdo_layout_ptr);
+
+void vdo_free_layout(struct vdo_layout *vdo_layout);
+
+struct partition * __must_check
+vdo_get_partition(struct vdo_layout *vdo_layout, enum partition_id id);
+
+int __must_check
+prepare_to_vdo_grow_layout(struct vdo_layout *vdo_layout,
+			   block_count_t old_physical_blocks,
+			   block_count_t new_physical_blocks);
+
+block_count_t __must_check
+vdo_get_next_layout_size(struct vdo_layout *vdo_layout);
+
+block_count_t __must_check
+vdo_get_next_block_allocator_partition_size(struct vdo_layout *vdo_layout);
+
+block_count_t __must_check vdo_grow_layout(struct vdo_layout *vdo_layout);
+
+void vdo_finish_layout_growth(struct vdo_layout *vdo_layout);
+
+
+struct fixed_layout * __must_check
+vdo_get_fixed_layout(const struct vdo_layout *vdo_layout);
+
+#endif /* VDO_LAYOUT_H */

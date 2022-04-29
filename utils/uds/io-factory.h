@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -61,6 +62,17 @@ enum { UDS_BLOCK_SIZE = 4096 };
 int __must_check make_uds_io_factory(const char *path,
 				     enum file_access access,
 				     struct io_factory **factory_ptr);
+
+/**
+ * Replace the backing store for an IO factory.
+ *
+ * @param factory  The IO factory
+ * @param path     The path to the new block device or storage file
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int __must_check replace_uds_storage(struct io_factory *factory,
+				     const char *path);
 
 /**
  * Get another reference to an IO factory, incrementing its reference count.

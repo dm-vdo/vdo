@@ -27,17 +27,17 @@
 #include "syscalls.h"
 
 #include "block-map-format.h"
-#include "fixed-layout.h"
 #include "num-utils.h"
-#include "physical-layer.h"
 #include "slab-depot-format.h"
 #include "slab-summary-format.h"
 #include "status-codes.h"
 #include "types.h"
 #include "volume-geometry.h"
+#include "vdo-layout.h"
 
 #include "blockMapUtils.h"
 #include "fileLayer.h"
+#include "physicalLayer.h"
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
 

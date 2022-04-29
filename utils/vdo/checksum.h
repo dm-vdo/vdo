@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -23,31 +24,21 @@
 #include <zlib.h>
 
 /**
- * A CRC-32 checksum
- **/
-typedef uint32_t crc32_checksum_t;
-
-static const crc32_checksum_t VDO_INITIAL_CHECKSUM = 0xffffffff;
-
-enum {
-	/* The size of a CRC-32 checksum */
-	VDO_CHECKSUM_SIZE = sizeof(crc32_checksum_t),
-};
-
-/**
- * A function to update a running CRC-32 checksum.
+ * A function to calculate a CRC-32 checksum.
  *
- * @param crc     The current value of the crc
- * @param buffer  The data to add to the checksum
+ * @param buffer  The data to  checksum
  * @param length  The length of the data
  *
- * @return The updated value of the checksum
+ * @return The checksum
  **/
-static inline crc32_checksum_t vdo_update_crc32(crc32_checksum_t crc,
-						const byte *buffer,
-						size_t length)
+static inline uint32_t vdo_crc32(const byte *buffer, size_t length)
 {
-	return crc32(crc, buffer, length);
+	/*
+	 * Different from the kernelspace wrapper in vdo.h, because the kernel
+	 * implementation doesn't precondition or postcondition the data; the
+	 * userspace implementation does. So, despite the difference in these
+	 * two implementations, they actually do the same checksum.
+	 */
+	return crc32(~0L, buffer, length);
 }
-
 #endif /* CHECKSUM_H */

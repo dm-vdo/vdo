@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -24,7 +25,6 @@
 #include "index-layout.h"
 #include "index-session.h"
 #include "index-zone.h"
-#include "load-type.h"
 #include "volume-index-ops.h"
 #include "request.h"
 #include "volume.h"
@@ -42,7 +42,6 @@ typedef void (*index_callback_t)(struct uds_request *request);
 struct uds_index {
 	bool has_saved_open_chapter;
 	bool need_to_save;
-	enum load_type loaded_type;
 	struct index_load_context *load_context;
 	struct index_layout *layout;
 	struct index_state *state;
@@ -76,17 +75,15 @@ struct uds_index {
  * Construct a new index from the given configuration.
  *
  * @param config	The configuration to use
- * @param load_type	How to create the index:  it can be create only, allow
- *			loading from files, and allow rebuilding from the
- *			volume
+ * @param open_type	How to create the index
  * @param load_context	The load context to use
- * @param callback      the function to invoke when a request completes
+ * @param callback      The function to invoke when a request completes
  * @param new_index	A pointer to hold a pointer to the new index
  *
  * @return	   UDS_SUCCESS or an error code
  **/
 int __must_check make_index(struct configuration *config,
-			    enum load_type load_type,
+			    enum uds_open_index_type open_type,
 			    struct index_load_context *load_context,
 			    index_callback_t callback,
 			    struct uds_index **new_index);
@@ -105,16 +102,10 @@ int __must_check allocate_index(struct configuration *config,
 				struct uds_index **new_index);
 
 /**
- * Save an index.
+ * Save an index. The caller must ensure that there are no index requests in
+ * progress.
  *
- * Before saving an index and while saving an index, the caller must ensure
- * that there are no index requests in progress.
- *
- * Some users follow save_index immediately with a free_index.	But some tests
- * use index_layout to modify the saved index.	The index will then have
- * some cached information that does not reflect these updates.
- *
- * @param index	  The index to save
+ * @param index   The index to save
  *
  * @return	  UDS_SUCCESS if successful
  **/
@@ -126,6 +117,17 @@ int __must_check save_index(struct uds_index *index);
  * @param index	  The index to destroy.
  **/
 void free_index(struct uds_index *index);
+
+/**
+ * Replace the existing index backing store with a different one.
+ *
+ * @param index  The index
+ * @param path   The path to the new backing store
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int __must_check replace_index_storage(struct uds_index *index,
+				       const char *path);
 
 /**
  * Perform the index operation specified by the type field of a UDS request.
@@ -145,11 +147,11 @@ void free_index(struct uds_index *index);
  *   UDS_UPDATE, a record will be added to the open chapter with the metadata
  *     in the request.
  *
- *   UDS_QUERY, if the update flag is set in the request, any record found
- *     will be moved to the open chapter. In all other cases the contents of
- *     the index will remain unchanged.
- *
  *   UDS_DELETE, any entry with the name will removed from the index.
+ *
+ *   UDS_QUERY, any record found will be moved to the open chapter.
+ *
+ *   UDS_QUERY_NO_UPDATE, the contents of the index will remain unchanged.
  *
  * @param index	      The index
  * @param request     The originating request

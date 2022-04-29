@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -135,7 +136,6 @@ system_string_error(int errnum, char *buf, size_t buflen)
 	return strerror_r(errnum, buf, buflen);
 }
 
-/**********************************************************************/
 const char *uds_string_error(int errnum, char *buf, size_t buflen)
 {
 	char *buffer = buf;
@@ -183,7 +183,6 @@ const char *uds_string_error(int errnum, char *buf, size_t buflen)
 	return buf;
 }
 
-/**********************************************************************/
 const char *uds_string_error_name(int errnum, char *buf, size_t buflen)
 {
 
@@ -220,7 +219,6 @@ const char *uds_string_error_name(int errnum, char *buf, size_t buflen)
 	return buf;
 }
 
-/**********************************************************************/
 int uds_map_to_system_error(int error)
 {
 	char error_name[80], error_message[ERRBUF_SIZE];
@@ -272,7 +270,6 @@ int uds_map_to_system_error(int error)
 	}
 }
 
-/**********************************************************************/
 int register_error_block(const char *block_name,
 			 int first_error,
 			 int last_reserved_error,

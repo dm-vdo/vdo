@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -122,18 +123,6 @@ const char * __must_check uds_string_error(int errnum,
  * @return A pointer to buf
  **/
 const char *uds_string_error_name(int errnum, char *buf, size_t buflen);
-
-/*
- * Identify that an result code is a successful result.
- *
- * @param result  A result code
- *
- * @return true if the result represents a success.
- */
-static INLINE bool __must_check is_successful(int result)
-{
-	return (result == UDS_SUCCESS) || (result == UDS_QUEUED);
-}
 
 struct error_info {
 	const char *name;

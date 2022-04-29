@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -28,7 +29,6 @@
 #include "uds.h"
 
 
-/**********************************************************************/
 int make_open_chapter_index(struct open_chapter_index **open_chapter_index,
 			    const struct geometry *geometry,
 			    uint64_t volume_nonce)
@@ -71,7 +71,6 @@ int make_open_chapter_index(struct open_chapter_index **open_chapter_index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_open_chapter_index(struct open_chapter_index *open_chapter_index)
 {
 	if (open_chapter_index == NULL) {
@@ -83,7 +82,6 @@ void free_open_chapter_index(struct open_chapter_index *open_chapter_index)
 	UDS_FREE(open_chapter_index);
 }
 
-/**********************************************************************/
 void empty_open_chapter_index(struct open_chapter_index *open_chapter_index,
 			      uint64_t virtual_chapter_number)
 {
@@ -106,7 +104,6 @@ static INLINE bool was_entry_found(const struct delta_index_entry *entry,
 	return (!entry->at_end && (entry->key == address));
 }
 
-/**********************************************************************/
 int put_open_chapter_index_record(struct open_chapter_index *open_chapter_index,
 				  const struct uds_chunk_name *name,
 				  unsigned int page_number)
@@ -129,7 +126,7 @@ int put_open_chapter_index_record(struct open_chapter_index *open_chapter_index,
 	address = hash_to_chapter_delta_address(name, geometry);
 	result = get_delta_index_entry(&open_chapter_index->delta_index,
 				       hash_to_chapter_delta_list(name,
-				       				  geometry),
+								  geometry),
 				       address,
 				       name->name,
 				       false,
@@ -149,7 +146,6 @@ int put_open_chapter_index_record(struct open_chapter_index *open_chapter_index,
 				     (found ? name->name : NULL));
 }
 
-/**********************************************************************/
 int pack_open_chapter_index_page(struct open_chapter_index *open_chapter_index,
 				 byte *memory,
 				 unsigned int first_list,
@@ -161,6 +157,7 @@ int pack_open_chapter_index_page(struct open_chapter_index *open_chapter_index,
 	unsigned int removals = 0;
 	struct delta_index_entry entry;
 	int list_number;
+
 	for (;;) {
 		int result =
 			pack_delta_index_page(delta_index,
@@ -197,6 +194,7 @@ int pack_open_chapter_index_page(struct open_chapter_index *open_chapter_index,
 		}
 		if (removals == 0) {
 			struct delta_index_stats stats;
+
 			get_delta_index_stats(delta_index, &stats);
 			uds_log_warning("The chapter index for chapter %llu contains %ld entries with %ld collisions",
 					(unsigned long long) open_chapter_index->virtual_chapter_number,
@@ -239,15 +237,14 @@ int pack_open_chapter_index_page(struct open_chapter_index *open_chapter_index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int get_open_chapter_index_size(struct open_chapter_index *open_chapter_index)
 {
 	struct delta_index_stats stats;
+
 	get_delta_index_stats(&open_chapter_index->delta_index, &stats);
 	return stats.record_count;
 }
 
-/**********************************************************************/
 int initialize_chapter_index_page(struct delta_index_page *chapter_index_page,
 				  const struct geometry *geometry,
 				  byte *index_page,
@@ -261,7 +258,6 @@ int initialize_chapter_index_page(struct delta_index_page *chapter_index_page,
 					   geometry->bytes_per_page);
 }
 
-/**********************************************************************/
 int validate_chapter_index_page(const struct delta_index_page *chapter_index_page,
 				const struct geometry *geometry)
 {
@@ -270,6 +266,7 @@ int validate_chapter_index_page(const struct delta_index_page *chapter_index_pag
 	unsigned int last = chapter_index_page->highest_list_number;
 	/* We walk every delta list from start to finish. */
 	unsigned int list_number;
+
 	for (list_number = first; list_number <= last; list_number++) {
 		struct delta_index_entry entry;
 		int result =
@@ -313,7 +310,6 @@ int validate_chapter_index_page(const struct delta_index_page *chapter_index_pag
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int search_chapter_index_page(struct delta_index_page *chapter_index_page,
 			      const struct geometry *geometry,
 			      const struct uds_chunk_name *name,

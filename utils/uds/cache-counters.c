@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -27,7 +28,6 @@
 #include "string-utils.h"
 #include "uds.h"
 
-/**********************************************************************/
 void increment_cache_counter(struct cache_counters *counters,
 			     int probe_type,
 			     enum cache_result_kind kind)

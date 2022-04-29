@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -47,7 +48,6 @@ enum {
 	OPEN_CHAPTER_VERSION_LENGTH = sizeof(OPEN_CHAPTER_VERSION) - 1
 };
 
-/**********************************************************************/
 static int fill_delta_chapter_index(struct open_chapter_zone **chapter_zones,
 				    unsigned int zone_count,
 				    struct open_chapter_index *index,
@@ -93,6 +93,7 @@ static int fill_delta_chapter_index(struct open_chapter_zone **chapter_zones,
 
 	for (page = 0; page < pages_per_chapter; page++) {
 		unsigned int i;
+
 		for (i = 0; i < records_per_page;
 		     i++, records_added++, zone = (zone + 1) % zone_count) {
 			struct uds_chunk_record *next_record;
@@ -140,7 +141,6 @@ static int fill_delta_chapter_index(struct open_chapter_zone **chapter_zones,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int close_open_chapter(struct open_chapter_zone **chapter_zones,
 		       unsigned int zone_count,
 		       struct volume *volume,
@@ -174,7 +174,6 @@ int close_open_chapter(struct open_chapter_zone **chapter_zones,
 	return write_chapter(volume, chapter_index, collated_records);
 }
 
-/**********************************************************************/
 int save_open_chapters(struct uds_index *index, struct buffered_writer *writer)
 {
 	uint32_t total_records = 0, records_added = 0;
@@ -210,10 +209,12 @@ int save_open_chapters(struct uds_index *index, struct buffered_writer *writer)
 	record_index = 1;
 	while (records_added < total_records) {
 		unsigned int i;
+
 		for (i = 0; i < index->zone_count; i++) {
 			struct open_chapter_zone *open_chapter =
 				index->zones[i]->open_chapter;
 			struct uds_chunk_record *record;
+
 			if (record_index > open_chapter->size) {
 				continue;
 			}
@@ -235,7 +236,6 @@ int save_open_chapters(struct uds_index *index, struct buffered_writer *writer)
 	return flush_buffered_writer(writer);
 }
 
-/**********************************************************************/
 uint64_t compute_saved_open_chapter_size(struct geometry *geometry)
 {
 	return OPEN_CHAPTER_MAGIC_LENGTH + OPEN_CHAPTER_VERSION_LENGTH +
@@ -243,13 +243,13 @@ uint64_t compute_saved_open_chapter_size(struct geometry *geometry)
 	       geometry->records_per_chapter * sizeof(struct uds_chunk_record);
 }
 
-/**********************************************************************/
 static int write_open_chapters(struct index_component *component,
 			       struct buffered_writer *writer,
 			       unsigned int zone)
 {
 	struct uds_index *index;
 	int result = ASSERT((zone == 0), "open chapter write not zoned");
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -274,6 +274,7 @@ static int read_version(struct buffered_reader *reader, const byte **version)
 {
 	byte buffer[OPEN_CHAPTER_VERSION_LENGTH];
 	int result = read_from_buffered_reader(reader, buffer, sizeof(buffer));
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -287,7 +288,6 @@ static int read_version(struct buffered_reader *reader, const byte **version)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int load_version20(struct uds_index *index,
 			  struct buffered_reader *reader)
 {
@@ -310,6 +310,7 @@ static int load_version20(struct uds_index *index,
 	/* Assign records to the correct zones. */
 	for (records = 0; records < num_records; records++) {
 		unsigned int zone = 0;
+
 		result = read_from_buffered_reader(reader, &record,
 						   sizeof(struct uds_chunk_record));
 		if (result != UDS_SUCCESS) {
@@ -331,6 +332,7 @@ static int load_version20(struct uds_index *index,
 		 */
 		if (!full_flags[zone]) {
 			unsigned int remaining;
+
 			result = put_open_chapter(index->zones[zone]->open_chapter,
 						  &record.name,
 						  &record.data,
@@ -345,7 +347,6 @@ static int load_version20(struct uds_index *index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int load_open_chapters(struct uds_index *index, struct buffered_reader *reader)
 {
 	const byte *version = NULL;
@@ -365,13 +366,13 @@ int load_open_chapters(struct uds_index *index, struct buffered_reader *reader)
 	return load_version20(index, reader);
 }
 
-/**********************************************************************/
 int read_open_chapters(struct read_portal *portal)
 {
 	struct uds_index *index = index_component_data(portal->component);
 
 	struct buffered_reader *reader;
 	int result = get_buffered_reader_for_portal(portal, 0, &reader);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}

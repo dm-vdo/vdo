@@ -39,7 +39,6 @@
 #include "slab-summary-format.h"
 #include "status-codes.h"
 #include "types.h"
-#include "vdo-state.h"
 
 #include "blockMapUtils.h"
 #include "slabSummaryReader.h"
@@ -127,6 +126,41 @@ static uint64_t     badBlockMappings = 0;
 static uint64_t     badRefCounts     = 0;
 static slab_count_t badSlabs         = 0;
 static slab_count_t badSummaryHints  = 0;
+
+static const char *VDO_STATE_NAMES[] = {
+	[VDO_CLEAN] = "CLEAN",
+	[VDO_DIRTY] = "DIRTY",
+	[VDO_FORCE_REBUILD] = "FORCE_REBUILD",
+	[VDO_NEW] = "NEW",
+	[VDO_READ_ONLY_MODE] = "READ_ONLY_MODE",
+	[VDO_REBUILD_FOR_UPGRADE] = "REBUILD_FOR_UPGRADE",
+	[VDO_RECOVERING] = "RECOVERING",
+	[VDO_REPLAYING] = "REPLAYING",
+};
+
+/**
+ * Get the name of a VDO state code for logging purposes.
+ *
+ * @param state  The state code
+ *
+ * @return The name of the state code
+ **/
+static const char *vdo_get_state_name(enum vdo_state state)
+{
+	int result;
+
+	/* Catch if a state has been added without updating the name array. */
+	STATIC_ASSERT(ARRAY_SIZE(VDO_STATE_NAMES) == VDO_STATE_COUNT);
+
+	result = ASSERT(state < ARRAY_SIZE(VDO_STATE_NAMES),
+			"vdo_state value %u must have a registered name",
+			state);
+	if (result != UDS_SUCCESS) {
+		return "INVALID VDO STATE CODE";
+	}
+
+	return VDO_STATE_NAMES[state];
+}
 
 /**
  * Explain how this command-line function is used.

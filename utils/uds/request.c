@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -26,7 +27,6 @@
 #include "permassert.h"
 #include "request-queue.h"
 
-/**********************************************************************/
 int uds_start_chunk_operation(struct uds_request *request)
 {
 	size_t internal_size;
@@ -40,6 +40,7 @@ int uds_start_chunk_operation(struct uds_request *request)
 	case UDS_DELETE:
 	case UDS_POST:
 	case UDS_QUERY:
+	case UDS_QUERY_NO_UPDATE:
 	case UDS_UPDATE:
 		break;
 	default:
@@ -50,7 +51,9 @@ int uds_start_chunk_operation(struct uds_request *request)
 	/* Reset all internal fields before processing. */
 	internal_size = sizeof(struct uds_request)
 		- offsetof(struct uds_request, zone_number);
-	memset(&request->zone_number, 0, internal_size);
+        // XXX should be using struct_group for this instead
+	memset((char *) request + sizeof(*request) - internal_size,
+	       0, internal_size);
 
 	result = get_index_session(request->session);
 	if (result != UDS_SUCCESS) {
@@ -65,13 +68,13 @@ int uds_start_chunk_operation(struct uds_request *request)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int launch_zone_message(struct uds_zone_message message,
 			unsigned int zone,
 			struct uds_index *index)
 {
 	struct uds_request *request;
 	int result = UDS_ALLOCATE(1, struct uds_request, __func__, &request);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -85,7 +88,6 @@ int launch_zone_message(struct uds_zone_message message,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static struct uds_request_queue *
 get_next_stage_queue(struct uds_request *request,
 		     enum request_stage next_stage)
@@ -97,7 +99,6 @@ get_next_stage_queue(struct uds_request *request,
 	return select_index_queue(request->index, request, next_stage);
 }
 
-/**********************************************************************/
 void enqueue_request(struct uds_request *request,
 		     enum request_stage next_stage)
 {
@@ -116,7 +117,6 @@ void enqueue_request(struct uds_request *request,
  */
 static request_restarter_t request_restarter = NULL;
 
-/**********************************************************************/
 void restart_request(struct uds_request *request)
 {
 	request->requeued = true;
@@ -127,19 +127,16 @@ void restart_request(struct uds_request *request)
 	}
 }
 
-/**********************************************************************/
 void set_request_restarter(request_restarter_t restarter)
 {
 	request_restarter = restarter;
 }
 
-/**********************************************************************/
 static INLINE void increment_once(uint64_t *count_ptr)
 {
 	WRITE_ONCE(*count_ptr, READ_ONCE(*count_ptr) + 1);
 }
 
-/**********************************************************************/
 void update_request_context_stats(struct uds_request *request)
 {
 	/*
@@ -166,12 +163,11 @@ void update_request_context_stats(struct uds_request *request)
 
 	struct session_stats *session_stats = &request->session->stats;
 
-	bool found = (request->location != UDS_LOCATION_UNAVAILABLE);
 	increment_once(&session_stats->requests);
 
 	switch (request->type) {
 	case UDS_POST:
-		if (found) {
+		if (request->found) {
 			increment_once(&session_stats->posts_found);
 
 			if (request->location == UDS_LOCATION_IN_OPEN_CHAPTER) {
@@ -187,7 +183,7 @@ void update_request_context_stats(struct uds_request *request)
 		break;
 
 	case UDS_UPDATE:
-		if (found) {
+		if (request->found) {
 			increment_once(&session_stats->updates_found);
 		} else {
 			increment_once(&session_stats->updates_not_found);
@@ -195,7 +191,7 @@ void update_request_context_stats(struct uds_request *request)
 		break;
 
 	case UDS_DELETE:
-		if (found) {
+		if (request->found) {
 			increment_once(&session_stats->deletions_found);
 		} else {
 			increment_once(&session_stats->deletions_not_found);
@@ -203,7 +199,8 @@ void update_request_context_stats(struct uds_request *request)
 		break;
 
 	case UDS_QUERY:
-		if (found) {
+	case UDS_QUERY_NO_UPDATE:
+		if (request->found) {
 			increment_once(&session_stats->queries_found);
 		} else {
 			increment_once(&session_stats->queries_not_found);
@@ -217,7 +214,6 @@ void update_request_context_stats(struct uds_request *request)
 	}
 }
 
-/**********************************************************************/
 void enter_callback_stage(struct uds_request *request)
 {
 	if (request->status != UDS_SUCCESS) {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -25,14 +26,12 @@
 #include "memory-alloc.h"
 #include "permassert.h"
 
-/**********************************************************************/
 static INLINE size_t records_size(const struct open_chapter_zone *open_chapter)
 {
 	return (sizeof(struct uds_chunk_record) *
 		(1 + open_chapter->capacity));
 }
 
-/**********************************************************************/
 static INLINE size_t slots_size(size_t slot_count)
 {
 	return (sizeof(struct open_chapter_zone_slot) * slot_count);
@@ -55,7 +54,6 @@ static INLINE size_t next_power_of_two(size_t val)
 	return (1 << compute_bits(val - 1));
 }
 
-/**********************************************************************/
 int make_open_chapter(const struct geometry *geometry,
 		      unsigned int zone_count,
 		      struct open_chapter_zone **open_chapter_ptr)
@@ -63,6 +61,7 @@ int make_open_chapter(const struct geometry *geometry,
 	struct open_chapter_zone *open_chapter;
 	size_t capacity, slot_count;
 	int result = ASSERT(zone_count > 0, "zone count must be > 0");
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -119,13 +118,11 @@ int make_open_chapter(const struct geometry *geometry,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 size_t open_chapter_size(const struct open_chapter_zone *open_chapter)
 {
 	return open_chapter->size - open_chapter->deleted;
 }
 
-/**********************************************************************/
 void reset_open_chapter(struct open_chapter_zone *open_chapter)
 {
 	open_chapter->size = 0;
@@ -135,7 +132,6 @@ void reset_open_chapter(struct open_chapter_zone *open_chapter)
 	memset(open_chapter->slots, 0, slots_size(open_chapter->slot_count));
 }
 
-/**********************************************************************/
 static struct uds_chunk_record *
 probe_chapter_slots(struct open_chapter_zone *open_chapter,
 		    const struct uds_chunk_name *name,
@@ -199,7 +195,6 @@ probe_chapter_slots(struct open_chapter_zone *open_chapter,
 	return record;
 }
 
-/**********************************************************************/
 void search_open_chapter(struct open_chapter_zone *open_chapter,
 			 const struct uds_chunk_name *name,
 			 struct uds_chunk_data *metadata,
@@ -218,7 +213,6 @@ void search_open_chapter(struct open_chapter_zone *open_chapter,
 	}
 }
 
-/**********************************************************************/
 int put_open_chapter(struct open_chapter_zone *open_chapter,
 		     const struct uds_chunk_name *name,
 		     const struct uds_chunk_data *metadata,
@@ -248,7 +242,6 @@ int put_open_chapter(struct open_chapter_zone *open_chapter,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void remove_from_open_chapter(struct open_chapter_zone *open_chapter,
 			      const struct uds_chunk_name *name,
 			      bool *removed)
@@ -271,7 +264,6 @@ void remove_from_open_chapter(struct open_chapter_zone *open_chapter,
 	*removed = true;
 }
 
-/**********************************************************************/
 void free_open_chapter(struct open_chapter_zone *open_chapter)
 {
 	if (open_chapter != NULL) {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -238,7 +239,6 @@ static int __must_check initialize_sparse_cache(struct sparse_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int make_sparse_cache(const struct geometry *geometry,
 		      unsigned int capacity,
 		      unsigned int zone_count,
@@ -250,6 +250,7 @@ int make_sparse_cache(const struct geometry *geometry,
 
 	struct sparse_cache *cache;
 	int result = uds_allocate_cache_aligned(bytes, "sparse cache", &cache);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -265,7 +266,6 @@ int make_sparse_cache(const struct geometry *geometry,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 size_t get_sparse_cache_memory_size(const struct sparse_cache *cache)
 {
 	/*
@@ -361,10 +361,10 @@ static void score_search_miss(struct sparse_cache *cache,
 	}
 }
 
-/**********************************************************************/
 void free_sparse_cache(struct sparse_cache *cache)
 {
 	unsigned int i;
+
 	if (cache == NULL) {
 		return;
 	}
@@ -375,6 +375,7 @@ void free_sparse_cache(struct sparse_cache *cache)
 
 	for (i = 0; i < cache->capacity; i++) {
 		struct cached_chapter_index *chapter = &cache->chapters[i];
+
 		destroy_cached_chapter_index(chapter);
 	}
 
@@ -384,7 +385,6 @@ void free_sparse_cache(struct sparse_cache *cache)
 }
 
 
-/**********************************************************************/
 bool sparse_cache_contains(struct sparse_cache *cache,
 			   uint64_t virtual_chapter,
 			   unsigned int zone_number)
@@ -423,7 +423,6 @@ bool sparse_cache_contains(struct sparse_cache *cache,
 	return false;
 }
 
-/**********************************************************************/
 int update_sparse_cache(struct index_zone *zone, uint64_t virtual_chapter)
 {
 	int result = UDS_SUCCESS;
@@ -513,8 +512,21 @@ int update_sparse_cache(struct index_zone *zone, uint64_t virtual_chapter)
 	return result;
 }
 
+void invalidate_sparse_cache(struct sparse_cache *cache)
+{
+	unsigned int i;
 
-/**********************************************************************/
+	if (cache == NULL) {
+		return;
+	}
+	for (i = 0; i < cache->capacity; i++) {
+		struct cached_chapter_index *chapter = &cache->chapters[i];
+
+		chapter->virtual_chapter = UINT64_MAX;
+		release_cached_chapter_index(chapter);
+	}
+}
+
 int search_sparse_cache(struct index_zone *zone,
 			const struct uds_chunk_name *name,
 			uint64_t *virtual_chapter_ptr,
@@ -528,7 +540,6 @@ int search_sparse_cache(struct index_zone *zone,
 	 * cache.
 	 */
 	bool search_all = (*virtual_chapter_ptr == UINT64_MAX);
-	unsigned int chapters_searched = 0;
 
 	/*
 	 * Get the chapter search order for this zone thread, searching the
@@ -559,7 +570,6 @@ int search_sparse_cache(struct index_zone *zone,
 		if (result != UDS_SUCCESS) {
 			return result;
 		}
-		chapters_searched += 1;
 
 		/* Did we find an index entry for the name? */
 		if (*record_page_ptr != NO_CHAPTER_INDEX_ENTRY) {

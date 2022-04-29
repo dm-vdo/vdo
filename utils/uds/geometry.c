@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -27,7 +28,6 @@
 #include "permassert.h"
 #include "uds.h"
 
-/**********************************************************************/
 static int initialize_geometry(struct geometry *geometry,
 			       size_t bytes_per_page,
 			       unsigned int record_pages_per_chapter,
@@ -118,7 +118,6 @@ static int initialize_geometry(struct geometry *geometry,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int make_geometry(size_t bytes_per_page,
 		  unsigned int record_pages_per_chapter,
 		  unsigned int chapters_per_volume,
@@ -129,6 +128,7 @@ int make_geometry(size_t bytes_per_page,
 {
 	struct geometry *geometry;
 	int result = UDS_ALLOCATE(1, struct geometry, "geometry", &geometry);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -148,7 +148,6 @@ int make_geometry(size_t bytes_per_page,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int copy_geometry(struct geometry *source, struct geometry **geometry_ptr)
 {
 	return make_geometry(source->bytes_per_page,
@@ -160,18 +159,17 @@ int copy_geometry(struct geometry *source, struct geometry **geometry_ptr)
 			     geometry_ptr);
 }
 
-/**********************************************************************/
 void free_geometry(struct geometry *geometry)
 {
 	UDS_FREE(geometry);
 }
 
-/**********************************************************************/
 unsigned int __must_check
 map_to_physical_chapter(const struct geometry *geometry,
 			uint64_t virtual_chapter)
 {
 	uint64_t delta;
+
 	if (!is_reduced_geometry(geometry)) {
 		return (virtual_chapter % geometry->chapters_per_volume);
 	}
@@ -198,7 +196,6 @@ map_to_physical_chapter(const struct geometry *geometry,
 	return 0;
 }
 
-/**********************************************************************/
 bool has_sparse_chapters(const struct geometry *geometry,
 			 uint64_t oldest_virtual_chapter,
 			 uint64_t newest_virtual_chapter)
@@ -208,7 +205,6 @@ bool has_sparse_chapters(const struct geometry *geometry,
 		 geometry->dense_chapters_per_volume));
 }
 
-/**********************************************************************/
 bool is_chapter_sparse(const struct geometry *geometry,
 		       uint64_t oldest_virtual_chapter,
 		       uint64_t newest_virtual_chapter,
@@ -222,7 +218,6 @@ bool is_chapter_sparse(const struct geometry *geometry,
 		 newest_virtual_chapter));
 }
 
-/**********************************************************************/
 unsigned int chapters_to_expire(const struct geometry *geometry,
 				uint64_t newest_chapter)
 {

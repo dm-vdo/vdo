@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -100,14 +101,12 @@ enum uds_index_region compute_index_region(const struct index_zone *zone,
  * @param request          The request originating the query
  * @param found            A pointer to a bool which will be set to
  *                         <code>true</code> if the record was found.
- * @param virtual_chapter  The chapter in which to search
  *
  * @return UDS_SUCCESS or an error code
  **/
 int __must_check get_record_from_zone(struct index_zone *zone,
 				      struct uds_request *request,
-				      bool *found,
-				      uint64_t virtual_chapter);
+				      bool *found);
 
 /**
  * Put a record in the open chapter. If this fills the chapter, the chapter

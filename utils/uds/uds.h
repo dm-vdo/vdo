@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -65,10 +66,15 @@ enum uds_request_type {
 
 	/**
 	 * Request type for operations that query mappings in the UDS
-	 * index. When a mapping is found, the recency of the mapping
-	 * is updated unless it's the no-update call.
+	 * index. The recency of the mapping is updated.
 	 **/
 	UDS_QUERY,
+
+	/**
+	 * Request type for operations that query mappings in the UDS
+	 * index without updating the recency of the mapping.
+	 **/
+	UDS_QUERY_NO_UPDATE,
 };
 
 /**
@@ -230,15 +236,19 @@ struct uds_index;
  * The block's general location in the index.
  **/
 enum uds_index_region {
-	/* the location isn't known yet */
+	/* no location information has been determined */
 	UDS_LOCATION_UNKNOWN = 0,
+	/* the index page entry has been found */
+	UDS_LOCATION_INDEX_PAGE_LOOKUP,
+	/* the record page entry has been found */
+	UDS_LOCATION_RECORD_PAGE_LOOKUP,
 	/* the block is not in the index */
 	UDS_LOCATION_UNAVAILABLE,
-	/* if the block was found in the open chapter */
+	/* the block was found in the open chapter */
 	UDS_LOCATION_IN_OPEN_CHAPTER,
-	/* if the block was found in the dense part of the index */
+	/* the block was found in the dense part of the index */
 	UDS_LOCATION_IN_DENSE,
-	/* if the block was found in the sparse part of the index */
+	/* the block was found in the sparse part of the index */
 	UDS_LOCATION_IN_SPARSE
 } __packed;
 
@@ -295,7 +305,7 @@ struct uds_request {
 	/*
 	 * The new metadata to associate with the name of the block (sometimes
 	 * called the duplicate address). Set before starting a #UDS_POST or
-	 * #UDS_QUERY operation. Unchanged at time of callback.
+	 * #UDS_UPDATE operation. Unchanged at time of callback.
 	 */
 	struct uds_chunk_data new_metadata;
 	/*
@@ -311,8 +321,9 @@ struct uds_request {
 	 */
 	struct uds_index_session *session;
 	/*
-	 * The operation type, which is one of #UDS_DELETE, #UDS_POST,
-	 * #UDS_QUERY or #UDS_UPDATE. Set before starting an operation.
+	 * The operation type, which is one of #UDS_POST, #UDS_UPDATE,
+	 * #UDS_DELETE, #UDS_QUERY or #UDS_QUERY_NO_UPDATE.
+	 * Set before starting an operation.
 	 * Unchanged at time of callback.
 	 */
 	enum uds_request_type type;
@@ -326,12 +337,6 @@ struct uds_request {
 	 * Set before the callback.
 	 */
 	bool found;
-	/*
-	 * If true, move the entry to the end of the deduplication window.
-	 * Set before starting a #UDS_QUERY operation.
-	 * Unchanged at time of callback.
-	 */
-	bool update;
 
 	/*
 	 * The remainder of this structure consists of fields used within the
@@ -354,6 +359,8 @@ struct uds_request {
 	bool unbatched;
 	/** If true, attempt to handle this request before newer requests */
 	bool requeued;
+	/** The virtual chapter containing the record */
+	uint64_t virtual_chapter;
 	/** The location of this chunk name in the index */
 	enum uds_index_region location;
 };
@@ -419,12 +426,16 @@ int __must_check uds_suspend_index_session(struct uds_index_session *session,
 
 /**
  * Allows new index operations for an index, whether it was suspended or not.
+ * If the index is suspended and the supplied path is different from the
+ * current backing store, the index will start using the new backing store.
  *
  * @param session  The session to resume
+ * @param name     A name describing the new backing store to use
  *
  * @return  Either #UDS_SUCCESS or an error code
  **/
-int __must_check uds_resume_index_session(struct uds_index_session *session);
+int __must_check uds_resume_index_session(struct uds_index_session *session,
+					  const char *name);
 
 /**
  * Waits until all callbacks for index operations are complete.
@@ -487,15 +498,12 @@ int __must_check uds_get_index_stats(struct uds_index_session *session,
 /** @name Deduplication */
 
 /**
- * Start a UDS index chunk operation.  The request <code>type</code> field must
- * be set to the type of operation.  This is an asynchronous interface to the
- * block-oriented UDS API.  The callback is invoked upon completion.
- *
- * The #UDS_DELETE operation type deletes the mapping for a particular block.
- * #UDS_DELETE is typically used when UDS provides invalid advice.
+ * Start a UDS index chunk operation. The request <code>type</code> field must
+ * be set to the type of operation. This is an asynchronous interface to the
+ * block-oriented UDS API. The callback is invoked upon completion.
  *
  * The #UDS_POST operation type indexes a block name and associates it with a
- * particular address.  The caller provides the block's name. UDS then checks
+ * particular address. The caller provides the block's name. UDS then checks
  * this name against its index.
  * <ul>
  *   <li>If the block is new, it is stored in the index.</li>
@@ -503,20 +511,29 @@ int __must_check uds_get_index_stats(struct uds_index_session *session,
  *       canonical block address via the callback.</li>
  * </ul>
  *
- * The #UDS_QUERY operation type checks to see if a block name exists in the
- * index.  The caller provides the block's name.  UDS then checks
- * this name against its index.
- * <ul>
- *   <li>If the block is new, no action is taken.</li>
-
- *   <li>If the block is a duplicate of an indexed block, UDS returns the
- *       canonical block address via the callback.  If the <code>update</code>
- *       field is set, the entry is moved to the end of the deduplication
- *       window.</li> </ul>
- *
  * The #UDS_UPDATE operation type updates the mapping for a particular block.
  * #UDS_UPDATE is typically used if the callback function provides invalid
  * advice.
+ *
+ * The #UDS_DELETE operation type deletes the mapping for a particular block.
+ * #UDS_DELETE is typically used when UDS provides invalid advice.
+ *
+ * The #UDS_QUERY operation type checks to see if a block name exists in the
+ * index. The caller provides the block's name. UDS then checks this name
+ * against its index.
+ * <ul>
+ *   <li>If the block is new, no action is taken.</li>
+ *   <li>If the block is a duplicate of an indexed block, UDS returns the
+ *       canonical block address via the callback and the entry is moved to
+ *       the end of the deduplication window.</li> </ul>
+ *
+ * The #UDS_QUERY_NO_UPDATE operation type checks to see if a block name exists
+ * in the index. The caller provides the block's name. UDS then checks this
+ * name against its index.
+ * <ul>
+ *   <li>If the block is new, no action is taken.</li>
+ *   <li>If the block is a duplicate of an indexed block, UDS returns the
+ *       canonical block address via the callback.
  *
  * @param [in] request  The operation.  The <code>type</code>,
  *                      <code>chunk_name</code>, <code>new_metadata</code>,

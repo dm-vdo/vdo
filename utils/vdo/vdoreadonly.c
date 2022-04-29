@@ -27,10 +27,10 @@
 #include "logger.h"
 
 #include "constants.h"
-#include "physical-layer.h"
 #include "status-codes.h"
 
 #include "fileLayer.h"
+#include "physicalLayer.h"
 #include "vdoConfig.h"
 #include "vdoVolumeUtils.h"
 

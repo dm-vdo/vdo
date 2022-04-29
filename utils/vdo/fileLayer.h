@@ -20,7 +20,7 @@
 #ifndef FILE_LAYER_H
 #define FILE_LAYER_H
 
-#include "physical-layer.h"
+#include "physicalLayer.h"
 
 /**
  * Make a file layer implementation of a physical layer.

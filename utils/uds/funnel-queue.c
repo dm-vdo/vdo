@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -23,7 +24,6 @@
 #include "permassert.h"
 #include "uds.h"
 
-/**********************************************************************/
 int make_funnel_queue(struct funnel_queue **queue_ptr)
 {
 	/*
@@ -49,13 +49,11 @@ int make_funnel_queue(struct funnel_queue **queue_ptr)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_funnel_queue(struct funnel_queue *queue)
 {
 	UDS_FREE(queue);
 }
 
-/**********************************************************************/
 static struct funnel_queue_entry *get_oldest(struct funnel_queue *queue)
 {
 	/*
@@ -95,6 +93,7 @@ static struct funnel_queue_entry *get_oldest(struct funnel_queue *queue)
 	 */
 	if (next == NULL) {
 		struct funnel_queue_entry *newest = queue->newest;
+
 		if (oldest != newest) {
 			/*
 			 * Another thread has already swung queue->newest
@@ -124,10 +123,10 @@ static struct funnel_queue_entry *get_oldest(struct funnel_queue *queue)
 	return oldest;
 }
 
-/**********************************************************************/
 struct funnel_queue_entry *funnel_queue_poll(struct funnel_queue *queue)
 {
 	struct funnel_queue_entry *oldest = get_oldest(queue);
+
 	if (oldest == NULL) {
 		return oldest;
 	}
@@ -157,13 +156,11 @@ struct funnel_queue_entry *funnel_queue_poll(struct funnel_queue *queue)
 	return oldest;
 }
 
-/**********************************************************************/
 bool is_funnel_queue_empty(struct funnel_queue *queue)
 {
 	return get_oldest(queue) == NULL;
 }
 
-/**********************************************************************/
 bool is_funnel_queue_idle(struct funnel_queue *queue)
 {
 	/*

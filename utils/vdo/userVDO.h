@@ -21,12 +21,13 @@
 #ifndef USER_VDO_H
 #define USER_VDO_H
 
-#include "physical-layer.h"
 #include "slab-summary-format.h"
 #include "super-block-codec.h"
 #include "types.h"
 #include "vdo-component-states.h"
 #include "volume-geometry.h"
+
+#include "physicalLayer.h"
 
 /**
  * A representation of a VDO for use by user space tools.

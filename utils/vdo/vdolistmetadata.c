@@ -24,11 +24,11 @@
 #include "syscalls.h"
 
 #include "block-map-format.h"
-#include "fixed-layout.h"
 #include "slab-depot-format.h"
 #include "slab-journal-format.h"
 #include "status-codes.h"
 #include "types.h"
+#include "vdo-layout.h"
 
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"

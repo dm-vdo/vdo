@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -40,13 +41,11 @@ struct buffered_writer {
 	int bw_error;
 };
 
-/**********************************************************************/
 static INLINE size_t space_used_in_buffer(struct buffered_writer *bw)
 {
 	return bw->bw_pointer - bw->bw_start;
 }
 
-/**********************************************************************/
 static
 size_t space_remaining_in_write_buffer(struct buffered_writer *bw)
 {
@@ -54,7 +53,6 @@ size_t space_remaining_in_write_buffer(struct buffered_writer *bw)
 }
 
 
-/**********************************************************************/
 int make_buffered_writer(struct io_region *region,
 			 struct buffered_writer **writer_ptr)
 {
@@ -66,6 +64,7 @@ int make_buffered_writer(struct io_region *region,
 	}
 
 	struct buffered_writer *writer;
+
 	result =
 		UDS_ALLOCATE(1, struct buffered_writer, "buffered writer",
 			     &writer);
@@ -87,10 +86,10 @@ int make_buffered_writer(struct io_region *region,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_buffered_writer(struct buffered_writer *bw)
 {
 	int result;
+
 	if (bw == NULL) {
 		return;
 	}
@@ -104,7 +103,6 @@ void free_buffered_writer(struct buffered_writer *bw)
 	UDS_FREE(bw);
 }
 
-/**********************************************************************/
 int write_to_buffered_writer(struct buffered_writer *bw,
 			     const void *data,
 			     size_t len)
@@ -112,6 +110,7 @@ int write_to_buffered_writer(struct buffered_writer *bw,
 	const byte *dp = data;
 	int result = UDS_SUCCESS;
 	size_t avail, chunk;
+
 	if (bw->bw_error != UDS_SUCCESS) {
 		return bw->bw_error;
 	}
@@ -133,11 +132,11 @@ int write_to_buffered_writer(struct buffered_writer *bw,
 	return result;
 }
 
-/**********************************************************************/
 int write_zeros_to_buffered_writer(struct buffered_writer *bw, size_t len)
 {
 	int result = UDS_SUCCESS;
 	size_t avail, chunk;
+
 	if (bw->bw_error != UDS_SUCCESS) {
 		return bw->bw_error;
 	}
@@ -158,7 +157,6 @@ int write_zeros_to_buffered_writer(struct buffered_writer *bw, size_t len)
 	return result;
 }
 
-/**********************************************************************/
 int flush_buffered_writer(struct buffered_writer *bw)
 {
 	if (bw->bw_error != UDS_SUCCESS) {
@@ -166,6 +164,7 @@ int flush_buffered_writer(struct buffered_writer *bw)
 	}
 
 	size_t n = space_used_in_buffer(bw);
+
 	if (n > 0) {
 		int result =
 			write_to_region(bw->bw_region,

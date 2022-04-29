@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -36,7 +37,6 @@ enum {
 	INDEX_CONFIG_VERSION_LENGTH = sizeof(INDEX_CONFIG_VERSION_6_02) - 1
 };
 
-/**********************************************************************/
 static int __must_check
 decode_index_config_06_02(struct buffer *buffer,
 			  struct uds_configuration_8_02 *config)
@@ -96,7 +96,6 @@ decode_index_config_06_02(struct buffer *buffer,
 	return result;
 }
 
-/**********************************************************************/
 static int __must_check
 decode_index_config_08_02(struct buffer *buffer,
 			  struct uds_configuration_8_02 *config)
@@ -162,7 +161,6 @@ decode_index_config_08_02(struct buffer *buffer,
 	return result;
 }
 
-/**********************************************************************/
 static int read_version(struct buffered_reader *reader,
 			struct uds_configuration_8_02 *conf)
 {
@@ -225,11 +223,10 @@ static int read_version(struct buffered_reader *reader,
 	return result;
 }
 
-/**********************************************************************/
 static bool are_matching_configurations(struct uds_configuration_8_02 *saved,
 					struct configuration *user)
 {
-        struct geometry *geometry = user->geometry;
+	struct geometry *geometry = user->geometry;
 	bool result = true;
 
 	if (saved->record_pages_per_chapter !=
@@ -285,7 +282,6 @@ static bool are_matching_configurations(struct uds_configuration_8_02 *saved,
 	return result;
 }
 
-/**********************************************************************/
 int validate_config_contents(struct buffered_reader *reader,
 			     struct configuration *config)
 {
@@ -312,12 +308,11 @@ int validate_config_contents(struct buffered_reader *reader,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int __must_check
 encode_index_config_06_02(struct buffer *buffer, struct configuration *config)
 {
 	int result;
-        struct geometry *geometry = config->geometry;
+	struct geometry *geometry = config->geometry;
 
 	result = put_uint32_le_into_buffer(buffer,
 					   geometry->record_pages_per_chapter);
@@ -365,12 +360,11 @@ encode_index_config_06_02(struct buffer *buffer, struct configuration *config)
 			       buffer_length(buffer));
 }
 
-/**********************************************************************/
 static int __must_check
 encode_index_config_08_02(struct buffer *buffer, struct configuration *config)
 {
 	int result;
-        struct geometry *geometry = config->geometry;
+	struct geometry *geometry = config->geometry;
 
 	result = put_uint32_le_into_buffer(buffer,
 					   geometry->record_pages_per_chapter);
@@ -428,7 +422,6 @@ encode_index_config_08_02(struct buffer *buffer, struct configuration *config)
 			       buffer_length(buffer));
 }
 
-/**********************************************************************/
 int write_config_contents(struct buffered_writer *writer,
 			  struct configuration *config,
 			  uint32_t version)
@@ -552,12 +545,12 @@ static int compute_memory_sizes(uds_memory_config_size_t mem_gb,
 		*sparse_chapters_per_volume =
 			(9 * base_chapters) + (base_chapters / 2);
 		base_chapters *= 10;
-        } else {
+	} else {
 		*sparse_chapters_per_volume = 0;
 	}
 
 	*chapters_per_volume = base_chapters - reduced_chapters;
-        return UDS_SUCCESS;
+	return UDS_SUCCESS;
 }
 
 /**
@@ -570,6 +563,7 @@ static int compute_memory_sizes(uds_memory_config_size_t mem_gb,
 static unsigned int __must_check normalize_zone_count(unsigned int requested)
 {
 	unsigned int zone_count = requested;
+
 	if (zone_count == 0) {
 		zone_count = uds_get_num_cores() / 2;
 	}
@@ -585,10 +579,10 @@ static unsigned int __must_check normalize_zone_count(unsigned int requested)
 	return zone_count;
 }
 
-/**********************************************************************/
 static unsigned int __must_check normalize_read_threads(unsigned int requested)
 {
 	unsigned int read_threads = requested;
+
 	if (read_threads < 1) {
 		read_threads = DEFAULT_VOLUME_READ_THREADS;
 	}
@@ -598,7 +592,6 @@ static unsigned int __must_check normalize_read_threads(unsigned int requested)
 	return read_threads;
 }
 
-/**********************************************************************/
 int make_configuration(const struct uds_parameters *params,
 		       struct configuration **config_ptr)
 {
@@ -617,7 +610,7 @@ int make_configuration(const struct uds_parameters *params,
 		return result;
 	}
 
-        result = UDS_ALLOCATE(1, struct configuration, __func__, &config);
+	result = UDS_ALLOCATE(1, struct configuration, __func__, &config);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -651,7 +644,6 @@ int make_configuration(const struct uds_parameters *params,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_configuration(struct configuration *config)
 {
 	if (config != NULL) {
@@ -660,7 +652,6 @@ void free_configuration(struct configuration *config)
 	}
 }
 
-/**********************************************************************/
 void log_uds_configuration(struct configuration *conf)
 {
 	uds_log_debug("Configuration:");

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -61,6 +62,7 @@ static int read_index_state_data(struct read_portal *portal)
 		get_state_index_state_buffer(portal->component->state,
 					     IO_READ);
 	int result = rewind_buffer(buffer, uncompacted_amount(buffer));
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -128,6 +130,7 @@ write_index_state_data(struct index_component *component,
 	struct buffer *buffer =
 		get_state_index_state_buffer(component->state, IO_WRITE);
 	int result = reset_buffer_end(buffer, 0);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -172,7 +175,6 @@ write_index_state_data(struct index_component *component,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 
 const struct index_component_info INDEX_STATE_INFO = {
 	.kind         = RL_KIND_INDEX_STATE,

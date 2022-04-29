@@ -16,13 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#39 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#44 $
 
-UDS_VERSION      = 8.2.0.72
-BUILD_VERSION    = $(UDS_VERSION)
-DISTRO_CODENAME := $(shell lsb_release -s -c)
+BUILD_VERSION = 8.2.0.0
 
-DEPDIR  = .deps
+DEPDIR = .deps
 
 ifeq ($(origin CC), default)
   CC=gcc
@@ -56,7 +54,7 @@ DEBUG_FLAGS    =
 RPM_OPT_FLAGS ?= -fpic
 GLOBAL_FLAGS   = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS)		\
 		 $(WARNS) $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)	\
-		 -DUDS_VERSION='"$(BUILD_VERSION)"'			\
+		 -DCURRENT_VERSION='"$(BUILD_VERSION)"'			\
 
 CFLAGS  = $(GLOBAL_FLAGS) -I. -std=gnu99 -pedantic $(C_WARNS) $(MY_CFLAGS)
 LDFLAGS = $(RPM_LD_FLAGS) $(MY_LDFLAGS)
@@ -96,7 +94,6 @@ UDS_OBJECTS =	murmurhash3.o		\
 		index-state-data.o	\
 		index-zone.o		\
 		ioFactory.o		\
-		load-type.o		\
 		logger.o		\
 		memoryAlloc.o		\
 		minisyslog.o		\
@@ -109,7 +106,7 @@ UDS_OBJECTS =	murmurhash3.o		\
 		random.o		\
 		record-page.o		\
 		request.o		\
-		requestQueueUser.o	\
+		requestQueue.o		\
 		search-list.o		\
 		sparse-cache.o		\
 		string-utils.o		\

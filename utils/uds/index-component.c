@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -28,7 +29,6 @@
 #include "permassert.h"
 #include "type-defs.h"
 
-/**********************************************************************/
 int make_index_component(struct index_state *state,
 			 const struct index_component_info *info,
 			 unsigned int zone_count,
@@ -38,6 +38,7 @@ int make_index_component(struct index_state *state,
 {
 	struct index_component *component = NULL;
 	int result;
+
 	if ((info == NULL) || (info->name == NULL)) {
 		return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
 					      "invalid component or directory specified");
@@ -69,13 +70,14 @@ int make_index_component(struct index_state *state,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static void free_write_zones(struct index_component *component)
 {
 	if (component->write_zones != NULL) {
 		unsigned int z;
+
 		for (z = 0; z < component->num_zones; ++z) {
 			struct write_zone *wz = component->write_zones[z];
+
 			if (wz == NULL) {
 				continue;
 			}
@@ -87,7 +89,6 @@ static void free_write_zones(struct index_component *component)
 	}
 }
 
-/**********************************************************************/
 void free_index_component(struct index_component *component)
 {
 	if (component == NULL) {
@@ -106,6 +107,7 @@ void free_index_component(struct index_component *component)
 static void free_read_portal(struct read_portal *read_portal)
 {
 	unsigned int z;
+
 	if (read_portal == NULL) {
 		return;
 	}
@@ -118,12 +120,12 @@ static void free_read_portal(struct read_portal *read_portal)
 	UDS_FREE(read_portal);
 }
 
-/**********************************************************************/
 int get_buffered_reader_for_portal(struct read_portal *portal,
 				   unsigned int part,
 				   struct buffered_reader **reader_ptr)
 {
 	struct index_component *component;
+
 	if (part >= portal->zones) {
 		return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
 					  "%s: cannot access zone %u of %u",
@@ -148,11 +150,11 @@ int get_buffered_reader_for_portal(struct read_portal *portal,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int read_index_component(struct index_component *component)
 {
 	struct read_portal *portal;
 	int read_zones, result;
+
 	result = UDS_ALLOCATE(1, struct read_portal,
 			      "index component read portal", &portal);
 	if (result != UDS_SUCCESS) {
@@ -190,8 +192,10 @@ int read_index_component(struct index_component *component)
 static int done_with_zone(struct write_zone *write_zone)
 {
 	const struct index_component *component = write_zone->component;
+
 	if (write_zone->writer != NULL) {
 		int result = flush_buffered_writer(write_zone->writer);
+
 		if (result != UDS_SUCCESS) {
 			return uds_log_error_strerror(result,
 						      "cannot flush buffered writer for %s component (zone %u)",
@@ -246,11 +250,11 @@ static int make_write_zones(struct index_component *component)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int open_buffered_writers(struct index_component *component)
 {
 	int result = UDS_SUCCESS;
 	struct write_zone **wzp;
+
 	for (wzp = component->write_zones;
 	     wzp < component->write_zones + component->num_zones;
 	     ++wzp) {
@@ -276,10 +280,10 @@ static int open_buffered_writers(struct index_component *component)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int start_index_component_save(struct index_component *component)
 {
 	int result = make_write_zones(component);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -292,7 +296,6 @@ static int start_index_component_save(struct index_component *component)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int write_index_component(struct index_component *component)
 {
 	int result;
@@ -330,11 +333,11 @@ int write_index_component(struct index_component *component)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int discard_index_component(struct index_component *component)
 {
 	unsigned int num_zones = 0, save_slot = 0, old_save_slot, z;
 	int result;
+
 	if (!component->info->io_storage) {
 		return UDS_INVALID_ARGUMENT;
 	}

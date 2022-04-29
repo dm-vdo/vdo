@@ -22,9 +22,9 @@
 
 #include "errors.h"
 
-#include "fixed-layout.h"
 #include "recovery-journal-format.h"
 #include "types.h"
+#include "vdo-layout.h"
 #include "volume-geometry.h"
 
 // The vdo_config structure is fully declared in types.h

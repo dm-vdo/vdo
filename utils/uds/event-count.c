@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -130,7 +131,6 @@ static INLINE bool same_event(event_token_t token1, event_token_t token2)
 	return ((token1 & EVENTS_MASK) == (token2 & EVENTS_MASK));
 }
 
-/**********************************************************************/
 void event_count_broadcast(struct event_count *ec)
 {
 	uint64_t waiters, state, old_state;
@@ -194,6 +194,7 @@ void event_count_broadcast(struct event_count *ec)
 static INLINE bool fast_cancel(struct event_count *ec, event_token_t token)
 {
 	event_token_t current_token = atomic64_read(&ec->state);
+
 	while (same_event(current_token, token)) {
 		/*
 		 * Try to decrement the waiter count via compare-and-swap as if
@@ -239,7 +240,6 @@ static bool consume_wait_token(struct event_count *ec,
 	return true;
 }
 
-/**********************************************************************/
 int make_event_count(struct event_count **ec_ptr)
 {
 	/*
@@ -248,6 +248,7 @@ int make_event_count(struct event_count **ec_ptr)
 	 */
 	struct event_count *ec = NULL;
 	int result = UDS_ALLOCATE(1, struct event_count, "event count", &ec);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -263,7 +264,6 @@ int make_event_count(struct event_count **ec_ptr)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_event_count(struct event_count *ec)
 {
 	if (ec == NULL) {
@@ -273,13 +273,11 @@ void free_event_count(struct event_count *ec)
 	UDS_FREE(ec);
 }
 
-/**********************************************************************/
 event_token_t event_count_prepare(struct event_count *ec)
 {
 	return atomic64_add_return(ONE_WAITER, &ec->state);
 }
 
-/**********************************************************************/
 void event_count_cancel(struct event_count *ec, event_token_t token)
 {
 	/* Decrement the waiter count if the event hasn't been signalled. */
@@ -294,7 +292,6 @@ void event_count_cancel(struct event_count *ec, event_token_t token)
 	event_count_wait(ec, token, NULL);
 }
 
-/**********************************************************************/
 bool event_count_wait(struct event_count *ec,
 		      event_token_t token,
 		      const ktime_t *timeout)

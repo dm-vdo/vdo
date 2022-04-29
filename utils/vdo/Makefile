@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#13 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#14 $
 
 VDO_VERSION = 8.2.0.0
 
@@ -96,6 +96,7 @@ PROGS = vdoaudit               \
 
 COMPLETIONS=vdostats
 
+NOBUILDPROGS = adaptLVMVDO.sh
 PROG_SOURCES := $(PROGS:%=%.c)
 C_FILES      := $(filter-out $(PROG_SOURCES),$(wildcard *.c))
 LIB_OBJECTS  := $(C_FILES:%.c=%.o)
@@ -125,7 +126,7 @@ COMPLETIONINSTALLDIR=$(DESTDIR)$(sysconfdir)/bash_completion.d
 .PHONY: install
 install:
 	$(INSTALL) $(INSTALLOWNER) -d $(INSTALLDIR)
-	for i in $(PROGS); do \
+	for i in $(PROGS) $(NOBUILDPROGS); do \
 	  $(INSTALL) $(INSTALLOWNER) -m 755 $$i $(INSTALLDIR); \
 	done
 	$(MAKE) -C man install

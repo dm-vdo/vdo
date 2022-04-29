@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -35,7 +36,6 @@
 #include "string-utils.h"
 #include "uds-threads.h"
 
-/**********************************************************************/
 int assert_page_in_cache(struct page_cache *cache, struct cached_page *page)
 {
 	uint16_t page_index;
@@ -207,6 +207,7 @@ invalidate_page_in_cache(struct page_cache *cache,
 
 		if (reason != INVALIDATION_ERROR) {
 			int result = assert_page_in_cache(cache, page);
+
 			if (result != UDS_SUCCESS) {
 				return result;
 			}
@@ -222,7 +223,6 @@ invalidate_page_in_cache(struct page_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int find_invalidate_and_make_least_recent(struct page_cache *cache,
 					  unsigned int physical_page,
 					  struct queued_read *read_queue,
@@ -274,7 +274,6 @@ int find_invalidate_and_make_least_recent(struct page_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int __must_check initialize_page_cache(struct page_cache *cache,
 					      const struct geometry *geometry,
 					      unsigned int chapters_in_cache,
@@ -282,6 +281,7 @@ static int __must_check initialize_page_cache(struct page_cache *cache,
 {
 	int result;
 	unsigned int i;
+
 	cache->geometry = geometry;
 	cache->num_index_entries = geometry->pages_per_volume + 1;
 	cache->num_cache_entries =
@@ -336,6 +336,7 @@ static int __must_check initialize_page_cache(struct page_cache *cache,
 
 	for (i = 0; i < cache->num_cache_entries; i++) {
 		struct cached_page *page = &cache->cache[i];
+
 		result = initialize_volume_page(geometry->bytes_per_page,
 						&page->cp_page_data);
 		if (result != UDS_SUCCESS) {
@@ -347,7 +348,6 @@ static int __must_check initialize_page_cache(struct page_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int make_page_cache(const struct geometry  *geometry,
 		    unsigned int chapters_in_cache,
 		    unsigned int zone_count,
@@ -384,7 +384,6 @@ int make_page_cache(const struct geometry  *geometry,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_page_cache(struct page_cache *cache)
 {
 	if (cache == NULL) {
@@ -392,6 +391,7 @@ void free_page_cache(struct page_cache *cache)
 	}
 	if (cache->cache != NULL) {
 		unsigned int i;
+
 		for (i = 0; i < cache->num_cache_entries; i++) {
 			destroy_volume_page(&cache->cache[i].cp_page_data);
 		}
@@ -403,7 +403,22 @@ void free_page_cache(struct page_cache *cache)
 	UDS_FREE(cache);
 }
 
-/**********************************************************************/
+void invalidate_page_cache(struct page_cache *cache)
+{
+	unsigned int i;
+
+	for (i = 0; i < cache->num_index_entries; i++) {
+		cache->index[i] = cache->num_cache_entries;
+	}
+
+	for (i = 0; i < cache->num_cache_entries; i++) {
+		struct cached_page *page = &cache->cache[i];
+
+		release_volume_page(&page->cp_page_data);
+		clear_cache_page(cache, page);
+	}
+}
+
 int invalidate_page_cache_for_chapter(struct page_cache *cache,
 				      unsigned int chapter,
 				      unsigned int pages_per_chapter,
@@ -433,7 +448,6 @@ int invalidate_page_cache_for_chapter(struct page_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void make_page_most_recent(struct page_cache *cache, struct cached_page *page)
 {
 	/*
@@ -467,6 +481,7 @@ static int __must_check get_least_recent_page(struct page_cache *cache,
 	 * must be one.
 	 */
 	unsigned int i;
+
 	for (i = 0;; i++) {
 		if (i >= cache->num_cache_entries) {
 			/* This should never happen. */
@@ -492,7 +507,6 @@ static int __must_check get_least_recent_page(struct page_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int get_page_from_cache(struct page_cache *cache,
 			unsigned int physical_page,
 			int probe_type,
@@ -530,7 +544,6 @@ int get_page_from_cache(struct page_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int enqueue_read(struct page_cache *cache,
 		 struct uds_request *request,
 		 unsigned int physical_page)
@@ -584,7 +597,6 @@ int enqueue_read(struct page_cache *cache,
 	return UDS_QUEUED;
 }
 
-/**********************************************************************/
 bool reserve_read_queue_entry(struct page_cache *cache,
 			      unsigned int *queue_pos,
 			      struct uds_request **first_request,
@@ -636,7 +648,6 @@ bool reserve_read_queue_entry(struct page_cache *cache,
 	return true;
 }
 
-/**********************************************************************/
 void release_read_queue_entry(struct page_cache *cache, unsigned int queue_pos)
 {
 	/* We hold the readThreadsMutex. */
@@ -652,7 +663,6 @@ void release_read_queue_entry(struct page_cache *cache, unsigned int queue_pos)
 	}
 }
 
-/**********************************************************************/
 int select_victim_in_cache(struct page_cache *cache,
 			   struct cached_page **page_ptr)
 {
@@ -692,7 +702,6 @@ int select_victim_in_cache(struct page_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int put_page_in_cache(struct page_cache *cache,
 		      unsigned int physical_page,
 		      struct cached_page *page)
@@ -747,7 +756,6 @@ int put_page_in_cache(struct page_cache *cache,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void cancel_page_in_cache(struct page_cache *cache,
 			  unsigned int physical_page,
 			  struct cached_page *page)
@@ -777,7 +785,6 @@ void cancel_page_in_cache(struct page_cache *cache,
 	WRITE_ONCE(cache->index[physical_page], cache->num_cache_entries);
 }
 
-/**********************************************************************/
 size_t get_page_cache_size(struct page_cache *cache)
 {
 	if (cache == NULL) {

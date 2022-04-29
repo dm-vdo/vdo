@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -21,7 +22,6 @@
 
 #include "permassert.h"
 
-/**********************************************************************/
 static unsigned int
 encode_tree(byte record_page[],
 	    const struct uds_chunk_record *sorted_pointers[],
@@ -31,6 +31,7 @@ encode_tree(byte record_page[],
 {
 	if (node < node_count) {
 		unsigned int child = (2 * node) + 1;
+
 		next_record = encode_tree(record_page,
 					  sorted_pointers,
 					  next_record,
@@ -55,7 +56,6 @@ encode_tree(byte record_page[],
 	return next_record;
 }
 
-/**********************************************************************/
 int encode_record_page(const struct volume *volume,
 		       const struct uds_chunk_record records[],
 		       byte record_page[])
@@ -71,6 +71,7 @@ int encode_record_page(const struct volume *volume,
 	 * record values.
 	 */
 	unsigned int i;
+
 	for (i = 0; i < records_per_page; i++) {
 		record_pointers[i] = &records[i];
 	}
@@ -92,7 +93,6 @@ int encode_record_page(const struct volume *volume,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 bool search_record_page(const byte record_page[],
 			const struct uds_chunk_name *name,
 			const struct geometry *geometry,
@@ -107,9 +107,11 @@ bool search_record_page(const byte record_page[],
 	 * in heap order, so the root of the tree is the first array element.
 	 */
 	unsigned int node = 0;
+
 	while (node < geometry->records_per_page) {
 		const struct uds_chunk_record *record = &records[node];
 		int result = memcmp(name, &record->name, UDS_CHUNK_NAME_SIZE);
+
 		if (result == 0) {
 			if (metadata != NULL) {
 				*metadata = record->data;

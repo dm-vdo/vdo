@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -17,15 +18,29 @@
  * 02110-1301, USA. 
  */
 
-#include "fixed-layout.h"
+#include "vdo-layout.h"
 
-#include "buffer.h"
-#include "logger.h"
+struct dm_kcopyd_client;
+struct dm_kcopyd_throttle;
+static struct dm_kcopyd_client *
+dm_kcopyd_client_create(struct dm_kcopyd_throttle *throttle __always_unused)
+{
+	return NULL;
+}
+
+static void
+dm_kcopyd_client_destroy(struct dm_kcopyd_client *kc __always_unused)
+{
+}
+
 #include "memory-alloc.h"
 #include "permassert.h"
 
+#include "constants.h"
 #include "header.h"
 #include "status-codes.h"
+#include "types.h"
+
 
 const block_count_t VDO_ALL_FREE_BLOCKS = (uint64_t) -1;
 
@@ -759,4 +774,346 @@ int vdo_make_partitioned_fixed_layout(block_count_t physical_blocks,
 
 	*layout_ptr = layout;
 	return VDO_SUCCESS;
+}
+
+/*-----------------------------------------------------------------*/
+static const enum partition_id REQUIRED_PARTITIONS[] = {
+	VDO_BLOCK_MAP_PARTITION,
+	VDO_BLOCK_ALLOCATOR_PARTITION,
+	VDO_RECOVERY_JOURNAL_PARTITION,
+	VDO_SLAB_SUMMARY_PARTITION,
+};
+
+static const uint8_t REQUIRED_PARTITION_COUNT = 4;
+
+/**
+ * Get the offset of a given partition.
+ *
+ * @param layout  The layout containing the partition
+ * @param id      The ID of the partition whose offset is desired
+ *
+ * @return The offset of the partition (in blocks)
+ **/
+static block_count_t __must_check
+get_partition_offset(struct vdo_layout *layout, enum partition_id id)
+{
+	return vdo_get_fixed_layout_partition_offset(vdo_get_partition(layout,
+								       id));
+}
+
+/**
+ * Make a vdo_layout from the fixed_layout decoded from the super block.
+ *
+ * @param [in]  layout          The fixed_layout from the super block
+ * @param [out] vdo_layout_ptr  A pointer to hold the vdo_layout
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int vdo_decode_layout(struct fixed_layout *layout,
+		      struct vdo_layout **vdo_layout_ptr)
+{
+	/* Check that all the expected partitions exist */
+	struct vdo_layout *vdo_layout;
+	struct partition *partition;
+	uint8_t i;
+	int result;
+
+	for (i = 0; i < REQUIRED_PARTITION_COUNT; i++) {
+		result = vdo_get_fixed_layout_partition(layout,
+							REQUIRED_PARTITIONS[i],
+							&partition);
+		if (result != VDO_SUCCESS) {
+			return uds_log_error_strerror(result,
+						      "VDO layout is missing required partition %u",
+						      REQUIRED_PARTITIONS[i]);
+		}
+	}
+
+	result = UDS_ALLOCATE(1, struct vdo_layout, __func__, &vdo_layout);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	vdo_layout->layout = layout;
+
+	/* XXX Assert this is the same as where we loaded the super block. */
+	vdo_layout->starting_offset =
+		get_partition_offset(vdo_layout, VDO_BLOCK_MAP_PARTITION);
+
+	*vdo_layout_ptr = vdo_layout;
+	return VDO_SUCCESS;
+}
+
+/**
+ * Free a vdo_layout.
+ *
+ * @param vdo_layout  The vdo_layout to free
+ **/
+void vdo_free_layout(struct vdo_layout *vdo_layout)
+{
+	if (vdo_layout == NULL) {
+		return;
+	}
+
+	if (vdo_layout->copier) {
+		dm_kcopyd_client_destroy(UDS_FORGET(vdo_layout->copier));
+	}
+	vdo_free_fixed_layout(UDS_FORGET(vdo_layout->next_layout));
+	vdo_free_fixed_layout(UDS_FORGET(vdo_layout->layout));
+	vdo_free_fixed_layout(UDS_FORGET(vdo_layout->previous_layout));
+	UDS_FREE(vdo_layout);
+}
+
+/**
+ * Get a partition from a fixed_layout in conditions where we expect that it can
+ * not fail.
+ *
+ * @param layout  The fixed_layout from which to get the partition
+ * @param id      The ID of the partition to retrieve
+ *
+ * @return The desired partition
+ **/
+static struct partition * __must_check
+retrieve_partition(struct fixed_layout *layout, enum partition_id id)
+{
+	struct partition *partition;
+	int result = vdo_get_fixed_layout_partition(layout, id, &partition);
+
+	ASSERT_LOG_ONLY(result == VDO_SUCCESS,
+			"vdo_layout has expected partition");
+	return partition;
+}
+
+/**
+ * Get a partition from a vdo_layout. Because the layout's fixed_layout has
+ * already been validated, this can not fail.
+ *
+ * @param vdo_layout  The vdo_layout from which to get the partition
+ * @param id          The ID of the desired partition
+ *
+ * @return The requested partition
+ **/
+struct partition *vdo_get_partition(struct vdo_layout *vdo_layout,
+				    enum partition_id id)
+{
+	return retrieve_partition(vdo_layout->layout, id);
+}
+
+/**
+ * Get a partition from a vdo_layout's next fixed_layout. This method should
+ * only be called when the vdo_layout is prepared to grow.
+ *
+ * @param vdo_layout  The vdo_layout from which to get the partition
+ * @param id          The ID of the desired partition
+ *
+ * @return The requested partition
+ **/
+static struct partition * __must_check
+get_partition_from_next_layout(struct vdo_layout *vdo_layout,
+			       enum partition_id id)
+{
+	ASSERT_LOG_ONLY(vdo_layout->next_layout != NULL,
+			"vdo_layout is prepared to grow");
+	return retrieve_partition(vdo_layout->next_layout, id);
+}
+
+/**
+ * Get the size of a given partition.
+ *
+ * @param layout  The layout containing the partition
+ * @param id      The partition ID whose size to find
+ *
+ * @return The size of the partition (in blocks)
+ **/
+static block_count_t __must_check
+get_partition_size(struct vdo_layout *layout, enum partition_id id)
+{
+	struct partition *partition = vdo_get_partition(layout, id);
+
+	return vdo_get_fixed_layout_partition_size(partition);
+}
+
+/**
+ * Prepare the layout to be grown.
+ *
+ * @param vdo_layout           The layout to grow
+ * @param old_physical_blocks  The current size of the VDO
+ * @param new_physical_blocks  The size to which the VDO will be grown
+ *
+ * @return VDO_SUCCESS or an error code
+ **/
+int prepare_to_vdo_grow_layout(struct vdo_layout *vdo_layout,
+			       block_count_t old_physical_blocks,
+			       block_count_t new_physical_blocks)
+{
+	int result;
+	struct partition *slab_summary_partition, *recovery_journal_partition;
+	block_count_t min_new_size;
+
+	if (vdo_get_next_layout_size(vdo_layout) == new_physical_blocks) {
+		/*
+		 * We are already prepared to grow to the new size, so we're
+		 * done.
+		 */
+		return VDO_SUCCESS;
+	}
+
+	/* Make a copy completion if there isn't one */
+	if (vdo_layout->copier == NULL) {
+		vdo_layout->copier = dm_kcopyd_client_create(NULL);
+		if (vdo_layout->copier == NULL) {
+			return -ENOMEM;
+		}
+	}
+
+	/* Free any unused preparation. */
+	vdo_free_fixed_layout(UDS_FORGET(vdo_layout->next_layout));
+
+	/*
+	 * Make a new layout with the existing partition sizes for everything
+	 * but the block allocator partition.
+	 */
+	result = vdo_make_partitioned_fixed_layout(new_physical_blocks,
+						   vdo_layout->starting_offset,
+						   get_partition_size(vdo_layout,
+								      VDO_BLOCK_MAP_PARTITION),
+						   get_partition_size(vdo_layout,
+								      VDO_RECOVERY_JOURNAL_PARTITION),
+						   get_partition_size(vdo_layout,
+								      VDO_SLAB_SUMMARY_PARTITION),
+						   &vdo_layout->next_layout);
+	if (result != VDO_SUCCESS) {
+		dm_kcopyd_client_destroy(UDS_FORGET(vdo_layout->copier));
+		return result;
+	}
+
+	/*
+	 * Ensure the new journal and summary are entirely within the added
+	 * blocks.
+	 */
+	slab_summary_partition =
+		get_partition_from_next_layout(vdo_layout,
+					       VDO_SLAB_SUMMARY_PARTITION);
+	recovery_journal_partition =
+		get_partition_from_next_layout(vdo_layout,
+					       VDO_RECOVERY_JOURNAL_PARTITION);
+	min_new_size =
+		(old_physical_blocks +
+		 vdo_get_fixed_layout_partition_size(slab_summary_partition) +
+		 vdo_get_fixed_layout_partition_size(recovery_journal_partition));
+	if (min_new_size > new_physical_blocks) {
+		/*
+		 * Copying the journal and summary would destroy some old
+		 * metadata.
+		 */
+		vdo_free_fixed_layout(UDS_FORGET(vdo_layout->next_layout));
+		dm_kcopyd_client_destroy(UDS_FORGET(vdo_layout->copier));
+		return VDO_INCREMENT_TOO_SMALL;
+	}
+
+	return VDO_SUCCESS;
+}
+
+/**
+ * Get the size of a VDO from the specified fixed_layout and the
+ * starting offset thereof.
+ *
+ * @param layout           The fixed layout whose size to use
+ * @param starting_offset  The starting offset of the layout
+ *
+ * @return The total size of a VDO (in blocks) with the given layout
+ **/
+static block_count_t __must_check
+get_vdo_size(struct fixed_layout *layout, block_count_t starting_offset)
+{
+	/*
+	 * The fixed_layout does not include the super block or any earlier
+	 * metadata; all that is captured in the vdo_layout's starting offset
+	 */
+	return vdo_get_total_fixed_layout_size(layout) + starting_offset;
+}
+
+/**
+ * Get the size of the next layout.
+ *
+ * @param vdo_layout  The layout to check
+ *
+ * @return The size which was specified when the layout was prepared for growth
+ *         or 0 if the layout is not prepared to grow
+ **/
+block_count_t vdo_get_next_layout_size(struct vdo_layout *vdo_layout)
+{
+	return ((vdo_layout->next_layout == NULL) ?
+			0 :
+			get_vdo_size(vdo_layout->next_layout,
+				     vdo_layout->starting_offset));
+}
+
+/**
+ * Get the size of the next block allocator partition.
+ *
+ * @param vdo_layout  The vdo_layout which has been prepared to grow
+ *
+ * @return The size of the block allocator partition in the next layout or 0
+ *         if the layout is not prepared to grow
+ **/
+block_count_t
+vdo_get_next_block_allocator_partition_size(struct vdo_layout *vdo_layout)
+{
+	struct partition *partition;
+
+	if (vdo_layout->next_layout == NULL) {
+		return 0;
+	}
+
+	partition = get_partition_from_next_layout(vdo_layout,
+						   VDO_BLOCK_ALLOCATOR_PARTITION);
+	return vdo_get_fixed_layout_partition_size(partition);
+}
+
+/**
+ * Grow the layout by swapping in the prepared layout.
+ *
+ * @param vdo_layout  The layout to grow
+ *
+ * @return The new size of the VDO
+ **/
+block_count_t vdo_grow_layout(struct vdo_layout *vdo_layout)
+{
+	ASSERT_LOG_ONLY(vdo_layout->next_layout != NULL,
+			"VDO prepared to grow physical");
+	vdo_layout->previous_layout = vdo_layout->layout;
+	vdo_layout->layout = vdo_layout->next_layout;
+	vdo_layout->next_layout = NULL;
+
+	return get_vdo_size(vdo_layout->layout, vdo_layout->starting_offset);
+}
+
+/**
+ * Clean up any unused resources once an attempt to grow has completed.
+ *
+ * @param vdo_layout  The layout
+ **/
+void vdo_finish_layout_growth(struct vdo_layout *vdo_layout)
+{
+	if (vdo_layout->layout != vdo_layout->previous_layout) {
+		vdo_free_fixed_layout(UDS_FORGET(vdo_layout->previous_layout));
+	}
+
+	if (vdo_layout->layout != vdo_layout->next_layout) {
+		vdo_free_fixed_layout(UDS_FORGET(vdo_layout->next_layout));
+	}
+}
+
+
+/**
+ * Get the current fixed layout of the vdo.
+ *
+ * @param vdo_layout  The layout
+ *
+ * @return The layout's current fixed layout
+ **/
+struct fixed_layout *vdo_get_fixed_layout(const struct vdo_layout *vdo_layout)
+{
+	return vdo_layout->layout;
 }

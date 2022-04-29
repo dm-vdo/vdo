@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -26,6 +27,8 @@
 
 #include "types.h"
 
+#include "permassert.h"
+
 /**
  * Return true if and only if a number is a power of two.
  **/
@@ -48,56 +51,17 @@ static inline bool is_power_of_2(uint64_t n)
  *
  * @return the integer log2 of the value, or -1 if the value is zero
  **/
-static inline int log_base_two(uint64_t n)
+static inline int ilog2(uint64_t n)
 {
-	if (n == 0) {
-		return -1;
-	}
+	ASSERT_LOG_ONLY (n != 0, "ilog2() may not be passed 0");
 	/*
-	 * Many CPUs, including x86, directly support this calculation, so use 
-	 * the GCC function for counting the number of leading high-order zero 
+	 * Many CPUs, including x86, directly support this calculation, so use
+	 * the GCC function for counting the number of leading high-order zero
 	 * bits.
 	 */
 	return 63 - __builtin_clzll(n);
 }
 
-/**
- * Round upward towards the nearest multiple of quantum.
- *
- * @param number        a number
- * @param quantum       the quantum
- *
- * @return the least multiple of quantum not less than number
- **/
-static inline size_t __must_check
-round_up_to_multiple_size_t(size_t number, size_t quantum)
-{
-	return number + quantum - 1 - ((number + quantum - 1) % quantum);
-}
-
-/**
- * Check whether the given value is between the lower and upper bounds,
- * within a cyclic range of values from 0 to (modulus - 1). The value
- * and both bounds must be smaller than the modulus.
- *
- * @param lower    The lowest value to accept
- * @param value    The value to check
- * @param upper    The highest value to accept
- * @param modulus  The size of the cyclic space, no more than 2^15
- *
- * @return <code>true</code> if the value is in range
- **/
-static inline bool in_cyclic_range(uint16_t lower, uint16_t value,
-				   uint16_t upper, uint16_t modulus)
-{
-	if (value < lower) {
-		value += modulus;
-	}
-	if (upper < lower) {
-		upper += modulus;
-	}
-	return (value <= upper);
-}
 
 /**
  * Compute the number of buckets of a given size which are required to hold a

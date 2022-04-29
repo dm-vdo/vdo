@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -25,7 +26,7 @@
 
 #include "uds.h"
 
-#include "physical-layer.h"
+#include "physicalLayer.h"
 #include "types.h"
 
 enum {

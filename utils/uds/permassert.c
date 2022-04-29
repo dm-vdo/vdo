@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -49,7 +50,6 @@ static const char *EXIT_ON_ASSERTION_FAILURE_VARIABLE =
 static atomic_t init_once = ATOMIC_INIT(0);
 static struct mutex mutex = { .mutex = UDS_MUTEX_INITIALIZER };
 
-/**********************************************************************/
 static void initialize(void)
 {
 	uds_initialize_mutex(&mutex, !UDS_DO_ASSERTIONS);
@@ -62,10 +62,10 @@ static void initialize(void)
 	}
 }
 
-/**********************************************************************/
 bool set_exit_on_assertion_failure(bool should_exit)
 {
 	bool previous_setting;
+
 	perform_once(&init_once, initialize);
 	uds_lock_mutex(&mutex);
 	previous_setting = exit_on_assertion_failure;
@@ -76,7 +76,6 @@ bool set_exit_on_assertion_failure(bool should_exit)
 
 /* Here ends large block of userspace stuff. */
 
-/**********************************************************************/
 int uds_assertion_failed(const char *expression_string,
 			 int code,
 			 const char *module_name,
@@ -86,6 +85,7 @@ int uds_assertion_failed(const char *expression_string,
 			 ...)
 {
 	va_list args;
+
 	va_start(args, format);
 
 	uds_log_embedded_message(UDS_LOG_ERR,

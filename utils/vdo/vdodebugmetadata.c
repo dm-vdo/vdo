@@ -529,8 +529,8 @@ isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 static void findRecoveryJournalEntries(logical_block_number_t lbn)
 {
   struct block_map_slot desiredSlot = (struct block_map_slot) {
-    .pbn  = vdo_compute_page_number(lbn),
-    .slot = vdo_compute_slot(lbn),
+    .pbn  = lbn / VDO_BLOCK_MAP_ENTRIES_PER_PAGE,
+    .slot = lbn % VDO_BLOCK_MAP_ENTRIES_PER_PAGE,
   };
   for (block_count_t i = 0;
        i < vdo->states.vdo.config.recovery_journal_size;

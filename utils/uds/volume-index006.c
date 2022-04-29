@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -76,7 +77,6 @@ is_volume_index_sample_006(const struct volume_index *volume_index,
 	return (extract_sampling_bytes(name) % vi6->sparse_sample_rate) == 0;
 }
 
-/**********************************************************************/
 /**
  * Get the subindex for the given chunk name
  *
@@ -96,7 +96,6 @@ get_sub_index(const struct volume_index *volume_index,
 			vi6->vi_non_hook);
 }
 
-/**********************************************************************/
 /**
  * Terminate and clean up the volume index
  *
@@ -110,6 +109,7 @@ static void free_volume_index_006(struct volume_index *volume_index)
 							 common);
 		if (vi6->zones != NULL) {
 			unsigned int zone;
+
 			for (zone = 0; zone < vi6->num_zones; zone++) {
 				uds_destroy_mutex(&vi6->zones[zone].hook_mutex);
 			}
@@ -128,7 +128,6 @@ static void free_volume_index_006(struct volume_index *volume_index)
 	}
 }
 
-/**********************************************************************/
 /**
  * Constants and structures for the saved volume index region. "MI6"
  * indicates volume index 006, and "-XXXX" is a number to increment
@@ -144,7 +143,6 @@ struct vi006_data {
 	unsigned int sparse_sample_rate;
 };
 
-/**********************************************************************/
 /**
  * Set the tag value used when saving and/or restoring a volume index.
  *
@@ -157,11 +155,11 @@ static void set_volume_index_tag_006(struct volume_index *volume_index
 {
 }
 
-/**********************************************************************/
 static int __must_check encode_volume_index_header(struct buffer *buffer,
 						   struct vi006_data *header)
 {
 	int result = put_bytes(buffer, MAGIC_SIZE, MAGIC_START);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -196,6 +194,7 @@ start_saving_volume_index_006(const struct volume_index *volume_index,
 		const_container_of(volume_index, struct volume_index6, common);
 	struct buffer *buffer;
 	int result = make_buffer(sizeof(struct vi006_data), &buffer);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -232,7 +231,6 @@ start_saving_volume_index_006(const struct volume_index *volume_index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 /**
  * Have all the data been written while saving a volume index to an output
  * stream?  If the answer is yes, it is still necessary to call
@@ -253,7 +251,6 @@ is_saving_volume_index_done_006(const struct volume_index *volume_index,
 		is_saving_volume_index_done(vi6->vi_hook, zone_number));
 }
 
-/**********************************************************************/
 /**
  * Finish saving a volume index to an output stream.  Force the writing of
  * all of the remaining data.  If an error occurred asynchronously during
@@ -271,13 +268,13 @@ finish_saving_volume_index_006(const struct volume_index *volume_index,
 	const struct volume_index6 *vi6 =
 		const_container_of(volume_index, struct volume_index6, common);
 	int result = finish_saving_volume_index(vi6->vi_non_hook, zone_number);
+
 	if (result == UDS_SUCCESS) {
 		result = finish_saving_volume_index(vi6->vi_hook, zone_number);
 	}
 	return result;
 }
 
-/**********************************************************************/
 /**
  * Abort saving a volume index to an output stream.  If an error occurred
  * asynchronously during the save operation, it will be dropped.
@@ -295,13 +292,13 @@ abort_saving_volume_index_006(const struct volume_index *volume_index,
 		const_container_of(volume_index, struct volume_index6, common);
 	int result = abort_saving_volume_index(vi6->vi_non_hook, zone_number);
 	int result2 = abort_saving_volume_index(vi6->vi_hook, zone_number);
+
 	if (result == UDS_SUCCESS) {
 		result = result2;
 	}
 	return result;
 }
 
-/**********************************************************************/
 static int __must_check decode_volume_index_header(struct buffer *buffer,
 						   struct vi006_data *header)
 {
@@ -354,6 +351,7 @@ start_restoring_volume_index_006(struct volume_index *volume_index,
 	for (i = 0; i < num_readers; i++) {
 		struct vi006_data header;
 		struct buffer *buffer;
+
 		result = make_buffer(sizeof(struct vi006_data), &buffer);
 		if (result != UDS_SUCCESS) {
 			return result;
@@ -407,7 +405,6 @@ start_restoring_volume_index_006(struct volume_index *volume_index,
 					    num_readers);
 }
 
-/**********************************************************************/
 /**
  * Have all the data been read while restoring a volume index from an
  * input stream?
@@ -425,7 +422,6 @@ is_restoring_volume_index_done_006(const struct volume_index *volume_index)
 		is_restoring_volume_index_done(vi6->vi_hook));
 }
 
-/**********************************************************************/
 /**
  * Restore a saved delta list
  *
@@ -453,7 +449,6 @@ restore_delta_list_to_volume_index_006(struct volume_index *volume_index,
 	return result;
 }
 
-/**********************************************************************/
 /**
  * Abort restoring a volume index from an input stream.
  *
@@ -467,7 +462,6 @@ static void abort_restoring_volume_index_006(struct volume_index *volume_index)
 	abort_restoring_volume_index(vi6->vi_hook);
 }
 
-/**********************************************************************/
 /**
  * Set the open chapter number on a zone.  The volume index zone will be
  * modified to index the proper number of chapters ending with the new open
@@ -485,6 +479,7 @@ set_volume_index_zone_open_chapter_006(struct volume_index *volume_index,
 	struct volume_index6 *vi6 =
 		container_of(volume_index, struct volume_index6, common);
 	struct mutex *mutex = &vi6->zones[zone_number].hook_mutex;
+
 	set_volume_index_zone_open_chapter(vi6->vi_non_hook, zone_number,
 					   virtual_chapter);
 
@@ -498,7 +493,6 @@ set_volume_index_zone_open_chapter_006(struct volume_index *volume_index,
 	uds_unlock_mutex(mutex);
 }
 
-/**********************************************************************/
 /**
  * Set the open chapter number.  The volume index will be modified to index
  * the proper number of chapters ending with the new open chapter.
@@ -513,13 +507,13 @@ set_volume_index_open_chapter_006(struct volume_index *volume_index,
 	struct volume_index6 *vi6 =
 		container_of(volume_index, struct volume_index6, common);
 	unsigned int zone;
+
 	for (zone = 0; zone < vi6->num_zones; zone++) {
 		set_volume_index_zone_open_chapter_006(volume_index, zone,
 						       virtual_chapter);
 	}
 }
 
-/**********************************************************************/
 /**
  * Find the volume index zone associated with a chunk name
  *
@@ -535,7 +529,6 @@ get_volume_index_zone_006(const struct volume_index *volume_index,
 	return get_volume_index_zone(get_sub_index(volume_index, name), name);
 }
 
-/**********************************************************************/
 /**
  * Do a quick read-only lookup of the chunk name and return information
  * needed by the index code to process the chunk name.
@@ -568,7 +561,6 @@ lookup_volume_index_name_006(const struct volume_index *volume_index,
 	return result;
 }
 
-/**********************************************************************/
 /**
  * Do a quick read-only lookup of the sampled chunk name and return
  * information needed by the index code to process the chunk name.
@@ -594,7 +586,6 @@ lookup_volume_index_sampled_name_006(const struct volume_index *volume_index
 				      "%s should not be called", __func__);
 }
 
-/**********************************************************************/
 /**
  * Find the volume index record associated with a block name
  *
@@ -628,6 +619,7 @@ static int get_volume_index_record_006(struct volume_index *volume_index,
 	const struct volume_index6 *vi6 =
 		const_container_of(volume_index, struct volume_index6, common);
 	int result;
+
 	if (is_volume_index_sample_006(volume_index, name)) {
 		/*
 		 * We need to prevent a lookup_volume_index_name() happening
@@ -637,6 +629,7 @@ static int get_volume_index_record_006(struct volume_index *volume_index,
 		 */
 		unsigned int zone = get_volume_index_zone(vi6->vi_hook, name);
 		struct mutex *mutex = &vi6->zones[zone].hook_mutex;
+
 		uds_lock_mutex(mutex);
 		result = get_volume_index_record(vi6->vi_hook, name, record);
 		uds_unlock_mutex(mutex);
@@ -652,7 +645,6 @@ static int get_volume_index_record_006(struct volume_index *volume_index,
 	return result;
 }
 
-/**********************************************************************/
 /**
  * Get the number of bytes used for volume index entries.
  *
@@ -669,7 +661,6 @@ get_volume_index_memory_used_006(const struct volume_index *volume_index)
 		get_volume_index_memory_used(vi6->vi_hook));
 }
 
-/**********************************************************************/
 /**
  * Return the volume index stats.  There is only one portion of the volume
  * index in this implementation, and we call it the dense portion of the
@@ -686,11 +677,11 @@ static void get_volume_index_stats_006(const struct volume_index *volume_index,
 	const struct volume_index6 *vi6 =
 		const_container_of(volume_index, struct volume_index6, common);
 	struct volume_index_stats dummy_stats;
+
 	get_volume_index_stats(vi6->vi_non_hook, dense, &dummy_stats);
 	get_volume_index_stats(vi6->vi_hook, sparse, &dummy_stats);
 }
 
-/**********************************************************************/
 struct split_config {
 	struct configuration hook_config; /* Describe hook part of the index */
 	struct geometry hook_geometry;
@@ -699,7 +690,6 @@ struct split_config {
 	struct geometry non_hook_geometry;
 };
 
-/**********************************************************************/
 static int split_configuration006(const struct configuration *config,
 				  struct split_config *split)
 {
@@ -744,13 +734,13 @@ static int split_configuration006(const struct configuration *config,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int compute_volume_index_save_bytes006(const struct configuration *config,
 				       size_t *num_bytes)
 {
 	size_t hook_bytes, non_hook_bytes;
 	struct split_config split;
 	int result = split_configuration006(config, &split);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -772,7 +762,6 @@ int compute_volume_index_save_bytes006(const struct configuration *config,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int make_volume_index006(const struct configuration *config,
 			 uint64_t volume_nonce,
 			 struct volume_index **volume_index)
@@ -781,6 +770,7 @@ int make_volume_index006(const struct configuration *config,
 	unsigned int zone;
 	struct volume_index6 *vi6;
 	int result = split_configuration006(config, &split);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}

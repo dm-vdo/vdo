@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -30,17 +31,16 @@
 #include "permassert.h"
 #include "uds.h"
 
-/**********************************************************************/
 static INLINE bool uses_sparse(const struct configuration *config)
 {
 	return is_sparse(config->geometry);
 }
 
-/**********************************************************************/
 void get_volume_index_combined_stats(const struct volume_index *volume_index,
 				     struct volume_index_stats *stats)
 {
 	struct volume_index_stats dense, sparse;
+
 	get_volume_index_stats(volume_index, &dense, &sparse);
 	stats->memory_allocated =
 		dense.memory_allocated + sparse.memory_allocated;
@@ -56,7 +56,6 @@ void get_volume_index_combined_stats(const struct volume_index *volume_index,
 	stats->early_flushes = dense.early_flushes + sparse.early_flushes;
 }
 
-/**********************************************************************/
 int make_volume_index(const struct configuration *config,
 		      uint64_t volume_nonce,
 		      struct volume_index **volume_index)
@@ -70,7 +69,6 @@ int make_volume_index(const struct configuration *config,
 	}
 }
 
-/**********************************************************************/
 int compute_volume_index_save_blocks(const struct configuration *config,
 				     size_t block_size,
 				     uint64_t *block_count)
@@ -89,7 +87,6 @@ int compute_volume_index_save_blocks(const struct configuration *config,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_volume_index(struct read_portal *portal)
 {
 	struct volume_index *volume_index =
@@ -97,6 +94,7 @@ static int read_volume_index(struct read_portal *portal)
 	unsigned int num_zones = portal->zones;
 	struct buffered_reader *readers[MAX_ZONES];
 	unsigned int z;
+
 	if (num_zones > MAX_ZONES) {
 		return uds_log_error_strerror(UDS_BAD_STATE,
 					      "zone count %u must not exceed MAX_ZONES",
@@ -115,15 +113,14 @@ static int read_volume_index(struct read_portal *portal)
 	return restore_volume_index(readers, num_zones, volume_index);
 }
 
-/**********************************************************************/
 static int write_volume_index(struct index_component *component,
 			      struct buffered_writer *writer,
 			      unsigned int zone)
 {
 	struct volume_index *volume_index = index_component_context(component);
-        int result;
+	int result;
 
-        result = start_saving_volume_index(volume_index, zone, writer);
+	result = start_saving_volume_index(volume_index, zone, writer);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -141,7 +138,6 @@ static int write_volume_index(struct index_component *component,
 	return flush_buffered_writer(writer);
 }
 
-/**********************************************************************/
 
 static const struct index_component_info VOLUME_INDEX_INFO_DATA = {
 	.kind = RL_KIND_VOLUME_INDEX,
@@ -154,7 +150,6 @@ static const struct index_component_info VOLUME_INDEX_INFO_DATA = {
 const struct index_component_info *const VOLUME_INDEX_INFO =
 	&VOLUME_INDEX_INFO_DATA;
 
-/**********************************************************************/
 static int restore_volume_index_body(struct buffered_reader **buffered_readers,
 				     unsigned int num_readers,
 				     struct volume_index *volume_index,
@@ -175,6 +170,7 @@ static int restore_volume_index_body(struct buffered_reader **buffered_readers,
 	for (z = 0; z < num_readers; z++) {
 		for (;;) {
 			struct delta_list_save_info dlsi;
+
 			result = read_saved_delta_list(&dlsi, dl_data,
 						       buffered_readers[z]);
 			if (result == UDS_END_OF_FILE) {
@@ -200,7 +196,6 @@ static int restore_volume_index_body(struct buffered_reader **buffered_readers,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int restore_volume_index(struct buffered_reader **buffered_readers,
 			 unsigned int num_readers,
 			 struct volume_index *volume_index)

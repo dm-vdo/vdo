@@ -28,18 +28,17 @@
 
 #include "block-map-format.h"
 #include "constants.h"
-#include "fixed-layout.h"
 #include "num-utils.h"
-#include "physical-layer.h"
 #include "recovery-journal-format.h"
 #include "release-versions.h"
 #include "slab-depot-format.h"
 #include "slab-summary-format.h"
 #include "status-codes.h"
 #include "vdo-component-states.h"
-#include "vdo-state.h"
+#include "vdo-layout.h"
 #include "volume-geometry.h"
 
+#include "physicalLayer.h"
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
 

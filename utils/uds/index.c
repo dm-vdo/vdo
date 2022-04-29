@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -28,7 +29,6 @@
 
 static const unsigned int MAX_COMPONENT_COUNT = 4;
 static const uint64_t NO_LAST_SAVE = UINT_MAX;
-
 
 /**
  * Get the zone for a request.
@@ -66,6 +66,7 @@ static uint64_t triage_index_request(struct uds_index *index,
 {
 	struct volume_index_triage triage;
 	struct index_zone *zone;
+
 	lookup_volume_index_name(index->volume_index, &request->chunk_name,
 				 &triage);
 	if (!triage.in_sampled_chapter) {
@@ -103,8 +104,10 @@ static void enqueue_barrier_messages(struct uds_index *index,
 		.virtual_chapter = virtual_chapter,
 	};
 	unsigned int zone;
+
 	for (zone = 0; zone < index->zone_count; zone++) {
 		int result = launch_zone_message(message, zone, index);
+
 		ASSERT_LOG_ONLY((result == UDS_SUCCESS),
 				"barrier message allocation");
 	}
@@ -173,6 +176,7 @@ static void triage_request(struct uds_request *request)
 	 * chapter.
 	 */
 	uint64_t sparse_virtual_chapter = triage_index_request(index, request);
+
 	if (sparse_virtual_chapter != UINT64_MAX) {
 		/* Generate and place a barrier request on every zone queue. */
 		enqueue_barrier_messages(index, sparse_virtual_chapter);
@@ -210,7 +214,8 @@ static void execute_zone_request(struct uds_request *request)
 	}
 
 	index->need_to_save = true;
-	if (request->requeued && !is_successful(request->status)) {
+	if (request->requeued && (request->status != UDS_SUCCESS)) {
+		set_request_location(request, UDS_LOCATION_UNAVAILABLE);
 		index->callback(request);
 		return;
 	}
@@ -221,6 +226,9 @@ static void execute_zone_request(struct uds_request *request)
 		return;
 	}
 
+	if (!request->found) {
+		set_request_location(request, UDS_LOCATION_UNAVAILABLE);
+	}
 	request->status = result;
 	index->callback(request);
 }
@@ -237,6 +245,7 @@ static int initialize_index_queues(struct uds_index *index,
 				   const struct geometry *geometry)
 {
 	unsigned int i;
+
 	for (i = 0; i < index->zone_count; i++) {
 		int result = make_uds_request_queue("indexW",
 						    &execute_zone_request,
@@ -258,13 +267,13 @@ static int initialize_index_queues(struct uds_index *index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int load_index(struct uds_index *index)
 {
 	uint64_t last_save_chapter;
 	unsigned int i;
 
 	int result = load_index_state(index->state);
+
 	if (result != UDS_SUCCESS) {
 		return UDS_INDEX_NOT_SAVED_CLEANLY;
 	}
@@ -280,11 +289,9 @@ static int load_index(struct uds_index *index)
 		set_active_chapters(index->zones[i]);
 	}
 
-	index->loaded_type = LOAD_LOAD;
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int rebuild_index(struct uds_index *index)
 {
 	/* Find the volume chapter boundaries */
@@ -293,6 +300,7 @@ static int rebuild_index(struct uds_index *index)
 	uint64_t lowest_vcn, highest_vcn;
 	bool is_empty = false;
 	enum index_lookup_mode old_lookup_mode = index->volume->lookup_mode;
+
 	index->volume->lookup_mode = LOOKUP_FOR_REBUILD;
 	result = find_volume_chapter_boundaries(index->volume, &lowest_vcn,
 						&highest_vcn, &is_empty);
@@ -329,7 +337,6 @@ static int rebuild_index(struct uds_index *index)
 
 	set_volume_index_open_chapter(index->volume_index, 0);
 	if (is_empty) {
-		index->loaded_type = LOAD_EMPTY;
 		return UDS_SUCCESS;
 	}
 
@@ -342,11 +349,9 @@ static int rebuild_index(struct uds_index *index)
 		set_active_chapters(index->zones[i]);
 	}
 
-	index->loaded_type = LOAD_REBUILD;
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int allocate_index(struct configuration *config,
 		   bool new,
 		   struct uds_index **new_index)
@@ -365,7 +370,6 @@ int allocate_index(struct configuration *config,
 		return result;
 	}
 
-	index->loaded_type = LOAD_UNDEFINED;
 	index->zone_count = config->zone_count;
 
 	result = make_uds_index_layout(config, new, &index->layout);
@@ -438,17 +442,17 @@ int allocate_index(struct configuration *config,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int make_index(struct configuration *config,
-	       enum load_type load_type,
+	       enum uds_open_index_type open_type,
 	       struct index_load_context *load_context,
 	       index_callback_t callback,
 	       struct uds_index **new_index)
 {
+	int result;
+	bool loaded = false;
 	struct uds_index *index;
-        int result;
 
-	result = allocate_index(config, (load_type == LOAD_CREATE), &index);
+	result = allocate_index(config, (open_type == UDS_CREATE), &index);
 	if (result != UDS_SUCCESS) {
 		return uds_log_error_strerror(result,
 					      "could not allocate index");
@@ -478,10 +482,13 @@ int make_index(struct configuration *config,
 		return result;
 	}
 
-	if ((load_type == LOAD_LOAD) || (load_type == LOAD_REBUILD)) {
+	if (open_type == UDS_CREATE) {
+		discard_index_state_data(index->state);
+	} else {
 		result = load_index(index);
 		switch (result) {
 		case UDS_SUCCESS:
+			loaded = true;
 			break;
 		case -ENOMEM:
 			/* We should not try a rebuild for this error. */
@@ -491,7 +498,7 @@ int make_index(struct configuration *config,
 		default:
 			uds_log_error_strerror(result,
 					       "index could not be loaded");
-			if (load_type == LOAD_REBUILD) {
+			if (open_type == UDS_LOAD) {
 				result = rebuild_index(index);
 				if (result != UDS_SUCCESS) {
 					uds_log_error_strerror(result,
@@ -500,9 +507,6 @@ int make_index(struct configuration *config,
 			}
 			break;
 		}
-	} else {
-		index->loaded_type = LOAD_CREATE;
-		discard_index_state_data(index->state);
 	}
 
 	if (result != UDS_SUCCESS) {
@@ -522,13 +526,12 @@ int make_index(struct configuration *config,
 		uds_unlock_mutex(&index->load_context->mutex);
 	}
 
-	index->has_saved_open_chapter = (index->loaded_type == LOAD_LOAD);
-	index->need_to_save = (index->loaded_type != LOAD_LOAD);
+	index->has_saved_open_chapter = loaded;
+	index->need_to_save = !loaded;
 	*new_index = index;
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_index(struct uds_index *index)
 {
 	unsigned int i;
@@ -561,7 +564,6 @@ void free_index(struct uds_index *index)
 	UDS_FREE(index);
 }
 
-/**********************************************************************/
 int save_index(struct uds_index *index)
 {
 	int result;
@@ -590,38 +592,52 @@ int save_index(struct uds_index *index)
 	return result;
 }
 
+int replace_index_storage(struct uds_index *index, const char *path)
+{
+	return replace_volume_storage(index->volume, index->layout, path);
+}
+
 /**
  * Search an index zone. This function is only correct for LRU.
  *
- * @param zone		    The index zone to query.
- * @param request	    The request originating the query.
+ * @param zone     The index zone to query
+ * @param request  The request originating the query
  *
  * @return UDS_SUCCESS or an error code
  **/
 static int search_index_zone(struct index_zone *zone,
 			     struct uds_request *request)
 {
+	int result;
 	struct volume_index_record record;
+	enum uds_index_region location;
 	bool overflow_record, found = false;
 	struct uds_chunk_data *metadata;
 	uint64_t chapter;
-	int result = get_volume_index_record(zone->index->volume_index,
-					     &request->chunk_name, &record);
+
+	result = get_volume_index_record(zone->index->volume_index,
+					 &request->chunk_name,
+					 &record);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
 	if (record.is_found) {
-		result = get_record_from_zone(zone, request, &found,
-					      record.virtual_chapter);
+		if (request->requeued &&
+		    request->virtual_chapter != record.virtual_chapter) {
+			set_request_location(request, UDS_LOCATION_UNKNOWN);
+		}
+
+		request->virtual_chapter = record.virtual_chapter;
+		result = get_record_from_zone(zone, request, &found);
 		if (result != UDS_SUCCESS) {
 			return result;
 		}
-		if (found) {
-			request->location =
-				compute_index_region(zone,
-						     record.virtual_chapter);
-		}
+	}
+
+	if (found) {
+		location = compute_index_region(zone, record.virtual_chapter);
+		set_request_location(request, location);
 	}
 
 	/*
@@ -633,8 +649,8 @@ static int search_index_zone(struct index_zone *zone,
 	overflow_record = (record.is_found && record.is_collision && !found);
 	chapter = zone->newest_virtual_chapter;
 	if (found || overflow_record) {
-		if ((request->type == UDS_QUERY) &&
-		    (!request->update || overflow_record)) {
+		if ((request->type == UDS_QUERY_NO_UPDATE) ||
+		    ((request->type == UDS_QUERY) && overflow_record)) {
 			/* This is a query without update, or with nothing to
 			 * update */
 			return UDS_SUCCESS;
@@ -656,11 +672,16 @@ static int search_index_zone(struct index_zone *zone,
 	} else {
 		/*
 		 * The record wasn't in the volume index, so check whether the
-		 * name is in a cached sparse chapter.
+		 * name is in a cached sparse chapter. If we found the name on
+		 * a previous search, use that result instead.
 		 */
-		if (!is_volume_index_sample(zone->index->volume_index,
-					    &request->chunk_name) &&
-		    is_sparse(zone->index->volume->geometry)) {
+		if (request->location == UDS_LOCATION_RECORD_PAGE_LOOKUP) {
+			found = true;
+		} else if (request->location == UDS_LOCATION_UNAVAILABLE) {
+			found = false;
+		} else if (is_sparse(zone->index->volume->geometry) &&
+			   !is_volume_index_sample(zone->index->volume_index,
+						   &request->chunk_name)) {
 			/*
 			 * Passing UINT64_MAX triggers a search of the entire
 			 * sparse cache.
@@ -671,20 +692,19 @@ static int search_index_zone(struct index_zone *zone,
 			if (result != UDS_SUCCESS) {
 				return result;
 			}
-
-			if (found) {
-				request->location = UDS_LOCATION_IN_SPARSE;
-			}
 		}
 
-		if (request->type == UDS_QUERY) {
-			if (!found || !request->update) {
-				/*
-				 * This is a query without update or for a new
-				 * record, so we're done.
-				 */
-				return UDS_SUCCESS;
-			}
+		if (found) {
+			set_request_location(request, UDS_LOCATION_IN_SPARSE);
+		}
+
+		if ((request->type == UDS_QUERY_NO_UPDATE) ||
+		    ((request->type == UDS_QUERY) && !found)) {
+			/*
+			 * This is a query without update or for a new record,
+			 * so we're done.
+			 */
+			return UDS_SUCCESS;
 		}
 
 		/*
@@ -721,13 +741,16 @@ static int search_index_zone(struct index_zone *zone,
 	return put_record_in_zone(zone, request, metadata);
 }
 
-/**********************************************************************/
 static int remove_from_index_zone(struct index_zone *zone,
 				  struct uds_request *request)
 {
+	int result;
+	enum uds_index_region location;
 	struct volume_index_record record;
-	int result = get_volume_index_record(zone->index->volume_index,
-					     &request->chunk_name, &record);
+
+	result = get_volume_index_record(zone->index->volume_index,
+					 &request->chunk_name,
+					 &record);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -740,28 +763,40 @@ static int remove_from_index_zone(struct index_zone *zone,
 		return UDS_SUCCESS;
 	}
 
-	if (!record.is_collision) {
+	/*
+	 * If the request was requeued, check whether the saved state is still
+	 * valid.
+	 */
+
+	if (record.is_collision) {
+		location = compute_index_region(zone, record.virtual_chapter);
+		set_request_location(request, location);
+	} else {
 		/*
 		 * Non-collision records are hints, so resolve the name in the
 		 * chapter.
 		 */
 		bool found;
-		int result = get_record_from_zone(zone, request, &found,
-						  record.virtual_chapter);
+
+		if (request->requeued &&
+		    request->virtual_chapter != record.virtual_chapter) {
+			set_request_location(request, UDS_LOCATION_UNKNOWN);
+		}
+
+		request->virtual_chapter = record.virtual_chapter;
+		result = get_record_from_zone(zone, request, &found);
 		if (result != UDS_SUCCESS) {
 			return result;
 		}
 
 		if (!found) {
-			/*
-			 * The name does not exist in the chapter, so there is
-			 * nothing to remove.
-			 */
+			/* There is no record to remove. */
 			return UDS_SUCCESS;
 		}
 	}
 
-	request->location = compute_index_region(zone, record.virtual_chapter);
+	location = compute_index_region(zone, record.virtual_chapter);
+	set_request_location(request, location);
 
 	/*
 	 * Delete the volume index entry for the named record only. Note that a
@@ -779,6 +814,7 @@ static int remove_from_index_zone(struct index_zone *zone,
 	 */
 	if (request->location == UDS_LOCATION_IN_OPEN_CHAPTER) {
 		bool hash_exists = false;
+
 		remove_from_open_chapter(zone->open_chapter,
 					 &request->chunk_name,
 					 &hash_exists);
@@ -792,7 +828,6 @@ static int remove_from_index_zone(struct index_zone *zone,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int dispatch_index_request(struct uds_index *index,
 			   struct uds_request *request)
 {
@@ -812,12 +847,11 @@ int dispatch_index_request(struct uds_index *index,
 		}
 	}
 
-	request->location = UDS_LOCATION_UNKNOWN;
-
 	switch (request->type) {
 	case UDS_POST:
 	case UDS_UPDATE:
 	case UDS_QUERY:
+	case UDS_QUERY_NO_UPDATE:
 		result = search_index_zone(zone, request);
 		break;
 
@@ -832,19 +866,16 @@ int dispatch_index_request(struct uds_index *index,
 		break;
 	}
 
-	if (request->location == UDS_LOCATION_UNKNOWN) {
-		request->location = UDS_LOCATION_UNAVAILABLE;
-	}
 	return result;
 }
 
-/**********************************************************************/
 static int rebuild_index_page_map(struct uds_index *index, uint64_t vcn)
 {
 	struct geometry *geometry = index->volume->geometry;
 	unsigned int chapter = map_to_physical_chapter(geometry, vcn);
 	unsigned int expected_list_number = 0;
 	unsigned int index_page_number;
+
 	for (index_page_number = 0;
 	     index_page_number < geometry->index_pages_per_chapter;
 	     index_page_number++) {
@@ -905,6 +936,7 @@ static int replay_record(struct uds_index *index,
 	struct volume_index_record record;
 	bool update_record;
 	int result;
+
 	if (will_be_sparse_chapter &&
 	    !is_volume_index_sample(index->volume_index, name)) {
 		/*
@@ -998,6 +1030,7 @@ static int replay_record(struct uds_index *index,
 static bool check_for_suspend(struct uds_index *index)
 {
 	bool ret_val;
+
 	if (index->load_context == NULL) {
 		return false;
 	}
@@ -1023,7 +1056,6 @@ static bool check_for_suspend(struct uds_index *index)
 	return ret_val;
 }
 
-/**********************************************************************/
 int replay_volume(struct uds_index *index, uint64_t from_vcn)
 {
 	int result;
@@ -1032,6 +1064,7 @@ int replay_volume(struct uds_index *index, uint64_t from_vcn)
 	const struct geometry *geometry;
 	uint64_t old_ipm_update, new_ipm_update, vcn;
 	uint64_t upto_vcn = index->newest_virtual_chapter;
+
 	uds_log_info("Replaying volume from chapter %llu through chapter %llu",
 		     (unsigned long long) from_vcn,
 		     (unsigned long long) upto_vcn);
@@ -1103,6 +1136,7 @@ int replay_volume(struct uds_index *index, uint64_t from_vcn)
 					record_page + (k * BYTES_PER_RECORD);
 
 				struct uds_chunk_name name;
+
 				memcpy(&name.name, name_bytes,
 				       UDS_CHUNK_NAME_SIZE);
 
@@ -1142,7 +1176,6 @@ int replay_volume(struct uds_index *index, uint64_t from_vcn)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void get_index_stats(struct uds_index *index, struct uds_index_stats *counters)
 {
 	uint64_t cw_allocated =
@@ -1152,6 +1185,7 @@ void get_index_stats(struct uds_index *index, struct uds_index_stats *counters)
 	 * that's safe to do when acquiring statistics.
 	 */
 	struct volume_index_stats dense_stats, sparse_stats;
+
 	get_volume_index_stats(index->volume_index, &dense_stats,
 			       &sparse_stats);
 
@@ -1167,7 +1201,6 @@ void get_index_stats(struct uds_index *index, struct uds_index_stats *counters)
 		(dense_stats.discard_count + sparse_stats.discard_count);
 }
 
-/**********************************************************************/
 void advance_active_chapters(struct uds_index *index)
 {
 	index->newest_virtual_chapter++;
@@ -1176,13 +1209,12 @@ void advance_active_chapters(struct uds_index *index)
 				   index->newest_virtual_chapter);
 }
 
-/**********************************************************************/
 struct uds_request_queue *select_index_queue(struct uds_index *index,
 					     struct uds_request *request,
 					     enum request_stage next_stage)
 {
 	switch (next_stage) {
-        case STAGE_TRIAGE:
+	case STAGE_TRIAGE:
 		/*
 		 * The triage queue is only needed for multi-zone sparse
 		 * indexes and won't be allocated by the index if not needed,
@@ -1195,15 +1227,15 @@ struct uds_request_queue *select_index_queue(struct uds_index *index,
 		 * Dense index or single zone, so route it directly to the zone
 		 * queue.
 		 */
-                fallthrough;
+		fallthrough;
 
-        case STAGE_INDEX:
+	case STAGE_INDEX:
 		request->zone_number =
 			get_volume_index_zone(index->volume_index,
 					      &request->chunk_name);
 		fallthrough;
 
-        case STAGE_MESSAGE:
+	case STAGE_MESSAGE:
 		return index->zone_queues[request->zone_number];
 
 	default:

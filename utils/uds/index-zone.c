@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -28,11 +29,11 @@
 #include "sparse-cache.h"
 #include "uds.h"
 
-/**********************************************************************/
 int make_index_zone(struct uds_index *index, unsigned int zone_number)
 {
 	struct index_zone *zone;
 	int result = UDS_ALLOCATE(1, struct index_zone, "index zone", &zone);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -60,7 +61,6 @@ int make_index_zone(struct uds_index *index, unsigned int zone_number)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_index_zone(struct index_zone *zone)
 {
 	if (zone == NULL) {
@@ -72,7 +72,6 @@ void free_index_zone(struct index_zone *zone)
 	UDS_FREE(zone);
 }
 
-/**********************************************************************/
 bool is_zone_chapter_sparse(const struct index_zone *zone,
 			    uint64_t virtual_chapter)
 {
@@ -82,7 +81,6 @@ bool is_zone_chapter_sparse(const struct index_zone *zone,
 				 virtual_chapter);
 }
 
-/**********************************************************************/
 void set_active_chapters(struct index_zone *zone)
 {
 	zone->oldest_virtual_chapter = zone->index->oldest_virtual_chapter;
@@ -160,8 +158,10 @@ static int announce_chapter_closed(struct index_zone *zone,
 	};
 
 	unsigned int i;
+
 	for (i = 0; i < zone->index->zone_count; i++) {
 		int result;
+
 		if (zone->id == i) {
 			continue;
 		}
@@ -187,6 +187,7 @@ static int open_next_chapter(struct index_zone *zone)
 	int result;
 	unsigned int finished_zones;
 	unsigned int expired_chapters;
+
 	uds_log_debug("closing chapter %llu of zone %u after %u entries (%u short)",
 		      (unsigned long long) zone->newest_virtual_chapter,
 		      zone->id,
@@ -244,7 +245,7 @@ static int open_next_chapter(struct index_zone *zone)
 					INVALIDATION_EXPIRE);
 	}
 
-        return result;
+	return result;
 }
 
 /**
@@ -267,7 +268,6 @@ static int handle_chapter_closed(struct index_zone *zone,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int dispatch_index_zone_control_request(struct uds_request *request)
 {
 	struct uds_zone_message *message = &request->zone_message;
@@ -286,7 +286,6 @@ int dispatch_index_zone_control_request(struct uds_request *request)
 	}
 }
 
-/**********************************************************************/
 enum uds_index_region compute_index_region(const struct index_zone *zone,
 					   uint64_t virtual_chapter)
 {
@@ -299,14 +298,21 @@ enum uds_index_region compute_index_region(const struct index_zone *zone,
 	return UDS_LOCATION_IN_DENSE;
 }
 
-/**********************************************************************/
 int get_record_from_zone(struct index_zone *zone,
 			 struct uds_request *request,
-			 bool *found,
-			 uint64_t virtual_chapter)
+			 bool *found)
 {
 	struct volume *volume;
-	if (virtual_chapter == zone->newest_virtual_chapter) {
+
+	if (request->location == UDS_LOCATION_RECORD_PAGE_LOOKUP) {
+		*found = true;
+		return UDS_SUCCESS;
+	} else if (request->location == UDS_LOCATION_UNAVAILABLE) {
+		*found = false;
+		return UDS_SUCCESS;
+	}
+
+	if (request->virtual_chapter == zone->newest_virtual_chapter) {
 		search_open_chapter(zone->open_chapter,
 				    &request->chunk_name,
 				    &request->old_metadata,
@@ -315,7 +321,7 @@ int get_record_from_zone(struct index_zone *zone,
 	}
 
 	if ((zone->newest_virtual_chapter > 0) &&
-	    (virtual_chapter == (zone->newest_virtual_chapter - 1)) &&
+	    (request->virtual_chapter == (zone->newest_virtual_chapter - 1)) &&
 	    (zone->writing_chapter->size > 0)) {
 		/*
 		 * Only search the writing chapter if it is full, else look on
@@ -328,33 +334,28 @@ int get_record_from_zone(struct index_zone *zone,
 		return UDS_SUCCESS;
 	}
 
-	/* We have determined the location previously. */
-	if (request->location != UDS_LOCATION_UNKNOWN) {
-		*found = (request->location != UDS_LOCATION_UNAVAILABLE);
-		return UDS_SUCCESS;
-	}
-
 	volume = zone->index->volume;
-	if (is_zone_chapter_sparse(zone, virtual_chapter) &&
+	if (is_zone_chapter_sparse(zone, request->virtual_chapter) &&
 	    sparse_cache_contains(volume->sparse_cache,
-				  virtual_chapter,
+				  request->virtual_chapter,
 				  request->zone_number)) {
 		/*
 		 * The named chunk, if it exists, is in a sparse chapter that
 		 * is cached, so just run the chunk through the sparse chapter
 		 * cache search.
 		 */
-		return search_sparse_cache_in_zone(zone, request,
-						   virtual_chapter, found);
+		return search_sparse_cache_in_zone(zone,
+						   request,
+						   request->virtual_chapter,
+						   found);
 	}
 
 	return search_volume_page_cache(volume,
 					request, &request->chunk_name,
-					virtual_chapter,
+					request->virtual_chapter,
 					&request->old_metadata, found);
 }
 
-/**********************************************************************/
 int put_record_in_zone(struct index_zone *zone,
 		       struct uds_request *request,
 		       const struct uds_chunk_data *metadata)
@@ -373,7 +374,6 @@ int put_record_in_zone(struct index_zone *zone,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int search_sparse_cache_in_zone(struct index_zone *zone,
 				struct uds_request *request,
 				uint64_t virtual_chapter,
@@ -390,14 +390,10 @@ int search_sparse_cache_in_zone(struct index_zone *zone,
 		return result;
 	}
 
-	volume = zone->index->volume;
-	/*
-	 * XXX map to physical chapter and validate. It would be nice to just
-	 * pass the virtual in to the slow lane, since it's tracking
-	 * invalidations.
-	 */
-	chapter = map_to_physical_chapter(volume->geometry, virtual_chapter);
+	request->virtual_chapter = virtual_chapter;
 
+	volume = zone->index->volume;
+	chapter = map_to_physical_chapter(volume->geometry, virtual_chapter);
 	return search_cached_record_page(volume,
 					 request, &request->chunk_name,
 					 chapter, record_page_number,

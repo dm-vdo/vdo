@@ -460,12 +460,6 @@ static void enumerate_devices(void)
       errx(1, "Could not parse device mapper information");
     }
 
-    if (major != 253) {
-      pclose(fp);
-      freeAllocations();
-      errx(1, "Major device number incorrect");
-    }
-
     sprintf(vdoPaths[count].resolvedName, "dm-%d", minor);
     sprintf(vdoPaths[count].resolvedPath, "/dev/%s",
             vdoPaths[count].resolvedName);

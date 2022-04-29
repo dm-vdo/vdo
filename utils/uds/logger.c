@@ -300,7 +300,7 @@ int uds_vlog_strerror(int priority,
 				 NULL,
 				 format,
 				 args,
-				 ": %s (%u)",
+				 ": %s (%d)",
 				 message,
 				 errnum);
 	return errnum;

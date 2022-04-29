@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -43,6 +44,7 @@ static int data_to_hex(const unsigned char *data,
 		       size_t hex_len)
 {
 	size_t i;
+
 	if (hex_len < 2 * data_len + 1) {
 		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
 						"hex data incorrect size");
@@ -62,7 +64,6 @@ static int data_to_hex(const unsigned char *data,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int chunk_name_to_hex(const struct uds_chunk_name *chunk_name,
 		      char *hex_data,
 		      size_t hex_data_len)
@@ -71,7 +72,6 @@ int chunk_name_to_hex(const struct uds_chunk_name *chunk_name,
 			   hex_data, hex_data_len);
 }
 
-/**********************************************************************/
 int chunk_data_to_hex(const struct uds_chunk_data *chunk_data,
 		      char *hex_data,
 		      size_t hex_data_len)
@@ -82,7 +82,6 @@ int chunk_data_to_hex(const struct uds_chunk_data *chunk_data,
 			   hex_data_len);
 }
 
-/**********************************************************************/
 unsigned int compute_bits(unsigned int max_value)
 {
 	/*
@@ -92,6 +91,7 @@ unsigned int compute_bits(unsigned int max_value)
 	 */
 
 	unsigned int bits = 0;
+
 	while (max_value > 0) {
 		max_value >>= 1;
 		bits++;
@@ -99,7 +99,6 @@ unsigned int compute_bits(unsigned int max_value)
 	return bits;
 }
 
-/**********************************************************************/
 void hash_utils_compile_time_assertions(void)
 {
 	STATIC_ASSERT((UDS_CHUNK_NAME_SIZE % sizeof(uint64_t)) == 0);

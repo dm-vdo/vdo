@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -121,6 +122,7 @@ static INLINE unsigned int extract_dlist_num(const struct volume_index5 *vi5,
 					     const struct uds_chunk_name *name)
 {
 	uint64_t bits = extract_volume_index_bytes(name);
+
 	return (bits >> vi5->address_bits) % vi5->num_delta_lists;
 }
 
@@ -196,7 +198,6 @@ is_virtual_chapter_indexed(const struct volume_index_record *record,
 		(virtual_chapter <= volume_index_zone->virtual_chapter_high));
 }
 
-/**********************************************************************/
 /**
  * Flush an invalid entry from the volume index, advancing to the next
  * valid entry.
@@ -217,6 +218,7 @@ flush_invalid_entries(struct volume_index_record *record,
 						       struct volume_index5,
 						       common);
 	int result = next_delta_index_entry(&record->delta_entry);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -287,6 +289,7 @@ static int get_volume_index_entry(struct volume_index_record *record,
 	    (key == other_record.delta_entry.key)) {
 		for (;;) {
 			byte collision_name[UDS_CHUNK_NAME_SIZE];
+
 			result = flush_invalid_entries(&other_record,
 						       flush_range,
 						       &next_chapter_to_invalidate);
@@ -329,7 +332,6 @@ static int get_volume_index_entry(struct volume_index_record *record,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 /**
  * Terminate and clean up the volume index
  *
@@ -369,7 +371,6 @@ struct vi005_data {
 	unsigned int num_lists;
 };
 
-/**********************************************************************/
 /**
  * Set the tag value used when saving and/or restoring a volume index.
  *
@@ -384,11 +385,11 @@ static void set_volume_index_tag_005(struct volume_index *volume_index,
 	set_delta_index_tag(&vi5->delta_index, tag);
 }
 
-/**********************************************************************/
 static int __must_check encode_volume_index_header(struct buffer *buffer,
 						   struct vi005_data *header)
 {
 	int result = put_bytes(buffer, MAGIC_SIZE, MAGIC_START);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -450,6 +451,7 @@ start_saving_volume_index_005(const struct volume_index *volume_index,
 	struct vi005_data header;
 	uint64_t *first_flush_chapter;
 	struct buffer *buffer;
+
 	memset(&header, 0, sizeof(header));
 	memcpy(header.magic, MAGIC_START, MAGIC_SIZE);
 	header.volume_nonce = vi5->volume_nonce;
@@ -504,7 +506,6 @@ start_saving_volume_index_005(const struct volume_index *volume_index,
 					buffered_writer);
 }
 
-/**********************************************************************/
 /**
  * Have all the data been written while saving a volume index to an output
  * stream?  If the answer is yes, it is still necessary to call
@@ -524,7 +525,6 @@ is_saving_volume_index_done_005(const struct volume_index *volume_index,
 	return is_saving_delta_index_done(&vi5->delta_index, zone_number);
 }
 
-/**********************************************************************/
 /**
  * Finish saving a volume index to an output stream.  Force the writing of
  * all of the remaining data.  If an error occurred asynchronously during
@@ -544,7 +544,6 @@ finish_saving_volume_index_005(const struct volume_index *volume_index,
 	return finish_saving_delta_index(&vi5->delta_index, zone_number);
 }
 
-/**********************************************************************/
 /**
  * Abort saving a volume index to an output stream.  If an error occurred
  * asynchronously during the save operation, it will be dropped.
@@ -563,7 +562,6 @@ abort_saving_volume_index_005(const struct volume_index *volume_index,
 	return abort_saving_delta_index(&vi5->delta_index, zone_number);
 }
 
-/**********************************************************************/
 static int __must_check decode_volume_index_header(struct buffer *buffer,
 						   struct vi005_data *header)
 {
@@ -625,6 +623,7 @@ start_restoring_volume_index_005(struct volume_index *volume_index,
 	uint64_t *first_flush_chapter;
 	uint64_t virtual_chapter_low = 0, virtual_chapter_high = 0;
 	int i;
+
 	if (volume_index == NULL) {
 		return uds_log_warning_strerror(UDS_BAD_STATE,
 						"cannot restore to null volume index");
@@ -636,6 +635,7 @@ start_restoring_volume_index_005(struct volume_index *volume_index,
 		struct buffer *buffer;
 		struct vi005_data header;
 		int result = make_buffer(sizeof(struct vi005_data), &buffer);
+
 		if (result != UDS_SUCCESS) {
 			return result;
 		}
@@ -737,7 +737,6 @@ start_restoring_volume_index_005(struct volume_index *volume_index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 /**
  * Have all the data been read while restoring a volume index from an
  * input stream?
@@ -754,7 +753,6 @@ is_restoring_volume_index_done_005(const struct volume_index *volume_index)
 	return is_restoring_delta_index_done(&vi5->delta_index);
 }
 
-/**********************************************************************/
 /**
  * Restore a saved delta list
  *
@@ -774,7 +772,6 @@ restore_delta_list_to_volume_index_005(struct volume_index *volume_index,
 	return restore_delta_list_to_delta_index(&vi5->delta_index, dlsi, data);
 }
 
-/**********************************************************************/
 /**
  * Abort restoring a volume index from an input stream.
  *
@@ -787,7 +784,6 @@ static void abort_restoring_volume_index_005(struct volume_index *volume_index)
 	abort_restoring_delta_index(&vi5->delta_index);
 }
 
-/**********************************************************************/
 static void remove_newest_chapters(struct volume_index5 *vi5,
 				   unsigned int zone_number,
 				   uint64_t virtual_chapter)
@@ -832,6 +828,7 @@ static void remove_newest_chapters(struct volume_index5 *vi5,
 				.zone_number = zone_number,
 			};
 		struct chapter_range range;
+
 		range.chapter_start =
 			convert_virtual_to_index(vi5, virtual_chapter);
 		range.chapter_count =
@@ -840,12 +837,12 @@ static void remove_newest_chapters(struct volume_index5 *vi5,
 		memset(&name, 0, sizeof(name));
 		for (i = first_list; i <= last_list; i++) {
 			struct chapter_range temp_range = range;
+
 			get_volume_index_entry(&record, i, 0, &temp_range);
 		}
 	}
 }
 
-/**********************************************************************/
 /**
  * Set the open chapter number on a zone.  The volume index zone will be
  * modified to index the proper number of chapters ending with the new open
@@ -957,7 +954,6 @@ set_volume_index_zone_open_chapter_005(struct volume_index *volume_index,
 	}
 }
 
-/**********************************************************************/
 /**
  * Set the open chapter number.  The volume index will be modified to index
  * the proper number of chapters ending with the new open chapter.
@@ -972,6 +968,7 @@ set_volume_index_open_chapter_005(struct volume_index *volume_index,
 	struct volume_index5 *vi5 =
 		container_of(volume_index, struct volume_index5, common);
 	unsigned int z;
+
 	for (z = 0; z < vi5->num_zones; z++) {
 		/*
 		 * In normal operation, we advance forward one chapter at a
@@ -999,7 +996,6 @@ set_volume_index_open_chapter_005(struct volume_index *volume_index,
 	}
 }
 
-/**********************************************************************/
 /**
  * Find the volume index zone associated with a chunk name
  *
@@ -1015,10 +1011,10 @@ get_volume_index_zone_005(const struct volume_index *volume_index,
 	const struct volume_index5 *vi5 =
 		const_container_of(volume_index, struct volume_index5, common);
 	unsigned int delta_list_number = extract_dlist_num(vi5, name);
+
 	return get_delta_index_zone(&vi5->delta_index, delta_list_number);
 }
 
-/**********************************************************************/
 /**
  * Do a quick read-only lookup of the chunk name and return information
  * needed by the index code to process the chunk name.
@@ -1040,7 +1036,6 @@ lookup_volume_index_name_005(const struct volume_index *volume_index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 /**
  * Do a quick read-only lookup of the sampled chunk name and return
  * information needed by the index code to process the chunk name.
@@ -1095,7 +1090,6 @@ lookup_volume_index_sampled_name_005(const struct volume_index *volume_index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 /**
  * Find the volume index record associated with a block name
  *
@@ -1133,6 +1127,7 @@ static int get_volume_index_record_005(struct volume_index *volume_index,
 	unsigned int address = extract_address(vi5, name);
 	unsigned int delta_list_number = extract_dlist_num(vi5, name);
 	uint64_t flush_chapter = vi5->flush_chapters[delta_list_number];
+
 	record->magic = volume_index_record_magic;
 	record->volume_index = volume_index;
 	record->mutex = NULL;
@@ -1181,7 +1176,6 @@ static int get_volume_index_record_005(struct volume_index *volume_index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 /**
  * Create a new record associated with a block name.
  *
@@ -1240,7 +1234,6 @@ int put_volume_index_record(struct volume_index_record *record,
 	return result;
 }
 
-/**********************************************************************/
 static INLINE int validate_record(struct volume_index_record *record)
 {
 	if (record->magic != volume_index_record_magic) {
@@ -1254,7 +1247,6 @@ static INLINE int validate_record(struct volume_index_record *record)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 /**
  * Remove an existing record.
  *
@@ -1265,6 +1257,7 @@ static INLINE int validate_record(struct volume_index_record *record)
 int remove_volume_index_record(struct volume_index_record *record)
 {
 	int result = validate_record(record);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -1280,7 +1273,6 @@ int remove_volume_index_record(struct volume_index_record *record)
 	return result;
 }
 
-/**********************************************************************/
 int set_volume_index_record_chapter(struct volume_index_record *record,
 				    uint64_t virtual_chapter)
 {
@@ -1288,6 +1280,7 @@ int set_volume_index_record_chapter(struct volume_index_record *record,
 						       struct volume_index5,
 						       common);
 	int result = validate_record(record);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -1305,7 +1298,7 @@ int set_volume_index_record_chapter(struct volume_index_record *record,
 	}
 	result = set_delta_entry_value(&record->delta_entry,
 				       convert_virtual_to_index(vi5,
-				       				virtual_chapter));
+								virtual_chapter));
 	if (unlikely(record->mutex != NULL)) {
 		uds_unlock_mutex(record->mutex);
 	}
@@ -1316,7 +1309,6 @@ int set_volume_index_record_chapter(struct volume_index_record *record,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 /**
  * Get the number of bytes used for volume index entries.
  *
@@ -1330,10 +1322,10 @@ get_volume_index_memory_used_005(const struct volume_index *volume_index)
 	const struct volume_index5 *vi5 =
 		const_container_of(volume_index, struct volume_index5, common);
 	uint64_t bits = get_delta_index_dlist_bits_used(&vi5->delta_index);
+
 	return (bits + CHAR_BIT - 1) / CHAR_BIT;
 }
 
-/**********************************************************************/
 /**
  * Return the volume index stats.  There is only one portion of the volume
  * index in this implementation, and we call it the dense portion of the
@@ -1351,6 +1343,7 @@ static void get_volume_index_stats_005(const struct volume_index *volume_index,
 		const_container_of(volume_index, struct volume_index5, common);
 	struct delta_index_stats dis;
 	unsigned int z;
+
 	get_delta_index_stats(&vi5->delta_index, &dis);
 	dense->memory_allocated =
 		(dis.memory_allocated + sizeof(struct volume_index5) +
@@ -1370,7 +1363,6 @@ static void get_volume_index_stats_005(const struct volume_index *volume_index,
 	memset(sparse, 0, sizeof(struct volume_index_stats));
 }
 
-/**********************************************************************/
 /**
  * Determine whether a given chunk name is a hook.
  *
@@ -1387,7 +1379,6 @@ static bool is_volume_index_sample_005(const struct volume_index *volume_index
 	return false;
 }
 
-/**********************************************************************/
 struct parameters005 {
 	unsigned int address_bits;     /* Number of bits in address mask */
 	unsigned int chapter_bits;     /* Number of bits in chapter number */
@@ -1399,7 +1390,6 @@ struct parameters005 {
 	size_t target_free_size;       /* Number of free bytes we desire */
 };
 
-/**********************************************************************/
 static int
 compute_volume_index_parameters005(const struct configuration *config,
 				   struct parameters005 *params)
@@ -1428,6 +1418,7 @@ compute_volume_index_parameters005(const struct configuration *config,
 
 	struct geometry *geometry = config->geometry;
 	unsigned long records_per_chapter = geometry->records_per_chapter;
+
 	params->num_chapters = geometry->chapters_per_volume;
 	/*
 	 * Make sure that the number of delta list records in the
@@ -1519,12 +1510,12 @@ compute_volume_index_parameters005(const struct configuration *config,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int compute_volume_index_save_bytes005(const struct configuration *config,
 				       size_t *num_bytes)
 {
 	struct parameters005 params = { .address_bits = 0 };
 	int result = compute_volume_index_parameters005(config, &params);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -1539,7 +1530,6 @@ int compute_volume_index_save_bytes005(const struct configuration *config,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int make_volume_index005(const struct configuration *config,
 			 uint64_t volume_nonce,
 			 struct volume_index **volume_index)
@@ -1548,6 +1538,7 @@ int make_volume_index005(const struct configuration *config,
 	struct parameters005 params = { .address_bits = 0 };
 	unsigned int num_zones = config->zone_count;
 	int result = compute_volume_index_parameters005(config, &params);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}

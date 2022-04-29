@@ -97,6 +97,7 @@ block-level deduplication, compression, and thin provisioning.
 This package provides the user-space support tools for VDO.
 
 %files support
+%{_bindir}/adaptLVMVDO.sh
 %{_bindir}/vdoaudit
 %{_bindir}/vdodebugmetadata
 %{_bindir}/vdodumpblockmap
@@ -104,6 +105,7 @@ This package provides the user-space support tools for VDO.
 %{_bindir}/vdolistmetadata
 %{_bindir}/vdoreadonly
 %{_bindir}/vdoregenerategeometry
+%{_mandir}/man8/adaptlvm.8.gz
 %{_mandir}/man8/vdoaudit.8.gz
 %{_mandir}/man8/vdodebugmetadata.8.gz
 %{_mandir}/man8/vdodumpblockmap.8.gz
@@ -113,5 +115,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Thu Nov 18 2021 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.0-1
+* Fri Apr 29 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.0-1
 - See https://github.com/dm-vdo/vdo.git

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -107,6 +108,13 @@ struct __attribute__((aligned(CACHE_LINE_BYTES))) cached_chapter_index {
 int __must_check
 initialize_cached_chapter_index(struct cached_chapter_index *chapter,
 				const struct geometry *geometry);
+
+/**
+ * Release the all cached page data for a cached_chapter_index.
+ *
+ * @param chapter  the chapter index cache entry to release
+ **/
+void release_cached_chapter_index(struct cached_chapter_index *chapter);
 
 /**
  * Destroy a cached_chapter_index, freeing the memory allocated for the

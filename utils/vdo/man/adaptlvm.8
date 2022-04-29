@@ -1,0 +1,23 @@
+.TH ADAPTLVM 8 "2022-01-27" "Red Hat" \" -*- nroff -*-
+.SH NAME
+adaptlvm \- Adapts an LVMVDO base storage to RW
+.SH SYNOPSIS
+.B adaptlvm
+.I filename
+.SH DESCRIPTION
+.B adaptlvm
+Tears down an LVMVDO stack to expose the VDO backing device as read only.
+.PP
+.SH OPTIONS
+.TP
+.B setRW
+Set the backing storage as Read/Write
+.TP
+.B setRO
+Sets the backing storage back to Read-Only
+.TP
+.B volume_group/logical_volume
+The volume group name and logical volume name for the LVMVDO volume
+.
+.SH SEE ALSO
+.BR vdo (8).

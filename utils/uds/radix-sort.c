@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -128,6 +129,7 @@ static INLINE void insertion_sort(const struct task task)
 	 * it, and voila!
 	 */
 	sort_key_t *next;
+
 	for (next = task.first_key + 1; next <= task.last_key; next++) {
 		insert_key(task, next);
 	}
@@ -143,13 +145,13 @@ static INLINE void push_task(struct task **stack_pointer,
 			     uint16_t length)
 {
 	struct task *task = (*stack_pointer)++;
+
 	task->first_key = first_key;
 	task->last_key = &first_key[count - 1];
 	task->offset = offset;
 	task->length = length;
 }
 
-/**********************************************************************/
 static INLINE void swap_keys(sort_key_t *a, sort_key_t *b)
 {
 	sort_key_t c = *a;
@@ -239,6 +241,7 @@ static INLINE int push_bins(struct task **stack,
 {
 	sort_key_t *pile_start = first_key;
 	int bin;
+
 	for (bin = bins->first;; bin++) {
 		uint32_t size = bins->size[bin];
 		/* Skip empty piles. */
@@ -273,7 +276,6 @@ static INLINE int push_bins(struct task **stack,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int make_radix_sorter(unsigned int count, struct radix_sorter **sorter)
 {
 	unsigned int stack_size = count / INSERTION_SORT_THRESHOLD;
@@ -292,13 +294,11 @@ int make_radix_sorter(unsigned int count, struct radix_sorter **sorter)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_radix_sorter(struct radix_sorter *sorter)
 {
 	UDS_FREE(sorter);
 }
 
-/**********************************************************************/
 int radix_sort(struct radix_sorter *sorter,
 	       const unsigned char *keys[],
 	       unsigned int count,

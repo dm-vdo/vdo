@@ -108,7 +108,8 @@ static int parseMem(char *string, uint32_t *sizePtr)
   uds_memory_config_size_t mem;
   if (strcmp(string, "0.25") == 0) {
     mem = UDS_MEMORY_CONFIG_256MB;
-  } else if (strcmp(string, "0.5") == 0) {
+  } else if ((strcmp(string, "0.5") == 0)
+             || (strcmp(string, "0.50") == 0)) {
     mem = UDS_MEMORY_CONFIG_512MB;
   } else if (strcmp(string, "0.75") == 0) {
     mem = UDS_MEMORY_CONFIG_768MB;

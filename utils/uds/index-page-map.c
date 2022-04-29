@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -51,14 +52,12 @@ const struct index_component_info INDEX_PAGE_MAP_INFO = {
 	.saver        = write_index_page_map,
 };
 
-/**********************************************************************/
 static INLINE size_t num_entries(const struct geometry *geometry)
 {
 	return geometry->chapters_per_volume *
 	       (geometry->index_pages_per_chapter - 1);
 }
 
-/**********************************************************************/
 int make_index_page_map(const struct geometry *geometry,
 			struct index_page_map **map_ptr)
 {
@@ -94,7 +93,6 @@ int make_index_page_map(const struct geometry *geometry,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_index_page_map(struct index_page_map *map)
 {
 	if (map != NULL) {
@@ -103,13 +101,11 @@ void free_index_page_map(struct index_page_map *map)
 	}
 }
 
-/**********************************************************************/
 uint64_t get_last_update(const struct index_page_map *map)
 {
 	return map->last_update;
 }
 
-/**********************************************************************/
 int update_index_page_map(struct index_page_map *map,
 			  uint64_t virtual_chapter_number,
 			  unsigned int chapter_number,
@@ -118,6 +114,7 @@ int update_index_page_map(struct index_page_map *map,
 {
 	size_t slot;
 	const struct geometry *geometry = map->geometry;
+
 	if ((virtual_chapter_number < map->last_update) ||
 	    (virtual_chapter_number > map->last_update + 1)) {
 		/*
@@ -166,7 +163,6 @@ int update_index_page_map(struct index_page_map *map,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int find_index_page_number(const struct index_page_map *map,
 			   const struct uds_chunk_name *name,
 			   unsigned int chapter_number,
@@ -175,6 +171,7 @@ int find_index_page_number(const struct index_page_map *map,
 	int result;
 	unsigned int delta_list_number, slot, limit, index_page_number = 0;
 	const struct geometry *geometry = map->geometry;
+
 	if (chapter_number >= geometry->chapters_per_volume) {
 		return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
 					      "chapter number %u exceeds maximum %u",
@@ -206,7 +203,6 @@ int find_index_page_number(const struct index_page_map *map,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int get_list_number_bounds(const struct index_page_map *map,
 			   unsigned int chapter_number,
 			   unsigned int index_page_number,
@@ -239,13 +235,11 @@ int get_list_number_bounds(const struct index_page_map *map,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 size_t index_page_map_size(const struct geometry *geometry)
 {
 	return sizeof(index_page_map_entry_t) * num_entries(geometry);
 }
 
-/**********************************************************************/
 static int write_index_page_map(struct index_component *component,
 				struct buffered_writer *writer,
 				unsigned int zone)
@@ -254,6 +248,7 @@ static int write_index_page_map(struct index_component *component,
 	struct buffer *buffer;
 
 	int result = ASSERT((zone == 0), "unimplemented zone %d", zone);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -311,18 +306,17 @@ static int write_index_page_map(struct index_component *component,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 uint64_t compute_index_page_map_save_size(const struct geometry *geometry)
 {
 	return index_page_map_size(geometry) + INDEX_PAGE_MAP_MAGIC_LENGTH +
 	       sizeof(((struct index_page_map *) 0)->last_update);
 }
 
-/**********************************************************************/
 static int __must_check decode_index_page_map(struct buffer *buffer,
 					      struct index_page_map *map)
 {
 	int result = get_uint64_le_from_buffer(buffer, &map->last_update);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -334,12 +328,11 @@ static int __must_check decode_index_page_map(struct buffer *buffer,
 	result = ASSERT_LOG_ONLY(content_length(buffer) == 0,
 				 "%zu bytes decoded of %zu expected",
 				 buffer_length(buffer) -
-				 	content_length(buffer),
+					content_length(buffer),
 				 buffer_length(buffer));
 	return result;
 }
 
-/**********************************************************************/
 static int read_index_page_map(struct read_portal *portal)
 {
 	struct index_page_map *map = index_component_data(portal->component);
@@ -347,6 +340,7 @@ static int read_index_page_map(struct read_portal *portal)
 	struct buffered_reader *reader = NULL;
 
 	int result = get_buffered_reader_for_portal(portal, 0, &reader);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}

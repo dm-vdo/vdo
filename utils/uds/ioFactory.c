@@ -59,6 +59,23 @@ int make_uds_io_factory(const char *path,
 }
 
 /**********************************************************************/
+int replace_uds_storage(struct io_factory *factory,
+			const char *path)
+{
+	int fd;
+	int result;
+
+	result = open_file(path, FU_READ_WRITE, &fd);
+	if (result != UDS_SUCCESS) {
+		return result;
+	}
+
+	close_file(factory->fd, NULL);
+	factory->fd = fd;
+	return UDS_SUCCESS;
+}
+
+/**********************************************************************/
 void put_uds_io_factory(struct io_factory *factory)
 {
 	if (atomic_add_return(-1, &factory->ref_count) <= 0) {

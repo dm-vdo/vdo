@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -177,6 +178,13 @@ int __must_check make_page_cache(const struct geometry *geometry,
  * @param cache the volumecache
  **/
 void free_page_cache(struct page_cache *cache);
+
+/**
+ * Remove all entries and release all cache data from a page cache.
+ *
+ * @param cache  The page cache
+ **/
+void invalidate_page_cache(struct page_cache *cache);
 
 /**
  * Invalidates a page cache for a particular chapter

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -67,6 +68,7 @@ get_delta_list_byte_size(const struct delta_list *delta_list)
 	uint16_t start_bit_offset =
 		get_delta_list_start(delta_list) % CHAR_BIT;
 	uint16_t bit_size = get_delta_list_size(delta_list);
+
 	return ((unsigned int) start_bit_offset + bit_size + CHAR_BIT - 1) /
 		CHAR_BIT;
 }
@@ -108,7 +110,6 @@ static INLINE size_t get_size_of_temp_offsets(unsigned int num_lists)
 	return (num_lists + 2) * sizeof(uint64_t);
 }
 
-/**********************************************************************/
 
 /**
  * Clear the transfers flags.
@@ -124,7 +125,6 @@ static void clear_transfer_flags(struct delta_memory *delta_memory)
 	delta_memory->transfer_status = UDS_SUCCESS;
 }
 
-/**********************************************************************/
 
 /**
  * Set the transfer flags for delta lists that are not empty, and count how
@@ -135,6 +135,7 @@ static void clear_transfer_flags(struct delta_memory *delta_memory)
 static void flag_non_empty_delta_lists(struct delta_memory *delta_memory)
 {
 	unsigned int i;
+
 	clear_transfer_flags(delta_memory);
 	for (i = 0; i < delta_memory->num_lists; i++) {
 		if (get_delta_list_size(&delta_memory->delta_lists[i + 1]) > 0) {
@@ -144,13 +145,13 @@ static void flag_non_empty_delta_lists(struct delta_memory *delta_memory)
 	}
 }
 
-/**********************************************************************/
 void empty_delta_lists(struct delta_memory *delta_memory)
 {
 	uint64_t num_bits, spacing, offset;
 	unsigned int i;
 	/* Zero all the delta list headers */
 	struct delta_list *delta_lists = delta_memory->delta_lists;
+
 	memset(delta_lists, 0,
 	       get_size_of_delta_lists(delta_memory->num_lists));
 
@@ -196,7 +197,6 @@ void empty_delta_lists(struct delta_memory *delta_memory)
 	delta_memory->collision_count = 0;
 }
 
-/**********************************************************************/
 /**
  * Compute the Huffman coding parameters for the given mean delta
  *
@@ -220,7 +220,6 @@ static void compute_coding_constants(unsigned int mean_delta,
 	*min_keys = (1 << *min_bits) - *incr_keys;
 }
 
-/**********************************************************************/
 /**
  * Rebalance a range of delta lists within memory.
  *
@@ -279,7 +278,6 @@ static void rebalance_delta_memory(const struct delta_memory *delta_memory,
 	}
 }
 
-/**********************************************************************/
 int initialize_delta_memory(struct delta_memory *delta_memory,
 			    size_t size,
 			    unsigned int first_list,
@@ -290,9 +288,10 @@ int initialize_delta_memory(struct delta_memory *delta_memory,
 	byte *memory = NULL, *flags = NULL;
 	uint64_t *temp_offsets = NULL;
 	int result;
+
 	if (num_lists == 0) {
 		return uds_log_warning_strerror(UDS_INVALID_ARGUMENT,
-					    	"cannot initialize delta memory with 0 delta lists");
+						"cannot initialize delta memory with 0 delta lists");
 	}
 	result = UDS_ALLOCATE(size, byte, "delta list", &memory);
 	if (result != UDS_SUCCESS) {
@@ -347,7 +346,6 @@ int initialize_delta_memory(struct delta_memory *delta_memory,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void uninitialize_delta_memory(struct delta_memory *delta_memory)
 {
 	UDS_FREE(delta_memory->flags);
@@ -360,7 +358,6 @@ void uninitialize_delta_memory(struct delta_memory *delta_memory)
 	delta_memory->memory = NULL;
 }
 
-/**********************************************************************/
 void initialize_delta_memory_page(struct delta_memory *delta_memory,
 				  byte *memory,
 				  size_t size,
@@ -392,18 +389,17 @@ void initialize_delta_memory_page(struct delta_memory *delta_memory,
 	delta_memory->tag = 'p';
 }
 
-/**********************************************************************/
 bool are_delta_memory_transfers_done(const struct delta_memory *delta_memory)
 {
 	return delta_memory->num_transfers == 0;
 }
 
-/**********************************************************************/
 int start_restoring_delta_memory(struct delta_memory *delta_memory)
 {
 	struct delta_list *delta_list;
 	/* Extend and balance memory to receive the delta lists */
 	int result = extend_delta_memory(delta_memory, 0, 0, false);
+
 	if (result != UDS_SUCCESS) {
 		return UDS_SUCCESS;
 	}
@@ -418,13 +414,13 @@ int start_restoring_delta_memory(struct delta_memory *delta_memory)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static int __must_check
 read_delta_list_save_info(struct buffered_reader *reader,
 			  struct delta_list_save_info *dlsi)
 {
 	byte buffer[sizeof(struct delta_list_save_info)];
 	int result = read_from_buffered_reader(reader, buffer, sizeof(buffer));
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -435,23 +431,23 @@ read_delta_list_save_info(struct buffered_reader *reader,
 	return result;
 }
 
-/**********************************************************************/
 int read_saved_delta_list(struct delta_list_save_info *dlsi,
 			  byte data[DELTA_LIST_MAX_BYTE_COUNT],
 			  struct buffered_reader *buffered_reader)
 {
 	int result = read_delta_list_save_info(buffered_reader, dlsi);
+
 	if (result == UDS_END_OF_FILE) {
 		return UDS_END_OF_FILE;
 	}
 	if (result != UDS_SUCCESS) {
 		return uds_log_warning_strerror(result,
-					    	"failed to read delta list data");
+						"failed to read delta list data");
 	}
 	if ((dlsi->bit_offset >= CHAR_BIT) ||
 	    (dlsi->byte_count > DELTA_LIST_MAX_BYTE_COUNT)) {
 		return uds_log_warning_strerror(UDS_CORRUPT_COMPONENT,
-					    	"corrupt delta list data");
+						"corrupt delta list data");
 	}
 	if (dlsi->tag == 'z') {
 		return UDS_END_OF_FILE;
@@ -460,12 +456,11 @@ int read_saved_delta_list(struct delta_list_save_info *dlsi,
 					   dlsi->byte_count);
 	if (result != UDS_SUCCESS) {
 		return uds_log_warning_strerror(result,
-					    	"failed to read delta list data");
+						"failed to read delta list data");
 	}
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int restore_delta_list(struct delta_memory *delta_memory,
 		       const struct delta_list_save_info *dlsi,
 		       const byte data[DELTA_LIST_MAX_BYTE_COUNT])
@@ -474,6 +469,7 @@ int restore_delta_list(struct delta_memory *delta_memory,
 	uint16_t bit_size;
 	unsigned int byte_count;
 	unsigned int list_number = dlsi->index - delta_memory->first_list;
+
 	if (list_number >= delta_memory->num_lists) {
 		return uds_log_warning_strerror(UDS_CORRUPT_COMPONENT,
 						"invalid delta list number %u not in range [%u,%u)",
@@ -510,14 +506,12 @@ int restore_delta_list(struct delta_memory *delta_memory,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void abort_restoring_delta_memory(struct delta_memory *delta_memory)
 {
 	clear_transfer_flags(delta_memory);
 	empty_delta_lists(delta_memory);
 }
 
-/**********************************************************************/
 void start_saving_delta_memory(struct delta_memory *delta_memory,
 			       struct buffered_writer *buffered_writer)
 {
@@ -525,10 +519,10 @@ void start_saving_delta_memory(struct delta_memory *delta_memory,
 	delta_memory->buffered_writer = buffered_writer;
 }
 
-/**********************************************************************/
 int finish_saving_delta_memory(struct delta_memory *delta_memory)
 {
 	unsigned int i;
+
 	for (i = 0;
 	     !are_delta_memory_transfers_done(delta_memory) &&
 		(i < delta_memory->num_lists);
@@ -545,19 +539,18 @@ int finish_saving_delta_memory(struct delta_memory *delta_memory)
 	return delta_memory->transfer_status;
 }
 
-/**********************************************************************/
 void abort_saving_delta_memory(struct delta_memory *delta_memory)
 {
 	clear_transfer_flags(delta_memory);
 	delta_memory->buffered_writer = NULL;
 }
 
-/**********************************************************************/
 static int __must_check
 write_delta_list_save_info(struct buffered_writer *buffered_writer,
 			   struct delta_list_save_info *dlsi)
 {
 	byte buffer[sizeof(struct delta_list_save_info)];
+
 	buffer[0] = dlsi->tag;
 	buffer[1] = dlsi->bit_offset;
 	put_unaligned_le16(dlsi->byte_count, &buffer[2]);
@@ -566,13 +559,13 @@ write_delta_list_save_info(struct buffered_writer *buffered_writer,
 					sizeof(buffer));
 }
 
-/**********************************************************************/
 void flush_delta_list(struct delta_memory *delta_memory,
 		      unsigned int flush_index)
 {
 	struct delta_list *delta_list;
 	struct delta_list_save_info dlsi;
 	int result;
+
 	ASSERT_LOG_ONLY((get_field(delta_memory->flags, flush_index, 1) != 0),
 			"flush bit is set");
 	set_zero(delta_memory->flags, flush_index, 1);
@@ -605,11 +598,11 @@ void flush_delta_list(struct delta_memory *delta_memory,
 	}
 }
 
-/**********************************************************************/
 int write_guard_delta_list(struct buffered_writer *buffered_writer)
 {
 	int result;
 	struct delta_list_save_info dlsi;
+
 	dlsi.tag = 'z';
 	dlsi.bit_offset = 0;
 	dlsi.byte_count = 0;
@@ -624,7 +617,6 @@ int write_guard_delta_list(struct buffered_writer *buffered_writer)
 	return result;
 }
 
-/**********************************************************************/
 int extend_delta_memory(struct delta_memory *delta_memory,
 			unsigned int growing_index,
 			size_t growing_size,
@@ -634,6 +626,7 @@ int extend_delta_memory(struct delta_memory *delta_memory,
 	struct delta_list *delta_lists;
 	unsigned int i;
 	size_t used_space, spacing;
+
 	if (!is_mutable(delta_memory)) {
 		return uds_log_error_strerror(UDS_BAD_STATE,
 					      "Attempt to read into an immutable delta list memory");
@@ -682,6 +675,7 @@ int extend_delta_memory(struct delta_memory *delta_memory,
 	 */
 	if (do_copy) {
 		ktime_t end_time;
+
 		rebalance_delta_memory(delta_memory, 1,
 				       delta_memory->num_lists + 1);
 		end_time = current_time_ns(CLOCK_MONOTONIC);
@@ -697,7 +691,6 @@ int extend_delta_memory(struct delta_memory *delta_memory,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int validate_delta_lists(const struct delta_memory *delta_memory)
 {
 	uint64_t num_bits;
@@ -778,7 +771,6 @@ int validate_delta_lists(const struct delta_memory *delta_memory)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 size_t get_delta_memory_allocated(const struct delta_memory *delta_memory)
 {
 	return (delta_memory->size +
@@ -787,13 +779,13 @@ size_t get_delta_memory_allocated(const struct delta_memory *delta_memory)
 		get_size_of_temp_offsets(delta_memory->num_lists));
 }
 
-/**********************************************************************/
 size_t get_delta_memory_size(unsigned long num_entries,
 			     unsigned int mean_delta,
 			     unsigned int num_payload_bits)
 {
 	unsigned short min_bits;
 	unsigned int incr_keys, min_keys;
+
 	compute_coding_constants(mean_delta, &min_bits, &min_keys, &incr_keys);
 	/* On average, each delta is encoded into about min_bits+1.5 bits. */
 	return (num_entries * (num_payload_bits + min_bits + 1) +

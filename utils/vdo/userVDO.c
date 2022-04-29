@@ -24,11 +24,13 @@
 #include "memory-alloc.h"
 
 #include "num-utils.h"
-#include "physical-layer.h"
 #include "status-codes.h"
 #include "types.h"
 #include "super-block-codec.h"
 #include "vdo-component-states.h"
+#include "vdo-layout.h"
+
+#include "physicalLayer.h"
 
 /**********************************************************************/
 int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
@@ -173,7 +175,7 @@ int saveVDO(UserVDO *vdo, bool saveGeometry)
 /**********************************************************************/
 void setDerivedSlabParameters(UserVDO *vdo)
 {
-  vdo->slabSizeShift = log_base_two(vdo->states.vdo.config.slab_size);
+  vdo->slabSizeShift = ilog2(vdo->states.vdo.config.slab_size);
   vdo->slabCount = vdo_compute_slab_count(vdo->states.slab_depot.first_block,
                                           vdo->states.slab_depot.last_block,
                                           vdo->slabSizeShift);

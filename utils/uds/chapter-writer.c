@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -61,6 +62,7 @@ static void close_chapters(void *arg)
 {
 	int result;
 	struct chapter_writer *writer = arg;
+
 	uds_log_debug("chapter writer starting");
 	uds_lock_mutex(&writer->mutex);
 	for (;;) {
@@ -88,6 +90,7 @@ static void close_chapters(void *arg)
 
 		if (writer->index->has_saved_open_chapter) {
 			struct index_component *oc;
+
 			writer->index->has_saved_open_chapter = false;
 			/*
 			 * Remove the saved open chapter as that chapter is
@@ -124,7 +127,6 @@ static void close_chapters(void *arg)
 	}
 }
 
-/**********************************************************************/
 int make_chapter_writer(struct uds_index *index,
 			struct chapter_writer **writer_ptr)
 {
@@ -191,10 +193,10 @@ int make_chapter_writer(struct uds_index *index,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_chapter_writer(struct chapter_writer *writer)
 {
 	int result __always_unused;
+
 	if (writer == NULL) {
 		return;
 	}
@@ -207,12 +209,12 @@ void free_chapter_writer(struct chapter_writer *writer)
 	UDS_FREE(writer);
 }
 
-/**********************************************************************/
 unsigned int start_closing_chapter(struct chapter_writer *writer,
 				   unsigned int zone_number,
 				   struct open_chapter_zone *chapter)
 {
 	unsigned int finished_zones;
+
 	uds_lock_mutex(&writer->mutex);
 	finished_zones = ++writer->zones_to_write;
 	writer->chapters[zone_number] = chapter;
@@ -222,11 +224,11 @@ unsigned int start_closing_chapter(struct chapter_writer *writer,
 	return finished_zones;
 }
 
-/**********************************************************************/
 int finish_previous_chapter(struct chapter_writer *writer,
 			    uint64_t current_chapter_number)
 {
 	int result;
+
 	uds_lock_mutex(&writer->mutex);
 	while (writer->index->newest_virtual_chapter <
 	       current_chapter_number) {
@@ -242,7 +244,6 @@ int finish_previous_chapter(struct chapter_writer *writer,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void wait_for_idle_chapter_writer(struct chapter_writer *writer)
 {
 	uds_lock_mutex(&writer->mutex);
@@ -256,7 +257,6 @@ void wait_for_idle_chapter_writer(struct chapter_writer *writer)
 	uds_unlock_mutex(&writer->mutex);
 }
 
-/**********************************************************************/
 int stop_chapter_writer(struct chapter_writer *writer)
 {
 	int result;
@@ -283,7 +283,6 @@ int stop_chapter_writer(struct chapter_writer *writer)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 size_t get_chapter_writer_memory_allocated(struct chapter_writer *writer)
 {
 	return writer->memory_allocated;

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -92,6 +93,8 @@ struct volume {
 	enum index_lookup_mode lookup_mode;
 	/* Number of read threads to use (run-time parameter) */
 	unsigned int num_read_threads;
+	/* Number of reserved buffers for the volume store */
+	unsigned int reserved_buffers;
 };
 
 /**
@@ -113,6 +116,19 @@ int __must_check make_volume(const struct configuration *config,
  * @param volume  The volume to destroy.
  **/
 void free_volume(struct volume *volume);
+
+/**
+ * Replace the backing storage for a volume.
+ *
+ * @param volume  The volume to reconfigure
+ * @param layout  The index layout
+ * @param path    The path to the new backing store
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int __must_check replace_volume_storage(struct volume *volume,
+					struct index_layout *layout,
+					const char *path);
 
 /**
  * Enqueue a page read.
@@ -378,10 +394,8 @@ int __must_check get_volume_page(struct volume *volume,
 				 byte **data_ptr,
 				 struct delta_index_page **index_page_ptr);
 
-/**********************************************************************/
 size_t __must_check get_cache_size(struct volume *volume);
 
-/**********************************************************************/
 int __must_check
 find_volume_chapter_boundaries_impl(unsigned int chapter_limit,
 				    unsigned int max_bad_chapters,

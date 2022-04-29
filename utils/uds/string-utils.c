@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -25,7 +26,6 @@
 #include "permassert.h"
 #include "uds.h"
 
-/**********************************************************************/
 int uds_alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 {
 	va_list args;
@@ -42,7 +42,6 @@ int uds_alloc_sprintf(const char *what, char **strp, const char *fmt, ...)
 	return result;
 }
 
-/**********************************************************************/
 int uds_wrap_vsnprintf(const char *what,
 		       char *buf,
 		       size_t buf_size,
@@ -52,8 +51,10 @@ int uds_wrap_vsnprintf(const char *what,
 		       size_t *needed)
 {
 	int n;
+
 	if (buf == NULL) {
 		static char nobuf[1];
+
 		buf = nobuf;
 		buf_size = 0;
 	}
@@ -73,7 +74,6 @@ int uds_wrap_vsnprintf(const char *what,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int uds_fixed_sprintf(const char *what,
 		      char *buf,
 		      size_t buf_size,
@@ -83,6 +83,7 @@ int uds_fixed_sprintf(const char *what,
 {
 	va_list args;
 	int result;
+
 	if (buf == NULL) {
 		return UDS_INVALID_ARGUMENT;
 	}
@@ -93,11 +94,11 @@ int uds_fixed_sprintf(const char *what,
 	return result;
 }
 
-/**********************************************************************/
 char *uds_v_append_to_buffer(char *buffer, char *buf_end, const char *fmt,
 			     va_list args)
 {
 	size_t n = vsnprintf(buffer, buf_end - buffer, fmt, args);
+
 	if (n >= (size_t)(buf_end - buffer)) {
 		buffer = buf_end;
 	} else {
@@ -106,7 +107,6 @@ char *uds_v_append_to_buffer(char *buffer, char *buf_end, const char *fmt,
 	return buffer;
 }
 
-/**********************************************************************/
 char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
 {
 	va_list ap;
@@ -118,11 +118,11 @@ char *uds_append_to_buffer(char *buffer, char *buf_end, const char *fmt, ...)
 	return pos;
 }
 
-/**********************************************************************/
 int uds_string_to_signed_int(const char *nptr, int *num)
 {
 	long value;
 	int result = uds_string_to_signed_long(nptr, &value);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -133,11 +133,11 @@ int uds_string_to_signed_int(const char *nptr, int *num)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int uds_string_to_unsigned_int(const char *nptr, unsigned int *num)
 {
 	unsigned long value;
 	int result = uds_string_to_unsigned_long(nptr, &value);
+
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
@@ -148,7 +148,6 @@ int uds_string_to_unsigned_int(const char *nptr, unsigned int *num)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int uds_string_to_signed_long(const char *nptr, long *num)
 {
 	if (nptr == NULL || *nptr == '\0') {
@@ -163,7 +162,6 @@ int uds_string_to_signed_long(const char *nptr, long *num)
 	return errno;
 }
 
-/**********************************************************************/
 int uds_string_to_unsigned_long(const char *nptr, unsigned long *num)
 {
 	if (nptr == NULL || *nptr == '\0') {
@@ -178,10 +176,10 @@ int uds_string_to_unsigned_long(const char *nptr, unsigned long *num)
 	return errno;
 }
 
-/**********************************************************************/
 int uds_parse_uint64(const char *str, uint64_t *num)
 {
 	char *end;
+
 	errno = 0;
 	unsigned long long temp = strtoull(str, &end, 10);
 	/*
@@ -193,6 +191,7 @@ int uds_parse_uint64(const char *str, uint64_t *num)
 		return UDS_INVALID_ARGUMENT;
 	}
 	uint64_t n = temp;
+
 	if (temp != (unsigned long long) n) {
 		return UDS_INVALID_ARGUMENT;
 	}

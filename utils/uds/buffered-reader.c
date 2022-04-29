@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -45,18 +46,19 @@ struct buffered_reader {
 };
 
 
-/**********************************************************************/
 int make_buffered_reader(struct io_region *region,
 			 struct buffered_reader **reader_ptr)
 {
 	byte *data;
-	int result = UDS_ALLOCATE_IO_ALIGNED(
+	struct buffered_reader *reader = NULL;
+	int result;
+
+	result = UDS_ALLOCATE_IO_ALIGNED(
 		UDS_BLOCK_SIZE, byte, "buffer writer buffer", &data);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
-	struct buffered_reader *reader = NULL;
 	result =
 		UDS_ALLOCATE(1, struct buffered_reader, "buffered reader",
 			     &reader);
@@ -77,7 +79,6 @@ int make_buffered_reader(struct io_region *region,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void free_buffered_reader(struct buffered_reader *br)
 {
 	if (br == NULL) {
@@ -88,7 +89,6 @@ void free_buffered_reader(struct buffered_reader *br)
 	UDS_FREE(br);
 }
 
-/**********************************************************************/
 static int
 position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
 {
@@ -98,6 +98,7 @@ position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
 					      br->br_start,
 					      UDS_BLOCK_SIZE,
 					      NULL);
+
 		if (result != UDS_SUCCESS) {
 			uds_log_warning_strerror(
 				result,
@@ -111,7 +112,6 @@ position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 static size_t bytes_remaining_in_read_buffer(struct buffered_reader *br)
 {
 	return (br->br_pointer == NULL ?
@@ -119,7 +119,6 @@ static size_t bytes_remaining_in_read_buffer(struct buffered_reader *br)
 			br->br_start + UDS_BLOCK_SIZE - br->br_pointer);
 }
 
-/**********************************************************************/
 static int reset_reader(struct buffered_reader *br)
 {
 	sector_t block_number;
@@ -136,7 +135,6 @@ static int reset_reader(struct buffered_reader *br)
 	return position_reader(br, block_number, 0);
 }
 
-/**********************************************************************/
 int read_from_buffered_reader(struct buffered_reader *br,
 			      void *data,
 			      size_t length)
@@ -144,6 +142,7 @@ int read_from_buffered_reader(struct buffered_reader *br,
 	byte *dp = data;
 	int result = UDS_SUCCESS;
 	size_t avail, chunk;
+
 	while (length > 0) {
 		result = reset_reader(br);
 		if (result != UDS_SUCCESS) {
@@ -165,7 +164,6 @@ int read_from_buffered_reader(struct buffered_reader *br,
 	return result;
 }
 
-/**********************************************************************/
 int verify_buffered_data(struct buffered_reader *br,
 			 const void *value,
 			 size_t length)
@@ -175,6 +173,7 @@ int verify_buffered_data(struct buffered_reader *br,
 	const byte *vp = value;
 	sector_t starting_block_number = br->br_block_number;
 	int starting_offset = br->br_pointer - br->br_start;
+
 	while (length > 0) {
 		result = reset_reader(br);
 		if (result != UDS_SUCCESS) {

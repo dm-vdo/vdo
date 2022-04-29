@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -48,15 +49,23 @@ int __must_check make_uds_index_layout(struct configuration *config,
  **/
 void free_uds_index_layout(struct index_layout *layout);
 
-/**********************************************************************/
+/**
+ * Replace the backing store for the layout.
+ *
+ * @param layout  The layout
+ * @param name    A name describing the new backing store
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+int __must_check replace_index_layout_storage(struct index_layout *layout,
+					      const char *name);
+
 int __must_check cancel_uds_index_save(struct index_layout *layout,
 				       unsigned int save_slot);
 
-/**********************************************************************/
 int __must_check commit_uds_index_save(struct index_layout *layout,
 				       unsigned int save_slot);
 
-/**********************************************************************/
 int __must_check discard_uds_index_saves(struct index_layout *layout);
 
 /**

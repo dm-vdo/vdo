@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -21,12 +22,12 @@
 
 #include "memory-alloc.h"
 
-/**********************************************************************/
 int initialize_cached_chapter_index(struct cached_chapter_index *chapter,
 				    const struct geometry *geometry)
 {
 	int result;
 	unsigned int i;
+
 	chapter->virtual_chapter = UINT64_MAX;
 	chapter->index_pages_count = geometry->index_pages_per_chapter;
 
@@ -56,11 +57,22 @@ int initialize_cached_chapter_index(struct cached_chapter_index *chapter,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
+void release_cached_chapter_index(struct cached_chapter_index *chapter)
+{
+	if (chapter->volume_pages != NULL) {
+		unsigned int i;
+
+		for (i = 0; i < chapter->index_pages_count; i++) {
+			release_volume_page(&chapter->volume_pages[i]);
+		}
+	}
+}
+
 void destroy_cached_chapter_index(struct cached_chapter_index *chapter)
 {
 	if (chapter->volume_pages != NULL) {
 		unsigned int i;
+
 		for (i = 0; i < chapter->index_pages_count; i++) {
 			destroy_volume_page(&chapter->volume_pages[i]);
 		}
@@ -69,7 +81,6 @@ void destroy_cached_chapter_index(struct cached_chapter_index *chapter)
 	UDS_FREE(chapter->volume_pages);
 }
 
-/**********************************************************************/
 int cache_chapter_index(struct cached_chapter_index *chapter,
 			uint64_t virtual_chapter,
 			const struct volume *volume)
@@ -103,7 +114,6 @@ int cache_chapter_index(struct cached_chapter_index *chapter,
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 int search_cached_chapter_index(struct cached_chapter_index *chapter,
 				const struct geometry *geometry,
 				const struct index_page_map *index_page_map,

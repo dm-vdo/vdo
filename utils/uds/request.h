@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -98,6 +99,21 @@ void enter_callback_stage(struct uds_request *request);
  * @param request  a client request that has successfully completed execution
  **/
 void update_request_context_stats(struct uds_request *request);
+
+/**
+ * Set the location and found flag together so they remain in sync.
+ *
+ * @param request       The request being processed
+ * @param new_location  The new location
+ **/
+static INLINE void set_request_location(struct uds_request *request,
+					enum uds_index_region new_location)
+{
+  request->location = new_location;
+  request->found = ((new_location == UDS_LOCATION_IN_OPEN_CHAPTER) ||
+		    (new_location == UDS_LOCATION_IN_DENSE) ||
+		    (new_location == UDS_LOCATION_IN_SPARSE));
+}
 
 /**
  * Compute the cache_probe_type value reflecting the request and page type.

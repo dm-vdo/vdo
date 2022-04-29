@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -23,13 +24,13 @@
 #include "logger.h"
 #include "memory-alloc.h"
 
-/**********************************************************************/
 int make_search_list(unsigned int capacity, struct search_list **list_ptr)
 {
 	struct search_list *list;
 	unsigned int bytes;
 	uint8_t i;
 	int result;
+
 	if (capacity == 0) {
 		return uds_log_error_strerror(UDS_INVALID_ARGUMENT,
 					      "search list must have entries");
@@ -64,7 +65,6 @@ int make_search_list(unsigned int capacity, struct search_list **list_ptr)
 	return UDS_SUCCESS;
 }
 
-/**********************************************************************/
 void purge_search_list(struct search_list *search_list,
 		       const struct cached_chapter_index chapters[],
 		       uint64_t oldest_virtual_chapter)
@@ -93,6 +93,7 @@ void purge_search_list(struct search_list *search_list,
 	for (i = 0; i < search_list->first_dead_entry; i++) {
 		uint8_t entry = entries[i];
 		const struct cached_chapter_index *chapter = &chapters[entry];
+
 		if ((chapter->virtual_chapter < oldest_virtual_chapter) ||
 		    (chapter->virtual_chapter == UINT64_MAX)) {
 			dead[next_dead++] = entry;

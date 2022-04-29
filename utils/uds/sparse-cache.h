@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
  *
@@ -102,6 +103,16 @@ bool sparse_cache_contains(struct sparse_cache *cache,
 int __must_check update_sparse_cache(struct index_zone *zone,
 				     uint64_t virtual_chapter);
 
+/**
+ * Mark every chapter in the cache as invalid.
+ *
+ * Note that sparse_cache_contains() does and must still return true for
+ * entries in the cache after this call, but those entries will not be
+ * searched and their data will be invalid.
+ *
+ * @param cache  the cache to invalidate
+ **/
+void invalidate_sparse_cache(struct sparse_cache *cache);
 
 /**
  * Search the cached sparse chapter indexes for a chunk name, returning a
