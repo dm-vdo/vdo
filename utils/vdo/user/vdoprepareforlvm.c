@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#4 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#5 $
  */
 
 #include <err.h>
@@ -42,6 +42,11 @@
 #include "volumeGeometry.h"
 
 #include "fileLayer.h"
+
+enum {
+  MAX_OPEN_RETRIES              = 25,
+  OPEN_RETRY_SLEEP_MICROSECONDS = 200000,
+};
 
 static const char usageString[] =
   " [--help] [--version] [--check] filename";
@@ -148,22 +153,31 @@ static const char *processArgs(int argc, char *argv[])
 static int openDeviceExclusively(int *descriptorPtr)
 {
   int fd, result;
-  unsigned int retries = 25;
-  unsigned int micro_sec_delay = 200000;
+  unsigned int retry = 0;
+  int modeFlags = O_RDWR | O_EXCL;
 
-  while (((fd = open(fileName, O_RDWR | O_EXCL | O_NONBLOCK)) < 0)
-         && retries--) {
-    if (!retries) {
+  // Initially attempt to open non-blocking so we can control how long
+  // we wait for exclusive access.
+  while ((fd = open(fileName, modeFlags | O_NONBLOCK)) < 0) {
+    retry++;
+    if (retry == 1) {
+      printf("Device %s is in use. Retrying...", fileName);
+      fflush(stdout);
+    } else if (retry > MAX_OPEN_RETRIES) {
+      printf("\n");
       return EBUSY;
+    } else if ((retry % (1000000 / OPEN_RETRY_SLEEP_MICROSECONDS)) == 0) {
+      // Indicate we're still trying about every second.
+      printf(".");
+      fflush(stdout);
     }
 
-    usleep(micro_sec_delay);
-    printf("Retrying in use check for %s.\n", fileName);
+    usleep(OPEN_RETRY_SLEEP_MICROSECONDS);
   }
 
-  // Now that the device is open, unset O_NONBLOCK flag to prevent subsequent
-  // I/Os from not being delayed or blocked correctly
-  result = fcntl(fd, F_SETFL, O_RDWR | O_EXCL);
+  // Now that the device is open, unset O_NONBLOCK flag to ensure subsequent
+  // I/Os are delayed or blocked correctly.
+  result = fcntl(fd, F_SETFL, modeFlags);
   if (result != VDO_SUCCESS) {
     warnx("Unable to clear non-blocking flag for %s", fileName);
     close(fd);

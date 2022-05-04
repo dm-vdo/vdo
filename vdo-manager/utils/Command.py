@@ -20,7 +20,7 @@
 """
   Command - runs commands and manages their results
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/Command.py#1 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/utils/Command.py#2 $
 
 """
 from __future__ import absolute_import
@@ -202,7 +202,7 @@ class Command(object):
 
   ######################################################################
   def __str__(self):
-    ' '.join(self._commandList)
+    return ' '.join(self._commandList)
 
   ######################################################################
   # Protected methods

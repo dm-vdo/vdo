@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/parseUtils.c#3 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/parseUtils.c#4 $
  */
 
 #include "parseUtils.h"
@@ -108,7 +108,8 @@ static int parseMem(char *string, uint32_t *sizePtr)
   UdsMemoryConfigSize mem;
   if (strcmp(string, "0.25") == 0) {
     mem = UDS_MEMORY_CONFIG_256MB;
-  } else if (strcmp(string, "0.5") == 0) {
+  } else if ((strcmp(string, "0.5") == 0)
+             || (strcmp(string, "0.50") == 0)) {
     mem = UDS_MEMORY_CONFIG_512MB;
   } else if (strcmp(string, "0.75") == 0) {
     mem = UDS_MEMORY_CONFIG_768MB;
