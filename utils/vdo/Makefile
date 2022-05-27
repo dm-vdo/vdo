@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#14 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/vdo/Makefile#16 $
 
 VDO_VERSION = 8.2.0.0
 
@@ -113,7 +113,6 @@ clean:
 	rm -rf $(DEPDIR) $(PROGS)
 
 libvdo.a: $(LIB_OBJECTS)
-	echo $$(LIB_OBJECTS)
 	$(RM) $@
 	$(AR) cr $@ $(LIB_OBJECTS)
 

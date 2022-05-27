@@ -27,25 +27,36 @@
 #include "numeric.h"
 
 /*
- * Define sector_t.  The kernel really wants us to use it.  The code becomes
- * ugly if we need to #ifdef every usage of sector_t.  Note that the of #define
- * means that even if a user mode include typedefs sector_t, it will not affect
- * this module.
+ * Define sector_t, because the kernel uses it extensively. Note that
+ * the use of #define means that even if a user mode include typedefs
+ * sector_t, it will not affect this module.
  */
 #define sector_t uint64_t
 
+/*
+ * The buffered reader allows efficient I/O for IO regions. The internal
+ * buffer always reads aligned data from the underlying region.
+ */
 struct buffered_reader {
 	/* Region to read from */
-	struct io_region *br_region;
+	struct io_region *region;
 	/* Number of the current block */
-	uint64_t br_block_number;
+	uint64_t block_number;
 	/* Start of the buffer */
-	byte *br_start;
+	byte *start;
 	/* End of the data read from the buffer */
-	byte *br_pointer;
+	byte *end;
 };
 
 
+/*
+ * Make a new buffered reader.
+ *
+ * @param region      An IO region to read from
+ * @param reader_ptr  The pointer to hold the newly allocated buffered reader
+ *
+ * @return UDS_SUCCESS or error code.
+ */
 int make_buffered_reader(struct io_region *region,
 			 struct buffered_reader **reader_ptr)
 {
@@ -53,25 +64,28 @@ int make_buffered_reader(struct io_region *region,
 	struct buffered_reader *reader = NULL;
 	int result;
 
-	result = UDS_ALLOCATE_IO_ALIGNED(
-		UDS_BLOCK_SIZE, byte, "buffer writer buffer", &data);
+	result = UDS_ALLOCATE_IO_ALIGNED(UDS_BLOCK_SIZE,
+					 byte,
+					 "buffered reader buffer",
+					 &data);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
-	result =
-		UDS_ALLOCATE(1, struct buffered_reader, "buffered reader",
-			     &reader);
+	result = UDS_ALLOCATE(1,
+			      struct buffered_reader,
+			      "buffered reader",
+			      &reader);
 	if (result != UDS_SUCCESS) {
 		UDS_FREE(data);
 		return result;
 	}
 
-	*reader = (struct buffered_reader){
-		.br_region = region,
-		.br_block_number = 0,
-		.br_start = data,
-		.br_pointer = NULL,
+	*reader = (struct buffered_reader) {
+		.region = region,
+		.block_number = 0,
+		.start = data,
+		.end = NULL,
 	};
 
 	get_io_region(region);
@@ -79,121 +93,143 @@ int make_buffered_reader(struct io_region *region,
 	return UDS_SUCCESS;
 }
 
-void free_buffered_reader(struct buffered_reader *br)
+void free_buffered_reader(struct buffered_reader *reader)
 {
-	if (br == NULL) {
+	if (reader == NULL) {
 		return;
 	}
-	put_io_region(br->br_region);
-	UDS_FREE(br->br_start);
-	UDS_FREE(br);
+
+	put_io_region(reader->region);
+	UDS_FREE(reader->start);
+	UDS_FREE(reader);
 }
 
-static int
-position_reader(struct buffered_reader *br, sector_t block_number, off_t offset)
+static int position_reader(struct buffered_reader *reader,
+			   sector_t block_number,
+			   off_t offset)
 {
-	if ((br->br_pointer == NULL) || (block_number != br->br_block_number)) {
-		int result = read_from_region(br->br_region,
+	if ((reader->end == NULL) || (block_number != reader->block_number)) {
+		int result = read_from_region(reader->region,
 					      block_number * UDS_BLOCK_SIZE,
-					      br->br_start,
+					      reader->start,
 					      UDS_BLOCK_SIZE,
 					      NULL);
-
 		if (result != UDS_SUCCESS) {
-			uds_log_warning_strerror(
-				result,
-				"%s got read_from_region error",
-				__func__);
+			uds_log_warning_strerror(result,
+						 "%s: read_from_region error",
+						 __func__);
 			return result;
 		}
 	}
-	br->br_block_number = block_number;
-	br->br_pointer = br->br_start + offset;
+
+	reader->block_number = block_number;
+	reader->end = reader->start + offset;
 	return UDS_SUCCESS;
 }
 
-static size_t bytes_remaining_in_read_buffer(struct buffered_reader *br)
+static size_t bytes_remaining_in_read_buffer(struct buffered_reader *reader)
 {
-	return (br->br_pointer == NULL ?
-			0 :
-			br->br_start + UDS_BLOCK_SIZE - br->br_pointer);
+	return (reader->end == NULL ?
+		0 :
+		reader->start + UDS_BLOCK_SIZE - reader->end);
 }
 
-static int reset_reader(struct buffered_reader *br)
+static int reset_reader(struct buffered_reader *reader)
 {
 	sector_t block_number;
 
-	if (bytes_remaining_in_read_buffer(br) > 0) {
+	if (bytes_remaining_in_read_buffer(reader) > 0) {
 		return UDS_SUCCESS;
 	}
 
-	block_number = br->br_block_number;
-	if (br->br_pointer != NULL) {
+	block_number = reader->block_number;
+	if (reader->end != NULL) {
 		++block_number;
 	}
 
-	return position_reader(br, block_number, 0);
+	return position_reader(reader, block_number, 0);
 }
 
-int read_from_buffered_reader(struct buffered_reader *br,
+/*
+ * Retrieve data from a buffered reader, reading from the region when needed.
+ *
+ * @param reader  The buffered reader
+ * @param data    The buffer to read data into
+ * @param length  The length of the data to read
+ *
+ * @return UDS_SUCCESS or an error code
+ */
+int read_from_buffered_reader(struct buffered_reader *reader,
 			      void *data,
 			      size_t length)
 {
 	byte *dp = data;
 	int result = UDS_SUCCESS;
-	size_t avail, chunk;
+	size_t chunk;
 
 	while (length > 0) {
-		result = reset_reader(br);
+		result = reset_reader(reader);
 		if (result != UDS_SUCCESS) {
 			break;
 		}
 
-		avail = bytes_remaining_in_read_buffer(br);
-		chunk = min(length, avail);
-		memcpy(dp, br->br_pointer, chunk);
+		chunk = min(length, bytes_remaining_in_read_buffer(reader));
+		memcpy(dp, reader->end, chunk);
 		length -= chunk;
 		dp += chunk;
-		br->br_pointer += chunk;
+		reader->end += chunk;
 	}
 
 	if (((result == UDS_OUT_OF_RANGE) || (result == UDS_END_OF_FILE)) &&
 	    (dp - (byte *) data > 0)) {
 		result = UDS_SHORT_READ;
 	}
+
 	return result;
 }
 
-int verify_buffered_data(struct buffered_reader *br,
+/*
+ * Verify that the data currently in the buffer matches the required value.
+ *
+ * @param reader  The buffered reader
+ * @param value   The value that must match the buffer contents
+ * @param length  The length of the value that must match
+ *
+ * @return UDS_SUCCESS or UDS_CORRUPT_FILE if the value does not match
+ *
+ * @note If the value matches, the matching contents are consumed. However,
+ *       if the match fails, any buffer contents are left as is.
+ */
+int verify_buffered_data(struct buffered_reader *reader,
 			 const void *value,
 			 size_t length)
 {
 	int result = UDS_SUCCESS;
-	size_t avail,chunk;
+	size_t chunk;
 	const byte *vp = value;
-	sector_t starting_block_number = br->br_block_number;
-	int starting_offset = br->br_pointer - br->br_start;
+	sector_t start_block_number = reader->block_number;
+	int start_offset = reader->end - reader->start;
 
 	while (length > 0) {
-		result = reset_reader(br);
+		result = reset_reader(reader);
 		if (result != UDS_SUCCESS) {
 			result = UDS_CORRUPT_FILE;
 			break;
 		}
 
-		avail = bytes_remaining_in_read_buffer(br);
-		chunk = min(length, avail);
-		if (memcmp(vp, br->br_pointer, chunk) != 0) {
+		chunk = min(length, bytes_remaining_in_read_buffer(reader));
+		if (memcmp(vp, reader->end, chunk) != 0) {
 			result = UDS_CORRUPT_FILE;
 			break;
 		}
+
 		length -= chunk;
 		vp += chunk;
-		br->br_pointer += chunk;
+		reader->end += chunk;
 	}
 
 	if (result != UDS_SUCCESS) {
-		position_reader(br, starting_block_number, starting_offset);
+		position_reader(reader, start_block_number, start_offset);
 	}
 
 	return result;

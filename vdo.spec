@@ -59,11 +59,6 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= bindir=%{_bindir} \
 %dir %{_defaultdocdir}/%{name}
 %license %{_defaultdocdir}/%{name}/COPYING
 %dir %{_defaultdocdir}/%{name}/examples
-%dir %{_defaultdocdir}/%{name}/examples/ansible
-%doc %{_defaultdocdir}/%{name}/examples/ansible/README.txt
-%doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate.yml
-%doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdocreate_alloptions.yml
-%doc %{_defaultdocdir}/%{name}/examples/ansible/test_vdoremove.yml
 %dir %{_defaultdocdir}/%{name}/examples/monitor
 %doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_logicalSpace.pl
 %doc %{_defaultdocdir}/%{name}/examples/monitor/monitor_check_vdostats_physicalSpace.pl
@@ -115,5 +110,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Fri Apr 29 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.0-1
+* Fri May 27 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.0-1
 - See https://github.com/dm-vdo/vdo.git

@@ -27,58 +27,69 @@
 #include "memory-alloc.h"
 #include "numeric.h"
 
-
 struct buffered_writer {
 	/* Region to write to */
-	struct io_region *bw_region;
+	struct io_region *region;
 	/* Number of the current block */
-	uint64_t bw_block_number;
+	uint64_t block_number;
 	/* Start of the buffer */
-	byte *bw_start;
+	byte *start;
 	/* End of the data written to the buffer */
-	byte *bw_pointer;
+	byte *end;
 	/* Error code */
-	int bw_error;
+	int error;
 };
 
-static INLINE size_t space_used_in_buffer(struct buffered_writer *bw)
+static INLINE size_t space_used_in_buffer(struct buffered_writer *writer)
 {
-	return bw->bw_pointer - bw->bw_start;
+	return writer->end - writer->start;
 }
 
 static
-size_t space_remaining_in_write_buffer(struct buffered_writer *bw)
+size_t space_remaining_in_write_buffer(struct buffered_writer *writer)
 {
-	return UDS_BLOCK_SIZE - space_used_in_buffer(bw);
+	return UDS_BLOCK_SIZE - space_used_in_buffer(writer);
 }
 
 
+/*
+ * Make a new buffered writer.
+ *
+ * @param region      The IO region to write to
+ * @param writer_ptr  The new buffered writer goes here
+ *
+ * @return UDS_SUCCESS or an error code
+ */
 int make_buffered_writer(struct io_region *region,
 			 struct buffered_writer **writer_ptr)
 {
+	int result;
 	byte *data;
-	int result = UDS_ALLOCATE_IO_ALIGNED(UDS_BLOCK_SIZE, byte,
-					     "buffer writer buffer", &data);
+	struct buffered_writer *writer;
+
+	result = UDS_ALLOCATE_IO_ALIGNED(UDS_BLOCK_SIZE,
+					 byte,
+					 "buffered writer buffer",
+					 &data);
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
-	struct buffered_writer *writer;
-
-	result =
-		UDS_ALLOCATE(1, struct buffered_writer, "buffered writer",
-			     &writer);
+	result = UDS_ALLOCATE(1,
+			      struct buffered_writer,
+			      "buffered writer",
+			      &writer);
 	if (result != UDS_SUCCESS) {
 		UDS_FREE(data);
 		return result;
 	}
 
-	*writer = (struct buffered_writer){
-		.bw_region = region,
-		.bw_start = data,
-		.bw_pointer = data,
-		.bw_block_number = 0,
-		.bw_error = UDS_SUCCESS,
+	*writer = (struct buffered_writer) {
+		.region = region,
+		.start = data,
+		.end = data,
+		.block_number = 0,
+		.error = UDS_SUCCESS,
 	};
 
 	get_io_region(region);
@@ -86,98 +97,100 @@ int make_buffered_writer(struct io_region *region,
 	return UDS_SUCCESS;
 }
 
-void free_buffered_writer(struct buffered_writer *bw)
+void free_buffered_writer(struct buffered_writer *writer)
 {
 	int result;
 
-	if (bw == NULL) {
+	if (writer == NULL) {
 		return;
 	}
-	result = sync_region_contents(bw->bw_region);
+
+	result = sync_region_contents(writer->region);
 	if (result != UDS_SUCCESS) {
 		uds_log_warning_strerror(result,
-				         "%s cannot sync storage", __func__);
+					 "%s: failed to sync storage",
+					 __func__);
 	}
-	put_io_region(bw->bw_region);
-	UDS_FREE(bw->bw_start);
-	UDS_FREE(bw);
+
+	put_io_region(writer->region);
+	UDS_FREE(writer->start);
+	UDS_FREE(writer);
 }
 
-int write_to_buffered_writer(struct buffered_writer *bw,
+/*
+ * Append data to the buffer, writing as needed. If a write error occurs, it
+ * is recorded and returned on every subsequent write attempt.
+ */
+int write_to_buffered_writer(struct buffered_writer *writer,
 			     const void *data,
 			     size_t len)
 {
 	const byte *dp = data;
 	int result = UDS_SUCCESS;
-	size_t avail, chunk;
+	size_t chunk;
 
-	if (bw->bw_error != UDS_SUCCESS) {
-		return bw->bw_error;
+	if (writer->error != UDS_SUCCESS) {
+		return writer->error;
 	}
 
 	while ((len > 0) && (result == UDS_SUCCESS)) {
-
-		avail = space_remaining_in_write_buffer(bw);
-		chunk = min(len, avail);
-		memcpy(bw->bw_pointer, dp, chunk);
+		chunk = min(len, space_remaining_in_write_buffer(writer));
+		memcpy(writer->end, dp, chunk);
 		len -= chunk;
 		dp += chunk;
-		bw->bw_pointer += chunk;
+		writer->end += chunk;
 
-		if (space_remaining_in_write_buffer(bw) == 0) {
-			result = flush_buffered_writer(bw);
+		if (space_remaining_in_write_buffer(writer) == 0) {
+			result = flush_buffered_writer(writer);
 		}
 	}
 
 	return result;
 }
 
-int write_zeros_to_buffered_writer(struct buffered_writer *bw, size_t len)
+int write_zeros_to_buffered_writer(struct buffered_writer *writer, size_t len)
 {
 	int result = UDS_SUCCESS;
-	size_t avail, chunk;
+	size_t chunk;
 
-	if (bw->bw_error != UDS_SUCCESS) {
-		return bw->bw_error;
+	if (writer->error != UDS_SUCCESS) {
+		return writer->error;
 	}
 
 	while ((len > 0) && (result == UDS_SUCCESS)) {
 
-		avail = space_remaining_in_write_buffer(bw);
-		chunk = min(len, avail);
-		memset(bw->bw_pointer, 0, chunk);
+		chunk = min(len, space_remaining_in_write_buffer(writer));
+		memset(writer->end, 0, chunk);
 		len -= chunk;
-		bw->bw_pointer += chunk;
+		writer->end += chunk;
 
-		if (space_remaining_in_write_buffer(bw) == 0) {
-			result = flush_buffered_writer(bw);
+		if (space_remaining_in_write_buffer(writer) == 0) {
+			result = flush_buffered_writer(writer);
 		}
 	}
 
 	return result;
 }
 
-int flush_buffered_writer(struct buffered_writer *bw)
+int flush_buffered_writer(struct buffered_writer *writer)
 {
-	if (bw->bw_error != UDS_SUCCESS) {
-		return bw->bw_error;
+	if (writer->error != UDS_SUCCESS) {
+		return writer->error;
 	}
 
-	size_t n = space_used_in_buffer(bw);
+	if (space_used_in_buffer(writer) == 0) {
+		return UDS_SUCCESS;
+	}
 
-	if (n > 0) {
-		int result =
-			write_to_region(bw->bw_region,
-					bw->bw_block_number * UDS_BLOCK_SIZE,
-					bw->bw_start,
+	writer->error = write_to_region(writer->region,
+					writer->block_number * UDS_BLOCK_SIZE,
+					writer->start,
 					UDS_BLOCK_SIZE,
-					n);
-		if (result != UDS_SUCCESS) {
-			return bw->bw_error = result;
-		} else {
-			bw->bw_pointer = bw->bw_start;
-			bw->bw_block_number++;
-		}
+					space_used_in_buffer(writer));
+	if (writer->error == UDS_SUCCESS) {
+		writer->end = writer->start;
+		writer->block_number++;
 	}
-	return UDS_SUCCESS;
+
+	return writer->error;
 }

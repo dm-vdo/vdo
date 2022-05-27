@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#44 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#49 $
 
 BUILD_VERSION = 8.2.0.0
 
@@ -67,17 +67,12 @@ vpath %.c .
 vpath %.c ./murmur
 
 UDS_OBJECTS =	murmurhash3.o		\
-		bits.o			\
 		buffer.o		\
 		buffered-reader.o	\
 		buffered-writer.o	\
-		cache-counters.o	\
-		cached-chapter-index.o	\
 		chapter-index.o		\
-		chapter-writer.o	\
 		config.o		\
 		delta-index.o		\
-		delta-memory.o		\
 		errors.o		\
 		event-count.o		\
 		fileIORegion.o		\
@@ -97,7 +92,6 @@ UDS_OBJECTS =	murmurhash3.o		\
 		logger.o		\
 		memoryAlloc.o		\
 		minisyslog.o		\
-		nonce.o			\
 		open-chapter.o		\
 		open-chapter-zone.o	\
 		page-cache.o		\
@@ -107,7 +101,6 @@ UDS_OBJECTS =	murmurhash3.o		\
 		record-page.o		\
 		request.o		\
 		requestQueue.o		\
-		search-list.o		\
 		sparse-cache.o		\
 		string-utils.o		\
 		syscalls.o		\
