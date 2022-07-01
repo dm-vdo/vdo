@@ -1,21 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
  */
 
 #include "volume-geometry.h"
@@ -80,13 +65,13 @@ static const release_version_number_t COMPATIBLE_RELEASE_VERSIONS[] = {
 };
 
 /**
- * Determine whether the supplied release version can be understood by
- * the VDO code.
+ * is_loadable_release_version() - Determine whether the supplied
+ *                                 release version can be understood
+ *                                 by the VDO code.
+ * @version: The release version number to check.
  *
- * @param version  The release version number to check
- *
- * @return <code>True</code> if the given version can be loaded.
- **/
+ * Return: True if the given version can be loaded.
+ */
 static inline bool is_loadable_release_version(release_version_number_t version)
 {
 	unsigned int i;
@@ -105,13 +90,13 @@ static inline bool is_loadable_release_version(release_version_number_t version)
 }
 
 /**
- * Decode the on-disk representation of an index configuration from a buffer.
+ * decode_index_config() - Decode the on-disk representation of an
+ *                         index configuration from a buffer.
+ * @buffer: A buffer positioned at the start of the encoding.
+ * @config: The structure to receive the decoded fields.
  *
- * @param buffer  A buffer positioned at the start of the encoding
- * @param config  The structure to receive the decoded fields
- *
- * @return UDS_SUCCESS or an error
- **/
+ * Return: UDS_SUCCESS or an error.
+ */
 static int decode_index_config(struct buffer *buffer,
 			       struct index_config *config)
 {
@@ -141,13 +126,13 @@ static int decode_index_config(struct buffer *buffer,
 }
 
 /**
- * Encode the on-disk representation of an index configuration into a buffer.
+ * encode_index_config() - Encode the on-disk representation of an
+ *                         index configuration into a buffer.
+ * @config: The index configuration to encode.
+ * @buffer: A buffer positioned at the start of the encoding.
  *
- * @param config  The index configuration to encode
- * @param buffer  A buffer positioned at the start of the encoding
- *
- * @return UDS_SUCCESS or an error
- **/
+ * Return: UDS_SUCCESS or an error.
+ */
 static int encode_index_config(const struct index_config *config,
 			       struct buffer *buffer)
 {
@@ -166,13 +151,13 @@ static int encode_index_config(const struct index_config *config,
 }
 
 /**
- * Decode the on-disk representation of a volume region from a buffer.
+ * decode_volume_region() - Decode the on-disk representation of a
+ *                          volume region from a buffer.
+ * @buffer: A buffer positioned at the start of the encoding.
+ * @region: The structure to receive the decoded fields.
  *
- * @param buffer  A buffer positioned at the start of the encoding
- * @param region  The structure to receive the decoded fields
- *
- * @return UDS_SUCCESS or an error
- **/
+ * Return: UDS_SUCCESS or an error.
+ */
 static int decode_volume_region(struct buffer *buffer,
 				struct volume_region *region)
 {
@@ -197,13 +182,13 @@ static int decode_volume_region(struct buffer *buffer,
 }
 
 /**
- * Encode the on-disk representation of a volume region into a buffer.
+ * encode_volume_region() - Encode the on-disk representation of a
+ *                          volume region into a buffer.
+ * @region: The region to encode.
+ * @buffer: A buffer positioned at the start of the encoding.
  *
- * @param region  The region to encode
- * @param buffer  A buffer positioned at the start of the encoding
- *
- * @return UDS_SUCCESS or an error
- **/
+ * Return: UDS_SUCCESS or an error.
+ */
 static int encode_volume_region(const struct volume_region *region,
 				struct buffer *buffer)
 {
@@ -217,14 +202,14 @@ static int encode_volume_region(const struct volume_region *region,
 }
 
 /**
- * Decode the on-disk representation of a volume geometry from a buffer.
+ * decode_volume_geometry() - Decode the on-disk representation of a
+ *                            volume geometry from a buffer.
+ * @buffer: A buffer positioned at the start of the encoding.
+ * @geometry: The structure to receive the decoded fields.
+ * @version: The geometry block version to decode.
  *
- * @param buffer    A buffer positioned at the start of the encoding
- * @param geometry  The structure to receive the decoded fields
- * @param version   The geometry block version to decode
- *
- * @return UDS_SUCCESS or an error
- **/
+ * Return: UDS_SUCCESS or an error.
+ */
 static int decode_volume_geometry(struct buffer *buffer,
 				  struct volume_geometry *geometry,
 				  uint32_t version)
@@ -273,14 +258,14 @@ static int decode_volume_geometry(struct buffer *buffer,
 }
 
 /**
- * Encode the on-disk representation of a volume geometry into a buffer.
+ * encode_volume_geometry() - Encode the on-disk representation of a
+ *                            volume geometry into a buffer.
+ * @geometry: The geometry to encode.
+ * @buffer: A buffer positioned at the start of the encoding.
+ * @version: The geometry block version to encode.
  *
- * @param geometry  The geometry to encode
- * @param buffer    A buffer positioned at the start of the encoding
- * @param version   The geometry block version to encode
- *
- * @return UDS_SUCCESS or an error
- **/
+ * Return: UDS_SUCCESS or an error.
+ */
 static int encode_volume_geometry(const struct volume_geometry *geometry,
 				  struct buffer *buffer,
 				  uint32_t version)
@@ -323,14 +308,14 @@ static int encode_volume_geometry(const struct volume_geometry *geometry,
 }
 
 /**
- * Decode the on-disk representation of a geometry block, up to but not
- * including the checksum, from a buffer.
+ * decode_geometry_block() - Decode the on-disk representation of a
+ *                           geometry block, up to but not including
+ *                           the checksum, from a buffer.
+ * @buffer: A buffer positioned at the start of the block.
+ * @geometry: The structure to receive the decoded volume geometry fields.
  *
- * @param buffer    A buffer positioned at the start of the block
- * @param geometry  The structure to receive the decoded volume geometry fields
- *
- * @return UDS_SUCCESS or an error
- **/
+ * Return: UDS_SUCCESS or an error.
+ */
 static int decode_geometry_block(struct buffer *buffer,
 				 struct volume_geometry *geometry)
 {
@@ -375,11 +360,10 @@ static int decode_geometry_block(struct buffer *buffer,
 }
 
 /**
- * Decode and validate an encoded geometry block.
- *
- * @param block     The encoded geometry block
- * @param geometry  The structure to receive the decoded fields
- **/
+ * vdo_parse_geometry_block() - Decode and validate an encoded geometry block.
+ * @block: The encoded geometry block.
+ * @geometry: The structure to receive the decoded fields.
+ */
 static int __must_check
 vdo_parse_geometry_block(byte *block, struct volume_geometry *geometry)
 {
@@ -420,15 +404,15 @@ vdo_parse_geometry_block(byte *block, struct volume_geometry *geometry)
 }
 
 /**
- * Encode the on-disk representation of a geometry block, up to but not
- * including the checksum, into a buffer.
+ * encode_geometry_block() - Encode the on-disk representation of a geometry
+ *                           block, up to but not including the checksum, into
+ *                           a buffer.
+ * @geometry: The volume geometry to encode into the block.
+ * @buffer: A buffer positioned at the start of the block.
+ * @version: The geometry block version to encode.
  *
- * @param geometry  The volume geometry to encode into the block
- * @param buffer    A buffer positioned at the start of the block
- * @param version   The geometry block version to encode
- *
- * @return UDS_SUCCESS or an error
- **/
+ * Return: UDS_SUCCESS or an error.
+ */
 static int encode_geometry_block(const struct volume_geometry *geometry,
 				 struct buffer *buffer,
 				 uint32_t version)
@@ -460,11 +444,10 @@ static int encode_geometry_block(const struct volume_geometry *geometry,
 }
 
 /**
- * Load the volume geometry from a layer.
- *
- * @param layer     The layer to read and parse the geometry from
- * @param geometry  The structure to receive the decoded fields
- **/
+ * vdo_load_volume_geometry() - Load the volume geometry from a layer.
+ * @layer: The layer to read and parse the geometry from.
+ * @geometry: The structure to receive the decoded fields.
+ */
 int vdo_load_volume_geometry(PhysicalLayer *layer,
 			     struct volume_geometry *geometry)
 {
@@ -487,13 +470,13 @@ int vdo_load_volume_geometry(PhysicalLayer *layer,
 }
 
 /**
- * Compute the index size in blocks from the index_config.
+ * vdo_compute_index_blocks() - Compute the index size in blocks from the
+ *                              index_config.
+ * @index_config: The index config.
+ * @index_blocks_ptr: A pointer to return the index size in blocks.
  *
- * @param index_config      The index config
- * @param index_blocks_ptr  A pointer to return the index size in blocks
- *
- * @return VDO_SUCCESS or an error
- **/
+ * Return: VDO_SUCCESS or an error.
+ */
 int vdo_compute_index_blocks(const struct index_config *index_config,
 			     block_count_t *index_blocks_ptr)
 {
@@ -523,15 +506,14 @@ int vdo_compute_index_blocks(const struct index_config *index_config,
 }
 
 /**
- * Initialize a volume_geometry for a VDO.
+ * vdo_initialize_volume_geometry() - Initialize a volume_geometry for a VDO.
+ * @nonce: The nonce for the VDO.
+ * @uuid: The uuid for the VDO.
+ * @index_config: The index config of the VDO.
+ * @geometry: The geometry being initialized.
  *
- * @param nonce         The nonce for the VDO
- * @param uuid          The uuid for the VDO
- * @param index_config  The index config of the VDO
- * @param geometry      The geometry being initialized
- *
- * @return VDO_SUCCESS or an error
- **/
+ * Return: VDO_SUCCESS or an error.
+ */
 int vdo_initialize_volume_geometry(nonce_t nonce,
 				   uuid_t *uuid,
 				   const struct index_config *index_config,
@@ -573,12 +555,11 @@ int vdo_initialize_volume_geometry(nonce_t nonce,
 }
 
 /**
- * Zero out the geometry on a layer.
+ * vdo_clear_volume_geometry() - Zero out the geometry on a layer.
+ * @layer: The layer to clear.
  *
- * @param layer  The layer to clear
- *
- * @return VDO_SUCCESS or an error
- **/
+ * Return: VDO_SUCCESS or an error.
+ */
 int vdo_clear_volume_geometry(PhysicalLayer *layer)
 {
 	char *block;
@@ -594,13 +575,12 @@ int vdo_clear_volume_geometry(PhysicalLayer *layer)
 }
 
 /**
- * Write a geometry block for a VDO.
+ * vdo_write_volume_geometry() - Write a geometry block for a VDO.
+ * @layer: The layer on which to write.
+ * @geometry: The volume_geometry to be written.
  *
- * @param layer     The layer on which to write
- * @param geometry  The volume_geometry to be written
- *
- * @return VDO_SUCCESS or an error
- **/
+ * Return: VDO_SUCCESS or an error.
+ */
 int vdo_write_volume_geometry(PhysicalLayer *layer,
 			      struct volume_geometry *geometry)
 {
@@ -609,14 +589,14 @@ int vdo_write_volume_geometry(PhysicalLayer *layer,
 }
 
 /**
- * Write a specific version of geometry block for a VDO.
+ * vdo_write_volume_geometry_with_version() - Write a specific version of
+ *                                            geometry block for a VDO.
+ * @layer: The layer on which to write.
+ * @geometry: The VolumeGeometry to be written.
+ * @version: The version of VolumeGeometry to write.
  *
- * @param layer     The layer on which to write
- * @param geometry  The VolumeGeometry to be written
- * @param version   The version of VolumeGeometry to write
- *
- * @return VDO_SUCCESS or an error
- **/
+ * Return: VDO_SUCCESS or an error.
+ */
 int __must_check
 vdo_write_volume_geometry_with_version(PhysicalLayer *layer,
 				       struct volume_geometry *geometry,

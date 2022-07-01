@@ -102,7 +102,6 @@ struct physicalLayer {
 	buffer_allocator *allocateIOBuffer;
 	extent_reader *reader;
 	extent_writer *writer;
-
 };
 
 #endif /* PHYSICAL_LAYER_H */

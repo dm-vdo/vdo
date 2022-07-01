@@ -293,7 +293,7 @@ int uds_vlog_strerror(int priority,
 		      const char *format,
 		      va_list args)
 {
-	char errbuf[ERRBUF_SIZE];
+	char errbuf[UDS_MAX_ERROR_MESSAGE_SIZE];
         const char *message = uds_string_error(errnum, errbuf, sizeof(errbuf));
 	uds_log_embedded_message(priority,
 				 module,

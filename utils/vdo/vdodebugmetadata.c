@@ -584,9 +584,9 @@ readVDOFromDump(const char *filename)
   int result = makeReadOnlyFileLayer(filename, &layer);
 
   if (result != VDO_SUCCESS) {
-    char errBuf[ERRBUF_SIZE];
-    warnx("Failed to make FileLayer from '%s' with %s",
-          filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+    warnx("Failed to make FileLayer from '%s' with %s", filename,
+          uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
 
@@ -595,9 +595,9 @@ readVDOFromDump(const char *filename)
   result = vdo_load_volume_geometry(layer, &geometry);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
-    char errBuf[ERRBUF_SIZE];
-    warnx("VDO geometry read failed for '%s' with %s",
-          filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+    warnx("VDO geometry read failed for '%s' with %s", filename,
+          uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
   geometry.regions[VDO_DATA_REGION].start_block = 1;
@@ -609,12 +609,12 @@ readVDOFromDump(const char *filename)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   char *filename;
@@ -638,8 +638,8 @@ int main(int argc, char *argv[])
 
   result = readVDOFromDump(filename);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not load VDO from '%s': %s",
-         filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    errx(1, "Could not load VDO from '%s': %s", filename,
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   allocateMetadataSpace();

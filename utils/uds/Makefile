@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#49 $
+# $Id: //eng/linux-vdo/src/packaging/src-dist/user/utils/uds/Makefile#54 $
 
 BUILD_VERSION = 8.2.0.0
 
@@ -81,19 +81,14 @@ UDS_OBJECTS =	murmurhash3.o		\
 		geometry.o		\
 		hash-utils.o		\
 		index.o			\
-		index-component.o	\
 		index-layout.o		\
 		index-page-map.o	\
 		index-session.o		\
-		index-state.o		\
-		index-state-data.o	\
-		index-zone.o		\
 		ioFactory.o		\
 		logger.o		\
 		memoryAlloc.o		\
 		minisyslog.o		\
 		open-chapter.o		\
-		open-chapter-zone.o	\
 		page-cache.o		\
 		permassert.o		\
 		radix-sort.o		\

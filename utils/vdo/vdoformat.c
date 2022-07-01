@@ -408,12 +408,12 @@ static int checkDeviceInUse(char *filename, uint32_t major, uint32_t minor)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   uint64_t     logicalSize  = 0; // defaults to physicalSize
@@ -536,7 +536,7 @@ int main(int argc, char *argv[])
          VDO_BLOCK_SIZE);
   }
 
-  char errorBuffer[ERRBUF_SIZE];
+  char errorBuffer[UDS_MAX_ERROR_MESSAGE_SIZE];
   if (config.logical_blocks > MAXIMUM_VDO_LOGICAL_BLOCKS) {
     errx(VDO_OUT_OF_RANGE,
          "%llu requested logical space exceeds the maximum "

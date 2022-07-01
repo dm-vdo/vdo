@@ -244,10 +244,10 @@ int readBlockMapPage(PhysicalLayer            *layer,
 {
   int result = layer->reader(layer, pbn, 1, (char *) page);
   if (result != VDO_SUCCESS) {
-    char errBuf[ERRBUF_SIZE];
+    char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
     printf("%llu unreadable : %s",
            (unsigned long long) pbn,
-           uds_string_error(result, errBuf, ERRBUF_SIZE));
+           uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
 

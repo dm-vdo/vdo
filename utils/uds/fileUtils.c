@@ -161,7 +161,7 @@ int read_buffer(int fd, void *buffer, unsigned int length)
 		}
 
 		if (bytes_read == 0) {
-			return uds_log_warning_strerror(UDS_CORRUPT_FILE,
+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
 							"unexpected end of file while reading");
 		}
 

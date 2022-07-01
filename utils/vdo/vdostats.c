@@ -493,13 +493,13 @@ static void calculateMaxDeviceName(char *name)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  char errBuf[ERRBUF_SIZE];
+  char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
   int result;
 
   result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   process_args(argc, argv);
