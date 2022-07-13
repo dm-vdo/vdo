@@ -20,7 +20,7 @@
 """
   VDOArgumentParser - argument parser for vdo command input
 
-  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#18 $
+  $Id: //eng/vdo-releases/aluminum/src/python/vdo/vdomgmnt/VDOArgumentParser.py#19 $
 """
 # "Too many lines in module"
 #pylint: disable=C0302
@@ -872,7 +872,9 @@ suffix is optional""").format(options
       noDefault (boolean) - if True, no default is mentioned in the help text
     """
     defaultHelp = ("" if noDefault else
-                   "The default is {0}.".format(Defaults.uuid))
+                   _("""For newly created volumes, the default is an empty 
+                   string (generate a new uuid).  For importing existing 
+                   volumes, the default is the existing VDO volume's uuid."""))
 
     parser = argparse.ArgumentParser(add_help = False)
     parser.add_argument("--uuid",

@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.7.9
+Version: 6.2.7.17
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -184,7 +184,6 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Wed May 04 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.7.9-1
-- Fixed excessive vdo2lvm "Retrying" messages.
-- Fixed a pylint 2+ complaint in the vdo scripts.
+* Wed Jul 13 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.7.17-1
+- Updated vdo script documentation and help text for the uuid option.
   

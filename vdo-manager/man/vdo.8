@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 .\" 02110-1301, USA. 
 .\"
-.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#22 $
+.\" $Id: //eng/vdo-releases/aluminum/src/python/vdo/man/vdo.8#23 $
 .
 .\" Constants (as strings, for ease of use and consistency)
 .ds ackThreadsDefault 1
@@ -664,7 +664,10 @@ Enables sparse indexing. The default is \*[sparseIndexDefault].
 Sets the UUID of the VDO volume. The value needs to be either a
 valid uuid or an empty string. If an empty string is specified, a
 new random uuid is generated for the VDO volume.
-The default is \*[uuidDefault]..
+For newly created volumes, the default is an empty
+string (generate a new uuid). For importing existing
+volumes, the default is the existing VDO volume's uuid.
+
 .TP
 .B \-\-vdoAckThreads=\fIthread count\fR
 Specifies the number of threads to use for acknowledging completion of
