@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDebugMetadata.c#20 $
  */
 
 #include <err.h>
@@ -26,21 +24,21 @@
 
 #include "errors.h"
 #include "logger.h"
-#include "memoryAlloc.h"
-#include "stringUtils.h"
+#include "memory-alloc.h"
+#include "string-utils.h"
 #include "syscalls.h"
 
-#include "blockMapFormat.h"
-#include "numUtils.h"
-#include "packedRecoveryJournalBlock.h"
-#include "packedReferenceBlock.h"
-#include "recoveryJournalEntry.h"
-#include "recoveryJournalFormat.h"
-#include "slabJournalFormat.h"
+#include "block-map-format.h"
+#include "num-utils.h"
+#include "packed-recovery-journal-block.h"
+#include "packed-reference-block.h"
+#include "recovery-journal-entry.h"
+#include "recovery-journal-format.h"
+#include "slab-journal-format.h"
 
-#include "statusCodes.h"
+#include "status-codes.h"
 #include "types.h"
-#include "volumeGeometry.h"
+#include "volume-geometry.h"
 
 #include "fileLayer.h"
 #include "userVDO.h"
@@ -329,15 +327,15 @@ static int allocateMetadataSpace(void)
          (unsigned long long) config->recovery_journal_size);
   }
 
-  result = UDS_ALLOCATE(get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
+  result = UDS_ALLOCATE(vdo_get_slab_summary_size(VDO_BLOCK_SIZE),
                         struct slab_summary_entry *,
                         __func__, &slabSummary);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %llu slab summary block pointers",
-         (unsigned long long) get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
+         (unsigned long long) vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
   }
 
-  for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+  for (block_count_t i = 0; i < vdo_get_slab_summary_size(VDO_BLOCK_SIZE);
        i++) {
     char *buffer;
     result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE,
@@ -372,7 +370,7 @@ static void freeMetadataSpace(void)
   recoveryJournal = NULL;
 
   if (slabSummary != NULL) {
-    for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+    for (block_count_t i = 0; i < vdo_get_slab_summary_size(VDO_BLOCK_SIZE);
          i++) {
       UDS_FREE(slabSummary[i]);
       slabSummary[i] = NULL;
@@ -401,7 +399,7 @@ static void readMetadata(void)
   block_count_t totalNonBlockMapMetadataBlocks
     = ((metadataBlocksPerSlab * slabCount)
        + config->recovery_journal_size
-       + get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
+       + vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
 
   nextBlock
     = (vdo->layer->getBlockCount(vdo->layer) - totalNonBlockMapMetadataBlocks);
@@ -435,14 +433,14 @@ static void readMetadata(void)
     UnpackedJournalBlock *block = &recoveryJournal[i];
     struct packed_journal_header *packedHeader
       = (struct packed_journal_header *) &rawJournalBytes[i * VDO_BLOCK_SIZE];
-    unpack_vdo_recovery_block_header(packedHeader, &block->header);
+    vdo_unpack_recovery_block_header(packedHeader, &block->header);
     for (uint8_t sector = 1; sector < VDO_SECTORS_PER_BLOCK; sector++) {
       block->sectors[sector]
-        = get_vdo_journal_block_sector(packedHeader, sector);
+        = vdo_get_journal_block_sector(packedHeader, sector);
     }
   }
 
-  for (block_count_t i = 0; i < get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+  for (block_count_t i = 0; i < vdo_get_slab_summary_size(VDO_BLOCK_SIZE);
        i++) {
     readBlocks(1, (char *) slabSummary[i]);
   }
@@ -474,12 +472,12 @@ static void findSlabJournalEntries(physical_block_number_t pbn)
          entryIndex < entryCount;
          entryIndex++) {
       struct slab_journal_entry entry
-        = decode_vdo_slab_journal_entry(block, entryIndex);
+        = vdo_decode_slab_journal_entry(block, entryIndex);
       if (slabOffset == entry.sbn) {
         printf("PBN %llu (%llu, %d) %s\n",
                (unsigned long long) pbn,
 	       (unsigned long long) __le64_to_cpu(block->header.sequence_number),
-               entryIndex, get_vdo_journal_operation_name(entry.operation));
+               entryIndex, vdo_get_journal_operation_name(entry.operation));
       }
     }
   }
@@ -520,7 +518,7 @@ isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 {
   block_count_t journal_size = vdo->states.vdo.config.recovery_journal_size;
   physical_block_number_t expectedOffset
-    = compute_vdo_recovery_journal_block_number(journal_size,
+    = vdo_compute_recovery_journal_block_number(journal_size,
                                                 header->sequence_number);
   return (expectedOffset == offset);
 }
@@ -531,8 +529,8 @@ isSequenceNumberPossibleForOffset(const struct recovery_block_header *header,
 static void findRecoveryJournalEntries(logical_block_number_t lbn)
 {
   struct block_map_slot desiredSlot = (struct block_map_slot) {
-    .pbn  = vdo_compute_page_number(lbn),
-    .slot = vdo_compute_slot(lbn),
+    .pbn  = lbn / VDO_BLOCK_MAP_ENTRIES_PER_PAGE,
+    .slot = lbn % VDO_BLOCK_MAP_ENTRIES_PER_PAGE,
   };
   for (block_count_t i = 0;
        i < vdo->states.vdo.config.recovery_journal_size;
@@ -544,7 +542,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
 
       for (journal_entry_count_t k = 0; k < sector->entry_count; k++) {
         struct recovery_journal_entry entry
-          = unpack_vdo_recovery_journal_entry(&sector->entries[k]);
+          = vdo_unpack_recovery_journal_entry(&sector->entries[k]);
 
         if ((desiredSlot.pbn == entry.slot.pbn)
             && (desiredSlot.slot == entry.slot.slot)) {
@@ -552,7 +550,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
           bool isSequenceNumberPossible
             = isSequenceNumberPossibleForOffset(&block.header, i);
           bool isSectorValid
-            = is_valid_vdo_recovery_journal_sector(&block.header, sector);
+            = vdo_is_valid_recovery_journal_sector(&block.header, sector);
 
           printf("found LBN %llu at offset %llu"
                  " (block %svalid, sequence number %llu %spossible), "
@@ -564,7 +562,7 @@ static void findRecoveryJournalEntries(logical_block_number_t lbn)
                  (isSequenceNumberPossible ? "" : "not "),
                  j, (isSectorValid ? "" : "not "), k,
                  (unsigned long long) entry.mapping.pbn,
-                 get_vdo_journal_operation_name(entry.operation),
+                 vdo_get_journal_operation_name(entry.operation),
                  entry.mapping.state);
         }
       }
@@ -586,9 +584,9 @@ readVDOFromDump(const char *filename)
   int result = makeReadOnlyFileLayer(filename, &layer);
 
   if (result != VDO_SUCCESS) {
-    char errBuf[ERRBUF_SIZE];
-    warnx("Failed to make FileLayer from '%s' with %s",
-          filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+    warnx("Failed to make FileLayer from '%s' with %s", filename,
+          uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
 
@@ -597,12 +595,12 @@ readVDOFromDump(const char *filename)
   result = vdo_load_volume_geometry(layer, &geometry);
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
-    char errBuf[ERRBUF_SIZE];
-    warnx("VDO geometry read failed for '%s' with %s",
-          filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+    warnx("VDO geometry read failed for '%s' with %s", filename,
+          uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
-  geometry.regions[DATA_REGION].start_block = 1;
+  geometry.regions[VDO_DATA_REGION].start_block = 1;
 
   // Create the VDO.
   return loadVDOWithGeometry(layer, &geometry, false, &vdo);
@@ -611,12 +609,12 @@ readVDOFromDump(const char *filename)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   char *filename;
@@ -640,8 +638,8 @@ int main(int argc, char *argv[])
 
   result = readVDOFromDump(filename);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not load VDO from '%s': %s",
-         filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    errx(1, "Could not load VDO from '%s': %s", filename,
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   allocateMetadataSpace();

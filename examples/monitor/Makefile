@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/examples/monitor/Makefile#1 $
+# $Id: //eng/vdo-releases/chlorine/src/packaging/src-dist/user/examples/monitor/Makefile#1 $
 
 INSTALLFILES=monitor_check_vdostats_logicalSpace.pl	\
 	monitor_check_vdostats_physicalSpace.pl	\

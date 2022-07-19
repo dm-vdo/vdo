@@ -1,22 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/src/uds/uds.h#37 $
  */
 
 /**
@@ -31,9 +15,14 @@
 #ifndef UDS_H
 #define UDS_H
 
+#include <errno.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
+
 #include "compiler.h"
-#include "uds-platform.h"
-#include "util/funnelQueue.h"
+#include "funnel-queue.h"
 
 /**
  * Valid request types.
@@ -62,10 +51,15 @@ enum uds_request_type {
 
 	/**
 	 * Request type for operations that query mappings in the UDS
-	 * index. When a mapping is found, the recency of the mapping
-	 * is updated unless it's the no-update call.
+	 * index. The recency of the mapping is updated.
 	 **/
 	UDS_QUERY,
+
+	/**
+	 * Request type for operations that query mappings in the UDS
+	 * index without updating the recency of the mapping.
+	 **/
+	UDS_QUERY_NO_UPDATE,
 };
 
 /**
@@ -99,27 +93,26 @@ enum {
 
 /**
  *  Type representing memory configuration which is either a positive
- *  integer number of gigabytes or one of the three special constants
+ *  integer number of gigabytes or one of the six special constants
  *  for configurations which are smaller than 1 gigabyte.
  **/
-typedef unsigned int uds_memory_config_size_t;
+typedef int uds_memory_config_size_t;
 
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_256MB;
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_512MB;
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_768MB;
-/**
- *  The maximum configurable amount of memory.
- **/
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_MAX;
-
-/**
- * Memory size constants for volumes that have one less chapter
- */
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_REDUCED_256MB;
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_REDUCED_512MB;
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_REDUCED_768MB;
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_REDUCED;
-extern const uds_memory_config_size_t UDS_MEMORY_CONFIG_REDUCED_MAX;
+enum {
+	/*  The maximum configurable amount of memory. */
+	UDS_MEMORY_CONFIG_MAX = 1024,
+	/*  Flag indicating volume has one less chapter than usual */
+	UDS_MEMORY_CONFIG_REDUCED = 0x1000,
+	/*  Flag indicating volume has one less chapter than usual */
+	UDS_MEMORY_CONFIG_REDUCED_MAX = 1024 + UDS_MEMORY_CONFIG_REDUCED,
+	/*  Special values indicating sizes less than 1 GB */
+	UDS_MEMORY_CONFIG_256MB = -256,
+	UDS_MEMORY_CONFIG_512MB = -512,
+	UDS_MEMORY_CONFIG_768MB = -768,
+	UDS_MEMORY_CONFIG_REDUCED_256MB = -1280,
+	UDS_MEMORY_CONFIG_REDUCED_512MB = -1536,
+	UDS_MEMORY_CONFIG_REDUCED_768MB = -1792,
+};
 
 /** The name (hash) of a chunk. */
 struct uds_chunk_name {
@@ -142,25 +135,24 @@ struct uds_index_session;
 /**
  * The data used to configure a new index.
  **/
-struct uds_configuration;
-typedef uint64_t uds_nonce_t;
-
-/**
- * The data used to configure a new index session.
- **/
 struct uds_parameters {
-	// Tne number of threads used to process index requests.
-	int zone_count;
-	// The number of threads used to read volume pages.
-	int read_threads;
-	// The number of chapters to write between checkpoints.
-	int checkpoint_frequency;
+	/** String describing the storage device */
+	const char *name;
+	/** The maximum allowable size of the index on storage */
+	size_t size;
+	/** The offset where the index should start */
+	off_t offset;
+	/** The maximum memory allocation, in GB */
+	uds_memory_config_size_t memory_size;
+	/** Whether the index should include sparse chapters */
+	bool sparse;
+	/** A 64-bit nonce to validate the index */
+	uint64_t nonce;
+	/** The number of threads used to process index requests */
+	unsigned int zone_count;
+	/** The number of threads used to read volume pages */
+	unsigned int read_threads;
 };
-#define UDS_PARAMETERS_INITIALIZER {		\
-		.zone_count = 0,		\
-		.read_threads = 2,		\
-		.checkpoint_frequency = 0,	\
-	}
 
 /**
  * Index statistics
@@ -227,15 +219,19 @@ struct uds_index;
  * The block's general location in the index.
  **/
 enum uds_index_region {
-	/* the location isn't known yet */
+	/* no location information has been determined */
 	UDS_LOCATION_UNKNOWN = 0,
+	/* the index page entry has been found */
+	UDS_LOCATION_INDEX_PAGE_LOOKUP,
+	/* the record page entry has been found */
+	UDS_LOCATION_RECORD_PAGE_LOOKUP,
 	/* the block is not in the index */
 	UDS_LOCATION_UNAVAILABLE,
-	/* if the block was found in the open chapter */
+	/* the block was found in the open chapter */
 	UDS_LOCATION_IN_OPEN_CHAPTER,
-	/* if the block was found in the dense part of the index */
+	/* the block was found in the dense part of the index */
 	UDS_LOCATION_IN_DENSE,
-	/* if the block was found in the sparse part of the index */
+	/* the block was found in the sparse part of the index */
 	UDS_LOCATION_IN_SPARSE
 } __packed;
 
@@ -255,8 +251,6 @@ enum uds_zone_message_type {
 struct uds_zone_message {
 	/** The type of message, determining how it will be processed */
 	enum uds_zone_message_type type;
-	/** The index to which the message is directed */
-	struct uds_index *index;
 	/** The virtual chapter number to which the message applies */
 	uint64_t virtual_chapter;
 };
@@ -294,7 +288,7 @@ struct uds_request {
 	/*
 	 * The new metadata to associate with the name of the block (sometimes
 	 * called the duplicate address). Set before starting a #UDS_POST or
-	 * #UDS_QUERY operation. Unchanged at time of callback.
+	 * #UDS_UPDATE operation. Unchanged at time of callback.
 	 */
 	struct uds_chunk_data new_metadata;
 	/*
@@ -310,8 +304,9 @@ struct uds_request {
 	 */
 	struct uds_index_session *session;
 	/*
-	 * The operation type, which is one of #UDS_DELETE, #UDS_POST,
-	 * #UDS_QUERY or #UDS_UPDATE. Set before starting an operation.
+	 * The operation type, which is one of #UDS_POST, #UDS_UPDATE,
+	 * #UDS_DELETE, #UDS_QUERY or #UDS_QUERY_NO_UPDATE.
+	 * Set before starting an operation.
 	 * Unchanged at time of callback.
 	 */
 	enum uds_request_type type;
@@ -325,12 +320,6 @@ struct uds_request {
 	 * Set before the callback.
 	 */
 	bool found;
-	/*
-	 * If true, move the entry to the end of the deduplication window.
-	 * Set before starting a #UDS_QUERY operation.
-	 * Unchanged at time of callback.
-	 */
-	bool update;
 
 	/*
 	 * The remainder of this structure consists of fields used within the
@@ -353,88 +342,11 @@ struct uds_request {
 	bool unbatched;
 	/** If true, attempt to handle this request before newer requests */
 	bool requeued;
+	/** The virtual chapter containing the record */
+	uint64_t virtual_chapter;
 	/** The location of this chunk name in the index */
 	enum uds_index_region location;
 };
-
-/**
- * Initializes an index configuration.
- *
- * @param [out] conf   The new configuration
- * @param [in] mem_gb  The maximum memory allocation, in GB
- *
- * @return                    Either #UDS_SUCCESS or an error code
- **/
-int __must_check uds_initialize_configuration(struct uds_configuration **conf,
-					      uds_memory_config_size_t mem_gb);
-
-/**
- * Sets or clears an index configuration's sparse indexing settings.
- *
- * @param [in,out] conf  The configuration to change
- * @param [in] sparse    If <code>true</code>, request a sparse
- *                       index; if <code>false</code>, request
- *                       a default index.
- *
- **/
-void uds_configuration_set_sparse(struct uds_configuration *conf, bool sparse);
-
-/**
- * Tests whether an index configuration specifies sparse indexing.
- *
- * @param [in] conf           The configuration to check
- *
- * @return                    Returns <code>true</code> if the configuration
- *                            is sparse, or <code>false</code> if not
- **/
-bool __must_check uds_configuration_get_sparse(struct uds_configuration *conf);
-
-/**
- * Sets an index configuration's nonce.
- *
- * @param [in,out] conf   The configuration to change
- * @param [in]     nonce  The 64 bit nonce.
- *
- **/
-void uds_configuration_set_nonce(struct uds_configuration *conf,
-				 uds_nonce_t nonce);
-
-/**
- * Gets an index configuration's nonce.
- *
- * @param [in] conf  The configuration to check
- *
- * @return  The 64 bit nonce.
- **/
-uds_nonce_t __must_check
-uds_configuration_get_nonce(struct uds_configuration *conf);
-
-/**
- * Fetches a configuration's maximum memory allocation.
- *
- * @param [in] conf  The configuration to check
- *
- * @return The amount of memory allocated, in GB
- **/
-uds_memory_config_size_t __must_check
-uds_configuration_get_memory(struct uds_configuration *conf);
-
-/**
- * Fetches a configuration's chapters per volume value.
- *
- * @param [in] conf  The configuration to check
- *
- * @return The number of chapters per volume
- **/
-unsigned int __must_check
-uds_configuration_get_chapters_per_volume(struct uds_configuration *conf);
-
-/**
- * Frees memory used by a configuration.
- *
- * @param [in,out] conf  The configuration for which memory is being freed
- **/
-void uds_free_configuration(struct uds_configuration *conf);
 
 /**
  * Compute the size required to store the index on persistent storage.  This
@@ -442,12 +354,12 @@ void uds_free_configuration(struct uds_configuration *conf);
  * device.  This size should be used when configuring a block device on which
  * to store an index.
  *
- * @param [in]  config      A uds_configuration for an index.
+ * @param [in]  parameters  Parameters for an index.
  * @param [out] index_size  The number of bytes required to store the index.
  *
  * @return UDS_SUCCESS or an error code.
  **/
-int __must_check uds_compute_index_size(const struct uds_configuration *config,
+int __must_check uds_compute_index_size(const struct uds_parameters *parameters,
 					uint64_t *index_size);
 
 /**
@@ -465,42 +377,20 @@ int __must_check uds_compute_index_size(const struct uds_configuration *config,
 int __must_check uds_create_index_session(struct uds_index_session **session);
 
 /**
- * Fetches the UDS library version.
- *
- * @return The library version
- **/
-const char * __must_check uds_get_version(void);
-
-/**
- * The name argument to #uds_open_index is a text string that names the index.
- * The name should have the form "path", where path is the name of the file or
- * block device.  The path should not contain white space.  The name can
- * optionally contain size and/or offset options which give the number of bytes
- * in the index and the byte offset to the start of the index.  For example,
- * the name "/dev/sda8 offset=409600 size=2048000000" is an index that is
- * stored in 2040000000 bytes of /dev/sda8 starting at byte 409600.
- **/
-
-/**
  * Opens an index with an existing session.  This operation will fail if the
  * index session is suspended, or if there is already an open index.
  *
  * The index should be closed with #uds_close_index.
  *
- * @param open_type  The type of open, which is one of #UDS_LOAD, #UDS_CREATE,
- *                   or #UDS_NO_REBUILD.
- * @param name       The name of the index
- * @param params     The index session parameters.  If NULL, the default
- *                   session parameters will be used.
- * @param conf       The index configuration
- * @param session    The index session
+ * @param open_type   The type of open, which is one of #UDS_LOAD, #UDS_CREATE,
+ *                    or #UDS_NO_REBUILD.
+ * @param parameters  The index parameters
+ * @param session     The index session
  *
  * @return          Either #UDS_SUCCESS or an error code
  **/
 int __must_check uds_open_index(enum uds_open_index_type open_type,
-				const char *name,
-				const struct uds_parameters *params,
-				struct uds_configuration *conf,
+				const struct uds_parameters *parameters,
 				struct uds_index_session *session);
 
 /**
@@ -565,15 +455,16 @@ int __must_check uds_close_index(struct uds_index_session *session);
 int uds_destroy_index_session(struct uds_index_session *session);
 
 /**
- * Returns the configuration for the given index session.
+ * Returns the parameters for the given index session. The caller is
+ * responsible for freeing the returned structure.
  *
- * @param [in]  session  The session
- * @param [out] conf     The index configuration
+ * @param [in]  session     The session
+ * @param [out] parameters  A copy of the index parameters
  *
  * @return Either #UDS_SUCCESS or an error code
  **/
-int __must_check uds_get_index_configuration(struct uds_index_session *session,
-					     struct uds_configuration **conf);
+int __must_check uds_get_index_parameters(struct uds_index_session *session,
+					  struct uds_parameters **parameters);
 
 /**
  * Fetches index statistics for the given index session.
@@ -586,37 +477,16 @@ int __must_check uds_get_index_configuration(struct uds_index_session *session,
 int __must_check uds_get_index_stats(struct uds_index_session *session,
 				     struct uds_index_stats *stats);
 
-/**
- * Convert an error code to a string.
- *
- * @param errnum  The error code
- * @param buf     The buffer to hold the error string
- * @param buflen  The length of the buffer
- *
- * @return A pointer to buf
- **/
-const char * __must_check uds_string_error(int errnum,
-					   char *buf,
-					   size_t buflen);
-
-/**
- * Suggested buffer size for uds_string_error.
- **/
-enum { UDS_STRING_ERROR_BUFSIZE = 128 };
-
 /** @{ */
 /** @name Deduplication */
 
 /**
- * Start a UDS index chunk operation.  The request <code>type</code> field must
- * be set to the type of operation.  This is an asynchronous interface to the
- * block-oriented UDS API.  The callback is invoked upon completion.
- *
- * The #UDS_DELETE operation type deletes the mapping for a particular block.
- * #UDS_DELETE is typically used when UDS provides invalid advice.
+ * Start a UDS index chunk operation. The request <code>type</code> field must
+ * be set to the type of operation. This is an asynchronous interface to the
+ * block-oriented UDS API. The callback is invoked upon completion.
  *
  * The #UDS_POST operation type indexes a block name and associates it with a
- * particular address.  The caller provides the block's name. UDS then checks
+ * particular address. The caller provides the block's name. UDS then checks
  * this name against its index.
  * <ul>
  *   <li>If the block is new, it is stored in the index.</li>
@@ -624,20 +494,29 @@ enum { UDS_STRING_ERROR_BUFSIZE = 128 };
  *       canonical block address via the callback.</li>
  * </ul>
  *
- * The #UDS_QUERY operation type checks to see if a block name exists in the
- * index.  The caller provides the block's name.  UDS then checks
- * this name against its index.
- * <ul>
- *   <li>If the block is new, no action is taken.</li>
-
- *   <li>If the block is a duplicate of an indexed block, UDS returns the
- *       canonical block address via the callback.  If the <code>update</code>
- *       field is set, the entry is moved to the end of the deduplication
- *       window.</li> </ul>
- *
  * The #UDS_UPDATE operation type updates the mapping for a particular block.
  * #UDS_UPDATE is typically used if the callback function provides invalid
  * advice.
+ *
+ * The #UDS_DELETE operation type deletes the mapping for a particular block.
+ * #UDS_DELETE is typically used when UDS provides invalid advice.
+ *
+ * The #UDS_QUERY operation type checks to see if a block name exists in the
+ * index. The caller provides the block's name. UDS then checks this name
+ * against its index.
+ * <ul>
+ *   <li>If the block is new, no action is taken.</li>
+ *   <li>If the block is a duplicate of an indexed block, UDS returns the
+ *       canonical block address via the callback and the entry is moved to
+ *       the end of the deduplication window.</li> </ul>
+ *
+ * The #UDS_QUERY_NO_UPDATE operation type checks to see if a block name exists
+ * in the index. The caller provides the block's name. UDS then checks this
+ * name against its index.
+ * <ul>
+ *   <li>If the block is new, no action is taken.</li>
+ *   <li>If the block is a duplicate of an indexed block, UDS returns the
+ *       canonical block address via the callback.
  *
  * @param [in] request  The operation.  The <code>type</code>,
  *                      <code>chunk_name</code>, <code>new_metadata</code>,

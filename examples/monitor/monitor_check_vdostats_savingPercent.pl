@@ -36,7 +36,7 @@
 #
 # The "vdostats" program must be in the path used by "sudo".
 #
-# $Id: //eng/vdo-releases/sulfur/src/tools/monitor/monitor_check_vdostats_savingPercent.pl#1 $
+# $Id: //eng/vdo-releases/chlorine/src/tools/monitor/monitor_check_vdostats_savingPercent.pl#1 $
 #
 ##
 

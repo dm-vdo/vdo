@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/vdo/man/Makefile#4 $
+# $Id: //eng/vdo-releases/chlorine/src/packaging/src-dist/user/utils/vdo/man/Makefile#2 $
 
 INSTALLFILES= \
         adaptlvm.8               \
@@ -30,6 +30,7 @@ INSTALLFILES= \
 	vdoformat.8              \
 	vdolistmetadata.8        \
 	vdoreadonly.8            \
+	vdorecover.8             \
 	vdoregenerategeometry.8  \
 	vdosetuuid.8             \
         vdostats.8

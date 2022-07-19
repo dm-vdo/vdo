@@ -1,22 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/src/uds/numeric.h#13 $
  */
 
 #ifndef NUMERIC_H
@@ -25,7 +9,7 @@
 #include "compiler.h"
 
 #include "numericDefs.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 /*
  * Type safe comparison macros, similar to the ones in linux/kernel.h.
@@ -36,7 +20,7 @@
 #define TYPECHECK(x, y) (!!(sizeof((typeof(x) *) 1 == (typeof(y) *) 1)))
 #define CONSTCHECK(x, y) (__builtin_constant_p(x) && __builtin_constant_p(y))
 
-// It takes two levels of macro expansion to compose the unique temp names.
+/* It takes two levels of macro expansion to compose the unique temp names. */
 #define CONCAT_(a, b) a##b
 #define CONCAT(a, b) CONCAT_(a, b)
 #define UNIQUE_ID(a) CONCAT(_UNIQUE_, CONCAT(a, __COUNTER__))
@@ -56,6 +40,9 @@
 
 #define min(x, y) COMPARE(x, y, <)
 #define max(x, y) COMPARE(x, y, >)
+
+// Copied from linux/math.h
+#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
 /**
  * Extract a 64 bit signed little-endian number from a buffer at a

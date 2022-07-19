@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoSetUUID.c#7 $
  */
 
 #include <err.h>
@@ -26,12 +24,12 @@
 
 #include "errors.h"
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 
 #include "constants.h"
 #include "types.h"
-#include "statusCodes.h"
-#include "volumeGeometry.h"
+#include "status-codes.h"
+#include "volume-geometry.h"
 
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
@@ -123,12 +121,12 @@ static const char *processArgs(int argc, char *argv[])
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-	 uds_string_error(result, errBuf, ERRBUF_SIZE));
+	 uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   // Generate a uuid as a default value in case the options is not specified.
@@ -155,7 +153,7 @@ int main(int argc, char *argv[])
   if (result != VDO_SUCCESS) {
     freeVDOFromFile(&vdo);
     errx(1, "Could not write the geometry to '%s' %s", vdoBacking,
-	 uds_string_error(result, errBuf, ERRBUF_SIZE));
+	 uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   freeVDOFromFile(&vdo);

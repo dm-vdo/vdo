@@ -15,15 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/atomicDefs.h#3 $
  */
 
 #ifndef ATOMIC_DEFS_H
 #define ATOMIC_DEFS_H
 
 #include "compiler.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 // The atomic interfaces are chosen to exactly match those interfaces defined
 // by the Linux kernel.  The rest of this file is the matching user-mode
@@ -280,6 +278,36 @@ static INLINE void atomic_inc(atomic_t *atom)
    * The x86 implementation does do memory barriers.
    */
   __sync_add_and_fetch(&atom->value, 1);
+}
+
+/**
+ * Increment a 32-bit atomic variable.  The addition is properly atomic, and
+ * there are memory barriers.
+ *
+ * @param atom  a pointer to the atomic variable
+ *
+ * @return the new value of the atom after the increment
+ **/
+static INLINE long atomic_inc_return(atomic_t *atom)
+{
+  return atomic_add_return(1, atom);
+}
+
+
+/**
+ * Decrement a 32-bit atomic variable, without any memory barriers.
+ *
+ * @param atom   a pointer to the atomic variable
+ **/
+static INLINE void atomic_dec(atomic_t *atom)
+{
+  /*
+   * According to the kernel documentation, the subtraction is atomic, but
+   * there are no memory barriers implied by this method.
+   *
+   * The x86 implementation does do memory barriers.
+   */
+  __sync_sub_and_fetch(&atom->value, 1);
 }
 
 /**

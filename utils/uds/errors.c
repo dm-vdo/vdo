@@ -1,29 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/src/uds/errors.c#27 $
  */
 
 #include "errors.h"
 
 #include "common.h"
 #include "permassert.h"
-#include "stringUtils.h"
+#include "string-utils.h"
 
 
 static const struct error_info successful = { "UDS_SUCCESS", "Success" };
@@ -41,17 +25,15 @@ static const struct error_info error_list[] = {
 	{ "UDS_QUEUED", "Request queued" },
 	{ "UDS_BUFFER_ERROR", "Buffer error" },
 	{ "UDS_NO_DIRECTORY", "Expected directory is missing" },
-	{ "UDS_CHECKPOINT_INCOMPLETE", "Checkpoint not completed" },
 	{ "UDS_ALREADY_REGISTERED", "Error range already registered" },
 	{ "UDS_BAD_IO_DIRECTION", "Bad I/O direction" },
 	{ "UDS_INCORRECT_ALIGNMENT", "Offset not at block alignment" },
 	{ "UDS_OUT_OF_RANGE", "Cannot access data outside specified limits" },
 	{ "UDS_EMODULE_LOAD", "Could not load modules" },
 	{ "UDS_DISABLED", "UDS library context is disabled" },
-	{ "UDS_CORRUPT_COMPONENT", "Corrupt saved component" },
 	{ "UDS_UNKNOWN_ERROR", "Unknown error" },
 	{ "UDS_UNSUPPORTED_VERSION", "Unsupported version" },
-	{ "UDS_CORRUPT_DATA", "Index data in memory is corrupt" },
+	{ "UDS_CORRUPT_DATA", "Some index structure is corrupt" },
 	{ "UDS_SHORT_READ", "Could not read requested number of bytes" },
 	{ "UDS_RESOURCE_LIMIT_EXCEEDED", "Internal resource limits exceeded" },
 	{ "UDS_VOLUME_OVERFLOW", "Memory overflow due to storage failure" },
@@ -69,10 +51,10 @@ struct error_block {
 };
 
 enum {
-	MAX_ERROR_BLOCKS = 6 // needed for testing
+	MAX_ERROR_BLOCKS = 6,
 };
 
-static struct error_information {
+static struct {
 	int allocated;
 	int count;
 	struct error_block blocks[MAX_ERROR_BLOCKS];
@@ -80,32 +62,25 @@ static struct error_information {
 	.allocated = MAX_ERROR_BLOCKS,
 	.count = 1,
 	.blocks = { {
-			    .name = "UDS Error",
-			    .base = UDS_ERROR_CODE_BASE,
-			    .last = UDS_ERROR_CODE_LAST,
-			    .max = UDS_ERROR_CODE_BLOCK_END,
-			    .infos = error_list,
-		    } }
+			.name = "UDS Error",
+			.base = UDS_ERROR_CODE_BASE,
+			.last = UDS_ERROR_CODE_LAST,
+			.max = UDS_ERROR_CODE_BLOCK_END,
+			.infos = error_list,
+		  } },
 };
 
-/**
- * Fetch the error info (if any) for the error number.
- *
- * @param errnum        the error number
- * @param info_ptr      the place to store the info for this error (if known),
- *                      otherwise set to NULL
- *
- * @return              the name of the error block (if known), NULL othersise
- **/
+/*
+ * Get the error info for an error number. Also returns the name of the error
+ * block, if known.
+ */
 static const char *get_error_info(int errnum,
 				  const struct error_info **info_ptr)
 {
 	struct error_block *block;
 
 	if (errnum == UDS_SUCCESS) {
-		if (info_ptr != NULL) {
-			*info_ptr = &successful;
-		}
+		*info_ptr = &successful;
 		return NULL;
 	}
 
@@ -113,42 +88,26 @@ static const char *get_error_info(int errnum,
 	     block < registered_errors.blocks + registered_errors.count;
 	     ++block) {
 		if ((errnum >= block->base) && (errnum < block->last)) {
-			if (info_ptr != NULL) {
-				*info_ptr =
-					block->infos + (errnum - block->base);
-			}
+			*info_ptr = block->infos + (errnum - block->base);
 			return block->name;
 		} else if ((errnum >= block->last) && (errnum < block->max)) {
-			if (info_ptr != NULL) {
-				*info_ptr = NULL;
-			}
+			*info_ptr = NULL;
 			return block->name;
 		}
 	}
-	if (info_ptr != NULL) {
-		*info_ptr = NULL;
-	}
+
 	return NULL;
 }
 
-/**
- * Return string describing a system error message
- *
- * @param errnum  System error number
- * @param buf     Buffer that can be used to contain the return value
- * @param buflen  Length of the buffer
- *
- * @return The error string, which may be a string constant or may be
- *         returned in the buf argument
- **/
+/* Return a string describing a system error message. */
 static INLINE const char *
 system_string_error(int errnum, char *buf, size_t buflen)
 {
 	return strerror_r(errnum, buf, buflen);
 }
 
-/**********************************************************************/
-const char *string_error(int errnum, char *buf, size_t buflen)
+/* Convert an error code to a descriptive string. */
+const char *uds_string_error(int errnum, char *buf, size_t buflen)
 {
 	char *buffer = buf;
 	char *buf_end = buf + buflen;
@@ -164,7 +123,6 @@ const char *string_error(int errnum, char *buf, size_t buflen)
 	}
 
 	block_name = get_error_info(errnum, &info);
-
 	if (block_name != NULL) {
 		if (info != NULL) {
 			buffer = uds_append_to_buffer(buffer,
@@ -180,13 +138,17 @@ const char *string_error(int errnum, char *buf, size_t buflen)
 						      errnum);
 		}
 	} else if (info != NULL) {
-		buffer = uds_append_to_buffer(buffer, buf_end, "%s",
+		buffer = uds_append_to_buffer(buffer,
+					      buf_end,
+					      "%s",
 					      info->message);
 	} else {
 		const char *tmp =
 			system_string_error(errnum, buffer, buf_end - buffer);
 		if (tmp != buffer) {
-			buffer = uds_append_to_buffer(buffer, buf_end, "%s",
+			buffer = uds_append_to_buffer(buffer,
+						      buf_end,
+						      "%s",
 						      tmp);
 		} else {
 			buffer += strlen(tmp);
@@ -195,10 +157,9 @@ const char *string_error(int errnum, char *buf, size_t buflen)
 	return buf;
 }
 
-/**********************************************************************/
-const char *string_error_name(int errnum, char *buf, size_t buflen)
+/* Convert an error code to its name. */
+const char *uds_string_error_name(int errnum, char *buf, size_t buflen)
 {
-
 	char *buffer = buf;
 	char *buf_end = buf + buflen;
 	const struct error_info *info = NULL;
@@ -207,23 +168,34 @@ const char *string_error_name(int errnum, char *buf, size_t buflen)
 	if (errnum < 0) {
 		errnum = -errnum;
 	}
+
 	block_name = get_error_info(errnum, &info);
 	if (block_name != NULL) {
 		if (info != NULL) {
-			buffer = uds_append_to_buffer(buffer, buf_end, "%s",
+			buffer = uds_append_to_buffer(buffer,
+						      buf_end,
+						      "%s",
 						      info->name);
 		} else {
-			buffer = uds_append_to_buffer(buffer, buf_end, "%s %d",
-						      block_name, errnum);
+			buffer = uds_append_to_buffer(buffer,
+						      buf_end,
+						      "%s %d",
+						      block_name,
+						      errnum);
 		}
 	} else if (info != NULL) {
-		buffer = uds_append_to_buffer(buffer, buf_end, "%s",
+		buffer = uds_append_to_buffer(buffer,
+					      buf_end,
+					      "%s",
 					      info->name);
 	} else {
-		const char *tmp =
-			system_string_error(errnum, buffer, buf_end - buffer);
+		const char *tmp;
+
+		tmp = system_string_error(errnum, buffer, buf_end - buffer);
 		if (tmp != buffer) {
-			buffer = uds_append_to_buffer(buffer, buf_end, "%s",
+			buffer = uds_append_to_buffer(buffer,
+						      buf_end,
+						      "%s",
 						      tmp);
 		} else {
 			buffer += strlen(tmp);
@@ -232,47 +204,53 @@ const char *string_error_name(int errnum, char *buf, size_t buflen)
 	return buf;
 }
 
-/**********************************************************************/
+/*
+ * Translate an error code into a value acceptable to the kernel. The input
+ * error code may be a system-generated value (such as -EIO), or an internal
+ * UDS status code. The result will be a negative errno value.
+ */
 int uds_map_to_system_error(int error)
 {
-	char error_name[80], error_message[ERRBUF_SIZE];
+	char error_name[UDS_MAX_ERROR_NAME_SIZE];
+	char error_message[UDS_MAX_ERROR_MESSAGE_SIZE];
 
-	// 0 is success, negative a system error code
+	/* 0 is success, and negative values are already system error codes. */
 	if (likely(error <= 0)) {
 		return error;
 	}
 
 	if (error < 1024) {
-		// probably an errno from userspace, just negate it.
+		/* This is probably an errno from userspace. */
 		return -error;
 	}
 
-	// UDS error
+	/* Internal UDS errors */
 	switch (error) {
 	case UDS_NO_INDEX:
-	case UDS_CORRUPT_COMPONENT:
-		// The index doesn't exist or can't be recovered.
+	case UDS_CORRUPT_DATA:
+		/* The index doesn't exist or can't be recovered. */
 		return -ENOENT;
 
 	case UDS_INDEX_NOT_SAVED_CLEANLY:
 	case UDS_UNSUPPORTED_VERSION:
-		// The index exists, but can't be loaded. Tell the client it
-		// exists so they don't destroy it inadvertently.
+		/*
+		 * The index exists, but can't be loaded. Tell the client it
+		 * exists so they don't destroy it inadvertently.
+		 */
 		return -EEXIST;
 
 	case UDS_DISABLED:
-		// The session is unusable; only returned by requests.
+		/* The session is unusable; only returned by requests. */
 		return -EIO;
 
 	default:
-		// No other UDS error code is expected here, so log what we
-		// got and convert to something reasonable.
+		/* Translate an unexpected error into something generic. */
 		uds_log_info("%s: mapping status code %d (%s: %s) to -EIO",
 			     __func__,
 			     error,
-			     string_error_name(error,
-					       error_name,
-					       sizeof(error_name)),
+			     uds_string_error_name(error,
+						   error_name,
+						   sizeof(error_name)),
 			     uds_string_error(error,
 					      error_message,
 					      sizeof(error_message)));
@@ -280,22 +258,39 @@ int uds_map_to_system_error(int error)
 	}
 }
 
-/**********************************************************************/
+/*
+ * Register a block of error codes.
+ *
+ * @param block_name       the name of the block of error codes
+ * @param first_error      the first error code in the block
+ * @param next_free_error  one past the highest possible error in the block
+ * @param infos            a pointer to the error info array for the block
+ * @param info_size        the size of the error info array
+ */
 int register_error_block(const char *block_name,
 			 int first_error,
-			 int last_reserved_error,
+			 int next_free_error,
 			 const struct error_info *infos,
 			 size_t info_size)
 {
+	int result;
 	struct error_block *block;
-	int result = ASSERT(first_error < last_reserved_error,
-			    "bad error block range");
+	struct error_block new_block = {
+		.name = block_name,
+		.base = first_error,
+		.last = first_error + (info_size / sizeof(struct error_info)),
+		.max = next_free_error,
+		.infos = infos,
+	};
+
+	result = ASSERT(first_error < next_free_error,
+			"well-defined error block range");
 	if (result != UDS_SUCCESS) {
 		return result;
 	}
 
 	if (registered_errors.count == registered_errors.allocated) {
-		// could reallocate and grow, but should never happen
+		/* This should never happen. */
 		return UDS_OVERFLOW;
 	}
 
@@ -305,21 +300,14 @@ int register_error_block(const char *block_name,
 		if (strcmp(block_name, block->name) == 0) {
 			return UDS_DUPLICATE_NAME;
 		}
-		// check for overlap in error ranges
+
+		/* Ensure error ranges do not overlap. */
 		if ((first_error < block->max) &&
-		    (last_reserved_error > block->base)) {
+		    (next_free_error > block->base)) {
 			return UDS_ALREADY_REGISTERED;
 		}
 	}
 
-	registered_errors.blocks[registered_errors.count++] =
-		(struct error_block){ .name = block_name,
-				      .base = first_error,
-				      .last = first_error +
-					      (info_size /
-					       sizeof(struct error_info)),
-				      .max = last_reserved_error,
-				      .infos = infos };
-
+	registered_errors.blocks[registered_errors.count++] = new_block;
 	return UDS_SUCCESS;
 }

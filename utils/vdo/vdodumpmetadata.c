@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDumpMetadata.c#20 $
  */
 
 #include <err.h>
@@ -24,22 +22,22 @@
 
 #include "errors.h"
 #include "fileUtils.h"
-#include "memoryAlloc.h"
-#include "stringUtils.h"
+#include "memory-alloc.h"
+#include "string-utils.h"
 #include "syscalls.h"
 
-#include "blockMapFormat.h"
-#include "fixedLayout.h"
-#include "numUtils.h"
-#include "physicalLayer.h"
-#include "slabDepotFormat.h"
-#include "slabSummaryFormat.h"
-#include "statusCodes.h"
+#include "block-map-format.h"
+#include "num-utils.h"
+#include "slab-depot-format.h"
+#include "slab-summary-format.h"
+#include "status-codes.h"
 #include "types.h"
-#include "volumeGeometry.h"
+#include "volume-geometry.h"
+#include "vdo-layout.h"
 
 #include "blockMapUtils.h"
 #include "fileLayer.h"
+#include "physicalLayer.h"
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
 
@@ -321,9 +319,9 @@ static void dumpRecoveryJournal(void)
 {
   // Copy the recovery journal.
   const struct partition *partition
-    = getPartition(vdo, RECOVERY_JOURNAL_PARTITION,
+    = getPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION,
                    "Could not copy recovery journal, no partition");
-  int result = copyBlocks(get_vdo_fixed_layout_partition_offset(partition),
+  int result = copyBlocks(vdo_get_fixed_layout_partition_offset(partition),
                           vdo->states.vdo.config.recovery_journal_size);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy recovery journal");
@@ -335,10 +333,10 @@ static void dumpSlabSummary(void)
 {
   // Copy the slab summary.
   const struct partition *partition
-    = getPartition(vdo, SLAB_SUMMARY_PARTITION,
+    = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION,
                    "Could not copy slab summary, no partition");
-  int result = copyBlocks(get_vdo_fixed_layout_partition_offset(partition),
-                          get_vdo_slab_summary_size(VDO_BLOCK_SIZE));
+  int result = copyBlocks(vdo_get_fixed_layout_partition_offset(partition),
+                          vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy slab summary");
   }
@@ -347,12 +345,12 @@ static void dumpSlabSummary(void)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   result = UDS_ALLOCATE(MAX_LBNS, physical_block_number_t, __func__, &lbns);

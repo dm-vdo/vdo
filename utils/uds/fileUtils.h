@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.h#8 $
  */
 
 #ifndef FILE_UTILS_H
@@ -26,7 +24,7 @@
 
 #include "common.h"
 #include "compiler.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 enum file_access {
 	FU_READ_ONLY = 0,                // open file with read-only access

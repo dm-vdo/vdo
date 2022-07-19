@@ -15,23 +15,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/blockMapUtils.c#14 $
  */
 
 #include "blockMapUtils.h"
 
 #include <err.h>
 
+#include "errors.h"
 #include "syscalls.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 
-#include "blockMapFormat.h"
-#include "blockMapPage.h"
-#include "physicalLayer.h"
-#include "statusCodes.h"
+#include "block-map-format.h"
+#include "block-map-page.h"
+#include "status-codes.h"
 #include "types.h"
 
+#include "physicalLayer.h"
 #include "userVDO.h"
 
 /**
@@ -63,7 +62,7 @@ static int readAndExaminePage(UserVDO                 *vdo,
     return result;
   }
 
-  if (!is_vdo_block_map_page_initialized(page)) {
+  if (!vdo_is_block_map_page_initialized(page)) {
     UDS_FREE(page);
     return VDO_SUCCESS;
   }
@@ -75,7 +74,7 @@ static int readAndExaminePage(UserVDO                 *vdo,
   for (; blockMapSlot.slot < VDO_BLOCK_MAP_ENTRIES_PER_PAGE;
         blockMapSlot.slot++) {
     struct data_location mapped
-      = unpack_vdo_block_map_entry(&page->entries[blockMapSlot.slot]);
+      = vdo_unpack_block_map_entry(&page->entries[blockMapSlot.slot]);
 
     result = examiner(blockMapSlot, height, mapped.pbn, mapped.state);
     if (result != VDO_SUCCESS) {
@@ -159,8 +158,8 @@ static int readSlotFromPage(UserVDO                  *vdo,
   }
 
   struct data_location mapped;
-  if (is_vdo_block_map_page_initialized(page)) {
-    mapped = unpack_vdo_block_map_entry(&page->entries[slot]);
+  if (vdo_is_block_map_page_initialized(page)) {
+    mapped = vdo_unpack_block_map_entry(&page->entries[slot]);
   } else {
     mapped = (struct data_location) {
       .state = VDO_MAPPING_STATE_UNMAPPED,
@@ -245,15 +244,15 @@ int readBlockMapPage(PhysicalLayer            *layer,
 {
   int result = layer->reader(layer, pbn, 1, (char *) page);
   if (result != VDO_SUCCESS) {
-    char errBuf[ERRBUF_SIZE];
+    char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
     printf("%llu unreadable : %s",
            (unsigned long long) pbn,
-           uds_string_error(result, errBuf, ERRBUF_SIZE));
+           uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
 
   enum block_map_page_validity validity
-    = validate_vdo_block_map_page(page, nonce, pbn);
+    = vdo_validate_block_map_page(page, nonce, pbn);
   if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
     return VDO_SUCCESS;
   }
@@ -261,9 +260,9 @@ int readBlockMapPage(PhysicalLayer            *layer,
   if (validity == VDO_BLOCK_MAP_PAGE_BAD) {
     warnx("Expected page %llu but got page %llu",
           (unsigned long long) pbn,
-          (unsigned long long) get_vdo_block_map_page_pbn(page));
+          (unsigned long long) vdo_get_block_map_page_pbn(page));
   }
 
-  mark_vdo_block_map_page_initialized(page, false);
+  vdo_mark_block_map_page_initialized(page, false);
   return VDO_SUCCESS;
 }

@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/examples/Makefile#2 $
+# $Id: //eng/vdo-releases/chlorine/src/packaging/src-dist/user/examples/Makefile#1 $
 
-SUBDIRS = ansible monitor
+SUBDIRS = monitor
 
 .PHONY: all clean install
 all clean install:

@@ -1,0 +1,18 @@
+.TH VDORECOVER 8 "2022-07-15" "Red Hat" \" -*- nroff -*-
+.SH NAME
+vdorecover \- Recovers available storage by discarding a full VDO volume.
+.SH SYNOPSIS
+.B vdorecover
+.I vdo_device
+.SH DESCRIPTION
+.B vdorecover
+Recovers available physical space on a full VDO volume by mounting it
+temporarily with snapshots and sending discards to it.
+.PP
+.SH OPTIONS
+.TP
+.B vdo_device
+The VDO device to recover
+.
+.SH SEE ALSO
+.BR vdo (8).

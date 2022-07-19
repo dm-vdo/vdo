@@ -15,22 +15,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoVolumeUtils.c#4 $
  */
 
 #include "vdoVolumeUtils.h"
 
 #include <err.h>
 
+#include "errors.h"
 #include "permassert.h"
 
-#include "statusCodes.h"
+#include "status-codes.h"
 
 #include "fileLayer.h"
 #include "userVDO.h"
 
-static char errBuf[ERRBUF_SIZE];
+static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
 /**
  * Load a VDO from a file.
@@ -62,8 +61,8 @@ static int __must_check loadVDOFromFile(const char *filename,
   }
 
   if (result != VDO_SUCCESS) {
-    warnx("Failed to make FileLayer from '%s' with %s",
-          filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    warnx("Failed to make FileLayer from '%s' with %s", filename,
+          uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
 
@@ -73,7 +72,7 @@ static int __must_check loadVDOFromFile(const char *filename,
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
     warnx("loading VDO failed with: %s",
-          uds_string_error(result, errBuf, ERRBUF_SIZE));
+          uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
 

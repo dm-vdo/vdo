@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/syscalls.h#9 $
  */
 
 #ifndef SYSCALLS_H
@@ -27,7 +25,7 @@
 #include "compiler.h"
 #include "errors.h"
 #include "logger.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 /**
  * Wrap the read(2) system call, looping as long as errno is EINTR.

@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoStats.c#15 $
  */
 
 #include <err.h>
@@ -32,15 +30,15 @@
 
 #include "errors.h"
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "statistics.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 #include "vdoStats.h"
 
-static const char usage_string[] =
+static const char usageString[] =
   " [--help] [--version] [options...] [device [device ...]]";
 
-static const char help_string[] =
+static const char helpString[] =
   "vdostats - Display configuration and statistics of VDO volumes\n"
   "\n"
   "SYNOPSIS\n"
@@ -84,7 +82,7 @@ static struct option options[] = {
   { NULL,              0,            NULL,   0  },
 };
 
-static char option_string[] = "harsvV";
+static char optionString[] = "harsvV";
 
 enum style {
   STYLE_DF,
@@ -92,10 +90,10 @@ enum style {
 };
 enum style style = STYLE_DF;
 
-static bool human_readable         = false;
+static bool humanReadable          = false;
 static bool si                     = false;
 static bool verbose                = false;
-static bool header_printed         = false;
+static bool headerPrinted          = false;
 static int  maxDeviceNameLength = 6;
 
 typedef struct dfStats {
@@ -171,7 +169,7 @@ static void printSizeAsHumanReadable(const int      aFieldWidth,
   int    divisor            = si ? 1000 : 1024;
 
   unsigned int i = 0;
-  while ((size >= divisor) && (i < (COUNT_OF(UNITS) - 1))) {
+  while ((size >= divisor) && (i < (ARRAY_SIZE(UNITS) - 1))) {
     size /= divisor;
     i++;
   }
@@ -188,8 +186,8 @@ static void printSizeAsHumanReadable(const int      aFieldWidth,
  **/
 static void displayDFStyle(const char *path, struct vdo_statistics *stats)
 {
-  const DFFieldLengths field_length = {maxDeviceNameLength, 9, 9, 9, 4, 13};
-  char dfName[field_length.name + 1];
+  const DFFieldLengths fieldLength = {maxDeviceNameLength, 9, 9, 9, 4, 13};
+  char dfName[fieldLength.name + 1];
   DFStats dfStats = getDFStats(stats);
 
   // Extract the device name. Use strdup for non const string.
@@ -198,60 +196,60 @@ static void displayDFStyle(const char *path, struct vdo_statistics *stats)
   free(devicePath);
 
   // Display the device statistics
-  if (!header_printed) {
+  if (!headerPrinted) {
     printf("%-*s %*s %*s %*s %*s %*s\n",
-           field_length.name, "Device",
-           field_length.size, human_readable ? "Size" : "1k-blocks",
-           field_length.used, "Used",
-           field_length.available, "Available",
-           field_length.usedPercent, "Use%",
-           field_length.savingPercent, "Space saving%");
-    header_printed = true;
+           fieldLength.name, "Device",
+           fieldLength.size, humanReadable ? "Size" : "1k-blocks",
+           fieldLength.used, "Used",
+           fieldLength.available, "Available",
+           fieldLength.usedPercent, "Use%",
+           fieldLength.savingPercent, "Space saving%");
+    headerPrinted = true;
   }
 
   if (stats->in_recovery_mode) {
     printf("%-*s %*" PRIu64 " %*s %*s %*s %*s\n",
-           field_length.name, dfName,
-           field_length.size, ((dfStats.size * stats->block_size) / 1024),
-           field_length.used, "N/A",
-           field_length.available, "N/A",
-           (field_length.usedPercent - 1), "N/A",
-           (field_length.savingPercent - 1), "N/A");
+           fieldLength.name, dfName,
+           fieldLength.size, ((dfStats.size * stats->block_size) / 1024),
+           fieldLength.used, "N/A",
+           fieldLength.available, "N/A",
+           (fieldLength.usedPercent - 1), "N/A",
+           (fieldLength.savingPercent - 1), "N/A");
     return;
   }
 
-  if (human_readable) {
+  if (humanReadable) {
     // Convert to human readable form (e.g., G, T, P) and
     // optionally in SI units (1000 as opposed to 1024).
-    printf("%-*s ", field_length.name, dfName);
+    printf("%-*s ", fieldLength.name, dfName);
 
     // The first argument is the field width (provided as input
     // here to ease matching any future changes with the below format
     // string).
-    printSizeAsHumanReadable(field_length.size,
+    printSizeAsHumanReadable(fieldLength.size,
                              dfStats.size * stats->block_size);
-    printSizeAsHumanReadable(field_length.used,
+    printSizeAsHumanReadable(fieldLength.used,
                              dfStats.used * stats->block_size);
-    printSizeAsHumanReadable(field_length.available,
+    printSizeAsHumanReadable(fieldLength.available,
                              dfStats.available * stats->block_size);
   } else {
     // Convert blocks to kb for printing
     printf("%-*s %*" PRIu64 " %*" PRIu64 " %*" PRIu64 " ",
-           field_length.name, dfName,
-           field_length.size, dfStats.size * stats->block_size / 1024,
-           field_length.used, dfStats.used * stats->block_size / 1024,
-           field_length.available,
+           fieldLength.name, dfName,
+           fieldLength.size, dfStats.size * stats->block_size / 1024,
+           fieldLength.used, dfStats.used * stats->block_size / 1024,
+           fieldLength.available,
            dfStats.available * stats->block_size / 1024);
   }
 
   if (dfStats.savingPercent < 0) {
     printf("%*d%% %*s\n",
-           (field_length.usedPercent - 1), dfStats.usedPercent,
-           (field_length.savingPercent - 1), "N/A");
+           (fieldLength.usedPercent - 1), dfStats.usedPercent,
+           (fieldLength.savingPercent - 1), "N/A");
   } else {
     printf("%*d%% %*d%%\n",
-           (field_length.usedPercent - 1), dfStats.usedPercent,
-           (field_length.savingPercent - 1), dfStats.savingPercent);
+           (fieldLength.usedPercent - 1), dfStats.usedPercent,
+           (fieldLength.savingPercent - 1), dfStats.savingPercent);
   }
 }
 
@@ -262,9 +260,9 @@ static void displayDFStyle(const char *path, struct vdo_statistics *stats)
  * @param name  The dmsetup name
  *
  **/
-static void usage(const char *progname, const char *usage_options_string)
+static void usage(const char *progname, const char *usageOptionsString)
 {
-  errx(1, "Usage: %s%s\n", progname, usage_options_string);
+  errx(1, "Usage: %s%s\n", progname, usageOptionsString);
 }
 
 /**********************************************************************
@@ -277,10 +275,10 @@ static void process_args(int argc, char *argv[])
 {
   int c;
 
-  while ((c = getopt_long(argc, argv, option_string, options, NULL)) != -1) {
+  while ((c = getopt_long(argc, argv, optionString, options, NULL)) != -1) {
     switch (c) {
     case 'h':
-      printf("%s", help_string);
+      printf("%s", helpString);
       exit(0);
       break;
 
@@ -289,12 +287,12 @@ static void process_args(int argc, char *argv[])
       break;
 
     case 'r':
-      human_readable = true;
+      humanReadable = true;
       break;
 
     case 's':
       si = true;
-      human_readable =  true;
+      humanReadable =  true;
       break;
 
     case 'v':
@@ -307,7 +305,7 @@ static void process_args(int argc, char *argv[])
       break;
 
     default:
-      usage(argv[0], usage_string);
+      usage(argv[0], usageString);
       break;
     };
   }
@@ -333,7 +331,7 @@ static void freeAllocations(void)
 static void process_device(const char *original, const char *name)
 {
   struct vdo_statistics stats;
-  
+
   char dmCommand[256];
   sprintf(dmCommand, "dmsetup message %s 0 stats", name);
   FILE* fp = popen(dmCommand, "r");
@@ -341,7 +339,7 @@ static void process_device(const char *original, const char *name)
     freeAllocations();
     errx(1, "'%s': Could not retrieve VDO device stats information", name);
   }
-  
+
   char statsBuf[8192];
   if (fgets(statsBuf, sizeof(statsBuf), fp) != NULL) {
     read_vdo_stats(statsBuf, &stats);
@@ -352,7 +350,7 @@ static void process_device(const char *original, const char *name)
 
       case STYLE_YAML:
         printf("%s : \n", original);
-	write_vdo_stats(&stats);
+	vdo_write_stats(&stats);
         break;
 
       default:
@@ -411,8 +409,8 @@ static VDOPath *transformDevice(char *device)
 static void enumerate_devices(void)
 {
   FILE *fp;
-  size_t line_size = 0;
-  char *dmsetup_line = NULL;
+  size_t lineSize = 0;
+  char *dmsetupLine = NULL;
 
   fp = popen("dmsetup ls --target vdo", "r");
   if (fp == NULL) {
@@ -420,7 +418,7 @@ static void enumerate_devices(void)
   }
 
   pathCount = 0;
-  while ((getline(&dmsetup_line, &line_size, fp)) > 0) {
+  while ((getline(&dmsetupLine, &lineSize, fp)) > 0) {
     pathCount++;
   }
 
@@ -447,14 +445,14 @@ static void enumerate_devices(void)
     errx(1, "Could not retrieve VDO device status information");
   }
 
-  line_size = 0;
-  dmsetup_line = NULL;
+  lineSize = 0;
+  dmsetupLine = NULL;
 
   int major, minor;
 
   int count = 0;
-  while ((getline(&dmsetup_line, &line_size, fp)) > 0) {
-    int items = sscanf(dmsetup_line, "%s (%d, %d)",
+  while ((getline(&dmsetupLine, &lineSize, fp)) > 0) {
+    int items = sscanf(dmsetupLine, "%s (%d, %d)",
                        vdoPaths[count].name, &major, &minor);
     if (items != 3) {
       pclose(fp);
@@ -486,22 +484,22 @@ static void enumerate_devices(void)
  */
 static void calculateMaxDeviceName(char *name)
 {
-  int name_length = strlen(name);
-  maxDeviceNameLength = ((name_length > maxDeviceNameLength)
-                         ? name_length
+  int nameLength = strlen(name);
+  maxDeviceNameLength = ((nameLength > maxDeviceNameLength)
+                         ? nameLength
                          : maxDeviceNameLength);
 }
 
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  char err_buf[ERRBUF_SIZE];
+  char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
   int result;
 
-  result = register_vdo_status_codes();
+  result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         string_error(result, err_buf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   process_args(argc, argv);
@@ -516,9 +514,9 @@ int main(int argc, char *argv[])
     errx(2, "Could not collect list of known vdo devices");
   }
 
-  int num_devices = argc - optind;
+  int numDevices = argc - optind;
 
-  if (num_devices == 0) {
+  if (numDevices == 0) {
     // Set maxDeviceNameLength
     for (int i = 0; i < pathCount; i++) {
       calculateMaxDeviceName(vdoPaths[i].name);

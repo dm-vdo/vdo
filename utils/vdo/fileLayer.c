@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/fileLayer.c#12 $
  */
 
 #include "fileLayer.h"
@@ -28,12 +26,12 @@
 
 #include "fileUtils.h"
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "permassert.h"
 #include "syscalls.h"
 
 #include "constants.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 
 typedef struct fileLayer {
   PhysicalLayer common;
@@ -140,7 +138,10 @@ static int performIO(FileLayer               *layer,
       if (n == 0) {
         errno = VDO_UNEXPECTED_EOF;
       }
-      return uds_log_error_strerror(errno, "pread %s", layer->name);
+      return uds_log_error_strerror(errno, "p%s %s @%zd",
+                                    (read ? "read" : "write"),
+                                    layer->name,
+                                    offset);
     }
 
     offset += n;
@@ -241,11 +242,6 @@ static int isBlockDevice(const char *path, bool *device)
     *device = (bool) (S_ISBLK(statbuf.st_mode));
   }
   return result;
-}
-
-/**********************************************************************/
-static void vacuousFlush(struct vdo_flush *vdoFlush __attribute__((unused)))
-{
 }
 
 /**
@@ -374,7 +370,6 @@ static int setupFileLayer(const char     *name,
   layer->common.allocateIOBuffer = allocateIOBuffer;
   layer->common.reader           = fileReader;
   layer->common.writer           = readOnly ? noWriter : fileWriter;
-  layer->common.completeFlush    = vacuousFlush;
 
   *layerPtr = &layer->common;
   return VDO_SUCCESS;

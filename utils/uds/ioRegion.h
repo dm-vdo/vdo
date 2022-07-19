@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/ioRegion.h#6 $
  */
 
 #ifndef IO_REGION_H
@@ -24,7 +22,7 @@
 
 #include "atomicDefs.h"
 #include "compiler.h"
-#include "typeDefs.h"
+#include "type-defs.h"
 
 /**
  * The IO region type is an abstraction which represents a specific

@@ -16,9 +16,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/vdo/Makefile#3 $
+# $Id: //eng/vdo-releases/chlorine/src/packaging/src-dist/user/utils/vdo/Makefile#2 $
 
-VDO_VERSION = 8.1.1.360
+VDO_VERSION = 8.2.0.2
 
 UDS_DIR      = ../uds
 
@@ -96,7 +96,8 @@ PROGS = vdoaudit               \
 
 COMPLETIONS=vdostats
 
-NOBUILDPROGS = adaptLVMVDO.sh
+NOBUILDPROGS = adaptLVMVDO.sh \
+	       vdorecover
 PROG_SOURCES := $(PROGS:%=%.c)
 C_FILES      := $(filter-out $(PROG_SOURCES),$(wildcard *.c))
 LIB_OBJECTS  := $(C_FILES:%.c=%.o)
@@ -113,7 +114,6 @@ clean:
 	rm -rf $(DEPDIR) $(PROGS)
 
 libvdo.a: $(LIB_OBJECTS)
-	echo $$(LIB_OBJECTS)
 	$(RM) $@
 	$(AR) cr $@ $(LIB_OBJECTS)
 

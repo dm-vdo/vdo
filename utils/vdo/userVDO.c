@@ -15,22 +15,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/userVDO.c#19 $
  */
 
 #include "userVDO.h"
 
 #include <err.h>
 
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 
-#include "numUtils.h"
-#include "physicalLayer.h"
-#include "statusCodes.h"
+#include "num-utils.h"
+#include "status-codes.h"
 #include "types.h"
-#include "superBlockCodec.h"
-#include "vdoComponentStates.h"
+#include "super-block-codec.h"
+#include "vdo-component-states.h"
+#include "vdo-layout.h"
+
+#include "physicalLayer.h"
 
 /**********************************************************************/
 int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
@@ -41,7 +41,7 @@ int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
     return result;
   }
 
-  result = initialize_vdo_super_block_codec(&vdo->superBlockCodec);
+  result = vdo_initialize_super_block_codec(&vdo->superBlockCodec);
   if (result != VDO_SUCCESS) {
     freeUserVDO(&vdo);
     return result;
@@ -60,8 +60,8 @@ void freeUserVDO(UserVDO **vdoPtr)
     return;
   }
 
-  destroy_vdo_component_states(&vdo->states);
-  destroy_vdo_super_block_codec(&vdo->superBlockCodec);
+  vdo_destroy_component_states(&vdo->states);
+  vdo_destroy_super_block_codec(&vdo->superBlockCodec);
   UDS_FREE(vdo);
   *vdoPtr = NULL;
 }
@@ -77,7 +77,7 @@ int __must_check loadSuperBlock(UserVDO *vdo)
     return result;
   }
 
-  return decode_vdo_super_block(&vdo->superBlockCodec);
+  return vdo_decode_super_block(&vdo->superBlockCodec);
 }
 
 /**********************************************************************/
@@ -99,7 +99,7 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
     return result;
   }
 
-  result = decode_vdo_component_states(vdo->superBlockCodec.component_buffer,
+  result = vdo_decode_component_states(vdo->superBlockCodec.component_buffer,
                                        geometry->release_version,
                                        &vdo->states);
   if (result != VDO_SUCCESS) {
@@ -108,8 +108,10 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
   }
 
   if (validateConfig) {
-    result = validate_vdo_component_states(&vdo->states, geometry->nonce,
-                                           layer->getBlockCount(layer));
+    result = vdo_validate_component_states(&vdo->states,
+                                           geometry->nonce,
+                                           layer->getBlockCount(layer),
+                                           0);
     if (result != VDO_SUCCESS) {
       freeUserVDO(&vdo);
       return result;
@@ -137,7 +139,7 @@ int loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr)
 /**********************************************************************/
 int saveSuperBlock(UserVDO *vdo)
 {
-  int result = encode_vdo_super_block(&vdo->superBlockCodec);
+  int result = vdo_encode_super_block(&vdo->superBlockCodec);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -152,7 +154,7 @@ int saveSuperBlock(UserVDO *vdo)
 int saveVDO(UserVDO *vdo, bool saveGeometry)
 {
   int result
-    = encode_vdo_component_states(vdo->superBlockCodec.component_buffer,
+    = vdo_encode_component_states(vdo->superBlockCodec.component_buffer,
                                   &vdo->states);
   if (result != VDO_SUCCESS) {
     return result;
@@ -173,8 +175,8 @@ int saveVDO(UserVDO *vdo, bool saveGeometry)
 /**********************************************************************/
 void setDerivedSlabParameters(UserVDO *vdo)
 {
-  vdo->slabSizeShift = log_base_two(vdo->states.vdo.config.slab_size);
-  vdo->slabCount = compute_vdo_slab_count(vdo->states.slab_depot.first_block,
+  vdo->slabSizeShift = ilog2(vdo->states.vdo.config.slab_size);
+  vdo->slabCount = vdo_compute_slab_count(vdo->states.slab_depot.first_block,
                                           vdo->states.slab_depot.last_block,
                                           vdo->slabSizeShift);
   vdo->slabOffsetMask = (1ULL << vdo->slabSizeShift) - 1;
@@ -227,7 +229,7 @@ getPartition(const UserVDO     *vdo,
              const char        *errorMessage)
 {
   struct partition *partition;
-  int result = vdo_get_partition(vdo->states.layout, id, &partition);
+  int result = vdo_get_fixed_layout_partition(vdo->states.layout, id, &partition);
   if (result != VDO_SUCCESS) {
     errx(1, "%s", errorMessage);
   }

@@ -15,23 +15,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/slabSummaryReader.c#12 $
  */
 
 #include "slabSummaryReader.h"
 
 #include <err.h>
 
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
+
+#include "slab-depot-format.h"
+#include "slab-summary-format.h"
+#include "status-codes.h"
+#include "types.h"
+#include "vdo-component-states.h"
 
 #include "physicalLayer.h"
-#include "slabDepotFormat.h"
-#include "slabSummaryFormat.h"
-#include "statusCodes.h"
-#include "types.h"
-#include "vdoComponentStates.h"
-
 #include "userVDO.h"
 
 /**********************************************************************/
@@ -44,7 +42,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
 
   struct slab_summary_entry *entries;
   block_count_t summary_blocks
-    = get_vdo_slab_summary_zone_size(VDO_BLOCK_SIZE);
+    = vdo_get_slab_summary_zone_size(VDO_BLOCK_SIZE);
   int result = vdo->layer->allocateIOBuffer(vdo->layer,
                                             summary_blocks * VDO_BLOCK_SIZE,
                                             "slab summary entries",
@@ -55,15 +53,16 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   }
 
   struct partition *slab_summary_partition;
-  result = vdo_get_partition(vdo->states.layout, SLAB_SUMMARY_PARTITION,
-                             &slab_summary_partition);
+  result = vdo_get_fixed_layout_partition(vdo->states.layout,
+					  VDO_SLAB_SUMMARY_PARTITION,
+					  &slab_summary_partition);
   if (result != VDO_SUCCESS) {
     warnx("Could not find slab summary partition");
     return result;
   }
 
   physical_block_number_t origin
-    = get_vdo_fixed_layout_partition_offset(slab_summary_partition);
+    = vdo_get_fixed_layout_partition_offset(slab_summary_partition);
   result = vdo->layer->reader(vdo->layer, origin, summary_blocks,
                               (char *) entries);
   if (result != VDO_SUCCESS) {

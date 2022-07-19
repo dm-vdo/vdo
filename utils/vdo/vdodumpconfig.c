@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoDumpConfig.c#10 $
  */
 
 #include <err.h>
@@ -26,12 +24,12 @@
 
 #include "errors.h"
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 
 #include "constants.h"
 #include "types.h"
-#include "statusCodes.h"
-#include "volumeGeometry.h"
+#include "status-codes.h"
+#include "volume-geometry.h"
 
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
@@ -134,12 +132,12 @@ static void readVDOConfig(const char             *vdoBacking,
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   const char *vdoBacking = processArgs(argc, argv);
@@ -167,13 +165,11 @@ int main(int argc, char *argv[])
   printf("ReleaseVersion: %u\n", geometry.release_version);
   printf("Nonce: %llu\n", (unsigned long long) geometry.nonce);
   printf("IndexRegion: %llu\n",
-         (unsigned long long) geometry.regions[INDEX_REGION].start_block);
+         (unsigned long long) geometry.regions[VDO_INDEX_REGION].start_block);
   printf("DataRegion: %llu\n",
-         (unsigned long long) geometry.regions[DATA_REGION].start_block);
+         (unsigned long long) geometry.regions[VDO_DATA_REGION].start_block);
   printf("IndexConfig:\n");
   printf("  memory: %u\n", geometry.index_config.mem);
-  printf("  checkpointFrequency: %u\n",
-         geometry.index_config.checkpoint_frequency);
   printf("  sparse: %s\n", geometry.index_config.sparse ? "true" : "false");
   exit(0);
 }

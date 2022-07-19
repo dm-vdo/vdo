@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/parseUtils.c#8 $
  */
 
 #include "parseUtils.h"
@@ -24,9 +22,11 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
-#include "statusCodes.h"
+#include "string-utils.h"
+
+#include "status-codes.h"
 
 /**********************************************************************/
 int parseUInt(const char   *arg,
@@ -108,21 +108,19 @@ static int parseMem(char *string, uint32_t *sizePtr)
   uds_memory_config_size_t mem;
   if (strcmp(string, "0.25") == 0) {
     mem = UDS_MEMORY_CONFIG_256MB;
-  } else if (strcmp(string, "0.5") == 0) {
+  } else if ((strcmp(string, "0.5") == 0)
+             || (strcmp(string, "0.50") == 0)) {
     mem = UDS_MEMORY_CONFIG_512MB;
   } else if (strcmp(string, "0.75") == 0) {
     mem = UDS_MEMORY_CONFIG_768MB;
   } else {
-    unsigned long number;
-    if (uds_string_to_unsigned_long(string, &number) != UDS_SUCCESS) {
+    int number;
+    if (uds_string_to_signed_int(string, &number) != UDS_SUCCESS) {
       return -EINVAL;
     }
     mem = number;
-    if (mem != number) {
-      return -EINVAL;
-    }
   }
-  *sizePtr = mem;
+  *sizePtr = (uint32_t) mem;
   return UDS_SUCCESS;
 }
 
@@ -141,20 +139,6 @@ int parseIndexConfig(UdsConfigStrings    *configStrings,
       return result;
     }
     config.mem = mem;
-  }
-
-  if (configStrings->checkpointFrequency != NULL) {
-    unsigned long number;
-    int result
-      = uds_string_to_unsigned_long(configStrings->checkpointFrequency,
-                                    &number);
-    if (result != UDS_SUCCESS) {
-      return result;
-    }
-    if (number != (unsigned int) number) {
-      return ERANGE;
-    }
-    config.checkpoint_frequency = number;
   }
 
   if (configStrings->sparse != NULL) {

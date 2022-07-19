@@ -15,19 +15,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoConfig.h#7 $
  */
 
 #ifndef VDO_CONFIG_H
 #define VDO_CONFIG_H
 
-#include "uds.h"
+#include "errors.h"
 
-#include "fixedLayout.h"
-#include "recoveryJournalFormat.h"
+#include "recovery-journal-format.h"
 #include "types.h"
-#include "volumeGeometry.h"
+#include "vdo-layout.h"
+#include "volume-geometry.h"
 
 // The vdo_config structure is fully declared in types.h
 

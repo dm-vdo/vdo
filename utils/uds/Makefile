@@ -16,13 +16,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA. 
 #
-# $Id: //eng/vdo-releases/sulfur/src/packaging/src-dist/user/utils/uds/Makefile#23 $
+# $Id: //eng/vdo-releases/chlorine/src/packaging/src-dist/user/utils/uds/Makefile#1 $
 
-UDS_VERSION      = 8.1.1.66
-BUILD_VERSION    = $(UDS_VERSION)
-DISTRO_CODENAME := $(shell lsb_release -s -c)
+BUILD_VERSION = 8.2.0.2
 
-DEPDIR  = .deps
+DEPDIR = .deps
 
 ifeq ($(origin CC), default)
   CC=gcc
@@ -56,7 +54,7 @@ DEBUG_FLAGS    =
 RPM_OPT_FLAGS ?= -fpic
 GLOBAL_FLAGS   = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS)		\
 		 $(WARNS) $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)	\
-		 -DUDS_VERSION='"$(BUILD_VERSION)"'			\
+		 -DCURRENT_VERSION='"$(BUILD_VERSION)"'			\
 
 CFLAGS  = $(GLOBAL_FLAGS) -I. -std=gnu99 -pedantic $(C_WARNS) $(MY_CFLAGS)
 LDFLAGS = $(RPM_LD_FLAGS) $(MY_LDFLAGS)
@@ -67,74 +65,49 @@ MY_LDFLAGS  =
 
 vpath %.c .
 vpath %.c ./murmur
-vpath %.c ./util
 
-UDS_OBJECTS =	MurmurHash3.o			\
-		bits.o				\
-		buffer.o			\
-		bufferedReader.o		\
-		bufferedWriter.o		\
-		cacheCounters.o			\
-		cachedChapterIndex.o		\
-		chapterIndex.o			\
-		chapterWriter.o			\
-		config.o			\
-		deltaIndex.o			\
-		deltaMemory.o			\
-		errors.o			\
-		eventCount.o			\
-		fileIORegion.o			\
-		fileUtils.o			\
-		funnelQueue.o			\
-		geometry.o			\
-		hashUtils.o			\
-		index.o				\
-		indexCheckpoint.o		\
-		indexComponent.o		\
-		indexConfig.o			\
-		indexLayout.o			\
-		indexLayoutLinuxUser.o		\
-		indexLayoutParser.o		\
-		indexPageMap.o			\
-		indexSession.o			\
-		indexState.o			\
-		indexStateData.o		\
-		indexZone.o			\
-		ioFactoryLinuxUser.o		\
-		loadType.o			\
-		logger.o			\
-		loggerLinuxUser.o		\
-		memoryAlloc.o			\
-		memoryLinuxUser.o		\
-		minisyslog.o			\
-		nonce.o				\
-		openChapter.o			\
-		openChapterZone.o		\
-		pageCache.o			\
-		permassert.o			\
-		radixSort.o			\
-		random.o			\
-		recordPage.o			\
-		request.o			\
-		requestQueueUser.o		\
-		searchList.o			\
-		sparseCache.o			\
-		stringLinuxUser.o		\
-		stringUtils.o			\
-		syscalls.o			\
-		threadCondVarLinuxUser.o	\
-		threadsLinuxUser.o		\
-		threadMutexLinuxUser.o		\
-		threadSemaphoreLinuxUser.o	\
-		threadOnce.o			\
-		timeUtils.o			\
-		udsMain.o			\
-		volume.o			\
-		volumeIndex005.o		\
-		volumeIndex006.o		\
-		volumeIndexOps.o		\
-		volumeStore.o			\
-		zone.o
+UDS_OBJECTS =	murmurhash3.o		\
+		buffer.o		\
+		buffered-reader.o	\
+		buffered-writer.o	\
+		chapter-index.o		\
+		config.o		\
+		delta-index.o		\
+		errors.o		\
+		event-count.o		\
+		fileIORegion.o		\
+		fileUtils.o		\
+		funnel-queue.o		\
+		geometry.o		\
+		hash-utils.o		\
+		index.o			\
+		index-layout.o		\
+		index-page-map.o	\
+		index-session.o		\
+		ioFactory.o		\
+		logger.o		\
+		memoryAlloc.o		\
+		minisyslog.o		\
+		open-chapter.o		\
+		page-cache.o		\
+		permassert.o		\
+		radix-sort.o		\
+		random.o		\
+		record-page.o		\
+		requestQueue.o		\
+		sparse-cache.o		\
+		string-utils.o		\
+		syscalls.o		\
+		threadCondVar.o		\
+		threadMutex.o		\
+		threadSemaphore.o	\
+		time-utils.o		\
+		uds-threads.o		\
+		volume.o		\
+		volume-index005.o	\
+		volume-index006.o	\
+		volume-index-ops.o	\
+		volume-store.o
 
 .PHONY: all
 all: libuds.a

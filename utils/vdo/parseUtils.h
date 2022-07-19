@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/parseUtils.h#4 $
  */
 
 #ifndef PARSE_UTILS_H
@@ -25,12 +23,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "volumeGeometry.h"
+#include "volume-geometry.h"
 
 typedef struct {
   char *sparse;
   char *memorySize;
-  char *checkpointFrequency;
 } UdsConfigStrings;
 
 /**

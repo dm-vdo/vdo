@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileUtils.c#15 $
  */
 
 #include "fileUtils.h"
@@ -29,10 +27,10 @@
 
 #include "errors.h"
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "numeric.h"
 #include "permassert.h"
-#include "stringUtils.h"
+#include "string-utils.h"
 #include "syscalls.h"
 
 /**********************************************************************/
@@ -163,7 +161,7 @@ int read_buffer(int fd, void *buffer, unsigned int length)
 		}
 
 		if (bytes_read == 0) {
-			return uds_log_warning_strerror(UDS_CORRUPT_FILE,
+			return uds_log_warning_strerror(UDS_CORRUPT_DATA,
 							"unexpected end of file while reading");
 		}
 

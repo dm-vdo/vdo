@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoAudit.c#14 $
  */
 
 #include <err.h>
@@ -31,17 +29,16 @@
 #include "errors.h"
 #include "fileUtils.h"
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "syscalls.h"
 
-#include "numUtils.h"
-#include "packedReferenceBlock.h"
-#include "recoveryJournalFormat.h"
-#include "slabDepotFormat.h"
-#include "slabSummaryFormat.h"
-#include "statusCodes.h"
+#include "num-utils.h"
+#include "packed-reference-block.h"
+#include "recovery-journal-format.h"
+#include "slab-depot-format.h"
+#include "slab-summary-format.h"
+#include "status-codes.h"
 #include "types.h"
-#include "vdoState.h"
 
 #include "blockMapUtils.h"
 #include "slabSummaryReader.h"
@@ -130,6 +127,41 @@ static uint64_t     badRefCounts     = 0;
 static slab_count_t badSlabs         = 0;
 static slab_count_t badSummaryHints  = 0;
 
+static const char *VDO_STATE_NAMES[] = {
+	[VDO_CLEAN] = "CLEAN",
+	[VDO_DIRTY] = "DIRTY",
+	[VDO_FORCE_REBUILD] = "FORCE_REBUILD",
+	[VDO_NEW] = "NEW",
+	[VDO_READ_ONLY_MODE] = "READ_ONLY_MODE",
+	[VDO_REBUILD_FOR_UPGRADE] = "REBUILD_FOR_UPGRADE",
+	[VDO_RECOVERING] = "RECOVERING",
+	[VDO_REPLAYING] = "REPLAYING",
+};
+
+/**
+ * Get the name of a VDO state code for logging purposes.
+ *
+ * @param state  The state code
+ *
+ * @return The name of the state code
+ **/
+static const char *vdo_get_state_name(enum vdo_state state)
+{
+	int result;
+
+	/* Catch if a state has been added without updating the name array. */
+	STATIC_ASSERT(ARRAY_SIZE(VDO_STATE_NAMES) == VDO_STATE_COUNT);
+
+	result = ASSERT(state < ARRAY_SIZE(VDO_STATE_NAMES),
+			"vdo_state value %u must have a registered name",
+			state);
+	if (result != UDS_SUCCESS) {
+		return "INVALID VDO STATE CODE";
+	}
+
+	return VDO_STATE_NAMES[state];
+}
+
 /**
  * Explain how this command-line function is used.
  *
@@ -180,8 +212,7 @@ static void printSlabErrorHistogram(const SlabAudit *audit)
       continue;
     }
     // Round up any fraction of a dot to a full dot.
-    int width = compute_bucket_count(count * (uint64_t) scale,
-                                     audit->badRefCounts);
+    int width = DIV_ROUND_UP(count * (uint64_t) scale, audit->badRefCounts);
     printf("  %5d  %8u   %.*s\n", delta, count, width, HISTOGRAM_BAR);
   }
 
@@ -645,7 +676,7 @@ static int verifyPBNRefCounts(void)
     return result;
   }
 
-  hintShift = get_vdo_slab_summary_hint_shift(vdo->slabSizeShift);
+  hintShift = vdo_get_slab_summary_hint_shift(vdo->slabSizeShift);
   for (slab_count_t slabNumber = 0; slabNumber < vdo->slabCount;
        slabNumber++) {
     result = verifySlab(slabNumber, buffer);
@@ -673,7 +704,7 @@ static bool auditVDO(void)
 
   if (vdo->states.vdo.state != VDO_CLEAN) {
     warnx("WARNING: The VDO was not cleanly shut down (it has state '%s')",
-          get_vdo_state_name(vdo->states.vdo.state));
+          vdo_get_state_name(vdo->states.vdo.state));
   }
 
   // Get logical block count and populate observed slab reference counts.
@@ -714,12 +745,12 @@ static bool auditVDO(void)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   result = processAuditArgs(argc, argv);
@@ -729,14 +760,14 @@ int main(int argc, char *argv[])
 
   result = makeVDOFromFile(filename, true, &vdo);
   if (result != VDO_SUCCESS) {
-    errx(1, "Could not load VDO from '%s': %s",
-         filename, uds_string_error(result, errBuf, ERRBUF_SIZE));
+    errx(1, "Could not load VDO from '%s': %s", filename,
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
   physical_block_number_t slabOrigin = depot.first_block;
   slabDataBlocks = depot.slab_config.data_blocks;
-  slab_count_t slabCount = compute_vdo_slab_count(depot.first_block,
+  slab_count_t slabCount = vdo_compute_slab_count(depot.first_block,
                                                   depot.last_block,
                                                   vdo->slabSizeShift);
   for (slab_count_t i = 0; i < slabCount; i++) {
@@ -753,7 +784,7 @@ int main(int argc, char *argv[])
       freeAuditAllocations();
       errx(1, "Could not allocate %llu reference counts: %s",
            (unsigned long long) slabDataBlocks,
-           uds_string_error(result, errBuf, ERRBUF_SIZE));
+           uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
     }
   }
 

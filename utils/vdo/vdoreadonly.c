@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoReadOnly.c#6 $
  */
 
 #include <err.h>
@@ -29,10 +27,10 @@
 #include "logger.h"
 
 #include "constants.h"
-#include "physicalLayer.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 
 #include "fileLayer.h"
+#include "physicalLayer.h"
 #include "vdoConfig.h"
 #include "vdoVolumeUtils.h"
 
@@ -73,12 +71,12 @@ static void usage(const char *progname, const char *usageOptionsString)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   int c;
@@ -113,7 +111,7 @@ int main(int argc, char *argv[])
 
   result = setVDOReadOnlyMode(layer);
   if (result != VDO_SUCCESS) {
-    char buf[ERRBUF_SIZE];
+    char buf[UDS_MAX_ERROR_MESSAGE_SIZE];
     errx(result, "setting read-only mode failed on '%s': %s",
          filename, uds_string_error(result, buf, sizeof(buf)));
   }

@@ -15,23 +15,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoRegenerateGeometry.c#15 $
  */
 
 #include <err.h>
 #include <getopt.h>
 #include <uuid/uuid.h>
 
-#include "memoryAlloc.h"
-#include "uds.h"
-#include "timeUtils.h"
+#include "errors.h"
+#include "memory-alloc.h"
+#include "time-utils.h"
 
 #include "constants.h"
-#include "blockMapFormat.h"
-#include "blockMapPage.h"
-#include "statusCodes.h"
-#include "volumeGeometry.h"
+#include "block-map-format.h"
+#include "block-map-page.h"
+#include "status-codes.h"
+#include "volume-geometry.h"
 
 #include "fileLayer.h"
 #include "parseUtils.h"
@@ -84,7 +82,7 @@ static char          *blockBuffer;
 static PhysicalLayer *fileLayer;
 static block_count_t  physicalSize;
 static uuid_t         uuid;
-static char           errorBuffer[ERRBUF_SIZE];
+static char           errorBuffer[UDS_MAX_ERROR_MESSAGE_SIZE];
 static Candidate      candidates[UDS_CONFIGURATIONS];
 static int            candidateCount = 0;
 
@@ -110,10 +108,10 @@ static void usage(const char *programName)
  **/
 static void processArgs(int argc, char *argv[])
 {
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errorBuffer, ERRBUF_SIZE));
+         uds_string_error(result, errorBuffer, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   int c;
@@ -163,7 +161,7 @@ static void processArgs(int argc, char *argv[])
  * @return The error message associated with the error code
  **/
 static const char *resultString(int result) {
-  return uds_string_error(result, errorBuffer, ERRBUF_SIZE);
+  return uds_string_error(result, errorBuffer, UDS_MAX_ERROR_MESSAGE_SIZE);
 }
 
 /**
@@ -243,8 +241,9 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     return false;
   }
 
-  if (validate_vdo_config(&candidate->vdo->states.vdo.config, physicalSize,
-                          true) != VDO_SUCCESS) {
+  if (vdo_validate_config(&candidate->vdo->states.vdo.config,
+                          physicalSize,
+                          0) != VDO_SUCCESS) {
     freeUserVDO(&candidate->vdo);
     return false;
   }
@@ -261,7 +260,7 @@ static bool tryUDSConfig(const uds_memory_config_size_t memory, bool sparse)
     }
 
     enum block_map_page_validity validity
-      = validate_vdo_block_map_page((struct block_map_page *) blockBuffer,
+      = vdo_validate_block_map_page((struct block_map_page *) blockBuffer,
                                     candidate->vdo->states.vdo.nonce,
                                     map.root_origin + root);
     if (validity == VDO_BLOCK_MAP_PAGE_VALID) {
@@ -288,7 +287,7 @@ static void findSuperBlocks(void)
   };
 
   bool trySparse = true;
-  for (unsigned int i = 0; i < UDS_MEMORY_CONFIG_MAX; i++) {
+  for (int i = 0; i < UDS_MEMORY_CONFIG_MAX; i++) {
     const uds_memory_config_size_t memory = ((i < 3) ? smallSizes[i] : i - 2);
     Candidate *candidate = &candidates[candidateCount];
     if (tryUDSConfig(memory, false)) {
@@ -326,10 +325,10 @@ static void rewriteGeometry(Candidate *candidate)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errorBuffer, ERRBUF_SIZE));
+         uds_string_error(result, errorBuffer, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   processArgs(argc, argv);

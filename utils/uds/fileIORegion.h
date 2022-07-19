@@ -15,14 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/userLinux/uds/fileIORegion.h#7 $
  */
 
 #ifndef FILE_IO_REGION_H
 #define FILE_IO_REGION_H
 
-#include "ioFactory.h"
+#include "io-factory.h"
 #include "ioRegion.h"
 #include "fileUtils.h"
 

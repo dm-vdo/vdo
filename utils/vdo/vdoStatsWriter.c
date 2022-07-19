@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -20,7 +21,7 @@
 
 #include "math.h"
 #include "statistics.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 #include "vdoStats.h"
 
 #define MAX_STATS 240
@@ -32,23 +33,6 @@ int maxLabelLength = 0;
 char labels[MAX_STATS][MAX_STAT_LENGTH];
 char values[MAX_STATS][MAX_STAT_LENGTH];
 
-
-/**********************************************************************/
-static int write_uint8_t(char *label, uint8_t value)
-{
-	int count = sprintf(labels[fieldCount], "%s", label);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-
-	maxLabelLength = max(maxLabelLength, (int) strlen(label));
-
-	count = sprintf(values[fieldCount++], "%hhu", value);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	return VDO_SUCCESS;
-}
 
 /**********************************************************************/
 static int write_block_count_t(char *label, block_count_t value)
@@ -68,6 +52,23 @@ static int write_block_count_t(char *label, block_count_t value)
 }
 
 /**********************************************************************/
+static int write_uint8_t(char *label, uint8_t value)
+{
+	int count = sprintf(labels[fieldCount], "%s", label);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+
+	maxLabelLength = max(maxLabelLength, (int) strlen(label));
+
+	count = sprintf(values[fieldCount++], "%hhu", value);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	return VDO_SUCCESS;
+}
+
+/**********************************************************************/
 static int write_uint64_t(char *label, uint64_t value)
 {
 	int count = sprintf(labels[fieldCount], "%s", label);
@@ -78,6 +79,23 @@ static int write_uint64_t(char *label, uint64_t value)
 	maxLabelLength = max(maxLabelLength, (int) strlen(label));
 
 	count = sprintf(values[fieldCount++], "%lu", value);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+static int write_string(char *label, char *value)
+{
+	int count = sprintf(labels[fieldCount], "%s", label);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+
+	maxLabelLength = max(maxLabelLength, (int) strlen(label));
+
+	count = sprintf(values[fieldCount++], "%s", value);
 	if (count < 0) {
 		return VDO_UNEXPECTED_EOF;
 	}
@@ -112,23 +130,6 @@ static int write_uint32_t(char *label, uint32_t value)
 	maxLabelLength = max(maxLabelLength, (int) strlen(label));
 
 	count = sprintf(values[fieldCount++], "%u", value);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
-static int write_string(char *label, char *value)
-{
-	int count = sprintf(labels[fieldCount], "%s", label);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-
-	maxLabelLength = max(maxLabelLength, (int) strlen(label));
-
-	count = sprintf(values[fieldCount++], "%s", value);
 	if (count < 0) {
 		return VDO_UNEXPECTED_EOF;
 	}
@@ -1450,7 +1451,7 @@ static int write_vdo_statistics(char *prefix,
 }
 
 /**********************************************************************/
-int write_vdo_stats(struct vdo_statistics *stats)
+int vdo_write_stats(struct vdo_statistics *stats)
 {
 	fieldCount = 0;
 	maxLabelLength = 0;

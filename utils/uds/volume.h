@@ -1,39 +1,22 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/src/uds/volume.h#29 $
  */
 
 #ifndef VOLUME_H
 #define VOLUME_H
 
-#include "cacheCounters.h"
 #include "common.h"
-#include "chapterIndex.h"
-#include "indexConfig.h"
-#include "indexLayout.h"
-#include "indexPageMap.h"
-#include "pageCache.h"
-#include "request.h"
-#include "sparseCache.h"
+#include "config.h"
+#include "chapter-index.h"
+#include "index-layout.h"
+#include "index-page-map.h"
+#include "page-cache.h"
+#include "radix-sort.h"
+#include "sparse-cache.h"
 #include "uds.h"
-#include "util/radixSort.h"
-#include "volumeStore.h"
+#include "uds-threads.h"
+#include "volume-store.h"
 
 enum reader_state {
 	READER_STATE_RUN = 1,
@@ -44,26 +27,13 @@ enum reader_state {
 enum index_lookup_mode {
 	/* Always do lookups in all chapters normally.  */
 	LOOKUP_NORMAL,
-	/*
-	 * Don't do lookups in closed chapters; assume records not in the
-	 * open chapter are always new.  You don't want this normally; it's
-	 * for programs like albfill.  (Even then, with multiple runs using
-	 * the same tag, we may actually duplicate older records, but if
-	 * it's in a separate chapter it won't really matter.)
-	 */
-	LOOKUP_CURRENT_CHAPTER_ONLY,
-	/*
-	 * Only do a subset of lookups needed when rebuilding an index.
-	 * This cannot be set externally.
-	 */
-	LOOKUP_FOR_REBUILD
+	/* Only do a subset of lookups needed when rebuilding an index. */
+	LOOKUP_FOR_REBUILD,
 };
 
 struct volume {
 	/* The layout of the volume */
 	struct geometry *geometry;
-	/* The configuration of the volume */
-	struct configuration *config;
 	/* The access to the volume's backing store */
 	struct volume_store volume_store;
 	/* A single page used for writing to the volume */
@@ -103,21 +73,14 @@ struct volume {
 /**
  * Create a volume.
  *
- * @param config               The configuration to use.
- * @param layout               The index layout
- * @param user_params          The index session parameters.  If NULL, the
- *                             default session parameters will be used.
- * @param read_queue_max_size  The maximum size of the read queue.
- * @param zone_count           The number of zones to use.
- * @param new_volume           A pointer to hold a pointer to the new volume.
+ * @param config      The configuration to use.
+ * @param layout      The index layout
+ * @param new_volume  A pointer to hold a pointer to the new volume.
  *
  * @return          UDS_SUCCESS or an error code
  **/
 int __must_check make_volume(const struct configuration *config,
 			     struct index_layout *layout,
-			     const struct uds_parameters *user_params,
-			     unsigned int read_queue_max_size,
-			     unsigned int zone_count,
 			     struct volume **new_volume);
 
 /**
@@ -240,13 +203,10 @@ int __must_check search_cached_record_page(struct volume *volume,
  *
  * @param volume   the volume containing the chapter
  * @param chapter  the virtual chapter number
- * @param reason   the reason for invalidation
  *
  * @return UDS_SUCCESS or an error code
  **/
-int __must_check forget_chapter(struct volume *volume,
-				uint64_t chapter,
-				enum invalidation_reason reason);
+int __must_check forget_chapter(struct volume *volume, uint64_t chapter);
 
 /**
  * Write a chapter's worth of index pages to a volume
@@ -326,17 +286,13 @@ read_chapter_index_from_volume(const struct volume *volume,
  * This function is only exposed for the use of unit tests.
  *
  * @param volume         The volume containing the page
- * @param request        The request originating the search
  * @param physical_page  The physical page number
- * @param probe_type     The type of cache access being done
  * @param entry_ptr      A pointer to hold the retrieved cached entry
  *
  * @return UDS_SUCCESS or an error code
  **/
 int __must_check get_volume_page_locked(struct volume *volume,
-					struct uds_request *request,
 					unsigned int physical_page,
-					enum cache_probe_type probe_type,
 					struct cached_page **entry_ptr);
 
 /**
@@ -359,7 +315,6 @@ int __must_check get_volume_page_locked(struct volume *volume,
  * @param volume         The volume containing the page
  * @param request        The request originating the search
  * @param physical_page  The physical page number
- * @param probe_type     The type of cache access being done
  * @param entry_ptr      A pointer to hold the retrieved cached entry
  *
  * @return UDS_SUCCESS or an error code
@@ -367,7 +322,6 @@ int __must_check get_volume_page_locked(struct volume *volume,
 int __must_check get_volume_page_protected(struct volume *volume,
 					   struct uds_request *request,
 					   unsigned int physical_page,
-					   enum cache_probe_type probe_type,
 					   struct cached_page **entry_ptr);
 
 /**
@@ -389,7 +343,6 @@ int __must_check get_volume_page_protected(struct volume *volume,
  * @param volume          The volume containing the page
  * @param chapter         The number of the chapter containing the page
  * @param page_number     The number of the page
- * @param probe_type      The type of cache access being done
  * @param data_ptr        Pointer to hold the retrieved page, NULL if not
  *                        wanted
  * @param index_page_ptr  Pointer to hold the retrieved chapter index page, or
@@ -400,14 +353,11 @@ int __must_check get_volume_page_protected(struct volume *volume,
 int __must_check get_volume_page(struct volume *volume,
 				 unsigned int chapter,
 				 unsigned int page_number,
-				 enum cache_probe_type probe_type,
 				 byte **data_ptr,
 				 struct delta_index_page **index_page_ptr);
 
-/**********************************************************************/
 size_t __must_check get_cache_size(struct volume *volume);
 
-/**********************************************************************/
 int __must_check
 find_volume_chapter_boundaries_impl(unsigned int chapter_limit,
 				    unsigned int max_bad_chapters,

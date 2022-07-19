@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright Red Hat
  *
@@ -18,7 +19,7 @@
  */
 
 #include "statistics.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 #include "vdoStats.h"
 
 /*********************************************************************/

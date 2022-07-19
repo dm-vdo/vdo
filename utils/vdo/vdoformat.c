@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoFormat.c#11 $
  */
 
 #include <blkid/blkid.h>
@@ -31,17 +29,15 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 
-#include "uds.h"
-
 #include "errors.h"
 #include "fileUtils.h"
 #include "logger.h"
-#include "stringUtils.h"
+#include "string-utils.h"
 #include "syscalls.h"
-#include "timeUtils.h"
+#include "time-utils.h"
 
 #include "constants.h"
-#include "statusCodes.h"
+#include "status-codes.h"
 #include "types.h"
 #include "vdoConfig.h"
 
@@ -102,9 +98,6 @@ static const char helpString[] =
   "      as small as possible, given the eventual maximal size of the\n"
   "      volume.\n"
   "\n"
-  "    --uds-checkpoint-frequency=<frequency>\n"
-  "       Specify the frequency of checkpoints. The default is never.\n"
-  "\n"
   "    --uds-memory-size=<gigabytes>\n"
   "       Specify the amount of memory, in gigabytes, to devote to the\n"
   "       index. Accepted options are .25, .5, .75, and all positive\n"
@@ -122,18 +115,17 @@ static const char helpString[] =
 
 // N.B. the option array must be in sync with the option string.
 static struct option options[] = {
-  { "force",                    no_argument,       NULL, 'f' },
-  { "help",                     no_argument,       NULL, 'h' },
-  { "logical-size",             required_argument, NULL, 'l' },
-  { "slab-bits",                required_argument, NULL, 'S' },
-  { "uds-checkpoint-frequency", required_argument, NULL, 'c' },
-  { "uds-memory-size",          required_argument, NULL, 'm' },
-  { "uds-sparse",               no_argument,       NULL, 's' },
-  { "verbose",                  no_argument,       NULL, 'v' },
-  { "version",                  no_argument,       NULL, 'V' },
-  { NULL,                       0,                 NULL,  0  },
+  { "force",           no_argument,       NULL, 'f' },
+  { "help",            no_argument,       NULL, 'h' },
+  { "logical-size",    required_argument, NULL, 'l' },
+  { "slab-bits",       required_argument, NULL, 'S' },
+  { "uds-memory-size", required_argument, NULL, 'm' },
+  { "uds-sparse",      no_argument,       NULL, 's' },
+  { "verbose",         no_argument,       NULL, 'v' },
+  { "version",         no_argument,       NULL, 'V' },
+  { NULL,              0,                 NULL,  0  },
 };
-static char optionString[] = "fhil:S:c:m:svV";
+static char optionString[] = "fhil:S:m:svV";
 
 static void usage(const char *progname, const char *usageOptionsString)
 {
@@ -145,7 +137,7 @@ static void printReadableSize(size_t size)
 {
   const char *UNITS[] = { "B", "KB", "MB", "GB", "TB", "PB" };
   unsigned int unit = 0;
-  while ((size >= 1024) && (unit < COUNT_OF(UNITS) - 1)) {
+  while ((size >= 1024) && (unit < ARRAY_SIZE(UNITS) - 1)) {
     size /= 1024;
     unit++;
   };
@@ -416,12 +408,12 @@ static int checkDeviceInUse(char *filename, uint32_t major, uint32_t minor)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[ERRBUF_SIZE];
+  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
 
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, ERRBUF_SIZE));
+         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
   }
 
   uint64_t     logicalSize  = 0; // defaults to physicalSize
@@ -461,10 +453,6 @@ int main(int argc, char *argv[])
               MIN_SLAB_BITS, MAX_VDO_SLAB_BITS);
         usage(argv[0], usageString);
       }
-      break;
-
-    case 'c':
-      configStrings.checkpointFrequency = optarg;
       break;
 
     case 'm':
@@ -548,7 +536,7 @@ int main(int argc, char *argv[])
          VDO_BLOCK_SIZE);
   }
 
-  char errorBuffer[ERRBUF_SIZE];
+  char errorBuffer[UDS_MAX_ERROR_MESSAGE_SIZE];
   if (config.logical_blocks > MAXIMUM_VDO_LOGICAL_BLOCKS) {
     errx(VDO_OUT_OF_RANGE,
          "%llu requested logical space exceeds the maximum "

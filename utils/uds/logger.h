@@ -1,22 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
- *
- * $Id: //eng/uds-releases/krusty/src/uds/logger.h#28 $
  */
 
 #ifndef LOGGER_H
@@ -199,23 +183,18 @@ int uds_vlog_strerror(int priority,
 #define uds_log_error_strerror(errnum, ...) \
 	uds_log_strerror(UDS_LOG_ERR, errnum, __VA_ARGS__);
 
-/**********************************************************************/
 #define uds_log_debug_strerror(errnum, ...) \
 	uds_log_strerror(UDS_LOG_DEBUG, errnum, __VA_ARGS__);
 
-/**********************************************************************/
 #define uds_log_info_strerror(errnum, ...) \
 	uds_log_strerror(UDS_LOG_INFO, errnum, __VA_ARGS__);
 
-/**********************************************************************/
 #define uds_log_notice_strerror(errnum, ...) \
 	uds_log_strerror(UDS_LOG_NOTICE, errnum, __VA_ARGS__);
 
-/**********************************************************************/
 #define uds_log_warning_strerror(errnum, ...) \
 	uds_log_strerror(UDS_LOG_WARNING, errnum, __VA_ARGS__);
 
-/**********************************************************************/
 #define uds_log_fatal_strerror(errnum, ...) \
 	uds_log_strerror(UDS_LOG_CRIT, errnum, __VA_ARGS__);
 

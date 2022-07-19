@@ -15,8 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
- *
- * $Id: //eng/vdo-releases/sulfur/src/c++/vdo/user/vdoConfig.c#22 $
  */
 
 #include <uuid/uuid.h>
@@ -24,24 +22,23 @@
 #include "vdoConfig.h"
 
 #include "logger.h"
-#include "memoryAlloc.h"
+#include "memory-alloc.h"
 #include "permassert.h"
-#include "timeUtils.h"
+#include "time-utils.h"
 
-#include "blockMapFormat.h"
+#include "block-map-format.h"
 #include "constants.h"
-#include "fixedLayout.h"
-#include "numUtils.h"
-#include "physicalLayer.h"
-#include "recoveryJournalFormat.h"
-#include "releaseVersions.h"
-#include "slabDepotFormat.h"
-#include "slabSummaryFormat.h"
-#include "statusCodes.h"
-#include "vdoComponentStates.h"
-#include "vdoState.h"
-#include "volumeGeometry.h"
+#include "num-utils.h"
+#include "recovery-journal-format.h"
+#include "release-versions.h"
+#include "slab-depot-format.h"
+#include "slab-summary-format.h"
+#include "status-codes.h"
+#include "vdo-component-states.h"
+#include "vdo-layout.h"
+#include "volume-geometry.h"
 
+#include "physicalLayer.h"
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
 
@@ -54,11 +51,11 @@ int makeFixedLayoutFromConfig(const struct vdo_config  *config,
                               physical_block_number_t   startingOffset,
                               struct fixed_layout     **layoutPtr)
 {
-  return make_partitioned_vdo_fixed_layout(config->physical_blocks,
+  return vdo_make_partitioned_fixed_layout(config->physical_blocks,
                                            startingOffset,
                                            DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
                                            config->recovery_journal_size,
-                                           get_vdo_slab_summary_size(VDO_BLOCK_SIZE),
+                                           vdo_get_slab_summary_size(VDO_BLOCK_SIZE),
                                            layoutPtr);
 }
 
@@ -97,7 +94,7 @@ computeForestSize(block_count_t logicalBlocks,
                  newSizes.levels[VDO_BLOCK_MAP_TREE_HEIGHT - 1]);
 
   block_count_t approximateLeaves =
-    compute_vdo_block_map_page_count(logicalBlocks - approximateNonLeaves);
+    vdo_compute_block_map_page_count(logicalBlocks - approximateNonLeaves);
 
   // This can be a slight over-estimate since the tree will never have to
   // address these blocks, so it might be a tiny bit smaller.
@@ -128,24 +125,24 @@ static int __must_check configureVDO(UserVDO *vdo)
   vdo->states.recovery_journal = configureRecoveryJournal();
 
   struct slab_config slabConfig;
-  result = configure_vdo_slab(config->slab_size,
+  result = vdo_configure_slab(config->slab_size,
                               config->slab_journal_blocks,
                               &slabConfig);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  const struct partition *partition = getPartition(vdo,
-                                                   BLOCK_ALLOCATOR_PARTITION,
-                                                   "no allocator partition");
+  const struct partition *partition
+    = getPartition(vdo, VDO_BLOCK_ALLOCATOR_PARTITION,
+                   "no allocator partition");
   if (result != VDO_SUCCESS) {
     return result;
   }
 
   physical_block_number_t partitionOffset
-    = get_vdo_fixed_layout_partition_offset(partition);
+    = vdo_get_fixed_layout_partition_offset(partition);
   result
-    = configure_vdo_slab_depot(get_vdo_fixed_layout_partition_size(partition),
+    = vdo_configure_slab_depot(vdo_get_fixed_layout_partition_size(partition),
                                partitionOffset,
                                slabConfig, 0, &vdo->states.slab_depot);
   if (result != VDO_SUCCESS) {
@@ -161,11 +158,12 @@ static int __must_check configureVDO(UserVDO *vdo)
                                        DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT);
   }
 
-  partition = getPartition(vdo, BLOCK_MAP_PARTITION, "no block map partition");
+  partition
+    = getPartition(vdo, VDO_BLOCK_MAP_PARTITION, "no block map partition");
   vdo->states.block_map = (struct block_map_state_2_0) {
     .flat_page_origin = VDO_BLOCK_MAP_FLAT_PAGE_ORIGIN,
     .flat_page_count = 0,
-    .root_origin = get_vdo_fixed_layout_partition_offset(partition),
+    .root_origin = vdo_get_fixed_layout_partition_offset(partition),
     .root_count = DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT,
   };
 
@@ -205,7 +203,7 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 
   block_count_t blockMapBlocks = DEFAULT_VDO_BLOCK_MAP_TREE_ROOT_COUNT;
   block_count_t journalBlocks  = config->recovery_journal_size;
-  block_count_t summaryBlocks  = get_vdo_slab_summary_size(VDO_BLOCK_SIZE);
+  block_count_t summaryBlocks  = vdo_get_slab_summary_size(VDO_BLOCK_SIZE);
   block_count_t slabBlocks     = config->slab_size;
 
   // The +2 takes into account the super block and geometry block.
@@ -228,14 +226,14 @@ int calculateMinimumVDOFromConfig(const struct vdo_config   *config,
 static int __must_check clearPartition(UserVDO *vdo, enum partition_id id)
 {
   struct partition *partition;
-  int result = vdo_get_partition(vdo->states.layout, id, &partition);
+  int result = vdo_get_fixed_layout_partition(vdo->states.layout, id, &partition);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  block_count_t size = get_vdo_fixed_layout_partition_size(partition);
+  block_count_t size = vdo_get_fixed_layout_partition_size(partition);
   physical_block_number_t start
-    = get_vdo_fixed_layout_partition_offset(partition);
+    = vdo_get_fixed_layout_partition_offset(partition);
 
   block_count_t bufferBlocks = 1;
   for (block_count_t n = size;
@@ -296,12 +294,12 @@ static int configureAndWriteVDO(UserVDO                   *vdo,
     return result;
   }
 
-  result = clearPartition(vdo, BLOCK_MAP_PARTITION);
+  result = clearPartition(vdo, VDO_BLOCK_MAP_PARTITION);
   if (result != VDO_SUCCESS) {
     return uds_log_error_strerror(result, "cannot clear block map partition");
   }
 
-  result = clearPartition(vdo, RECOVERY_JOURNAL_PARTITION);
+  result = clearPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION);
   if (result != VDO_SUCCESS) {
     return uds_log_error_strerror(result,
                                   "cannot clear recovery journal partition");
@@ -317,12 +315,12 @@ int formatVDOWithNonce(const struct vdo_config   *config,
                        nonce_t                    nonce,
                        uuid_t                    *uuid)
 {
-  int result = register_vdo_status_codes();
+  int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  result = validate_vdo_config(config, layer->getBlockCount(layer), false);
+  result = vdo_validate_config(config, layer->getBlockCount(layer), 0);
   if (result != VDO_SUCCESS) {
     return result;
   }
