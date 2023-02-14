@@ -95,6 +95,8 @@ static INLINE void smp_mb(void)
   __asm__ __volatile__("bcr 14,0" : : : "memory");
 #elif defined __PPC__
   __asm__ __volatile__("sync" : : : "memory");
+#elif defined __loongarch64
+  __asm__ __volatile__("dbar 0" : : : "memory");
 #else
 #error "no fence defined"
 #endif
@@ -120,6 +122,8 @@ static INLINE void smp_rmb(void)
   __asm__ __volatile__("bcr 14,0" : : : "memory");
 #elif defined __PPC__
   __asm__ __volatile__("lwsync" : : : "memory");
+#elif defined __loongarch64
+  __asm__ __volatile__("dbar 0" : : : "memory");
 #else
 #error "no fence defined"
 #endif
@@ -145,6 +149,8 @@ static INLINE void smp_wmb(void)
   __asm__ __volatile__("bcr 14,0" : : : "memory");
 #elif defined __PPC__
   __asm__ __volatile__("lwsync" : : : "memory");
+#elif defined __loongarch64
+  __asm__ __volatile__("dbar 0" : : : "memory");
 #else
 #error "no fence defined"
 #endif
