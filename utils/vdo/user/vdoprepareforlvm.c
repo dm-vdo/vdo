@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#5 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#8 $
  */
 
 #include <err.h>
@@ -94,8 +94,8 @@ static char optionString[] = "chV";
 
 static const char *fileName;
 static bool checkPreparationState = false;
-static const off_t vdoByteOffset  = (1024 * 1024) * 2;
-static const off_t vdoBlockOffset = vdoByteOffset / VDO_BLOCK_SIZE;
+static off_t vdoByteOffset  = (1024 * 1024) * 2;
+static off_t vdoBlockOffset = ((1024 * 1024) * 2) / VDO_BLOCK_SIZE;
 
 static void usage(const char *progname, const char *usageOptionsString)
 {
@@ -230,6 +230,79 @@ static int convertUDS(IndexConfig    *indexConfig,
   udsFreeConfiguration(udsConfig);
 
   return result;
+}
+
+/**
+ * Calculate the aligned offset and extent size for LVM use.
+ *
+ * In order to properly convert VDO volumes to LVM, they need to
+ * be able to fit our max length (256 TB) into two 32 bit numbers;
+ * one for extent count and one for extent size. If we take a max
+ ^ extent count, it means the min extent size can be 65536. This
+ * function attempts to find the max extent size between 1.5 to
+ * 2M from the original VDO start location, which we know is free
+ * space we can move the start of the VDO volume to after
+ * conversion.
+ * 
+ *
+ * @param [in]  vdo               The vdo structure to be converted
+ * @param [in]  geometry          The volume geometry
+ * @param [out] extentSize        The extent size for the LVM volume
+ *
+ * @return VDO_SUCCESS or an error code
+ **/
+static int calculateExtentSizeAlignment(VDO            *vdo,
+					VolumeGeometry geometry,
+					unsigned long  *extentSize)
+{
+  off_t vdoStart = geometry.regions[DATA_REGION].startBlock;
+  off_t vdoLength = vdo->config.physicalBlocks;
+
+  // length of VDO, starting at a 2M offset
+  unsigned long lenBlocks = 1 + vdoStart + vdoLength - vdoBlockOffset;
+  unsigned long lenBytes = lenBlocks * VDO_BLOCK_SIZE;
+
+  // 500K Buffer between 1.5M and 2M that we will use to align within
+  unsigned long alignRange = 500 * 1024;
+
+  // Extent size range
+  unsigned long minExtentSize = ((unsigned long)1 << 16);
+  unsigned long maxExtentSize = ((unsigned long)1 << 32);
+
+  // Don't calculate if vdo length is already too small
+  if (lenBytes <= minExtentSize) {
+    return EINVAL;
+  }
+
+  printf("Length = %lu\n", lenBytes);
+  
+  unsigned long remainder = 0;  
+  while (maxExtentSize >= minExtentSize) {
+    // If extent size is too big, move to next one
+    if (maxExtentSize <= lenBytes) {
+      remainder = (lenBytes % maxExtentSize);
+      // If we are perfectly aligned at 2M, we're good.
+      if (remainder == 0) {
+	break;
+      }
+      // If we're not aligned BUT we know we can be aligned
+      // within the 500K available space, we'll align there.
+      unsigned long neededToAlign = maxExtentSize - remainder;
+      if (neededToAlign < alignRange) {
+	break;
+      }      
+    }
+    // Try again with a smaller extent size
+    maxExtentSize = maxExtentSize / 2;
+  }
+
+  // Calculate the start of VDO by block and byte.
+  vdoByteOffset = vdoByteOffset - maxExtentSize + remainder;
+  vdoBlockOffset = vdoByteOffset / VDO_BLOCK_SIZE;
+
+  *extentSize = maxExtentSize;
+    
+  return VDO_SUCCESS;
 }
 
 /**
@@ -483,6 +556,15 @@ static int performDeviceConversion(void)
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
+  unsigned long extentSize;
+  result = calculateExtentSizeAlignment(vdo, geometry, &extentSize);
+  if (result != VDO_SUCCESS) {
+    cleanup(vdo, layer);
+    close(fd);
+    errx(2, "Failed to calculate alignment from '%s' : %s",
+         fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  }
+  
   printf("Checking the VDO state\n");
   if (vdo->loadState == VDO_NEW) {
     cleanup(vdo, layer);
@@ -524,8 +606,9 @@ static int performDeviceConversion(void)
   cleanup(vdo, layer);
   close(fd);
 
-  printf("Conversion completed for '%s': VDO is now offset by %ld bytes\n",
-         fileName, vdoByteOffset);
+  printf("Conversion completed for '%s': VDO is now aligned on %ld bytes,"
+	 " starting at offset %lu\n",
+         fileName, extentSize, vdoByteOffset);
 
   return result;
 }
