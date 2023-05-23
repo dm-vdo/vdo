@@ -16,14 +16,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#8 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#9 $
  */
 
 #include <err.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <linux/fs.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 #include "convertToLVM.h"
@@ -49,7 +52,7 @@ enum {
 };
 
 static const char usageString[] =
-  " [--help] [--version] [--check] filename";
+  " [--help] [--version] [--check] [--dry-run] filename";
 
 static const char helpString[] =
   "vdoprepareforlvm - Converts a VDO device for use with LVM\n"
@@ -69,6 +72,9 @@ static const char helpString[] =
   "    --check\n"
   "       Checks if the specified device has already been converted.\n"
   "\n"
+  "    --dry-run\n"
+  "       Does alignment calculation but doesn't convert anything.\n"
+  "\n"
   "    --version\n"
   "       Show the version of vdoprepareforlvm.\n"
   "\n"
@@ -86,16 +92,22 @@ static const char helpString[] =
 static struct option options[] = {
   { "help",    no_argument, NULL, 'h' },
   { "check",   no_argument, NULL, 'c' },
+  { "dry-run", no_argument, NULL, 'd' },
   { "version", no_argument, NULL, 'V' },
   { NULL,      0,           NULL,  0  },
 };
 
-static char optionString[] = "chV";
+static char optionString[] = "cdhV";
 
 static const char *fileName;
 static bool checkPreparationState = false;
-static off_t vdoByteOffset  = (1024 * 1024) * 2;
-static off_t vdoBlockOffset = ((1024 * 1024) * 2) / VDO_BLOCK_SIZE;
+static bool doDryRun = false;
+
+// Min possible offset we will align geometry block at
+static const off_t vdoMinBlockOffset = (1524 * 1024) / VDO_BLOCK_SIZE;
+
+// Max possible offset we will align geomtry block at
+static const off_t vdoMaxBlockOffset = (2048 * 1024) / VDO_BLOCK_SIZE;
 
 static void usage(const char *progname, const char *usageOptionsString)
 {
@@ -117,6 +129,10 @@ static const char *processArgs(int argc, char *argv[])
     switch (c) {
     case 'c':
       checkPreparationState = true;
+      break;
+
+    case 'd':
+      doDryRun = true;
       break;
 
     case 'h':
@@ -144,21 +160,25 @@ static const char *processArgs(int argc, char *argv[])
 }
 
 /**
- * Open the target device exclusively.
+ * Open the target device with the specified mode.
+ * The mode will be bitwise-ored with O_NONBLOCK for the open.
+ * On successful open O_NONBLOCK will be cleared.
  *
+ * The open will be retried up to MAX_OPEN_RETRIES.
+ *
+ * @param mode The open mode.
  * @param descriptorPtr  A pointer to hold the opened device file descriptor
  *
  * @return VDO_SUCCES or an error code
  **/
-static int openDeviceExclusively(int *descriptorPtr)
+static int openDevice(int mode, int *descriptorPtr)
 {
   int fd, result;
   unsigned int retry = 0;
-  int modeFlags = O_RDWR | O_EXCL;
 
   // Initially attempt to open non-blocking so we can control how long
   // we wait for exclusive access.
-  while ((fd = open(fileName, modeFlags | O_NONBLOCK)) < 0) {
+  while ((fd = open(fileName, mode | O_NONBLOCK)) < 0) {
     retry++;
     if (retry == 1) {
       printf("Device %s is in use. Retrying...", fileName);
@@ -177,7 +197,7 @@ static int openDeviceExclusively(int *descriptorPtr)
 
   // Now that the device is open, unset O_NONBLOCK flag to ensure subsequent
   // I/Os are delayed or blocked correctly.
-  result = fcntl(fd, F_SETFL, modeFlags);
+  result = fcntl(fd, F_SETFL, mode);
   if (result != VDO_SUCCESS) {
     warnx("Unable to clear non-blocking flag for %s", fileName);
     close(fd);
@@ -189,16 +209,30 @@ static int openDeviceExclusively(int *descriptorPtr)
 }
 
 /**
+ * Open the target device exclusively.
+ *
+ * @param descriptorPtr  A pointer to hold the opened device file descriptor
+ *
+ * @return VDO_SUCCES or an error code
+ **/
+static int openDeviceExclusively(int *descriptorPtr)
+{
+  return openDevice(O_RDWR | O_EXCL, descriptorPtr);
+}
+
+/**
  * Perform the UDS index conversion.
  *
  * @param [in/out] indexConfig       The index configuration to be updated
  * @param [in]     geometry          The volume geometry
+ * @param [in]     newBlockOffset    Where the geometry block should move to
  * @param [out]    superblockOffset  A pointer for the superblock byte offset
  *
  * @return UDS_SUCCESS or an error code
  **/
 static int convertUDS(IndexConfig    *indexConfig,
                       VolumeGeometry  geometry,
+                      off_t           newBlockOffset,
                       off_t          *superblockOffset)
 {
   int result;
@@ -213,14 +247,14 @@ static int convertUDS(IndexConfig    *indexConfig,
 
   udsConfigurationSetNonce(udsConfig, geometry.nonce);
 
-  off_t startByte = geometry.regions[INDEX_REGION].startBlock * VDO_BLOCK_SIZE;
-  result = asprintf(&indexName, "%s offset=%ld", fileName, startByte);
+  off_t offset = geometry.regions[INDEX_REGION].startBlock * VDO_BLOCK_SIZE;
+  result = asprintf(&indexName, "%s offset=%ld", fileName, offset);
   if (result == -1) {
     udsFreeConfiguration(udsConfig);
     return ENOMEM;
   }
 
-  result = udsConvertToLVM(indexName, vdoByteOffset, udsConfig,
+  result = udsConvertToLVM(indexName, newBlockOffset * VDO_BLOCK_SIZE, udsConfig,
                            superblockOffset);
   if (result == UDS_SUCCESS) {
     indexConfig->mem = udsConfigurationGetMemory(udsConfig);
@@ -243,87 +277,79 @@ static int convertUDS(IndexConfig    *indexConfig,
  * 2M from the original VDO start location, which we know is free
  * space we can move the start of the VDO volume to after
  * conversion.
- * 
  *
- * @param [in]  vdo               The vdo structure to be converted
- * @param [in]  geometry          The volume geometry
- * @param [out] extentSize        The extent size for the LVM volume
+ *
+ * @param [in]  vdo             Pointer to the VDO structure
+ * @param [in]  oldBlockOffset  The offset the geometry block was found at
+ * @param [out] extentSize      The extent size for the LVM volume
+ * @param [out] newBlockOffset  The offset the geometry block should move to
  *
  * @return VDO_SUCCESS or an error code
  **/
-static int calculateExtentSizeAlignment(VDO            *vdo,
-					VolumeGeometry geometry,
-					unsigned long  *extentSize)
+static int calculateAlignment(VDO *vdo,
+                              off_t oldBlockOffset,
+                              unsigned long *extentSize,
+                              off_t *newBlockOffset)
 {
-  off_t vdoStart = geometry.regions[DATA_REGION].startBlock;
-  off_t vdoLength = vdo->config.physicalBlocks;
+  // Length of entire VDO
+  unsigned long vdoLength
+    = (unsigned long)vdo->config.physicalBlocks * VDO_BLOCK_SIZE;
 
-  // length of VDO, starting at a 2M offset
-  unsigned long lenBlocks = 1 + vdoStart + vdoLength - vdoBlockOffset;
-  unsigned long lenBytes = lenBlocks * VDO_BLOCK_SIZE;
+  // Reset length back to 2MB in from start
+  vdoLength -= ((vdoMaxBlockOffset - oldBlockOffset) * VDO_BLOCK_SIZE);
 
-  // 500K Buffer between 1.5M and 2M that we will use to align within
-  unsigned long alignRange = 500 * 1024;
-
-  // Extent size range
+  // Extent range to test with, with a min of 64K needed to handle a
+  // 256TB VDO in a 32 bit lvm extent count field
   unsigned long minExtentSize = ((unsigned long)1 << 16);
-  unsigned long maxExtentSize = ((unsigned long)1 << 32);
+  unsigned long maxExtentSize = ((unsigned long)1 << 21);
 
-  // Don't calculate if vdo length is already too small
-  if (lenBytes <= minExtentSize) {
-    return EINVAL;
-  }
+  unsigned long alignRange
+    = (vdoMaxBlockOffset - vdoMinBlockOffset) * VDO_BLOCK_SIZE;
 
-  printf("Length = %lu\n", lenBytes);
-  
-  unsigned long remainder = 0;  
+  // Find an extent that fits with the length and the area we have to move to
   while (maxExtentSize >= minExtentSize) {
-    // If extent size is too big, move to next one
-    if (maxExtentSize <= lenBytes) {
-      remainder = (lenBytes % maxExtentSize);
-      // If we are perfectly aligned at 2M, we're good.
-      if (remainder == 0) {
-	break;
-      }
-      // If we're not aligned BUT we know we can be aligned
-      // within the 500K available space, we'll align there.
-      unsigned long neededToAlign = maxExtentSize - remainder;
-      if (neededToAlign < alignRange) {
-	break;
-      }      
+    unsigned long remainder = (vdoLength % maxExtentSize);
+    // If we are perfectly aligned at 2M, we're good.
+    if (remainder == 0) {
+      *extentSize = maxExtentSize;
+      *newBlockOffset = vdoMaxBlockOffset;
+      return VDO_SUCCESS;
     }
-    // Try again with a smaller extent size
+    // If we're not aligned BUT we know we can be aligned
+    // within the 500K available space, we'll align there.
+    unsigned long neededToAlign = maxExtentSize - remainder;
+    if (neededToAlign < alignRange) {
+      *extentSize = maxExtentSize;
+      *newBlockOffset = vdoMaxBlockOffset - (neededToAlign / VDO_BLOCK_SIZE);
+      return VDO_SUCCESS;
+    }
     maxExtentSize = maxExtentSize / 2;
   }
 
-  // Calculate the start of VDO by block and byte.
-  vdoByteOffset = vdoByteOffset - maxExtentSize + remainder;
-  vdoBlockOffset = vdoByteOffset / VDO_BLOCK_SIZE;
-
-  *extentSize = maxExtentSize;
-    
-  return VDO_SUCCESS;
+  return VDO_NO_SPACE;
 }
 
 /**
  * Perform the VDO conversion.
  *
- * @param [in/out] vdo               The vdo structure to be converted
- * @param [in/out] geometry          The volume geometry
- * @param [in]     indexConfig       The converted index configuration
- * @param [in]     indexStartOffset  The converted index start block offset
+ * @param [in/out] vdo              The vdo structure to be converted
+ * @param [in/out] geometry         The volume geometry
+ * @param [in]     newBlockOffset   The offset the geometry block should move to
+ * @param [in]     indexConfig      The converted index configuration
+ * @param [in]     indexStartOffset The converted index start block offset
  *
  * @return VDO_SUCCESS or an error code
  **/
 static int convertVDO(VDO            *vdo,
                       VolumeGeometry *geometry,
+                      off_t           newBlockOffset,
                       IndexConfig     indexConfig,
                       off_t           indexStartOffset)
 {
   int result;
   char *zeroBuf;
 
-  vdo->config.physicalBlocks -= vdoBlockOffset;
+  vdo->config.physicalBlocks -= newBlockOffset;
   result = saveVDOComponents(vdo);
   if (result != VDO_SUCCESS) {
     warnx("Failed to save the updated configuration");
@@ -331,11 +357,11 @@ static int convertVDO(VDO            *vdo,
   }
 
   geometry->regions[INDEX_REGION].startBlock = indexStartOffset + 1;
-  geometry->bioOffset = vdoBlockOffset;
+  geometry->bioOffset = newBlockOffset;
   geometry->indexConfig = indexConfig;
 
   PhysicalLayer *offsetLayer;
-  result = makeOffsetFileLayer(fileName, 0, vdoBlockOffset, &offsetLayer);
+  result = makeOffsetFileLayer(fileName, 0, newBlockOffset, &offsetLayer);
   if (result != VDO_SUCCESS) {
     warnx("Failed to make offset FileLayer for writing converted volume"
           " geometry");
@@ -414,14 +440,57 @@ static int deviceCheckResultToExitStatus(int result, bool preConversion)
 /**
  * Check if the device has already been converted.
  *
+ * @param [out] vdoBlockOffset Block offset where the geometry block is,
+ *                             if it is a VDO device.
+ *
  * @return exit status      -1 => not a VDO device
  *                           0 => a post-conversion VDO device
  *                           1 => a pre-conversion VDO device
  **/
-static int performDeviceCheck(void)
+static int performDeviceCheck(off_t *vdoBlockOffset)
 {
   int result;
 
+  // Set default to 0, as that will be true for non converted VDO devices.
+  *vdoBlockOffset = 0;
+
+  /**
+   * First, check that the device is large enough that we can successfully
+   * perform the necessary i/o.  We use 4 MiB as the limit as it is large
+   * enough that we can do the i/o but several orders of magnitude smaller
+   * than even the smallest possibly configured VDO.
+   *
+   * This is necessitated by upgrades from pre-9.0 RHEL systems (where this
+   * utility is used as part of ensuring all VDO devices have been
+   * appropriately converted) to RHEL 9 as systems may have block devices
+   * too small to be VDO devices which, for complete safety, couldn't
+   * otherwise be excluded from consideration.
+   **/
+  int fd;
+  result = openDevice(O_RDONLY, &fd);
+  if (result != VDO_SUCCESS) {
+    return deviceCheckResultToExitStatus(result, true);
+  }
+
+  uint64_t physicalSize;
+  if (ioctl(fd, BLKGETSIZE64, &physicalSize) < 0) {
+    close(fd);
+    return deviceCheckResultToExitStatus(errno, true);
+  }
+  close(fd);
+
+  /**
+   * If the device is too small to possibly be a VDO use VDO_BAD_MAGIC to
+   * generate the "not a VDO" exit status.
+   **/
+  if (physicalSize < (4 * 1024 * 1024)) {
+    return deviceCheckResultToExitStatus(VDO_BAD_MAGIC, true);
+  }
+
+  /**
+   * The device is large enough that we can perform the necessary i/o to
+   * check it.
+   **/
   PhysicalLayer *layer;
   result = makeFileLayer(fileName, 0, &layer);
   if (result != VDO_SUCCESS) {
@@ -460,7 +529,7 @@ static int performDeviceCheck(void)
      * We try to load the superblock again accounting for the conversion.
      **/
     PhysicalLayer *offsetLayer;
-    result = makeOffsetFileLayer(fileName, 0, -vdoBlockOffset, &offsetLayer);
+    result = makeOffsetFileLayer(fileName, 0, -vdoMaxBlockOffset, &offsetLayer);
     if (result != VDO_SUCCESS) {
       cleanup(NULL, layer);
       return result;
@@ -471,6 +540,7 @@ static int performDeviceCheck(void)
       vdo = NULL;
       result = VDO_BAD_MAGIC; // Not a vdo.
     }
+
     offsetLayer->destroy(&offsetLayer);
     cleanup(vdo, layer);
     /**
@@ -487,10 +557,26 @@ static int performDeviceCheck(void)
    * Attempt to load the geometry from its post-conversion location.  If the
    * device is not a VDO the load will fail with VDO_BAD_MAGIC.
    */
-  result = loadVolumeGeometryAtBlock(layer, vdoBlockOffset, &geometry);
-  if (result != VDO_SUCCESS) {
+  bool found = false;
+  for (off_t block = vdoMaxBlockOffset; block >= vdoMinBlockOffset; block--) {
+    result = loadVolumeGeometryAtBlock(layer, block, &geometry);
+    if (result == VDO_SUCCESS) {
+      printf("Found a geometry block at offset %lu\n",
+             (unsigned long)block * VDO_BLOCK_SIZE);
+      *vdoBlockOffset = block;
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
     cleanup(NULL, layer);
-    return deviceCheckResultToExitStatus(result, false);
+    return deviceCheckResultToExitStatus(result, true);
+  }
+
+  // Make sure we are already a converted VDO.
+  if (geometry.bioOffset == 0) {
+    cleanup(NULL, layer);
+    return deviceCheckResultToExitStatus(VDO_BAD_CONFIGURATION, true);
   }
 
   // Load the superblock as an additional check the device is really a vdo.
@@ -500,6 +586,7 @@ static int performDeviceCheck(void)
     vdo = NULL;
     result = VDO_BAD_MAGIC; // Not a vdo.
   }
+
   cleanup(vdo, layer);
   return deviceCheckResultToExitStatus(result, false);
 }
@@ -507,26 +594,21 @@ static int performDeviceCheck(void)
 /**
  * Perform the device conversion.
  *
+ * @param oldBlockOffset  The offset the geometry block was found at.
+ *
+ * @return UDS_SUCCESS or an error code
  **/
-static int performDeviceConversion(void)
+static int performDeviceConversion(off_t oldBlockOffset)
 {
   char errBuf[ERRBUF_SIZE];
   int result, fd;
+  unsigned long lvmExtentSize = VDO_BLOCK_SIZE;
 
   printf("Opening %s exclusively\n", fileName);
   result = openDeviceExclusively(&fd);
   if (result != VDO_SUCCESS) {
     errx(2, "Failed to open '%s' exclusively : %s",
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
-  }
-
-  int exit_status = performDeviceCheck();
-  if ((exit_status == 0) || (exit_status == -1)) {
-    close(fd);
-    if (exit_status == 0) {
-      errx(exit_status, "'%s' is already converted", fileName);
-    }
-    errx(exit_status, "'%s' is not a VDO device", fileName);
   }
 
   printf("Loading the VDO superblock and volume geometry\n");
@@ -556,15 +638,16 @@ static int performDeviceConversion(void)
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
   }
 
-  unsigned long extentSize;
-  result = calculateExtentSizeAlignment(vdo, geometry, &extentSize);
+  off_t newBlockOffset;
+  result
+    = calculateAlignment(vdo, oldBlockOffset, &lvmExtentSize, &newBlockOffset);
   if (result != VDO_SUCCESS) {
     cleanup(vdo, layer);
     close(fd);
     errx(2, "Failed to calculate alignment from '%s' : %s",
          fileName, stringError(result, errBuf, ERRBUF_SIZE));
   }
-  
+
   printf("Checking the VDO state\n");
   if (vdo->loadState == VDO_NEW) {
     cleanup(vdo, layer);
@@ -579,36 +662,235 @@ static int performDeviceConversion(void)
          getVDOStateName(vdo->loadState));
   }
 
-  printf("Converting the UDS index\n");
-  IndexConfig config = geometry.indexConfig;
-  off_t superblockOffset = 0;
-
-  result = convertUDS(&config, geometry, &superblockOffset);
-  if (result != UDS_SUCCESS) {
-    cleanup(vdo, layer);
-    close(fd);
-    errx(2, "Failed to convert the UDS index for usage with LVM: %s",
-         stringError(result, errBuf, ERRBUF_SIZE));
+  // Testing purposes only
+  char *vdoOffset = getenv("VDOOFFSET");
+  if (vdoOffset != NULL) {
+    off_t vdoByteOffset = (off_t)atoi(vdoOffset);
+    printf("VDOOFFSET env set. Setting geometry block offset to %lu\n",
+           (unsigned long)vdoByteOffset);
+    newBlockOffset = vdoByteOffset / VDO_BLOCK_SIZE;
+    lvmExtentSize = VDO_BLOCK_SIZE;
   }
 
-  printf("Converting the VDO\n");
-  result = convertVDO(vdo,
-                      &geometry,
-                      config,
-                      (superblockOffset / VDO_BLOCK_SIZE));
-  if (result != VDO_SUCCESS) {
-    cleanup(vdo, layer);
-    close(fd);
-    errx(2, "Failed to convert VDO volume '%s': %s",
-         fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  printf("New geometry block offset calculated at %lu\n",
+         newBlockOffset * VDO_BLOCK_SIZE);
+
+  // If its not a dry run, convert the VDO device
+  if (!doDryRun) {
+    IndexConfig config = geometry.indexConfig;
+    off_t superblockOffset = 0;
+
+    printf("Converting the UDS index\n");
+    result = convertUDS(&config, geometry, newBlockOffset, &superblockOffset);
+    if (result != UDS_SUCCESS) {
+      cleanup(vdo, layer);
+      close(fd);
+      errx(2, "Failed to convert the UDS index for usage with LVM: %s",
+           stringError(result, errBuf, ERRBUF_SIZE));
+    }
+
+    printf("Converting the VDO\n");
+    result = convertVDO(vdo,
+                        &geometry,
+                        newBlockOffset,
+                        config,
+                        (superblockOffset / VDO_BLOCK_SIZE));
+    if (result != VDO_SUCCESS) {
+      cleanup(vdo, layer);
+      close(fd);
+      errx(2, "Failed to convert VDO volume '%s': %s",
+           fileName, stringError(result, errBuf, ERRBUF_SIZE));
+    }
   }
 
   cleanup(vdo, layer);
   close(fd);
 
   printf("Conversion completed for '%s': VDO is now aligned on %ld bytes,"
-	 " starting at offset %lu\n",
-         fileName, extentSize, vdoByteOffset);
+         " starting at offset %lu\n",
+         fileName, lvmExtentSize, newBlockOffset * VDO_BLOCK_SIZE);
+
+  return result;
+}
+
+/**
+ * Repair the UDS index conversion.
+ *
+ * @param geometry        The volume geometry
+ * @param newBlockOffset  Where the geometry block should move to
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+static int repairUDS(VolumeGeometry geometry, off_t newBlockOffset)
+{
+  off_t offset = (geometry.regions[INDEX_REGION].startBlock * VDO_BLOCK_SIZE);
+  off_t newStartOffset = newBlockOffset * VDO_BLOCK_SIZE;
+  return udsRepairConvertToLVM(fileName, offset, newStartOffset);
+}
+
+/**
+ * Repair the VDO conversion.
+ *
+ * @param [in/out] vdo              The vdo structure to be converted
+ * @param [in/out] geometry         The volume geometry
+ * @param [in]     oldBlockOffset   The offset the geometry block was found at
+ * @param [in]     newBlockOffset   The offset the geometry block should move to
+ *
+ * @return VDO_SUCCESS or an error code
+ **/
+static int repairVDO(VDO            *vdo,
+                     VolumeGeometry *geometry,
+                     off_t           oldBlockOffset,
+                     off_t           newBlockOffset)
+{
+  int result;
+  char *zeroBuf;
+
+  off_t offset = oldBlockOffset - newBlockOffset;
+  vdo->config.physicalBlocks += offset;
+  result = saveVDOComponents(vdo);
+  if (result != VDO_SUCCESS) {
+    warnx("Failed to save the updated configuration");
+    return result;
+  }
+
+  geometry->bioOffset -= offset;
+
+  PhysicalLayer *offsetLayer;
+  result = makeOffsetFileLayer(fileName, 0, newBlockOffset, &offsetLayer);
+  if (result != VDO_SUCCESS) {
+    warnx("Failed to make offset FileLayer for writing converted volume"
+          " geometry");
+    return result;
+  }
+
+  result = writeVolumeGeometryWithVersion(offsetLayer, geometry, 5);
+  offsetLayer->destroy(&offsetLayer);
+  if (result != VDO_SUCCESS) {
+    warnx("Failed to write the converted volume geometry");
+    return result;
+  }
+
+  result = vdo->layer->allocateIOBuffer(vdo->layer, VDO_BLOCK_SIZE,
+                                        "zero buffer", &zeroBuf);
+  if (result != VDO_SUCCESS) {
+    warnx("Failed to allocate zero buffer");
+    return result;
+  }
+
+  result = vdo->layer->writer(vdo->layer, oldBlockOffset, 1, zeroBuf, NULL);
+  FREE(zeroBuf);
+  if (result != VDO_SUCCESS) {
+    warnx("Failed to zero the geometry block from the old VDO location");
+    return result;
+  }
+
+  return VDO_SUCCESS;
+}
+
+/**
+ * Repair a badly misaligned device conversion.
+ *
+ * @param oldBlockOffset  The offset the geometry block was found at.
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+static int repairDeviceConversion(off_t oldBlockOffset)
+{
+  char errBuf[ERRBUF_SIZE];
+  int result, fd;
+
+  printf("Opening %s exclusively\n", fileName);
+  result = openDeviceExclusively(&fd);
+  if (result != VDO_SUCCESS) {
+    errx(2, "Failed to open '%s' exclusively : %s",
+         fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  printf("Loading the VDO superblock and volume geometry\n");
+  PhysicalLayer *layer;
+  result = makeFileLayer(fileName, 0, &layer);
+  if (result != VDO_SUCCESS) {
+    close(fd);
+    errx(2, "Failed to make FileLayer from '%s' : %s",
+         fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  VolumeGeometry geometry;
+  result = loadVolumeGeometryAtBlock(layer, oldBlockOffset, &geometry);
+  if (result != VDO_SUCCESS) {
+    cleanup(NULL, layer);
+    close(fd);
+    errx(2, "Failed to load geometry from '%s' : %s",
+         fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  VDO *vdo = NULL;
+  result = loadVDOSuperblock(layer, &geometry, false, NULL, &vdo);
+  if (result != VDO_SUCCESS) {
+    cleanup(vdo, layer);
+    close(fd);
+    errx(2, "Failed to load superblock from '%s' : %s",
+         fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  unsigned long lvmExtentSize = VDO_BLOCK_SIZE;
+  off_t newBlockOffset;
+  result
+    = calculateAlignment(vdo, oldBlockOffset, &lvmExtentSize, &newBlockOffset);
+  if (result != VDO_SUCCESS) {
+    cleanup(vdo, layer);
+    close(fd);
+    errx(2, "Failed to calculate alignment from '%s' : %s",
+         fileName, stringError(result, errBuf, ERRBUF_SIZE));
+  }
+
+  printf("New geometry block offset calculated at %lu\n",
+         newBlockOffset * VDO_BLOCK_SIZE);
+
+  // If there is a change in location and its not a dry run
+  if ((newBlockOffset < oldBlockOffset) && !doDryRun) {
+    printf("Repairing the UDS index\n");
+    result = repairUDS(geometry, newBlockOffset);
+    if (result != VDO_SUCCESS) {
+      cleanup(vdo, layer);
+      close(fd);
+      errx(2, "Failed to repair the UDS index for usage with LVM: %s",
+           stringError(result, errBuf, ERRBUF_SIZE));
+    }
+
+    printf("Repairing the VDO\n");
+    result = repairVDO(vdo, &geometry, oldBlockOffset, newBlockOffset);
+    if (result != VDO_SUCCESS) {
+      cleanup(vdo, layer);
+      close(fd);
+      errx(2, "Failed to repair VDO volume %s: %s",
+           fileName, stringError(result, errBuf, ERRBUF_SIZE));
+    }
+
+    result = loadVolumeGeometryAtBlock(layer, newBlockOffset, &geometry);
+    if (result != VDO_SUCCESS) {
+      cleanup(vdo, layer);
+      close(fd);
+      errx(2, "Failed to load geometry from '%s' : %s",
+           fileName, stringError(result, errBuf, ERRBUF_SIZE));
+    }
+
+    result = loadVDOSuperblock(layer, &geometry, false, NULL, &vdo);
+    if (result != VDO_SUCCESS) {
+      cleanup(vdo, layer);
+      close(fd);
+      errx(2, "Failed to load superblock from '%s' : %s",
+           fileName, stringError(result, errBuf, ERRBUF_SIZE));
+    }
+  }
+
+  cleanup(vdo, layer);
+  close(fd);
+
+  printf("Conversion completed for '%s': VDO is now aligned on %ld bytes,"
+         " starting at offset %lu\n",
+         fileName, lvmExtentSize, newBlockOffset * VDO_BLOCK_SIZE);
 
   return result;
 }
@@ -618,6 +900,7 @@ int main(int argc, char *argv[])
 {
   int exit_status;
   char errBuf[ERRBUF_SIZE];
+  off_t vdoBlockOffset = 0;
 
   exit_status = registerStatusCodes();
   if (exit_status != VDO_SUCCESS) {
@@ -628,10 +911,27 @@ int main(int argc, char *argv[])
   fileName = processArgs(argc, argv);
   openLogger();
 
+  printf("Checking device\n");
+  exit_status = performDeviceCheck(&vdoBlockOffset);
   if (checkPreparationState) {
-    exit_status = performDeviceCheck();
-  } else {
-    exit_status = performDeviceConversion();
+    exit(exit_status);
+  }
+
+  // -1 not VDO, 0 converted VDO, 1 not converted VDO
+  switch (exit_status) {
+  case -1:
+    errx(exit_status, "'%s' is not a VDO device", fileName);
+    break;
+  case 0:
+    printf("Previously converted VDO. Repairing alignment\n");
+    exit_status = repairDeviceConversion(vdoBlockOffset);
+    break;
+  case 1:
+    printf("Non converted VDO. Converting to LVM\n");
+    exit_status = performDeviceConversion(vdoBlockOffset);
+    break;
+  default:
+    break;
   }
 
   exit(exit_status);

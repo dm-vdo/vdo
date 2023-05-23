@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/convertToLVM.c#14 $
+ * $Id: //eng/uds-releases/jasper/src/uds/convertToLVM.c#15 $
  */
 
 #include "config.h"
@@ -260,4 +260,30 @@ int udsConvertToLVM(const char       *name,
   router->needToSave = true;
   cleanupSession(session);
   return UDS_SUCCESS;
+}
+
+/**********************************************************************/
+int udsRepairConvertToLVM(const char *path,
+                          size_t indexOffset,
+                          size_t newStartOffset)
+{
+  int result;  
+  IOFactory *factory = NULL;  
+#ifdef __KERNEL__  
+  result = makeIOFactory(path, &factory);
+#else
+  result = makeIOFactory(path, FU_READ_WRITE, &factory);  
+#endif
+  if (result != UDS_SUCCESS) {
+    logError("Failed to make I/O factory");
+    return result;
+  }
+  
+  result = repairLayout(factory, indexOffset, newStartOffset);
+  if (result != UDS_SUCCESS) {
+    logError("Failed to repair layout header");
+  }
+
+  putIOFactory(factory);      
+  return result;
 }

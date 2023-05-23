@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/indexLayout.c#28 $
+ * $Id: //eng/uds-releases/jasper/src/uds/indexLayout.c#29 $
  */
 
 #include "indexLayout.h"
@@ -25,6 +25,7 @@
 #include "compiler.h"
 #include "config.h"
 #include "indexConfig.h"
+#include "ioFactory.h"
 #include "layoutRegion.h"
 #include "logger.h"
 #include "masterIndexOps.h"
@@ -1739,7 +1740,7 @@ int writeIndexConfig(IndexLayout      *layout,
                      UdsConfiguration  config,
                      off_t             offset)
 {
-  BufferedWriter *writer = NULL;
+  BufferedWriter *writer = NULL;  
   int result = openLayoutWriter(layout, &layout->config, offset, &writer);
   if (result != UDS_SUCCESS) {
     return logErrorWithStringError(result, "failed to open config region");
@@ -2216,7 +2217,7 @@ static int writeIndexSaveLayout(IndexLayout *layout, IndexSaveLayout *isl)
     return result;
   }
 
-  BufferedWriter *writer = NULL;
+  BufferedWriter *writer = NULL;  
   result = openLayoutWriter(layout, &isl->header,
                             -layout->super.startOffset,
                             &writer);
@@ -2513,5 +2514,84 @@ int updateLayout(IndexLayout      *layout,
   }
   layout->index = index;
   layout->super = super;
+  return result;
+}
+
+/**
+ * Repair the super block offset on misaligned conversions.
+ *
+ * @param layout          the layout to load/save superblock with
+ * @param newStartOffset  The new value for the index superblock's
+ *                        startOffset field
+ *
+ * @return UDS_SUCCESS or an error code
+ **/
+__attribute__((warn_unused_result))
+static int repairSuperBlock(IndexLayout *layout, size_t newStartOffset)
+{
+  BufferedReader *reader;
+  int result = openBufferedReader(layout->factory, layout->offset,
+                                  UDS_BLOCK_SIZE, &reader);
+  if (result != UDS_SUCCESS) {
+    return logErrorWithStringError(result, "unable to read superblock");
+  }
+
+  RegionTable *table = NULL;
+  result = loadRegionTable(reader, &table);
+  if (result != UDS_SUCCESS) {
+    freeBufferedReader(reader);
+    return result;
+  }
+
+  if (table->header.type != RH_TYPE_SUPER) {
+    FREE(table);    
+    freeBufferedReader(reader);
+    return logErrorWithStringError(UDS_CORRUPT_COMPONENT,
+                                   "not a superblock region table");
+  }
+  
+  result = readSuperBlockData(reader, layout, table->header.payload);
+  freeBufferedReader(reader);  
+  if (result != UDS_SUCCESS) {
+    FREE(table);
+    return logErrorWithStringError(result, "unknown superblock format");
+  }
+  
+  // Repair the offset  
+  layout->totalBlocks = table->header.regionBlocks;
+  layout->super.startOffset = newStartOffset / UDS_BLOCK_SIZE;
+  
+  BufferedWriter *writer;
+  result = openBufferedWriter(layout->factory, layout->offset,
+                              UDS_BLOCK_SIZE, &writer);
+  if (result != UDS_SUCCESS) {
+    FREE(table);
+    return logErrorWithStringError(result, "unable to write superblock");
+  }
+  
+  result = writeSingleFileHeader(layout, table, table->header.numRegions, writer);
+  FREE(table);
+  freeBufferedWriter(writer);
+  return result;
+}
+
+/*****************************************************************************/
+int repairLayout(IOFactory *factory,
+                 size_t indexOffset,
+                 size_t newStartOffset)
+{
+  IndexLayout *layout = NULL;
+  int result = ALLOCATE(1, IndexLayout, __func__, &layout);
+  if (result != UDS_SUCCESS) {    
+    return result;
+  }
+  layout->refCount = 1;
+
+  getIOFactory(factory);
+  layout->factory = factory;
+  layout->offset  = indexOffset;
+
+  result = repairSuperBlock(layout, newStartOffset);
+  putIndexLayout(&layout);
   return result;
 }

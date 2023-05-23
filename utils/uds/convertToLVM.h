@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/convertToLVM.h#4 $
+ * $Id: //eng/uds-releases/jasper/src/uds/convertToLVM.h#5 $
  */
 
 #include "uds.h"
@@ -50,4 +50,20 @@ int udsConvertToLVM(const char       *name,
                     size_t            freedSpace,
                     UdsConfiguration  config,
                     off_t            *chapterSize)
+  __attribute__((warn_unused_result));
+
+/**
+ * Update the lvm offset that is stored in the layout when we repair
+ * a broken conversion.
+ * 
+ * @param path            The path to the device or file containing the index
+ * @param indexOffset     The offset in the device to load/save the index at
+ * @param newStartOffset  The new value for the index superblock's
+ *                        startOffset field
+ *
+ * @return  UDS_SUCCESS or an error code
+ */
+int udsRepairConvertToLVM(const char *path,
+                          size_t      indexOffset,
+                          size_t      newStartOffset)
   __attribute__((warn_unused_result));

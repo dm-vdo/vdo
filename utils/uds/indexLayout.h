@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/uds-releases/jasper/src/uds/indexLayout.h#17 $
+ * $Id: //eng/uds-releases/jasper/src/uds/indexLayout.h#18 $
  */
 
 #ifndef INDEX_LAYOUT_H
@@ -270,11 +270,27 @@ const struct index_version *getIndexVersion(IndexLayout *layout)
  * @param lvmOffset  The adjustment for lvm space, in bytes
  * @param offset     The offset in bytes to move the index
  *
- * @return  UDS_SUCCESS or a error code
+ * @return  UDS_SUCCESS or an error code
  */
 int updateLayout(IndexLayout      *layout,
                  UdsConfiguration  config,
                  off_t             lvmOffset,
                  off_t             offset);
 
+/**
+ * Repair startOffset and write out the uds superblock
+ *
+ * @param factory         The factory to make the layout from
+ * @param indexOffset     The offset in the device to load/save the
+ *                        index at
+ * @param newStartOffset  The new value for the index superblock's
+ *                        startOffset field
+ *
+ * @return  UDS_SUCCESS or an error code
+ */
+int repairLayout(IOFactory *factory,
+                 size_t indexOffset,
+                 size_t newStartOffset)
+  __attribute__((warn_unused_result));
+  
 #endif // INDEX_LAYOUT_H
