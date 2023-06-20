@@ -1,17 +1,25 @@
-.TH VDODUMPCONFIG 8 "2017-09-12" "Red Hat" \" -*- nroff -*-
+.TH VDODUMPCONFIG 8 "2023-04-04" "Red Hat" \" -*- nroff -*-
 .SH NAME
-vdodumpconfig \- dump the configuration of a VDO volume from its backing
-store
+vdodumpconfig \- dump the configuration of a VDO volume from its backing store
 .SH SYNOPSIS
 .B vdodumpconfig
 .I vdoBacking
 .SH DESCRIPTION
 .B vdodumpconfig
-dumps the configuration of a VDO volume, whether or not the VDO is running.
+dumps the configuration of a VDO volume.
+.PP
+.I vdoBacking
+must be the path of the VDODataLV as described in \fBlvmvdo\fP(7).
 .SH OPTIONS
 .TP
 .I vdoBacking
-The name of the file or block device used as the backing store for
-VDO.
+The name of the file or block device used as the backing store for VDO.
+.SH EXAMPLE
+.nf
+# lvchange -ay vdo1/vdo0pool_vdata
+# vdodumpconfig /dev/mapper/vdo1-vdo0pool_vdata
+# lvchange -an vdo1/vdo0pool_vdata
+.fi
 .SH SEE ALSO
-.BR vdo (8).
+.BR lvmvdo (7),
+.BR lvchange (8)

@@ -620,6 +620,16 @@ static int read_hash_lock_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
+	/** Current number of dedupe queries that are in flight */
+	result = skip_string(buf, "currDedupeQueries : ");
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+	result = read_uint32_t(buf,
+			       &stats->curr_dedupe_queries);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
 	return VDO_SUCCESS;
 }
 
@@ -833,26 +843,6 @@ static int read_index_statistics(char **buf,
 	}
 	result = read_uint64_t(buf,
 			       &stats->updates_not_found);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-	/** Current number of dedupe queries that are in flight */
-	result = skip_string(buf, "currDedupeQueries : ");
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-	result = read_uint32_t(buf,
-			       &stats->curr_dedupe_queries);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-	/** Maximum number of dedupe queries that have been in flight */
-	result = skip_string(buf, "maxDedupeQueries : ");
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-	result = read_uint32_t(buf,
-			       &stats->max_dedupe_queries);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}

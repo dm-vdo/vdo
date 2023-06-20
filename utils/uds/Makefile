@@ -18,7 +18,7 @@
 #
 # $Id: //eng/vdo-releases/chlorine/src/packaging/src-dist/user/utils/uds/Makefile#1 $
 
-BUILD_VERSION = 8.2.0.2
+BUILD_VERSION = 8.2.2.2
 
 DEPDIR = .deps
 

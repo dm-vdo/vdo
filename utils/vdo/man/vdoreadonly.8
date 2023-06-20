@@ -1,4 +1,4 @@
-.TH VDOREADONLY 8 "2020-05-13" "Red Hat" \" -*- nroff -*-
+.TH VDOREADONLY 8 "2023-04-14" "Red Hat" \" -*- nroff -*-
 .SH NAME
 vdoreadonly \- puts a VDO device into read-only mode
 .SH SYNOPSIS
@@ -7,6 +7,12 @@ vdoreadonly \- puts a VDO device into read-only mode
 .SH DESCRIPTION
 .B vdoreadonly
 forces an existing VDO device into read-only mode.
+.PP
+.I filename
+must be the path of the VDODataLV as described in \fBlvmvdo\fP(7).
+Since \fBlvchange\fP(8) will only mount that as read-only, a writable version
+of that device must be manually created, as shown in the example below.
+.PP
 .SH OPTIONS
 .TP
 .B \-\-help
@@ -15,5 +21,16 @@ Print this help message and exit.
 .B \-\-version
 Show the version of vdoreadonly.
 .
+.SH EXAMPLE
+.nf
+# lvchange -ay vdo1/vdo0pool_vdata
+# dmsetup table vdo1-vdo0pool_vdata > vdata.table
+# lvchange -an vdo1/vdo0pool_vdata
+# dmsetup create vdo1-vdo0pool_vdata --table "`cat vdata.table`"
+# vdoreadonly /dev/mapper/vdo1-vdo0pool_vdata
+# dmsetup remove vdo1-vdo0pool_vdata
+.fi
 .SH SEE ALSO
-.BR vdo (8).
+.BR lvmvdo (7),
+.BR lvchange (8),
+.BR dmsetup (8)

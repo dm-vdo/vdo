@@ -18,7 +18,7 @@
 #
 # $Id: //eng/vdo-releases/chlorine/src/packaging/src-dist/user/utils/vdo/Makefile#2 $
 
-VDO_VERSION = 8.2.0.2
+VDO_VERSION = 8.2.2.2
 
 UDS_DIR      = ../uds
 

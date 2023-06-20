@@ -1,4 +1,4 @@
-.TH VDOSETUUID 8 "2019-09-12" "Red Hat" \" -*- nroff -*-
+.TH VDOSETUUID 8 "2023-04-10" "Red Hat" \" -*- nroff -*-
 .SH NAME
 vdosetuuid \- sets a new uuid for the vdo volume stored on a backing
 store
@@ -10,7 +10,12 @@ store
 .B vdosetuuid
 sets a new uuid for the VDO volume stored on the 
 .I vdoBacking
-device, whether the volume is running or not.
+device.
+.PP
+.I vdoBacking
+must be the path of the VDODataLV as described in \fBlvmvdo\fP(7).
+Since \fBlvchange\fP(8) will only mount that as read-only, a writable version
+of that device must be manually created, as shown in the example below.
 .PP
 .SH OPTIONS
 .TP
@@ -23,5 +28,16 @@ specified, the uuid is randomly generated.
 .TP
 .B \-\-version
 Show the version of vdosetuuid.
+.SH EXAMPLE
+.nf
+# lvchange -ay vdo1/vdo0pool_vdata
+# dmsetup table vdo1-vdo0pool_vdata > vdata.table
+# lvchange -an vdo1/vdo0pool_vdata
+# dmsetup create vdo1-vdo0pool_vdata --table "`cat vdata.table`"
+# vdosetuuid --uuid 6ecb9db8-[...] /dev/mapper/vdo1-vdo0pool_vdata
+# dmsetup remove vdo1-vdo0pool_vdata
+.fi
 .SH SEE ALSO
-.BR vdo (8).
+.BR lvmvdo (7),
+.BR lvchange (8),
+.BR dmsetup (8)

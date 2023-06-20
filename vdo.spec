@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 8.2.0.2
+Version: 8.2.2.2
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -112,5 +112,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Sun Jul 17 2022 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.0.2-1
+* Thu May 25 2023 - Red Hat VDO Team <vdo-devel@redhat.com> - 8.2.2.2-1
 - See https://github.com/dm-vdo/vdo.git

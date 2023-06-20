@@ -1,4 +1,4 @@
-.TH VDOREGENERATEGEOMETRY 8 "2020-05-09" "Red Hat" \" -*- nroff -*-
+.TH VDOREGENERATEGEOMETRY 8 "2023-04-14" "Red Hat" \" -*- nroff -*-
 .SH NAME
 vdoregenerategeometry \- regenerate a VDO whose first few blocks have been wiped
 .SH SYNOPSIS
@@ -11,6 +11,11 @@ will attempt to regenerate the geometry block of a VDO device in the event that
 the beginning of the backing store was wiped. This tool will fail if enough of
 the device was wiped that the VDO super block was also erased, or if there are
 multiple valid super block candidates on the volume.
+.PP
+.I filename
+must be the path of the VDODataLV as described in \fBlvmvdo\fP(7).
+Since \fBlvchange\fP(8) will only mount that as read-only, a writable version
+of that device must be manually created, as shown in the example below.
 .PP
 If the super block location is known, or to select one of the candidate
 super blocks in the event that multiple candidates were found, the
@@ -28,7 +33,16 @@ Specify the location (in bytes) of the super block.
 .B \-\-version
 Show the version of vdoregenerategeometry.
 .
-.\" .SH EXAMPLES
-.\" .SH NOTES
+.SH EXAMPLE
+.nf
+# lvchange -ay vdo1/vdo0pool_vdata
+# dmsetup table vdo1-vdo0pool_vdata > vdata.table
+# lvchange -an vdo1/vdo0pool_vdata
+# dmsetup create vdo1-vdo0pool_vdata --table "`cat vdata.table`"
+# vdoregenerategeometry /dev/mapper/vdo1-vdo0pool_vdata
+# dmsetup remove vdo1-vdo0pool_vdata
+.fi
 .SH SEE ALSO
-.BR vdo (8).
+.BR lvmvdo (7),
+.BR lvchange (8),
+.BR dmsetup (8)

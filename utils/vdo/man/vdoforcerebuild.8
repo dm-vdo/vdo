@@ -1,4 +1,4 @@
-.TH VDOFORCEREBUILD 8 "2017-09-12" "Red Hat" \" -*- nroff -*-
+.TH VDOFORCEREBUILD 8 "2023-04-14" "Red Hat" \" -*- nroff -*-
 .SH NAME
 vdoforcerebuild \- prepare a VDO device to exit read-only mode
 .SH SYNOPSIS
@@ -8,9 +8,29 @@ vdoforcerebuild \- prepare a VDO device to exit read-only mode
 .B vdoforcerebuild
 forces an existing VDO device to exit read-only
 mode and to attempt to regenerate as much metadata as possible.
+.PP
+.I filename
+must be the path of the VDODataLV as described in \fBlvmvdo\fP(7).
+Since \fBlvchange\fP(8) will only mount that as read-only, a writable version
+of that device must be manually created, as shown in the example below.
+.PP
 .SH OPTIONS
 .TP
-.I filename
-The name of the file or block device to be updated.
+.B \-\-help
+Print this help message and exit.
+.TP
+.B \-\-version
+Show the version of vdoforcerebuild.
+.SH EXAMPLE
+.nf
+# lvchange -ay vdo1/vdo0pool_vdata
+# dmsetup table vdo1-vdo0pool_vdata > vdata.table
+# lvchange -an vdo1/vdo0pool_vdata
+# dmsetup create vdo1-vdo0pool_vdata --table "`cat vdata.table`"
+# vdoforcerebuild /dev/mapper/vdo1-vdo0pool_vdata
+# dmsetup remove vdo1-vdo0pool_vdata
+.fi
 .SH SEE ALSO
-.BR vdo (8).
+.BR lvmvdo (7),
+.BR lvchange (8),
+.BR dmsetup (8)

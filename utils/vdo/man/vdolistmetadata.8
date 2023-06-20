@@ -1,4 +1,4 @@
-.TH VDOLISTMETADATA 8 "2020-05-12" "Red Hat" \" -*- nroff -*-
+.TH VDOLISTMETADATA 8 "2023-03-28" "Red Hat" \" -*- nroff -*-
 .SH NAME
 vdolistmetadata \- list the metadata regions on a VDO device
 .SH SYNOPSIS
@@ -14,6 +14,9 @@ Each range is on a separate line of the form:
 Both endpoints are included in the range, and are the zero-based
 indexes of 4KB VDO metadata blocks on the backing device.
 
+.PP
+.I filename
+must be the path of the VDODataLV as described in \fBlvmvdo\fP(7).
 .SH OPTIONS
 .TP
 .B \-\-help
@@ -22,5 +25,12 @@ Print this help message and exit.
 .B \-\-version
 Show the version of vdolistmetadata.
 .
+.SH EXAMPLE
+.nf
+# lvchange -ay vdo1/vdo0pool_vdata
+# vdolistmetadata /dev/mapper/vdo1-vdo0pool_vdata
+# lvchange -an vdo1/vdo0pool_vdata
+.fi
 .SH SEE ALSO
-.BR vdo (8).
+.BR lvmvdo (7),
+.BR lvchange (8)

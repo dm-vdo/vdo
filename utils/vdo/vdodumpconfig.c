@@ -44,14 +44,13 @@ static const char helpString[] =
   "  vdodumpconfig <vdoBacking>\n"
   "\n"
   "DESCRIPTION\n"
-  "  vdodumpconfig dumps the configuration of a VDO volume, whether or not\n"
-  "  the VDO is running.\n"
+  "  vdodumpconfig dumps the configuration of a VDO volume.\n"
   "OPTIONS\n"
   "    --help\n"
   "       Print this help message and exit.\n"
   "\n"
   "    --version\n"
-  "       Show the version of vdodmeventd.\n"
+  "       Show the version of vdodumpconfig.\n"
   "\n";
 
 static struct option options[] = {

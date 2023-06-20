@@ -24,7 +24,7 @@
 #include "status-codes.h"
 #include "vdoStats.h"
 
-#define MAX_STATS 240
+#define MAX_STATS 238
 #define MAX_STAT_LENGTH 80
 
 int fieldCount = 0;
@@ -35,7 +35,7 @@ char values[MAX_STATS][MAX_STAT_LENGTH];
 
 
 /**********************************************************************/
-static int write_block_count_t(char *label, block_count_t value)
+static int write_uint64_t(char *label, uint64_t value)
 {
 	int count = sprintf(labels[fieldCount], "%s", label);
 	if (count < 0) {
@@ -45,6 +45,23 @@ static int write_block_count_t(char *label, block_count_t value)
 	maxLabelLength = max(maxLabelLength, (int) strlen(label));
 
 	count = sprintf(values[fieldCount++], "%lu", value);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+static int write_uint32_t(char *label, uint32_t value)
+{
+	int count = sprintf(labels[fieldCount], "%s", label);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+
+	maxLabelLength = max(maxLabelLength, (int) strlen(label));
+
+	count = sprintf(values[fieldCount++], "%u", value);
 	if (count < 0) {
 		return VDO_UNEXPECTED_EOF;
 	}
@@ -62,23 +79,6 @@ static int write_uint8_t(char *label, uint8_t value)
 	maxLabelLength = max(maxLabelLength, (int) strlen(label));
 
 	count = sprintf(values[fieldCount++], "%hhu", value);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
-static int write_uint64_t(char *label, uint64_t value)
-{
-	int count = sprintf(labels[fieldCount], "%s", label);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-
-	maxLabelLength = max(maxLabelLength, (int) strlen(label));
-
-	count = sprintf(values[fieldCount++], "%lu", value);
 	if (count < 0) {
 		return VDO_UNEXPECTED_EOF;
 	}
@@ -120,7 +120,7 @@ static int write_double(char *label, double value)
 }
 
 /**********************************************************************/
-static int write_uint32_t(char *label, uint32_t value)
+static int write_block_count_t(char *label, block_count_t value)
 {
 	int count = sprintf(labels[fieldCount], "%s", label);
 	if (count < 0) {
@@ -129,7 +129,7 @@ static int write_uint32_t(char *label, uint32_t value)
 
 	maxLabelLength = max(maxLabelLength, (int) strlen(label));
 
-	count = sprintf(values[fieldCount++], "%u", value);
+	count = sprintf(values[fieldCount++], "%lu", value);
 	if (count < 0) {
 		return VDO_UNEXPECTED_EOF;
 	}
@@ -684,6 +684,16 @@ static int write_hash_lock_statistics(char *prefix,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
+
+	/** Current number of dedupe queries that are in flight */
+	if (asprintf(&joined, "%s current dedupe queries", prefix) == -1) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	result = write_uint32_t(joined, stats->curr_dedupe_queries);
+	free(joined);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
 	return VDO_SUCCESS;
 }
 
@@ -900,26 +910,6 @@ static int write_index_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	result = write_uint64_t(joined, stats->updates_not_found);
-	free(joined);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	/** Current number of dedupe queries that are in flight */
-	if (asprintf(&joined, "%s current dedupe queries", prefix) == -1) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	result = write_uint32_t(joined, stats->curr_dedupe_queries);
-	free(joined);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	/** Maximum number of dedupe queries that have been in flight */
-	if (asprintf(&joined, "%s maximum dedupe queries", prefix) == -1) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	result = write_uint32_t(joined, stats->max_dedupe_queries);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;

@@ -1,4 +1,4 @@
-.TH VDOAUDIT 8 "2020-05-04" "Red Hat" \" -*- nroff -*-
+.TH VDOAUDIT 8 "2023-03-28" "Red Hat" \" -*- nroff -*-
 .SH NAME
 vdoaudit \- confirm the reference counts of a VDO device
 .SH SYNOPSIS
@@ -13,6 +13,9 @@ logical blocks. It also confirms all of the actual reference counts on all
 physical blocks against the stored reference counts. Finally, it validates
 that the slab summary approximation of the free blocks in each slab is
 correct.
+.PP
+.I filename
+must be the path of the VDODataLV as described in \fBlvmvdo\fP(7).
 .PP
 If \-\-verbose is specified, a line item will be reported for each
 inconsistency; otherwise a summary of the problems will be displayed.
@@ -30,7 +33,13 @@ Display a line item for each inconsistency found on the volume.
 .B \-\-version
 Show the version of vdoaudit.
 .
-.\" .SH EXAMPLES
+.SH EXAMPLE
+.nf
+# lvchange -ay vdo1/vdo0pool_vdata
+# vdoaudit --verbose /dev/mapper/vdo1-vdo0pool_vdata
+# lvchange -an vdo1/vdo0pool_vdata
+.fi
 .\" .SH NOTES
 .SH SEE ALSO
-.BR vdo (8).
+.BR lvmvdo (7),
+.BR lvchange (8)
