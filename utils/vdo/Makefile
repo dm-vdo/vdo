@@ -96,7 +96,7 @@ PROGS = vdoaudit               \
 
 COMPLETIONS=vdostats
 
-NOBUILDPROGS = adaptLVMVDO.sh \
+NOBUILDPROGS = adaptLVMVDO \
 	       vdorecover
 PROG_SOURCES := $(PROGS:%=%.c)
 C_FILES      := $(filter-out $(PROG_SOURCES),$(wildcard *.c))
@@ -121,7 +121,8 @@ INSTALL = install
 INSTALLOWNER ?= -o root -g root
 bindir ?= /usr/bin
 INSTALLDIR=$(DESTDIR)$(bindir)
-COMPLETIONINSTALLDIR=$(DESTDIR)$(sysconfdir)/bash_completion.d
+bash_completions_dir ?= $(sysconfdir)/bash_completion.d
+COMPLETIONINSTALLDIR=$(DESTDIR)$(bash_completions_dir)/
 
 .PHONY: install
 install:
