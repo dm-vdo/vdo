@@ -1,28 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * Copyright 2023 Red Hat
  */
+
+#include "string-utils.h"
 
 #include "statistics.h"
 #include "status-codes.h"
 #include "vdoStats.h"
 
-/*********************************************************************/
 static int skip_string(char **buf, char *skip)
 {
         char *tmp = NULL;
@@ -34,9 +20,8 @@ static int skip_string(char **buf, char *skip)
         return VDO_SUCCESS;
 }
 
-/**********************************************************************/
-static int read_uint64_t(char **buf,
-			 uint64_t *value)
+static int read_u64(char **buf,
+		    u64 *value)
 {
 	int count = sscanf(*buf, "%lu, ", value);
 	if (count != 1) {
@@ -45,9 +30,8 @@ static int read_uint64_t(char **buf,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
-static int read_uint32_t(char **buf,
-			 uint32_t *value)
+static int read_u32(char **buf,
+		    u32 *value)
 {
 	int count = sscanf(*buf, "%u, ", value);
 	if (count != 1) {
@@ -56,7 +40,6 @@ static int read_uint32_t(char **buf,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_block_count_t(char **buf,
 			      block_count_t *value)
 {
@@ -67,7 +50,6 @@ static int read_block_count_t(char **buf,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_string(char **buf,
 		       char *value)
 {
@@ -78,7 +60,6 @@ static int read_string(char **buf,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_bool(char **buf,
 		     bool *value)
 {
@@ -91,9 +72,8 @@ static int read_bool(char **buf,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
-static int read_uint8_t(char **buf,
-			uint8_t *value)
+static int read_u8(char **buf,
+		   u8 *value)
 {
 	int count = sscanf(*buf, "%hhu, ", value);
 	if (count != 1) {
@@ -102,7 +82,6 @@ static int read_uint8_t(char **buf,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_block_allocator_statistics(char **buf,
 					   struct block_allocator_statistics *stats)
 {
@@ -113,8 +92,8 @@ static int read_block_allocator_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->slab_count);
+	result = read_u64(buf,
+			  &stats->slab_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -123,8 +102,8 @@ static int read_block_allocator_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->slabs_opened);
+	result = read_u64(buf,
+			  &stats->slabs_opened);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -133,15 +112,14 @@ static int read_block_allocator_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->slabs_reopened);
+	result = read_u64(buf,
+			  &stats->slabs_reopened);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_commit_statistics(char **buf,
 				  struct commit_statistics *stats)
 {
@@ -152,8 +130,8 @@ static int read_commit_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->started);
+	result = read_u64(buf,
+			  &stats->started);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -162,8 +140,8 @@ static int read_commit_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->written);
+	result = read_u64(buf,
+			  &stats->written);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -172,15 +150,14 @@ static int read_commit_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->committed);
+	result = read_u64(buf,
+			  &stats->committed);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_recovery_journal_statistics(char **buf,
 					    struct recovery_journal_statistics *stats)
 {
@@ -191,8 +168,8 @@ static int read_recovery_journal_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->disk_full);
+	result = read_u64(buf,
+			  &stats->disk_full);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -201,8 +178,8 @@ static int read_recovery_journal_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->slab_journal_commits_requested);
+	result = read_u64(buf,
+			  &stats->slab_journal_commits_requested);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -229,7 +206,6 @@ static int read_recovery_journal_statistics(char **buf,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_packer_statistics(char **buf,
 				  struct packer_statistics *stats)
 {
@@ -240,8 +216,8 @@ static int read_packer_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->compressed_fragments_written);
+	result = read_u64(buf,
+			  &stats->compressed_fragments_written);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -250,8 +226,8 @@ static int read_packer_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->compressed_blocks_written);
+	result = read_u64(buf,
+			  &stats->compressed_blocks_written);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -260,15 +236,14 @@ static int read_packer_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->compressed_fragments_in_packer);
+	result = read_u64(buf,
+			  &stats->compressed_fragments_in_packer);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_slab_journal_statistics(char **buf,
 					struct slab_journal_statistics *stats)
 {
@@ -279,8 +254,8 @@ static int read_slab_journal_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->disk_full_count);
+	result = read_u64(buf,
+			  &stats->disk_full_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -289,8 +264,8 @@ static int read_slab_journal_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->flush_count);
+	result = read_u64(buf,
+			  &stats->flush_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -299,8 +274,8 @@ static int read_slab_journal_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->blocked_count);
+	result = read_u64(buf,
+			  &stats->blocked_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -309,8 +284,8 @@ static int read_slab_journal_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->blocks_written);
+	result = read_u64(buf,
+			  &stats->blocks_written);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -319,15 +294,14 @@ static int read_slab_journal_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->tail_busy_count);
+	result = read_u64(buf,
+			  &stats->tail_busy_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_slab_summary_statistics(char **buf,
 					struct slab_summary_statistics *stats)
 {
@@ -338,15 +312,14 @@ static int read_slab_summary_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->blocks_written);
+	result = read_u64(buf,
+			  &stats->blocks_written);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_ref_counts_statistics(char **buf,
 				      struct ref_counts_statistics *stats)
 {
@@ -357,15 +330,14 @@ static int read_ref_counts_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->blocks_written);
+	result = read_u64(buf,
+			  &stats->blocks_written);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_block_map_statistics(char **buf,
 				     struct block_map_statistics *stats)
 {
@@ -376,8 +348,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->dirty_pages);
+	result = read_u32(buf,
+			  &stats->dirty_pages);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -386,8 +358,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->clean_pages);
+	result = read_u32(buf,
+			  &stats->clean_pages);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -396,8 +368,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->free_pages);
+	result = read_u32(buf,
+			  &stats->free_pages);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -406,8 +378,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->failed_pages);
+	result = read_u32(buf,
+			  &stats->failed_pages);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -416,8 +388,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->incoming_pages);
+	result = read_u32(buf,
+			  &stats->incoming_pages);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -426,8 +398,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->outgoing_pages);
+	result = read_u32(buf,
+			  &stats->outgoing_pages);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -436,8 +408,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->cache_pressure);
+	result = read_u32(buf,
+			  &stats->cache_pressure);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -446,8 +418,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->read_count);
+	result = read_u64(buf,
+			  &stats->read_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -456,8 +428,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->write_count);
+	result = read_u64(buf,
+			  &stats->write_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -466,8 +438,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->failed_reads);
+	result = read_u64(buf,
+			  &stats->failed_reads);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -476,8 +448,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->failed_writes);
+	result = read_u64(buf,
+			  &stats->failed_writes);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -486,8 +458,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->reclaimed);
+	result = read_u64(buf,
+			  &stats->reclaimed);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -496,8 +468,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->read_outgoing);
+	result = read_u64(buf,
+			  &stats->read_outgoing);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -506,8 +478,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->found_in_cache);
+	result = read_u64(buf,
+			  &stats->found_in_cache);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -516,8 +488,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->discard_required);
+	result = read_u64(buf,
+			  &stats->discard_required);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -526,8 +498,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->wait_for_page);
+	result = read_u64(buf,
+			  &stats->wait_for_page);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -536,8 +508,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->fetch_required);
+	result = read_u64(buf,
+			  &stats->fetch_required);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -546,8 +518,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->pages_loaded);
+	result = read_u64(buf,
+			  &stats->pages_loaded);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -556,8 +528,8 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->pages_saved);
+	result = read_u64(buf,
+			  &stats->pages_saved);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -566,15 +538,14 @@ static int read_block_map_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->flush_count);
+	result = read_u64(buf,
+			  &stats->flush_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_hash_lock_statistics(char **buf,
 				     struct hash_lock_statistics *stats)
 {
@@ -585,8 +556,8 @@ static int read_hash_lock_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->dedupe_advice_valid);
+	result = read_u64(buf,
+			  &stats->dedupe_advice_valid);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -595,8 +566,8 @@ static int read_hash_lock_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->dedupe_advice_stale);
+	result = read_u64(buf,
+			  &stats->dedupe_advice_stale);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -605,8 +576,8 @@ static int read_hash_lock_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->concurrent_data_matches);
+	result = read_u64(buf,
+			  &stats->concurrent_data_matches);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -615,8 +586,8 @@ static int read_hash_lock_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->concurrent_hash_collisions);
+	result = read_u64(buf,
+			  &stats->concurrent_hash_collisions);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -625,15 +596,14 @@ static int read_hash_lock_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->curr_dedupe_queries);
+	result = read_u32(buf,
+			  &stats->curr_dedupe_queries);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_error_statistics(char **buf,
 				 struct error_statistics *stats)
 {
@@ -644,8 +614,8 @@ static int read_error_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->invalid_advice_pbn_count);
+	result = read_u64(buf,
+			  &stats->invalid_advice_pbn_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -654,8 +624,8 @@ static int read_error_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->no_space_error_count);
+	result = read_u64(buf,
+			  &stats->no_space_error_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -664,15 +634,14 @@ static int read_error_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->read_only_error_count);
+	result = read_u64(buf,
+			  &stats->read_only_error_count);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_bio_stats(char **buf,
 			  struct bio_stats *stats)
 {
@@ -683,8 +652,8 @@ static int read_bio_stats(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->read);
+	result = read_u64(buf,
+			  &stats->read);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -693,8 +662,8 @@ static int read_bio_stats(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->write);
+	result = read_u64(buf,
+			  &stats->write);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -703,8 +672,8 @@ static int read_bio_stats(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->empty_flush);
+	result = read_u64(buf,
+			  &stats->empty_flush);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -713,8 +682,8 @@ static int read_bio_stats(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->discard);
+	result = read_u64(buf,
+			  &stats->discard);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -723,8 +692,8 @@ static int read_bio_stats(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->flush);
+	result = read_u64(buf,
+			  &stats->flush);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -733,15 +702,14 @@ static int read_bio_stats(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->fua);
+	result = read_u64(buf,
+			  &stats->fua);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_memory_usage(char **buf,
 			     struct memory_usage *stats)
 {
@@ -752,8 +720,8 @@ static int read_memory_usage(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->bytes_used);
+	result = read_u64(buf,
+			  &stats->bytes_used);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -762,27 +730,26 @@ static int read_memory_usage(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->peak_bytes_used);
+	result = read_u64(buf,
+			  &stats->peak_bytes_used);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_index_statistics(char **buf,
 				 struct index_statistics *stats)
 {
 	int result = 0;
 
-	/** Number of chunk names stored in the index */
+	/** Number of records stored in the index */
 	result = skip_string(buf, "entriesIndexed : ");
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->entries_indexed);
+	result = read_u64(buf,
+			  &stats->entries_indexed);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -791,8 +758,8 @@ static int read_index_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->posts_found);
+	result = read_u64(buf,
+			  &stats->posts_found);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -801,8 +768,8 @@ static int read_index_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->posts_not_found);
+	result = read_u64(buf,
+			  &stats->posts_not_found);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -811,8 +778,8 @@ static int read_index_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->queries_found);
+	result = read_u64(buf,
+			  &stats->queries_found);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -821,8 +788,8 @@ static int read_index_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->queries_not_found);
+	result = read_u64(buf,
+			  &stats->queries_not_found);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -831,8 +798,8 @@ static int read_index_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->updates_found);
+	result = read_u64(buf,
+			  &stats->updates_found);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -841,15 +808,24 @@ static int read_index_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->updates_not_found);
+	result = read_u64(buf,
+			  &stats->updates_not_found);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+	/** Number of entries discarded */
+	result = skip_string(buf, "entriesDiscarded : ");
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+	result = read_u64(buf,
+			  &stats->entries_discarded);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int read_vdo_statistics(char **buf,
 			       struct vdo_statistics *stats)
 {
@@ -859,17 +835,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->version);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-	result = skip_string(buf, "releaseVersion : ");
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-	result = read_uint32_t(buf,
-			       &stats->release_version);
+	result = read_u32(buf,
+			  &stats->version);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -878,8 +845,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->data_blocks_used);
+	result = read_u64(buf,
+			  &stats->data_blocks_used);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -888,8 +855,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->overhead_blocks_used);
+	result = read_u64(buf,
+			  &stats->overhead_blocks_used);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -898,8 +865,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->logical_blocks_used);
+	result = read_u64(buf,
+			  &stats->logical_blocks_used);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -928,8 +895,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->block_map_cache_size);
+	result = read_u64(buf,
+			  &stats->block_map_cache_size);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -938,8 +905,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->block_size);
+	result = read_u64(buf,
+			  &stats->block_size);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -948,8 +915,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->complete_recoveries);
+	result = read_u64(buf,
+			  &stats->complete_recoveries);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -958,8 +925,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->read_only_recoveries);
+	result = read_u64(buf,
+			  &stats->read_only_recoveries);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -988,8 +955,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint8_t(buf,
-			      &stats->recovery_percentage);
+	result = read_u8(buf,
+			 &stats->recovery_percentage);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -1088,8 +1055,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->instance);
+	result = read_u32(buf,
+			  &stats->instance);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -1098,8 +1065,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->current_vios_in_progress);
+	result = read_u32(buf,
+			  &stats->current_vios_in_progress);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -1108,8 +1075,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint32_t(buf,
-			       &stats->max_vios);
+	result = read_u32(buf,
+			  &stats->max_vios);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -1118,8 +1085,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->dedupe_advice_timeouts);
+	result = read_u64(buf,
+			  &stats->dedupe_advice_timeouts);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -1128,8 +1095,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->flush_out);
+	result = read_u64(buf,
+			  &stats->flush_out);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -1138,8 +1105,8 @@ static int read_vdo_statistics(char **buf,
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
-	result = read_uint64_t(buf,
-			       &stats->logical_block_size);
+	result = read_u64(buf,
+			  &stats->logical_block_size);
 	if (result != VDO_SUCCESS) {
 		return result;
 	}
@@ -1287,7 +1254,6 @@ static int read_vdo_statistics(char **buf,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 int read_vdo_stats(char *buf,
 		   struct vdo_statistics *stats)
 {

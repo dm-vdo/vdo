@@ -5,20 +5,19 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA. 
+# 02110-1301, USA.
 #
-# $Id: //eng/vdo-releases/chlorine/src/packaging/src-dist/user/utils/vdo/Makefile#2 $
 
-VDO_VERSION = 8.2.2.2
+VDO_VERSION = 8.4.0.0
 
 UDS_DIR      = ../uds
 
@@ -59,7 +58,7 @@ DEBUG_FLAGS      =
 RPM_OPT_FLAGS   ?= -fpic
 GLOBAL_FLAGS     = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS) $(WARNS) \
 		   $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)
-GLOBAL_CFLAGS	 = $(GLOBAL_FLAGS) -std=gnu99 -pedantic $(C_WARNS)	\
+GLOBAL_CFLAGS	 = $(GLOBAL_FLAGS) -std=gnu11 -pedantic $(C_WARNS)	\
 		   $(EXTRA_CFLAGS)
 EXTRA_FLAGS      =
 EXTRA_CFLAGS	 = $(EXTRA_FLAGS)
@@ -96,7 +95,7 @@ PROGS = vdoaudit               \
 
 COMPLETIONS=vdostats
 
-NOBUILDPROGS = adaptLVMVDO.sh \
+NOBUILDPROGS = adaptlvm \
 	       vdorecover
 PROG_SOURCES := $(PROGS:%=%.c)
 C_FILES      := $(filter-out $(PROG_SOURCES),$(wildcard *.c))
@@ -121,7 +120,8 @@ INSTALL = install
 INSTALLOWNER ?= -o root -g root
 bindir ?= /usr/bin
 INSTALLDIR=$(DESTDIR)$(bindir)
-COMPLETIONINSTALLDIR=$(DESTDIR)$(sysconfdir)/bash_completion.d
+bash_completions_dir ?= /usr/share/bash-completion/completions
+COMPLETIONINSTALLDIR=$(DESTDIR)$(bash_completions_dir)/
 
 .PHONY: install
 install:

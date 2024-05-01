@@ -1,131 +1,99 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * Copyright 2023 Red Hat
  */
 
-#include "request-queue.h"
+#include "funnel-requestqueue.h"
 
-#include "atomicDefs.h"
-#include "compiler.h"
+#include <linux/atomic.h>
+#include <linux/cache.h>
+
 #include "event-count.h"
 #include "funnel-queue.h"
 #include "logger.h"
 #include "memory-alloc.h"
-#include "uds-threads.h"
+#include "thread-utils.h"
 #include "time-utils.h"
 
 /*
- * Ordering:
+ * This queue will attempt to handle requests in reasonably sized batches
+ * instead of reacting immediately to each new request. The wait time between
+ * batches is dynamically adjusted up or down to try to balance responsiveness
+ * against wasted thread run time.
  *
- * Multiple retry requests or multiple non-retry requests enqueued from
- * a single producer thread will be processed in the order enqueued.
+ * If the wait time becomes long enough, the queue will become dormant and must
+ * be explicitly awoken when a new request is enqueued. The enqueue operation
+ * updates "newest" in the funnel queue via xchg (which is a memory barrier),
+ * and later checks "dormant" to decide whether to do a wakeup of the worker
+ * thread.
  *
- * Retry requests will generally be processed before normal requests.
+ * When deciding to go to sleep, the worker thread sets "dormant" and then
+ * examines "newest" to decide if the funnel queue is idle. In dormant mode,
+ * the last examination of "newest" before going to sleep is done inside the
+ * wait_event_interruptible macro(), after a point where one or more memory
+ * barriers have been issued. (Preparing to sleep uses spin locks.) Even if the
+ * funnel queue's "next" field update isn't visible yet to make the entry
+ * accessible, its existence will kick the worker thread out of dormant mode
+ * and back into timer-based mode.
  *
- * HOWEVER, a producer thread can enqueue a retry request (generally given
- * higher priority) and then enqueue a normal request, and they can get
- * processed in the reverse order.  The checking of the two internal queues is
- * very simple and there's a potential race with the producer regarding the
- * "priority" handling.  If an ordering guarantee is needed, it can be added
- * without much difficulty, it just makes the code a bit more complicated.
- *
- * If requests are enqueued while the processing of another request is
- * happening, and the enqueuing operations complete while the request
- * processing is still in progress, then the retry request(s) *will*
- * get processed next.  (This is used for testing.)
+ * Unbatched requests are used to communicate between different zone threads
+ * and will also cause the queue to awaken immediately.
  */
 
-/**
- * Time constants, all in units of nanoseconds.
- **/
 enum {
-	ONE_NANOSECOND = 1,
-	ONE_MICROSECOND = 1000 * ONE_NANOSECOND,
-	ONE_MILLISECOND = 1000 * ONE_MICROSECOND,
-	ONE_SECOND = 1000 * ONE_MILLISECOND,
-
-	/** The initial time to wait after waiting with no timeout */
-	DEFAULT_WAIT_TIME = 10 * ONE_MICROSECOND,
-
-	/** The minimum time to wait when waiting with a timeout */
+	NANOSECOND = 1,
+	MICROSECOND = 1000 * NANOSECOND,
+	MILLISECOND = 1000 * MICROSECOND,
+	DEFAULT_WAIT_TIME = 10 * MICROSECOND,
 	MINIMUM_WAIT_TIME = DEFAULT_WAIT_TIME / 2,
-
-	/** The maximimum time to wait when waiting with a timeout */
-	MAXIMUM_WAIT_TIME = ONE_MILLISECOND
-};
-
-/**
- * Batch size tuning constants. These are compared to the number of requests
- * that have been processed since the worker thread last woke up.
- **/
-enum {
-	MINIMUM_BATCH = 32, // wait time increases if batch smaller than this
-	MAXIMUM_BATCH = 64  // wait time decreases if batch larger than this
+	MAXIMUM_WAIT_TIME = MILLISECOND,
+	MINIMUM_BATCH = 32,
+	MAXIMUM_BATCH = 64,
 };
 
 struct uds_request_queue {
-	const char *name; // name of queue
-	uds_request_queue_processor_t *process_one; // function to process 1
-						    // request
-
-	struct funnel_queue *main_queue;  // new incoming requests
-	struct funnel_queue *retry_queue; // old requests to retry first
-	struct event_count *work_event;   // signal to wake the worker thread
-
-	struct thread *thread; // thread id of the worker thread
-	bool started;          // true if the worker was started
-
-	bool alive;    // when true, requests can be enqueued
-
-	/** A flag set when the worker is waiting without a timeout */
+	/* The name of queue */
+	const char *name;
+	/* Function to process a request */
+	uds_request_queue_processor_fn processor;
+	/* Queue of new incoming requests */
+	struct funnel_queue *main_queue;
+	/* Queue of old requests to retry */
+	struct funnel_queue *retry_queue;
+	/* Signal to wake the worker thread */
+	struct event_count *work_event;
+	/* The thread id of the worker thread */
+	struct thread *thread;
+	/* True if the worker was started */
+	bool started;
+	/* When true, requests can be enqueued */
+	bool running;
+	/* A flag set when the worker is waiting without a timeout */
 	atomic_t dormant;
 
-	// The following fields are mutable state private to the worker thread.
-	// The first field is aligned to avoid cache line sharing with
-	// preceding fields.
+	/*
+	 * The following fields are mutable state private to the worker thread.
+	 * The first field is aligned to avoid cache line sharing with
+	 * preceding fields.
+	 */
 
-	/** requests processed since last wait */
-	uint64_t current_batch __attribute__((aligned(CACHE_LINE_BYTES)));
-
-	/** the amount of time to wait to accumulate a batch of requests */
+	/* Requests processed since last wait */
+	uint64_t current_batch __aligned(L1_CACHE_BYTES);
+	/* The amount of time to wait to accumulate a batch of requests */
 	uint64_t wait_nanoseconds;
-
-	/** the relative time at which to wake when waiting with a timeout */
+	/* The relative time at which to wake when waiting with a timeout */
 	ktime_t wake_rel_time;
 };
 
-/**
- * Adjust the wait time if the last batch of requests was larger or smaller
- * than the tuning constants.
- *
- * @param queue  the request queue
- **/
+/**********************************************************************/
 static void adjust_wait_time(struct uds_request_queue *queue)
 {
-	// Adjust the wait time by about 25%.
 	uint64_t delta = queue->wait_nanoseconds / 4;
 
-	if (queue->current_batch < MINIMUM_BATCH) {
-		// Batch too small, so increase the wait a little.
+	if (queue->current_batch < MINIMUM_BATCH)
 		queue->wait_nanoseconds += delta;
-	} else if (queue->current_batch > MAXIMUM_BATCH) {
-		// Batch too large, so decrease the wait a little.
+	else if (queue->current_batch > MAXIMUM_BATCH)
 		queue->wait_nanoseconds -= delta;
-	}
 }
 
 /**
@@ -142,36 +110,19 @@ static ktime_t *get_wake_time(struct uds_request_queue *queue)
 {
 	if (queue->wait_nanoseconds >= MAXIMUM_WAIT_TIME) {
 		if (atomic_read(&queue->dormant)) {
-			// The dormant flag was set on the last timeout cycle
-			// and nothing changed, so wait with no timeout and
-			// reset the wait time.
+			/* The thread is going dormant. */
 			queue->wait_nanoseconds = DEFAULT_WAIT_TIME;
 			return NULL;
 		}
-		// Wait one time with the dormant flag set, ensuring that
-		// enqueuers will have a chance to see that the flag is set.
+
 		queue->wait_nanoseconds = MAXIMUM_WAIT_TIME;
 		atomic_set_release(&queue->dormant, true);
 	} else if (queue->wait_nanoseconds < MINIMUM_WAIT_TIME) {
-		// If the producer is very fast or the scheduler just doesn't
-		// wake us promptly, waiting for very short times won't make
-		// the batches smaller.
 		queue->wait_nanoseconds = MINIMUM_WAIT_TIME;
 	}
 
-	ktime_t *wake = &queue->wake_rel_time;
-	*wake = queue->wait_nanoseconds;
-	return wake;
-}
-
-/**********************************************************************/
-static struct uds_request *remove_head(struct funnel_queue *queue)
-{
-	struct funnel_queue_entry *entry = funnel_queue_poll(queue);
-	if (entry == NULL) {
-		return NULL;
-	}
-	return container_of(entry, struct uds_request, request_queue_link);
+	queue->wake_rel_time = queue->wait_nanoseconds;
+	return &queue->wake_rel_time;
 }
 
 /**
@@ -184,85 +135,73 @@ static struct uds_request *remove_head(struct funnel_queue *queue)
  **/
 static struct uds_request *poll_queues(struct uds_request_queue *queue)
 {
-	struct uds_request *request = remove_head(queue->retry_queue);
-	if (request == NULL) {
-		request = remove_head(queue->main_queue);
-	}
-	return request;
+	struct funnel_queue_entry *entry;
+
+	entry = vdo_funnel_queue_poll(queue->retry_queue);
+	if (entry != NULL)
+		return container_of(entry, struct uds_request, queue_link);
+
+	entry = vdo_funnel_queue_poll(queue->main_queue);
+	if (entry != NULL)
+		return container_of(entry, struct uds_request, queue_link);
+
+	return NULL;
 }
 
-/**
+/*
  * Remove the next request to be processed from the queue, waiting for a
- * request if the queue is empty. Must only be called by the worker thread.
- *
- * @param queue  the queue from which to remove an entry
- *
- * @return the next request in the queue, or NULL if the queue has been
- *         shut down and the worker thread should exit
- **/
+ * request if necessary.
+ */
 static struct uds_request *dequeue_request(struct uds_request_queue *queue)
 {
 	for (;;) {
-		// Assume we'll find a request to return; if not, it'll be
-		// zeroed later.
-		queue->current_batch += 1;
+		struct uds_request *request;
+		event_token_t wait_token;
+		ktime_t *wake_time;
+		bool shutting_down;
 
-		// Fast path: pull an item off a non-blocking queue and return
-		// it.
-		struct uds_request *request = poll_queues(queue);
-		if (request != NULL) {
+		queue->current_batch++;
+		request = poll_queues(queue);
+		if (request != NULL)
 			return request;
-		}
 
-		// Looks like there's no work. Prepare to wait for more work.
-		// If the event count is signalled after this returns, we won't
-		// wait later on.
-		event_token_t wait_token =
-			event_count_prepare(queue->work_event);
+		/* Prepare to wait for more work to arrive. */
+		wait_token = event_count_prepare(queue->work_event);
 
-		// First poll for shutdown to ensure we don't miss work that
-		// was enqueued immediately before a shutdown request.
-		bool shutting_down = !READ_ONCE(queue->alive);
-		if (shutting_down) {
+		shutting_down = !READ_ONCE(queue->running);
+		if (shutting_down)
 			/*
-			 * Ensure that we see any requests that were guaranteed
-			 * to have been fully enqueued before shutdown was
-			 * flagged.  The corresponding write barrier is in
-			 * uds_request_queue_finish.
+			 * Ensure that we see any remaining requests that were
+			 * enqueued before shutting down. The corresponding
+			 * write barrier is in uds_request_queue_finish().
 			 */
 			smp_rmb();
-		}
 
-		// Poll again before waiting--a request may have been enqueued
-		// just before we got the event key.
+		/*
+		 * Poll again in case a request was enqueued just before we got
+		 * the event key.
+		 */
 		request = poll_queues(queue);
 		if ((request != NULL) || shutting_down) {
 			event_count_cancel(queue->work_event, wait_token);
 			return request;
 		}
 
-		// We're about to wait again, so update the wait time to
-		// reflect the batch of requests we processed since the last
-		// wait.
+		/* Wait for more work to arrive. */
 		adjust_wait_time(queue);
-
-		// If the event count hasn't been signalled since we got the waitToken,
-		// wait until it is signalled or until the wait times out.
-		ktime_t *wake_time = get_wake_time(queue);
+		wake_time = get_wake_time(queue);
 		event_count_wait(queue->work_event, wait_token, wake_time);
 
 		if (wake_time == NULL) {
-			// We've been roused from dormancy. Clear the flag so
-			// enqueuers can stop broadcasting (no fence needed for
-			// this transition).
+			/*
+			 * The queue has been roused from dormancy. Clear the
+			 * flag so enqueuers can stop broadcasting. No fence is
+			 * needed for this transition.
+			 */
 			atomic_set(&queue->dormant, false);
-			// Reset the timeout back to the default since we don't
-			// know how long we've been asleep and we also want to
-			// be responsive to a new burst.
 			queue->wait_nanoseconds = DEFAULT_WAIT_TIME;
 		}
 
-		// Just finished waiting, so start counting a new batch.
 		queue->current_batch = 0;
 	}
 }
@@ -271,38 +210,39 @@ static struct uds_request *dequeue_request(struct uds_request_queue *queue)
 static void request_queue_worker(void *arg)
 {
 	struct uds_request_queue *queue = (struct uds_request_queue *) arg;
-	uds_log_debug("%s queue starting", queue->name);
 	struct uds_request *request;
-	while ((request = dequeue_request(queue)) != NULL) {
-		queue->process_one(request);
-	}
-	uds_log_debug("%s queue done", queue->name);
+
+	vdo_log_debug("%s queue starting", queue->name);
+	while ((request = dequeue_request(queue)) != NULL)
+		queue->processor(request);
+	vdo_log_debug("%s queue done", queue->name);
 }
 
 /**********************************************************************/
-int make_uds_request_queue(const char *queue_name,
-			   uds_request_queue_processor_t *process_one,
+int uds_make_request_queue(const char *queue_name,
+			   uds_request_queue_processor_fn processor,
 			   struct uds_request_queue **queue_ptr)
 {
+	int result;
 	struct uds_request_queue *queue;
-	int result = UDS_ALLOCATE(1, struct uds_request_queue, __func__,
-				  &queue);
-	if (result != UDS_SUCCESS) {
+
+	result = vdo_allocate(1, struct uds_request_queue, __func__, &queue);
+	if (result != VDO_SUCCESS)
 		return result;
-	}
+
 	queue->name = queue_name;
-	queue->process_one = process_one;
-	queue->alive = true;
+	queue->processor = processor;
+	queue->running = true;
 	queue->current_batch = 0;
 	queue->wait_nanoseconds = DEFAULT_WAIT_TIME;
 
-	result = make_funnel_queue(&queue->main_queue);
+	result = vdo_make_funnel_queue(&queue->main_queue);
 	if (result != UDS_SUCCESS) {
 		uds_request_queue_finish(queue);
 		return result;
 	}
 
-	result = make_funnel_queue(&queue->retry_queue);
+	result = vdo_make_funnel_queue(&queue->retry_queue);
 	if (result != UDS_SUCCESS) {
 		uds_request_queue_finish(queue);
 		return result;
@@ -314,9 +254,11 @@ int make_uds_request_queue(const char *queue_name,
 		return result;
 	}
 
-	result = uds_create_thread(request_queue_worker, queue, queue_name,
+	result = vdo_create_thread(request_queue_worker,
+				   queue,
+				   queue_name,
 				   &queue->thread);
-	if (result != UDS_SUCCESS) {
+	if (result != VDO_SUCCESS) {
 		uds_request_queue_finish(queue);
 		return result;
 	}
@@ -328,7 +270,7 @@ int make_uds_request_queue(const char *queue_name,
 }
 
 /**********************************************************************/
-static INLINE void wake_up_worker(struct uds_request_queue *queue)
+static inline void wake_up_worker(struct uds_request_queue *queue)
 {
 	event_count_broadcast(queue->work_event);
 }
@@ -337,55 +279,43 @@ static INLINE void wake_up_worker(struct uds_request_queue *queue)
 void uds_request_queue_enqueue(struct uds_request_queue *queue,
 			       struct uds_request *request)
 {
+	struct funnel_queue *sub_queue;
 	bool unbatched = request->unbatched;
-	funnel_queue_put(request->requeued ? queue->retry_queue :
-					     queue->main_queue,
-			 &request->request_queue_link);
+
+	sub_queue = request->requeued ? queue->retry_queue : queue->main_queue;
+	vdo_funnel_queue_put(sub_queue, &request->queue_link);
 
 	/*
-	 * We must wake the worker thread when it is dormant (waiting with no
-	 * timeout). An atomic load (read fence) isn't needed here since we
-	 * know the queue operation acts as one.
+	 * We must wake the worker thread when it is dormant. A read fence
+	 * isn't needed here since we know the queue operation acts as one.
 	 */
-	if (atomic_read(&queue->dormant) || unbatched) {
+	if (atomic_read(&queue->dormant) || unbatched)
 		wake_up_worker(queue);
-	}
 }
 
 /**********************************************************************/
 void uds_request_queue_finish(struct uds_request_queue *queue)
 {
-	if (queue == NULL) {
+	if (queue == NULL)
 		return;
-	}
 
 	/*
 	 * This memory barrier ensures that any requests we queued will be
-	 * seen.  The point is that when dequeue_request sees the following
-	 * update to the alive flag, it will also be able to see any change we
-	 * made to a next field in the funnel queue entry.  The corresponding
-	 * read barrier is in dequeue_request.
+	 * seen. The point is that when dequeue_request() sees the following
+	 * update to the running flag, it will also be able to see any change
+	 * we made to a next field in the funnel queue entry. The corresponding
+	 * read barrier is in dequeue_request().
 	 */
 	smp_wmb();
-
-	// Mark the queue as dead.
-	WRITE_ONCE(queue->alive, false);
+	WRITE_ONCE(queue->running, false);
 
 	if (queue->started) {
-		// Wake the worker so it notices that it should exit.
 		wake_up_worker(queue);
-
-		// Wait for the worker thread to finish processing any
-		// additional pending work and exit.
-		int result = uds_join_threads(queue->thread);
-		if (result != UDS_SUCCESS) {
-			uds_log_warning_strerror(result,
-						 "Failed to join worker thread");
-		}
+		vdo_join_threads(queue->thread);
 	}
 
 	free_event_count(queue->work_event);
-	free_funnel_queue(queue->main_queue);
-	free_funnel_queue(queue->retry_queue);
-	UDS_FREE(queue);
+	vdo_free_funnel_queue(queue->main_queue);
+	vdo_free_funnel_queue(queue->retry_queue);
+	vdo_free(queue);
 }

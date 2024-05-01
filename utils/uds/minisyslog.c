@@ -1,20 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * Copyright 2023 Red Hat
  */
 
 #include <fcntl.h>
@@ -28,10 +14,10 @@
 #include "memory-alloc.h"
 #include "minisyslog.h"
 #include "string-utils.h"
-#include "uds-threads.h"
+#include "thread-utils.h"
 #include "time-utils.h"
 
-static struct mutex mutex = { .mutex = UDS_MUTEX_INITIALIZER };
+static struct mutex mutex = UDS_MUTEX_INITIALIZER;
 
 static int log_socket = -1;
 
@@ -53,9 +39,8 @@ static void close_locked(void)
 /**********************************************************************/
 static void open_socket_locked(void)
 {
-	if (log_socket != -1) {
+	if (log_socket != -1)
 		return;
-	}
 
 	struct sockaddr_un sun;
 	memset(&sun, 0, sizeof(sun));
@@ -67,14 +52,12 @@ static void open_socket_locked(void)
 	 * loggingSocket(), loggingConnect(), or tryCloseFile().
 	 */
 	log_socket = socket(PF_UNIX, SOCK_DGRAM, 0);
-	if (log_socket < 0) {
+	if (log_socket < 0)
 		return;
-	}
 
 	if (connect(log_socket, (const struct sockaddr *) &sun, sizeof(sun)) !=
-	    0) {
+	    0)
 		close_locked();
-	}
 }
 
 /**********************************************************************/
@@ -82,16 +65,14 @@ void mini_openlog(const char *ident, int option, int facility)
 {
 	uds_lock_mutex(&mutex);
 	close_locked();
-	UDS_FREE(log_ident);
-	if (uds_duplicate_string(ident, NULL, &log_ident) != UDS_SUCCESS) {
+	vdo_free(log_ident);
+	if (vdo_duplicate_string(ident, NULL, &log_ident) != VDO_SUCCESS)
 		// on failure, NULL is okay
 		log_ident = NULL;
-	}
 	log_option = option;
 	default_facility = facility;
-	if (log_option & LOG_NDELAY) {
+	if (log_option & LOG_NDELAY)
 		open_socket_locked();
-	}
 	uds_unlock_mutex(&mutex);
 }
 
@@ -113,15 +94,15 @@ static bool __must_check write_msg(int fd, const char *msg)
 		bytes_to_write += 1;
 		bytes_written += write(fd, "\n", 1);
 	}
-	return (bytes_written != (ssize_t) bytes_to_write);
+	return bytes_written != (ssize_t) bytes_to_write;
 }
 
 /**********************************************************************/
 __printf(3, 0)
-#ifdef __clang__ 
+#ifdef __clang__
 // Clang insists on annotating both printf style format strings, but
 // gcc doesn't understand the second.
-__printf(5, 0) 
+__printf(5, 0)
 #endif //__clang__
 static void log_it(int priority,
 		   const char *prefix,
@@ -130,7 +111,7 @@ static void log_it(int priority,
 		   const char *format2,
 		   va_list args2)
 {
-	const char *priority_str = uds_log_priority_to_string(priority);
+	const char *priority_str = vdo_log_priority_to_string(priority);
 	char buffer[1024];
 	char *buf_end = buffer + sizeof(buffer);
 	char *bufp = buffer;
@@ -138,28 +119,25 @@ static void log_it(int priority,
 	struct tm tm;
 	char timestamp[64];
 	timestamp[0] = '\0';
-	if (localtime_r(&t, &tm) != NULL) {
+	if (localtime_r(&t, &tm) != NULL)
 		if (strftime(timestamp,
 			     sizeof(timestamp),
 			     "%b %e %H:%M:%S",
-			     &tm) == 0) {
+			     &tm) == 0)
 			timestamp[0] = '\0';
-		}
-	}
-	if (LOG_FAC(priority) == 0) {
+	if (LOG_FAC(priority) == 0)
 		priority |= default_facility;
-	}
 
-	bufp = uds_append_to_buffer(bufp, buf_end, "<%d>%s", priority,
+	bufp = vdo_append_to_buffer(bufp, buf_end, "<%d>%s", priority,
 				    timestamp);
 	const char *stderr_msg = bufp;
-	bufp = uds_append_to_buffer(bufp, buf_end, " %s",
+	bufp = vdo_append_to_buffer(bufp, buf_end, " %s",
 				    log_ident == NULL ? "" : log_ident);
 
 	if (log_option & LOG_PID) {
 		char tname[16];
 		uds_get_thread_name(tname);
-		bufp = uds_append_to_buffer(bufp,
+		bufp = vdo_append_to_buffer(bufp,
 					    buf_end,
 					    "[%u]: %-6s (%s/%d) ",
 					    getpid(),
@@ -167,37 +145,31 @@ static void log_it(int priority,
 					    tname,
 					    uds_get_thread_id());
 	} else {
-		bufp = uds_append_to_buffer(bufp, buf_end, ": ");
+		bufp = vdo_append_to_buffer(bufp, buf_end, ": ");
 	}
-	if ((bufp + sizeof("...")) >= buf_end) {
+	if ((bufp + sizeof("...")) >= buf_end)
 		return;
-	}
-	if (prefix != NULL) {
-		bufp = uds_append_to_buffer(bufp, buf_end, "%s", prefix);
-	}
+	if (prefix != NULL)
+		bufp = vdo_append_to_buffer(bufp, buf_end, "%s", prefix);
 	if (format1 != NULL) {
 		int ret = vsnprintf(bufp, buf_end - bufp, format1, args1);
-		if (ret < (buf_end - bufp)) {
+		if (ret < (buf_end - bufp))
 			bufp += ret;
-		} else {
+		else
 			bufp = buf_end;
 		}
-	}
 	if (format2 != NULL) {
 		int ret = vsnprintf(bufp, buf_end - bufp, format2, args2);
-		if (ret < (buf_end - bufp)) {
+		if (ret < (buf_end - bufp))
 			bufp += ret;
-		} else {
+		else
 			bufp = buf_end;
 		}
-	}
-	if (bufp == buf_end) {
+	if (bufp == buf_end)
 		strcpy(buf_end - sizeof("..."), "...");
-	}
 	bool failure = false;
-	if (log_option & LOG_PERROR) {
+	if (log_option & LOG_PERROR)
 		failure |= write_msg(STDERR_FILENO, stderr_msg);
-	}
 	open_socket_locked();
 	failure |= (log_socket == -1);
 	if (log_socket != -1) {
@@ -209,9 +181,8 @@ static void log_it(int priority,
 	if (failure && (log_option & LOG_CONS)) {
 		int console = open(_PATH_CONSOLE, O_WRONLY);
 		failure |= (console == -1) || write_msg(console, stderr_msg);
-		if (console != -1) {
+		if (console != -1)
 			failure |= (close(console) != 0);
-		}
 	}
 }
 
@@ -240,7 +211,7 @@ void mini_closelog(void)
 {
 	uds_lock_mutex(&mutex);
 	close_locked();
-	UDS_FREE(log_ident);
+	vdo_free(log_ident);
 	log_ident = NULL;
 	log_option = 0;
 	default_facility = LOG_USER;

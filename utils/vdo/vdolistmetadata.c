@@ -5,30 +5,29 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include <err.h>
 #include <getopt.h>
+#include <stdlib.h>
 
 #include "errors.h"
+#include "string-utils.h"
 #include "syscalls.h"
 
-#include "block-map-format.h"
-#include "slab-depot-format.h"
-#include "slab-journal-format.h"
+#include "encodings.h"
 #include "status-codes.h"
 #include "types.h"
-#include "vdo-layout.h"
 
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
@@ -174,32 +173,27 @@ static void listSlabs(void)
 static void listRecoveryJournal(void)
 {
   const struct partition *partition
-    = getPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION,
-                   "no recovery journal partition");
-  listBlocks("recovery journal",
-             vdo_get_fixed_layout_partition_offset(partition),
-             vdo->states.vdo.config.recovery_journal_size);
+    = getPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION, "no recovery journal partition");
+  listBlocks("recovery journal", partition->offset, vdo->states.vdo.config.recovery_journal_size);
 }
 
 /**********************************************************************/
 static void listSlabSummary(void)
 {
   const struct partition *partition
-    = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION,
-                   "no slab summary partition");
-  listBlocks("slab summary", vdo_get_fixed_layout_partition_offset(partition),
-             vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
+    = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION, "no slab summary partition");
+  listBlocks("slab summary", partition->offset, VDO_SLAB_SUMMARY_BLOCKS);
 }
 
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+  static char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   processArgs(argc, argv);

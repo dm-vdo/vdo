@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include <err.h>
@@ -32,11 +32,7 @@
 #include "memory-alloc.h"
 #include "syscalls.h"
 
-#include "num-utils.h"
-#include "packed-reference-block.h"
-#include "recovery-journal-format.h"
-#include "slab-depot-format.h"
-#include "slab-summary-format.h"
+#include "encodings.h"
 #include "status-codes.h"
 #include "types.h"
 
@@ -152,10 +148,10 @@ static const char *vdo_get_state_name(enum vdo_state state)
 	/* Catch if a state has been added without updating the name array. */
 	STATIC_ASSERT(ARRAY_SIZE(VDO_STATE_NAMES) == VDO_STATE_COUNT);
 
-	result = ASSERT(state < ARRAY_SIZE(VDO_STATE_NAMES),
-			"vdo_state value %u must have a registered name",
-			state);
-	if (result != UDS_SUCCESS) {
+	result = VDO_ASSERT(state < ARRAY_SIZE(VDO_STATE_NAMES),
+			    "vdo_state value %u must have a registered name",
+			    state);
+	if (result != VDO_SUCCESS) {
 		return "INVALID VDO STATE CODE";
 	}
 
@@ -264,9 +260,9 @@ static void printErrorSummary(void)
  **/
 static void freeAuditAllocations(void)
 {
-  UDS_FREE(slabSummaryEntries);
+  vdo_free(slabSummaryEntries);
   for (slab_count_t i = 0; i < vdo->slabCount; i++) {
-    UDS_FREE(slabs[i].refCounts);
+    vdo_free(slabs[i].refCounts);
   }
   freeVDOFromFile(&vdo);
 }
@@ -685,7 +681,7 @@ static int verifyPBNRefCounts(void)
     }
   }
 
-  UDS_FREE(buffer);
+  vdo_free(buffer);
   return result;
 }
 
@@ -745,12 +741,12 @@ static bool auditVDO(void)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+  static char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   result = processAuditArgs(argc, argv);
@@ -761,7 +757,7 @@ int main(int argc, char *argv[])
   result = makeVDOFromFile(filename, true, &vdo);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load VDO from '%s': %s", filename,
-         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   struct slab_depot_state_2_0 depot = vdo->states.slab_depot;
@@ -779,12 +775,12 @@ int main(int argc, char *argv[])
     audit->firstError = (slab_block_number) -1;
 
     result
-      = UDS_ALLOCATE(slabDataBlocks, uint8_t, __func__, &audit->refCounts);
+      = vdo_allocate(slabDataBlocks, uint8_t, __func__, &audit->refCounts);
     if (result != VDO_SUCCESS) {
       freeAuditAllocations();
       errx(1, "Could not allocate %llu reference counts: %s",
            (unsigned long long) slabDataBlocks,
-           uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+           uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
     }
   }
 

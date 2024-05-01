@@ -5,18 +5,19 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
+#include <linux/limits.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -318,13 +319,13 @@ static void process_args(int argc, char *argv[])
  **/
 static void freeAllocations(void)
 {
-  UDS_FREE(vdoPaths);
+  vdo_free(vdoPaths);
 }
 
 /**********************************************************************
  * Process the VDO stats for a single device.
  *
- * @param original The orignal name passed into vdostats
+ * @param original The original name passed into vdostats
  * @param name     The name of the vdo device to use in dmsetup message
  *
  **/
@@ -433,8 +434,8 @@ static void enumerate_devices(void)
   if (pathCount == 0) {
     errx(1, "Could not find any VDO devices");
   }
-  
-  result = UDS_ALLOCATE(pathCount, struct vdoPath, __func__, &vdoPaths);
+
+  result = vdo_allocate(pathCount, struct vdoPath, __func__, &vdoPaths);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate vdo path structure");
   }
@@ -493,13 +494,13 @@ static void calculateMaxDeviceName(char *name)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+  char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
   int result;
 
   result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   process_args(argc, argv);

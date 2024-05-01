@@ -6,26 +6,23 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #ifndef USER_VDO_H
 #define USER_VDO_H
 
-#include "slab-summary-format.h"
-#include "super-block-codec.h"
+#include "encodings.h"
 #include "types.h"
-#include "vdo-component-states.h"
-#include "volume-geometry.h"
 
 #include "physicalLayer.h"
 
@@ -37,8 +34,8 @@ typedef struct user_vdo {
   PhysicalLayer               *layer;
   /* The geometry of the VDO */
   struct volume_geometry       geometry;
-  /* The codec for the super block */
-  struct super_block_codec     superBlockCodec;
+  /* The buffer for the super block */
+  char                         superBlockBuffer[VDO_BLOCK_SIZE];
   /* The full state of all components */
   struct vdo_component_states  states;
 
@@ -60,9 +57,19 @@ int __must_check makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr);
 /**
  * Free a user space VDO object and NULL out the reference to it.
  *
- * @param vdoPtr  A poitner to the VDO to free
+ * @param vdoPtr  A pointer to the VDO to free
  **/
 void freeUserVDO(UserVDO **vdoPtr);
+
+/**
+ * Load the volume geometry from a layer.
+ *
+ * @param layer     The layer from which to read the geometry
+ * @param geometry  The structure to receive the decoded fields
+ *
+ * @return VDO_SUCCESS or an error
+ **/
+int __must_check loadVolumeGeometry(PhysicalLayer *layer, struct volume_geometry *geometry);
 
 /**
  * Read the super block from the location indicated by the geometry.
@@ -101,8 +108,35 @@ int __must_check
 loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr);
 
 /**
+ * Write a specific version of geometry block for a VDO.
+ *
+ * @param layer     The layer on which to write
+ * @param geometry  The volume_geometry to be written
+ * @param version   The version of the geometry to write
+ *
+ * @return VDO_SUCCESS or an error.
+ **/
+int __must_check writeVolumeGeometryWithVersion(PhysicalLayer          *layer,
+                                                struct volume_geometry *geometry,
+                                                u32                     version);
+
+/**
+ * Write a geometry block for a VDO.
+ *
+ * @param layer     The layer on which to write
+ * @param geometry  The volume_geometry to be written
+ *
+ * @return VDO_SUCCESS or an error.
+ **/
+static inline int __must_check
+writeVolumeGeometry(PhysicalLayer *layer, struct volume_geometry *geometry)
+{
+  return writeVolumeGeometryWithVersion(layer, geometry, VDO_DEFAULT_GEOMETRY_BLOCK_VERSION);
+}
+
+/**
  * Encode and write out the super block (assuming the components have already
- * been encoded). Thist method is broken out for unit testing.
+ * been encoded). This method is broken out for unit testing.
  *
  * @param vdo  The vdo whose super block is to be saved
  *

@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright Red Hat
+ * Copyright 2023 Red Hat
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * If you add new statistics, be sure to update the following files:
+ *
+ * ../base/statistics.h
+ * ../base/message-stats.c
+ * ../base/pool-sysfs-stats.c
+ * ./messageStatsReader.c
+ * ../../../perl/Permabit/Statistics/Definitions.pm
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "numeric.h"
+#include "string-utils.h"
 
 #include "math.h"
 #include "statistics.h"
 #include "status-codes.h"
+#include "types.h"
 #include "vdoStats.h"
 
-#define MAX_STATS 238
+#define MAX_STATS 239
 #define MAX_STAT_LENGTH 80
 
 int fieldCount = 0;
@@ -34,42 +34,7 @@ char labels[MAX_STATS][MAX_STAT_LENGTH];
 char values[MAX_STATS][MAX_STAT_LENGTH];
 
 
-/**********************************************************************/
-static int write_uint64_t(char *label, uint64_t value)
-{
-	int count = sprintf(labels[fieldCount], "%s", label);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-
-	maxLabelLength = max(maxLabelLength, (int) strlen(label));
-
-	count = sprintf(values[fieldCount++], "%lu", value);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
-static int write_uint32_t(char *label, uint32_t value)
-{
-	int count = sprintf(labels[fieldCount], "%s", label);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-
-	maxLabelLength = max(maxLabelLength, (int) strlen(label));
-
-	count = sprintf(values[fieldCount++], "%u", value);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
-static int write_uint8_t(char *label, uint8_t value)
+static int write_u8(char *label, u8 value)
 {
 	int count = sprintf(labels[fieldCount], "%s", label);
 	if (count < 0) {
@@ -85,7 +50,22 @@ static int write_uint8_t(char *label, uint8_t value)
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
+static int write_u64(char *label, u64 value)
+{
+	int count = sprintf(labels[fieldCount], "%s", label);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+
+	maxLabelLength = max(maxLabelLength, (int) strlen(label));
+
+	count = sprintf(values[fieldCount++], "%lu", value);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	return VDO_SUCCESS;
+}
+
 static int write_string(char *label, char *value)
 {
 	int count = sprintf(labels[fieldCount], "%s", label);
@@ -102,24 +82,6 @@ static int write_string(char *label, char *value)
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
-static int write_double(char *label, double value)
-{
-	int count = sprintf(labels[fieldCount], "%s", label);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-
-	maxLabelLength = max(maxLabelLength, (int) strlen(label));
-
-	count = sprintf(values[fieldCount++], "%.2f", value);
-	if (count < 0) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	return VDO_SUCCESS;
-}
-
-/**********************************************************************/
 static int write_block_count_t(char *label, block_count_t value)
 {
 	int count = sprintf(labels[fieldCount], "%s", label);
@@ -136,8 +98,39 @@ static int write_block_count_t(char *label, block_count_t value)
 	return VDO_SUCCESS;
 }
 
+static int write_u32(char *label, u32 value)
+{
+	int count = sprintf(labels[fieldCount], "%s", label);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
 
-/**********************************************************************/
+	maxLabelLength = max(maxLabelLength, (int) strlen(label));
+
+	count = sprintf(values[fieldCount++], "%u", value);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	return VDO_SUCCESS;
+}
+
+static int write_double(char *label, double value)
+{
+	int count = sprintf(labels[fieldCount], "%s", label);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+
+	maxLabelLength = max(maxLabelLength, (int) strlen(label));
+
+	count = sprintf(values[fieldCount++], "%.2f", value);
+	if (count < 0) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	return VDO_SUCCESS;
+}
+
+
 static int write_block_allocator_statistics(char *prefix,
 					    struct block_allocator_statistics *stats)
 {
@@ -149,7 +142,7 @@ static int write_block_allocator_statistics(char *prefix,
 	if (asprintf(&joined, "%s slab count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->slab_count);
+	result = write_u64(joined, stats->slab_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -159,7 +152,7 @@ static int write_block_allocator_statistics(char *prefix,
 	if (asprintf(&joined, "%s slabs opened", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->slabs_opened);
+	result = write_u64(joined, stats->slabs_opened);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -169,7 +162,7 @@ static int write_block_allocator_statistics(char *prefix,
 	if (asprintf(&joined, "%s slabs reopened", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->slabs_reopened);
+	result = write_u64(joined, stats->slabs_reopened);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -177,20 +170,19 @@ static int write_block_allocator_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_commit_statistics(char *prefix,
 				   struct commit_statistics *stats)
 {
 	int result = 0;
 	char *joined = NULL;
 
-	uint64_t batching = stats->started - stats->written;
-	uint64_t writing = stats->written - stats->committed;
+	u64 batching = stats->started - stats->written;
+	u64 writing = stats->written - stats->committed;
 
 	if (asprintf(&joined, "%s batching", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, batching);
+	result = write_u64(joined, batching);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -200,7 +192,7 @@ static int write_commit_statistics(char *prefix,
 	if (asprintf(&joined, "%s started", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->started);
+	result = write_u64(joined, stats->started);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -209,7 +201,7 @@ static int write_commit_statistics(char *prefix,
 	if (asprintf(&joined, "%s writing", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, writing);
+	result = write_u64(joined, writing);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -219,7 +211,7 @@ static int write_commit_statistics(char *prefix,
 	if (asprintf(&joined, "%s written", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->written);
+	result = write_u64(joined, stats->written);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -229,7 +221,7 @@ static int write_commit_statistics(char *prefix,
 	if (asprintf(&joined, "%s committed", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->committed);
+	result = write_u64(joined, stats->committed);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -237,7 +229,6 @@ static int write_commit_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_recovery_journal_statistics(char *prefix,
 					     struct recovery_journal_statistics *stats)
 {
@@ -249,7 +240,7 @@ static int write_recovery_journal_statistics(char *prefix,
 	if (asprintf(&joined, "%s disk full count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->disk_full);
+	result = write_u64(joined, stats->disk_full);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -259,7 +250,7 @@ static int write_recovery_journal_statistics(char *prefix,
 	if (asprintf(&joined, "%s commits requested count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->slab_journal_commits_requested);
+	result = write_u64(joined, stats->slab_journal_commits_requested);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -287,7 +278,6 @@ static int write_recovery_journal_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_packer_statistics(char *prefix,
 				   struct packer_statistics *stats)
 {
@@ -299,7 +289,7 @@ static int write_packer_statistics(char *prefix,
 	if (asprintf(&joined, "%s compressed fragments written", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->compressed_fragments_written);
+	result = write_u64(joined, stats->compressed_fragments_written);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -309,7 +299,7 @@ static int write_packer_statistics(char *prefix,
 	if (asprintf(&joined, "%s compressed blocks written", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->compressed_blocks_written);
+	result = write_u64(joined, stats->compressed_blocks_written);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -319,7 +309,7 @@ static int write_packer_statistics(char *prefix,
 	if (asprintf(&joined, "%s compressed fragments in packer", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->compressed_fragments_in_packer);
+	result = write_u64(joined, stats->compressed_fragments_in_packer);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -327,7 +317,6 @@ static int write_packer_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_slab_journal_statistics(char *prefix,
 					 struct slab_journal_statistics *stats)
 {
@@ -339,7 +328,7 @@ static int write_slab_journal_statistics(char *prefix,
 	if (asprintf(&joined, "%s disk full count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->disk_full_count);
+	result = write_u64(joined, stats->disk_full_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -349,7 +338,7 @@ static int write_slab_journal_statistics(char *prefix,
 	if (asprintf(&joined, "%s flush count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->flush_count);
+	result = write_u64(joined, stats->flush_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -359,7 +348,7 @@ static int write_slab_journal_statistics(char *prefix,
 	if (asprintf(&joined, "%s blocked count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->blocked_count);
+	result = write_u64(joined, stats->blocked_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -369,7 +358,7 @@ static int write_slab_journal_statistics(char *prefix,
 	if (asprintf(&joined, "%s blocks written", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->blocks_written);
+	result = write_u64(joined, stats->blocks_written);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -379,7 +368,7 @@ static int write_slab_journal_statistics(char *prefix,
 	if (asprintf(&joined, "%s tail busy count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->tail_busy_count);
+	result = write_u64(joined, stats->tail_busy_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -387,7 +376,6 @@ static int write_slab_journal_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_slab_summary_statistics(char *prefix,
 					 struct slab_summary_statistics *stats)
 {
@@ -399,7 +387,7 @@ static int write_slab_summary_statistics(char *prefix,
 	if (asprintf(&joined, "%s blocks written", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->blocks_written);
+	result = write_u64(joined, stats->blocks_written);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -407,7 +395,6 @@ static int write_slab_summary_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_ref_counts_statistics(char *prefix,
 				       struct ref_counts_statistics *stats)
 {
@@ -419,7 +406,7 @@ static int write_ref_counts_statistics(char *prefix,
 	if (asprintf(&joined, "%s blocks written", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->blocks_written);
+	result = write_u64(joined, stats->blocks_written);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -427,7 +414,6 @@ static int write_ref_counts_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_block_map_statistics(char *prefix,
 				      struct block_map_statistics *stats)
 {
@@ -439,7 +425,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s dirty pages", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->dirty_pages);
+	result = write_u32(joined, stats->dirty_pages);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -449,7 +435,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s clean pages", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->clean_pages);
+	result = write_u32(joined, stats->clean_pages);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -459,7 +445,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s free pages", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->free_pages);
+	result = write_u32(joined, stats->free_pages);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -469,7 +455,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s failed pages", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->failed_pages);
+	result = write_u32(joined, stats->failed_pages);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -479,7 +465,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s incoming pages", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->incoming_pages);
+	result = write_u32(joined, stats->incoming_pages);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -489,7 +475,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s outgoing pages", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->outgoing_pages);
+	result = write_u32(joined, stats->outgoing_pages);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -499,7 +485,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s cache pressure", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->cache_pressure);
+	result = write_u32(joined, stats->cache_pressure);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -509,7 +495,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s read count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->read_count);
+	result = write_u64(joined, stats->read_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -519,7 +505,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s write count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->write_count);
+	result = write_u64(joined, stats->write_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -529,7 +515,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s failed reads", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->failed_reads);
+	result = write_u64(joined, stats->failed_reads);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -539,7 +525,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s failed writes", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->failed_writes);
+	result = write_u64(joined, stats->failed_writes);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -549,7 +535,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s reclaimed", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->reclaimed);
+	result = write_u64(joined, stats->reclaimed);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -559,7 +545,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s read outgoing", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->read_outgoing);
+	result = write_u64(joined, stats->read_outgoing);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -569,7 +555,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s found in cache", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->found_in_cache);
+	result = write_u64(joined, stats->found_in_cache);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -579,7 +565,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s discard required", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->discard_required);
+	result = write_u64(joined, stats->discard_required);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -589,7 +575,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s wait for page", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->wait_for_page);
+	result = write_u64(joined, stats->wait_for_page);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -599,7 +585,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s fetch required", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->fetch_required);
+	result = write_u64(joined, stats->fetch_required);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -609,7 +595,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s pages loaded", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->pages_loaded);
+	result = write_u64(joined, stats->pages_loaded);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -619,7 +605,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s pages saved", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->pages_saved);
+	result = write_u64(joined, stats->pages_saved);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -629,7 +615,7 @@ static int write_block_map_statistics(char *prefix,
 	if (asprintf(&joined, "%s flush count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->flush_count);
+	result = write_u64(joined, stats->flush_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -637,7 +623,6 @@ static int write_block_map_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_hash_lock_statistics(char *prefix,
 				      struct hash_lock_statistics *stats)
 {
@@ -649,7 +634,7 @@ static int write_hash_lock_statistics(char *prefix,
 	if (asprintf(&joined, "%s dedupe advice valid", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->dedupe_advice_valid);
+	result = write_u64(joined, stats->dedupe_advice_valid);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -659,7 +644,7 @@ static int write_hash_lock_statistics(char *prefix,
 	if (asprintf(&joined, "%s dedupe advice stale", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->dedupe_advice_stale);
+	result = write_u64(joined, stats->dedupe_advice_stale);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -669,7 +654,7 @@ static int write_hash_lock_statistics(char *prefix,
 	if (asprintf(&joined, "%s concurrent data matches", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->concurrent_data_matches);
+	result = write_u64(joined, stats->concurrent_data_matches);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -679,7 +664,7 @@ static int write_hash_lock_statistics(char *prefix,
 	if (asprintf(&joined, "%s concurrent hash collisions", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->concurrent_hash_collisions);
+	result = write_u64(joined, stats->concurrent_hash_collisions);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -689,7 +674,7 @@ static int write_hash_lock_statistics(char *prefix,
 	if (asprintf(&joined, "%s current dedupe queries", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->curr_dedupe_queries);
+	result = write_u32(joined, stats->curr_dedupe_queries);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -697,7 +682,6 @@ static int write_hash_lock_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_error_statistics(char *prefix,
 				  struct error_statistics *stats)
 {
@@ -709,7 +693,7 @@ static int write_error_statistics(char *prefix,
 	if (asprintf(&joined, "%s invalid advice PBN count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->invalid_advice_pbn_count);
+	result = write_u64(joined, stats->invalid_advice_pbn_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -719,7 +703,7 @@ static int write_error_statistics(char *prefix,
 	if (asprintf(&joined, "%s no space error count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->no_space_error_count);
+	result = write_u64(joined, stats->no_space_error_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -729,7 +713,7 @@ static int write_error_statistics(char *prefix,
 	if (asprintf(&joined, "%s read only error count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->read_only_error_count);
+	result = write_u64(joined, stats->read_only_error_count);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -737,7 +721,6 @@ static int write_error_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_bio_stats(char *prefix,
 			   struct bio_stats *stats)
 {
@@ -749,7 +732,7 @@ static int write_bio_stats(char *prefix,
 	if (asprintf(&joined, "%s read", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->read);
+	result = write_u64(joined, stats->read);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -759,7 +742,7 @@ static int write_bio_stats(char *prefix,
 	if (asprintf(&joined, "%s write", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->write);
+	result = write_u64(joined, stats->write);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -769,7 +752,7 @@ static int write_bio_stats(char *prefix,
 	if (asprintf(&joined, "%s empty flush", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->empty_flush);
+	result = write_u64(joined, stats->empty_flush);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -779,7 +762,7 @@ static int write_bio_stats(char *prefix,
 	if (asprintf(&joined, "%s discard", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->discard);
+	result = write_u64(joined, stats->discard);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -789,7 +772,7 @@ static int write_bio_stats(char *prefix,
 	if (asprintf(&joined, "%s flush", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->flush);
+	result = write_u64(joined, stats->flush);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -799,7 +782,7 @@ static int write_bio_stats(char *prefix,
 	if (asprintf(&joined, "%s fua", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->fua);
+	result = write_u64(joined, stats->fua);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -807,7 +790,6 @@ static int write_bio_stats(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_memory_usage(char *prefix,
 			      struct memory_usage *stats)
 {
@@ -819,7 +801,7 @@ static int write_memory_usage(char *prefix,
 	if (asprintf(&joined, "%s bytes used", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->bytes_used);
+	result = write_u64(joined, stats->bytes_used);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -829,7 +811,7 @@ static int write_memory_usage(char *prefix,
 	if (asprintf(&joined, "%s peak bytes used", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->peak_bytes_used);
+	result = write_u64(joined, stats->peak_bytes_used);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -837,7 +819,6 @@ static int write_memory_usage(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_index_statistics(char *prefix,
 				  struct index_statistics *stats)
 {
@@ -845,11 +826,11 @@ static int write_index_statistics(char *prefix,
 	char *joined = NULL;
 
 
-	/** Number of chunk names stored in the index */
+	/** Number of records stored in the index */
 	if (asprintf(&joined, "%s entries indexed", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->entries_indexed);
+	result = write_u64(joined, stats->entries_indexed);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -859,7 +840,7 @@ static int write_index_statistics(char *prefix,
 	if (asprintf(&joined, "%s posts found", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->posts_found);
+	result = write_u64(joined, stats->posts_found);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -869,7 +850,7 @@ static int write_index_statistics(char *prefix,
 	if (asprintf(&joined, "%s posts not found", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->posts_not_found);
+	result = write_u64(joined, stats->posts_not_found);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -879,7 +860,7 @@ static int write_index_statistics(char *prefix,
 	if (asprintf(&joined, "%s queries found", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->queries_found);
+	result = write_u64(joined, stats->queries_found);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -889,7 +870,7 @@ static int write_index_statistics(char *prefix,
 	if (asprintf(&joined, "%s queries not found", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->queries_not_found);
+	result = write_u64(joined, stats->queries_not_found);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -899,7 +880,7 @@ static int write_index_statistics(char *prefix,
 	if (asprintf(&joined, "%s updates found", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->updates_found);
+	result = write_u64(joined, stats->updates_found);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -909,7 +890,17 @@ static int write_index_statistics(char *prefix,
 	if (asprintf(&joined, "%s updates not found", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->updates_not_found);
+	result = write_u64(joined, stats->updates_not_found);
+	free(joined);
+	if (result != VDO_SUCCESS) {
+		return result;
+	}
+
+	/** Number of entries discarded */
+	if (asprintf(&joined, "%s entries discarded", prefix) == -1) {
+		return VDO_UNEXPECTED_EOF;
+	}
+	result = write_u64(joined, stats->entries_discarded);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -917,19 +908,18 @@ static int write_index_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 static int write_vdo_statistics(char *prefix,
 				struct vdo_statistics *stats)
 {
 	int result = 0;
 	char *joined = NULL;
 
-	uint64_t one_k_blocks = stats->physical_blocks * stats->block_size / 1024;
-	uint64_t one_k_blocks_used = (stats->data_blocks_used + stats->overhead_blocks_used) * stats->block_size / 1024;
-	uint64_t one_k_blocks_available = (stats->physical_blocks - stats->data_blocks_used - stats->overhead_blocks_used) * stats->block_size / 1024;
-	uint8_t used_percent = (int) (100 * (stats->data_blocks_used + stats->overhead_blocks_used) / stats->physical_blocks) + 0.5;
-	int32_t savings = (stats->logical_blocks_used > 0) ? (int) (100 * (int64_t) (stats->logical_blocks_used - stats->data_blocks_used) / (uint64_t) stats->logical_blocks_used) : -1;
-	uint8_t saving_percent = savings;
+	u64 one_k_blocks = stats->physical_blocks * stats->block_size / 1024;
+	u64 one_k_blocks_used = (stats->data_blocks_used + stats->overhead_blocks_used) * stats->block_size / 1024;
+	u64 one_k_blocks_available = (stats->physical_blocks - stats->data_blocks_used - stats->overhead_blocks_used) * stats->block_size / 1024;
+	u8 used_percent = (int) (100 * (stats->data_blocks_used + stats->overhead_blocks_used) / stats->physical_blocks) + 0.5;
+	s32 savings = (stats->logical_blocks_used > 0) ? (int) (100 * (s64) (stats->logical_blocks_used - stats->data_blocks_used) / (u64) stats->logical_blocks_used) : -1;
+	u8 saving_percent = savings;
 	char five_twelve_byte_emulation[4] = "";
 	sprintf(five_twelve_byte_emulation, "%s", (stats->logical_block_size == 512) ? "on" : "off");
 	double write_amplification_ratio = (stats->bios_in.write > 0) ? roundf((stats->bios_meta.write + stats->bios_out.write) / (stats->bios_in.write)) : 0.00;
@@ -937,16 +927,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s version", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->version);
-	free(joined);
-	if (result != VDO_SUCCESS) {
-		return result;
-	}
-
-	if (asprintf(&joined, "%s release version", prefix) == -1) {
-		return VDO_UNEXPECTED_EOF;
-	}
-	result = write_uint32_t(joined, stats->release_version);
+	result = write_u32(joined, stats->version);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -957,7 +938,7 @@ static int write_vdo_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	if ((!stats->in_recovery_mode) && (strcmp("read-only", stats->mode))) {
-		result = write_uint64_t(joined, stats->data_blocks_used);
+		result = write_u64(joined, stats->data_blocks_used);
 	} else {
 		result = write_string(joined, "N/A");
 	}
@@ -971,7 +952,7 @@ static int write_vdo_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	if (!stats->in_recovery_mode) {
-		result = write_uint64_t(joined, stats->overhead_blocks_used);
+		result = write_u64(joined, stats->overhead_blocks_used);
 	} else {
 		result = write_string(joined, "N/A");
 	}
@@ -985,7 +966,7 @@ static int write_vdo_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	if (!stats->in_recovery_mode) {
-		result = write_uint64_t(joined, stats->logical_blocks_used);
+		result = write_u64(joined, stats->logical_blocks_used);
 	} else {
 		result = write_string(joined, "N/A");
 	}
@@ -1017,7 +998,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s 1K-blocks", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, one_k_blocks);
+	result = write_u64(joined, one_k_blocks);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1027,7 +1008,7 @@ static int write_vdo_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	if ((!stats->in_recovery_mode) && (strcmp("read-only", stats->mode))) {
-		result = write_uint64_t(joined, one_k_blocks_used);
+		result = write_u64(joined, one_k_blocks_used);
 	} else {
 		result = write_string(joined, "N/A");
 	}
@@ -1040,7 +1021,7 @@ static int write_vdo_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	if ((!stats->in_recovery_mode) && (strcmp("read-only", stats->mode))) {
-		result = write_uint64_t(joined, one_k_blocks_available);
+		result = write_u64(joined, one_k_blocks_available);
 	} else {
 		result = write_string(joined, "N/A");
 	}
@@ -1053,7 +1034,7 @@ static int write_vdo_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	if ((!stats->in_recovery_mode) && (strcmp("read-only", stats->mode))) {
-		result = write_uint8_t(joined, used_percent);
+		result = write_u8(joined, used_percent);
 	} else {
 		result = write_string(joined, "N/A");
 	}
@@ -1066,7 +1047,7 @@ static int write_vdo_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	if ((!stats->in_recovery_mode) && (strcmp("read-only", stats->mode)) && (savings >= 0)) {
-		result = write_uint8_t(joined, saving_percent);
+		result = write_u8(joined, saving_percent);
 	} else {
 		result = write_string(joined, "N/A");
 	}
@@ -1079,7 +1060,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s block map cache size", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->block_map_cache_size);
+	result = write_u64(joined, stats->block_map_cache_size);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1089,7 +1070,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s block size", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->block_size);
+	result = write_u64(joined, stats->block_size);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1099,7 +1080,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s completed recovery count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->complete_recoveries);
+	result = write_u64(joined, stats->complete_recoveries);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1109,7 +1090,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s read-only recovery count", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->read_only_recoveries);
+	result = write_u64(joined, stats->read_only_recoveries);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1130,7 +1111,7 @@ static int write_vdo_statistics(char *prefix,
 		return VDO_UNEXPECTED_EOF;
 	}
 	if (stats->in_recovery_mode) {
-		result = write_uint8_t(joined, stats->recovery_percentage);
+		result = write_u8(joined, stats->recovery_percentage);
 	} else {
 		result = write_string(joined, "N/A");
 	}
@@ -1233,7 +1214,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s instance", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->instance);
+	result = write_u32(joined, stats->instance);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1252,7 +1233,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s current VDO IO requests in progress", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->current_vios_in_progress);
+	result = write_u32(joined, stats->current_vios_in_progress);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1262,7 +1243,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s maximum VDO IO requests in progress", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint32_t(joined, stats->max_vios);
+	result = write_u32(joined, stats->max_vios);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1272,7 +1253,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s dedupe advice timeouts", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->dedupe_advice_timeouts);
+	result = write_u64(joined, stats->dedupe_advice_timeouts);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1282,7 +1263,7 @@ static int write_vdo_statistics(char *prefix,
 	if (asprintf(&joined, "%s flush out", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;
 	}
-	result = write_uint64_t(joined, stats->flush_out);
+	result = write_u64(joined, stats->flush_out);
 	free(joined);
 	if (result != VDO_SUCCESS) {
 		return result;
@@ -1440,7 +1421,6 @@ static int write_vdo_statistics(char *prefix,
 	return VDO_SUCCESS;
 }
 
-/**********************************************************************/
 int vdo_write_stats(struct vdo_statistics *stats)
 {
 	fieldCount = 0;

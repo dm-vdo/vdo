@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include "vdoVolumeUtils.h"
@@ -29,7 +29,7 @@
 #include "fileLayer.h"
 #include "userVDO.h"
 
-static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+static char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
 
 /**
  * Load a VDO from a file.
@@ -46,10 +46,10 @@ static int __must_check loadVDOFromFile(const char *filename,
 					bool validateConfig,
 					UserVDO **vdoPtr)
 {
-  int result = ASSERT(validateConfig || readOnly,
-                      "Cannot make a writable VDO"
-                      " without validating its config");
-  if (result != UDS_SUCCESS) {
+  int result = VDO_ASSERT(validateConfig || readOnly,
+                          "Cannot make a writable VDO"
+                          " without validating its config");
+  if (result != VDO_SUCCESS) {
     return result;
   }
 
@@ -62,7 +62,7 @@ static int __must_check loadVDOFromFile(const char *filename,
 
   if (result != VDO_SUCCESS) {
     warnx("Failed to make FileLayer from '%s' with %s", filename,
-          uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+          uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
 
@@ -72,7 +72,7 @@ static int __must_check loadVDOFromFile(const char *filename,
   if (result != VDO_SUCCESS) {
     layer->destroy(&layer);
     warnx("loading VDO failed with: %s",
-          uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+          uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
     return result;
   }
 

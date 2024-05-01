@@ -1,40 +1,34 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright Red Hat
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * Copyright 2023 Red Hat
  */
 
+/*
+ *
+ * If you add new statistics, be sure to update the following files:
+ *
+ * ./message-stats.c
+ * ./pool-sysfs-stats.c
+ * ../user/messageStatsReader.c
+ * ../user/vdoStatsWriter.c
+ * ../../../perl/Permabit/Statistics/Definitions.pm
+ */
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-#include "header.h"
 #include "types.h"
 
 enum {
-	STATISTICS_VERSION = 35,
+	STATISTICS_VERSION = 36,
 };
 
 struct block_allocator_statistics {
-	/** The total number of slabs from which blocks may be allocated */
-	uint64_t slab_count;
-	/** The total number of slabs from which blocks have ever been allocated */
-	uint64_t slabs_opened;
-	/** The number of times since loading that a slab has been re-opened */
-	uint64_t slabs_reopened;
+	/* The total number of slabs from which blocks may be allocated */
+	u64 slab_count;
+	/* The total number of slabs from which blocks have ever been allocated */
+	u64 slabs_opened;
+	/* The number of times since loading that a slab has been re-opened */
+	u64 slabs_reopened;
 };
 
 /**
@@ -43,236 +37,237 @@ struct block_allocator_statistics {
  * allow the number of buffered, in-memory items and the number of in-flight,
  * unacknowledged writes to be derived, while still tracking totals for
  * reporting purposes
- **/
+ */
 struct commit_statistics {
-	/** The total number of items on which processing has started */
-	uint64_t started;
-	/** The total number of items for which a write operation has been issued */
-	uint64_t written;
-	/** The total number of items for which a write operation has completed */
-	uint64_t committed;
+	/* The total number of items on which processing has started */
+	u64 started;
+	/* The total number of items for which a write operation has been issued */
+	u64 written;
+	/* The total number of items for which a write operation has completed */
+	u64 committed;
 };
 
 /** Counters for events in the recovery journal */
 struct recovery_journal_statistics {
-	/** Number of times the on-disk journal was full */
-	uint64_t disk_full;
-	/** Number of times the recovery journal requested slab journal commits. */
-	uint64_t slab_journal_commits_requested;
-	/** Write/Commit totals for individual journal entries */
+	/* Number of times the on-disk journal was full */
+	u64 disk_full;
+	/* Number of times the recovery journal requested slab journal commits. */
+	u64 slab_journal_commits_requested;
+	/* Write/Commit totals for individual journal entries */
 	struct commit_statistics entries;
-	/** Write/Commit totals for journal blocks */
+	/* Write/Commit totals for journal blocks */
 	struct commit_statistics blocks;
 };
 
 /** The statistics for the compressed block packer. */
 struct packer_statistics {
-	/** Number of compressed data items written since startup */
-	uint64_t compressed_fragments_written;
-	/** Number of blocks containing compressed items written since startup */
-	uint64_t compressed_blocks_written;
-	/** Number of VIOs that are pending in the packer */
-	uint64_t compressed_fragments_in_packer;
+	/* Number of compressed data items written since startup */
+	u64 compressed_fragments_written;
+	/* Number of blocks containing compressed items written since startup */
+	u64 compressed_blocks_written;
+	/* Number of VIOs that are pending in the packer */
+	u64 compressed_fragments_in_packer;
 };
 
 /** The statistics for the slab journals. */
 struct slab_journal_statistics {
-	/** Number of times the on-disk journal was full */
-	uint64_t disk_full_count;
-	/** Number of times an entry was added over the flush threshold */
-	uint64_t flush_count;
-	/** Number of times an entry was added over the block threshold */
-	uint64_t blocked_count;
-	/** Number of times a tail block was written */
-	uint64_t blocks_written;
-	/** Number of times we had to wait for the tail to write */
-	uint64_t tail_busy_count;
+	/* Number of times the on-disk journal was full */
+	u64 disk_full_count;
+	/* Number of times an entry was added over the flush threshold */
+	u64 flush_count;
+	/* Number of times an entry was added over the block threshold */
+	u64 blocked_count;
+	/* Number of times a tail block was written */
+	u64 blocks_written;
+	/* Number of times we had to wait for the tail to write */
+	u64 tail_busy_count;
 };
 
 /** The statistics for the slab summary. */
 struct slab_summary_statistics {
-	/** Number of blocks written */
-	uint64_t blocks_written;
+	/* Number of blocks written */
+	u64 blocks_written;
 };
 
 /** The statistics for the reference counts. */
 struct ref_counts_statistics {
-	/** Number of reference blocks written */
-	uint64_t blocks_written;
+	/* Number of reference blocks written */
+	u64 blocks_written;
 };
 
 /** The statistics for the block map. */
 struct block_map_statistics {
-	/** number of dirty (resident) pages */
-	uint32_t dirty_pages;
-	/** number of clean (resident) pages */
-	uint32_t clean_pages;
-	/** number of free pages */
-	uint32_t free_pages;
-	/** number of pages in failed state */
-	uint32_t failed_pages;
-	/** number of pages incoming */
-	uint32_t incoming_pages;
-	/** number of pages outgoing */
-	uint32_t outgoing_pages;
-	/** how many times free page not avail */
-	uint32_t cache_pressure;
-	/** number of get_vdo_page() calls for read */
-	uint64_t read_count;
-	/** number of get_vdo_page() calls for write */
-	uint64_t write_count;
-	/** number of times pages failed to read */
-	uint64_t failed_reads;
-	/** number of times pages failed to write */
-	uint64_t failed_writes;
-	/** number of gets that are reclaimed */
-	uint64_t reclaimed;
-	/** number of gets for outgoing pages */
-	uint64_t read_outgoing;
-	/** number of gets that were already there */
-	uint64_t found_in_cache;
-	/** number of gets requiring discard */
-	uint64_t discard_required;
-	/** number of gets enqueued for their page */
-	uint64_t wait_for_page;
-	/** number of gets that have to fetch */
-	uint64_t fetch_required;
-	/** number of page fetches */
-	uint64_t pages_loaded;
-	/** number of page saves */
-	uint64_t pages_saved;
-	/** the number of flushes issued */
-	uint64_t flush_count;
+	/* number of dirty (resident) pages */
+	u32 dirty_pages;
+	/* number of clean (resident) pages */
+	u32 clean_pages;
+	/* number of free pages */
+	u32 free_pages;
+	/* number of pages in failed state */
+	u32 failed_pages;
+	/* number of pages incoming */
+	u32 incoming_pages;
+	/* number of pages outgoing */
+	u32 outgoing_pages;
+	/* how many times free page not avail */
+	u32 cache_pressure;
+	/* number of get_vdo_page() calls for read */
+	u64 read_count;
+	/* number of get_vdo_page() calls for write */
+	u64 write_count;
+	/* number of times pages failed to read */
+	u64 failed_reads;
+	/* number of times pages failed to write */
+	u64 failed_writes;
+	/* number of gets that are reclaimed */
+	u64 reclaimed;
+	/* number of gets for outgoing pages */
+	u64 read_outgoing;
+	/* number of gets that were already there */
+	u64 found_in_cache;
+	/* number of gets requiring discard */
+	u64 discard_required;
+	/* number of gets enqueued for their page */
+	u64 wait_for_page;
+	/* number of gets that have to fetch */
+	u64 fetch_required;
+	/* number of page fetches */
+	u64 pages_loaded;
+	/* number of page saves */
+	u64 pages_saved;
+	/* the number of flushes issued */
+	u64 flush_count;
 };
 
 /** The dedupe statistics from hash locks */
 struct hash_lock_statistics {
-	/** Number of times the UDS advice proved correct */
-	uint64_t dedupe_advice_valid;
-	/** Number of times the UDS advice proved incorrect */
-	uint64_t dedupe_advice_stale;
-	/** Number of writes with the same data as another in-flight write */
-	uint64_t concurrent_data_matches;
-	/** Number of writes whose hash collided with an in-flight write */
-	uint64_t concurrent_hash_collisions;
-	/** Current number of dedupe queries that are in flight */
-	uint32_t curr_dedupe_queries;
+	/* Number of times the UDS advice proved correct */
+	u64 dedupe_advice_valid;
+	/* Number of times the UDS advice proved incorrect */
+	u64 dedupe_advice_stale;
+	/* Number of writes with the same data as another in-flight write */
+	u64 concurrent_data_matches;
+	/* Number of writes whose hash collided with an in-flight write */
+	u64 concurrent_hash_collisions;
+	/* Current number of dedupe queries that are in flight */
+	u32 curr_dedupe_queries;
 };
 
 /** Counts of error conditions in VDO. */
 struct error_statistics {
-	/** number of times VDO got an invalid dedupe advice PBN from UDS */
-	uint64_t invalid_advice_pbn_count;
-	/** number of times a VIO completed with a VDO_NO_SPACE error */
-	uint64_t no_space_error_count;
-	/** number of times a VIO completed with a VDO_READ_ONLY error */
-	uint64_t read_only_error_count;
+	/* number of times VDO got an invalid dedupe advice PBN from UDS */
+	u64 invalid_advice_pbn_count;
+	/* number of times a VIO completed with a VDO_NO_SPACE error */
+	u64 no_space_error_count;
+	/* number of times a VIO completed with a VDO_READ_ONLY error */
+	u64 read_only_error_count;
 };
 
 struct bio_stats {
-	/** Number of REQ_OP_READ bios */
-	uint64_t read;
-	/** Number of REQ_OP_WRITE bios with data */
-	uint64_t write;
-	/** Number of bios tagged with REQ_PREFLUSH and containing no data */
-	uint64_t empty_flush;
-	/** Number of REQ_OP_DISCARD bios */
-	uint64_t discard;
-	/** Number of bios tagged with REQ_PREFLUSH */
-	uint64_t flush;
-	/** Number of bios tagged with REQ_FUA */
-	uint64_t fua;
+	/* Number of REQ_OP_READ bios */
+	u64 read;
+	/* Number of REQ_OP_WRITE bios with data */
+	u64 write;
+	/* Number of bios tagged with REQ_PREFLUSH and containing no data */
+	u64 empty_flush;
+	/* Number of REQ_OP_DISCARD bios */
+	u64 discard;
+	/* Number of bios tagged with REQ_PREFLUSH */
+	u64 flush;
+	/* Number of bios tagged with REQ_FUA */
+	u64 fua;
 };
 
 struct memory_usage {
-	/** Tracked bytes currently allocated. */
-	uint64_t bytes_used;
-	/** Maximum tracked bytes allocated. */
-	uint64_t peak_bytes_used;
+	/* Tracked bytes currently allocated. */
+	u64 bytes_used;
+	/* Maximum tracked bytes allocated. */
+	u64 peak_bytes_used;
 };
 
 /** UDS index statistics */
 struct index_statistics {
-	/** Number of chunk names stored in the index */
-	uint64_t entries_indexed;
-	/** Number of post calls that found an existing entry */
-	uint64_t posts_found;
-	/** Number of post calls that added a new entry */
-	uint64_t posts_not_found;
-	/** Number of query calls that found an existing entry */
-	uint64_t queries_found;
-	/** Number of query calls that added a new entry */
-	uint64_t queries_not_found;
-	/** Number of update calls that found an existing entry */
-	uint64_t updates_found;
-	/** Number of update calls that added a new entry */
-	uint64_t updates_not_found;
+	/* Number of records stored in the index */
+	u64 entries_indexed;
+	/* Number of post calls that found an existing entry */
+	u64 posts_found;
+	/* Number of post calls that added a new entry */
+	u64 posts_not_found;
+	/* Number of query calls that found an existing entry */
+	u64 queries_found;
+	/* Number of query calls that added a new entry */
+	u64 queries_not_found;
+	/* Number of update calls that found an existing entry */
+	u64 updates_found;
+	/* Number of update calls that added a new entry */
+	u64 updates_not_found;
+	/* Number of entries discarded */
+	u64 entries_discarded;
 };
 
 /** The statistics of the vdo service. */
 struct vdo_statistics {
-	uint32_t version;
-	uint32_t release_version;
-	/** Number of blocks used for data */
-	uint64_t data_blocks_used;
-	/** Number of blocks used for VDO metadata */
-	uint64_t overhead_blocks_used;
-	/** Number of logical blocks that are currently mapped to physical blocks */
-	uint64_t logical_blocks_used;
-	/** number of physical blocks */
+	u32 version;
+	/* Number of blocks used for data */
+	u64 data_blocks_used;
+	/* Number of blocks used for VDO metadata */
+	u64 overhead_blocks_used;
+	/* Number of logical blocks that are currently mapped to physical blocks */
+	u64 logical_blocks_used;
+	/* number of physical blocks */
 	block_count_t physical_blocks;
-	/** number of logical blocks */
+	/* number of logical blocks */
 	block_count_t logical_blocks;
-	/** Size of the block map page cache, in bytes */
-	uint64_t block_map_cache_size;
-	/** The physical block size */
-	uint64_t block_size;
-	/** Number of times the VDO has successfully recovered */
-	uint64_t complete_recoveries;
-	/** Number of times the VDO has recovered from read-only mode */
-	uint64_t read_only_recoveries;
-	/** String describing the operating mode of the VDO */
+	/* Size of the block map page cache, in bytes */
+	u64 block_map_cache_size;
+	/* The physical block size */
+	u64 block_size;
+	/* Number of times the VDO has successfully recovered */
+	u64 complete_recoveries;
+	/* Number of times the VDO has recovered from read-only mode */
+	u64 read_only_recoveries;
+	/* String describing the operating mode of the VDO */
 	char mode[15];
-	/** Whether the VDO is in recovery mode */
+	/* Whether the VDO is in recovery mode */
 	bool in_recovery_mode;
-	/** What percentage of recovery mode work has been completed */
-	uint8_t recovery_percentage;
-	/** The statistics for the compressed block packer */
+	/* What percentage of recovery mode work has been completed */
+	u8 recovery_percentage;
+	/* The statistics for the compressed block packer */
 	struct packer_statistics packer;
-	/** Counters for events in the block allocator */
+	/* Counters for events in the block allocator */
 	struct block_allocator_statistics allocator;
-	/** Counters for events in the recovery journal */
+	/* Counters for events in the recovery journal */
 	struct recovery_journal_statistics journal;
-	/** The statistics for the slab journals */
+	/* The statistics for the slab journals */
 	struct slab_journal_statistics slab_journal;
-	/** The statistics for the slab summary */
+	/* The statistics for the slab summary */
 	struct slab_summary_statistics slab_summary;
-	/** The statistics for the reference counts */
+	/* The statistics for the reference counts */
 	struct ref_counts_statistics ref_counts;
-	/** The statistics for the block map */
+	/* The statistics for the block map */
 	struct block_map_statistics block_map;
-	/** The dedupe statistics from hash locks */
+	/* The dedupe statistics from hash locks */
 	struct hash_lock_statistics hash_lock;
-	/** Counts of error conditions */
+	/* Counts of error conditions */
 	struct error_statistics errors;
-	/** The VDO instance */
-	uint32_t instance;
-	/** Current number of active VIOs */
-	uint32_t current_vios_in_progress;
-	/** Maximum number of active VIOs */
-	uint32_t max_vios;
-	/** Number of times the UDS index was too slow in responding */
-	uint64_t dedupe_advice_timeouts;
-	/** Number of flush requests submitted to the storage device */
-	uint64_t flush_out;
-	/** Logical block size */
-	uint64_t logical_block_size;
-	/** Bios submitted into VDO from above */
+	/* The VDO instance */
+	u32 instance;
+	/* Current number of active VIOs */
+	u32 current_vios_in_progress;
+	/* Maximum number of active VIOs */
+	u32 max_vios;
+	/* Number of times the UDS index was too slow in responding */
+	u64 dedupe_advice_timeouts;
+	/* Number of flush requests submitted to the storage device */
+	u64 flush_out;
+	/* Logical block size */
+	u64 logical_block_size;
+	/* Bios submitted into VDO from above */
 	struct bio_stats bios_in;
 	struct bio_stats bios_in_partial;
-	/** Bios submitted onward for user data */
+	/* Bios submitted onward for user data */
 	struct bio_stats bios_out;
-	/** Bios submitted onward for metadata */
+	/* Bios submitted onward for metadata */
 	struct bio_stats bios_meta;
 	struct bio_stats bios_journal;
 	struct bio_stats bios_page_cache;
@@ -282,11 +277,11 @@ struct vdo_statistics {
 	struct bio_stats bios_page_cache_completed;
 	struct bio_stats bios_acknowledged;
 	struct bio_stats bios_acknowledged_partial;
-	/** Current number of bios in progress */
+	/* Current number of bios in progress */
 	struct bio_stats bios_in_progress;
-	/** Memory usage stats. */
+	/* Memory usage stats. */
 	struct memory_usage memory_usage;
-	/** The statistics for the UDS index */
+	/* The statistics for the UDS index */
 	struct index_statistics index;
 };
 

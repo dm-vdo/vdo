@@ -1,45 +1,36 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright Red Hat
+ * Copyright 2023 Red Hat
  */
 
 #include "errors.h"
 
-#include "common.h"
+#include <linux/compiler.h>
+
+#include "logger.h"
 #include "permassert.h"
 #include "string-utils.h"
-
 
 static const struct error_info successful = { "UDS_SUCCESS", "Success" };
 
 
 static const struct error_info error_list[] = {
 	{ "UDS_OVERFLOW", "Index overflow" },
-	{ "UDS_INVALID_ARGUMENT",
-	  "Invalid argument passed to internal routine" },
+	{ "UDS_INVALID_ARGUMENT", "Invalid argument passed to internal routine" },
 	{ "UDS_BAD_STATE", "UDS data structures are in an invalid state" },
-	{ "UDS_DUPLICATE_NAME",
-	  "Attempt to enter the same name into a delta index twice" },
-	{ "UDS_UNEXPECTED_RESULT", "Unexpected result from internal routine" },
+	{ "UDS_DUPLICATE_NAME", "Attempt to enter the same name into a delta index twice" },
 	{ "UDS_ASSERTION_FAILED", "Assertion failed" },
 	{ "UDS_QUEUED", "Request queued" },
-	{ "UDS_BUFFER_ERROR", "Buffer error" },
-	{ "UDS_NO_DIRECTORY", "Expected directory is missing" },
 	{ "UDS_ALREADY_REGISTERED", "Error range already registered" },
-	{ "UDS_BAD_IO_DIRECTION", "Bad I/O direction" },
-	{ "UDS_INCORRECT_ALIGNMENT", "Offset not at block alignment" },
 	{ "UDS_OUT_OF_RANGE", "Cannot access data outside specified limits" },
-	{ "UDS_EMODULE_LOAD", "Could not load modules" },
 	{ "UDS_DISABLED", "UDS library context is disabled" },
-	{ "UDS_UNKNOWN_ERROR", "Unknown error" },
 	{ "UDS_UNSUPPORTED_VERSION", "Unsupported version" },
 	{ "UDS_CORRUPT_DATA", "Some index structure is corrupt" },
-	{ "UDS_SHORT_READ", "Could not read requested number of bytes" },
-	{ "UDS_RESOURCE_LIMIT_EXCEEDED", "Internal resource limits exceeded" },
-	{ "UDS_VOLUME_OVERFLOW", "Memory overflow due to storage failure" },
 	{ "UDS_NO_INDEX", "No index found" },
-	{ "UDS_END_OF_FILE", "Unexpected end of file" },
 	{ "UDS_INDEX_NOT_SAVED_CLEANLY", "Index not saved cleanly" },
+	{ "UDS_NO_DIRECTORY", "Expected directory is missing" },
+	{ "UDS_EMODULE_LOAD", "Could not load modules" },
+	{ "UDS_UNKNOWN_ERROR", "Unknown error" },
 };
 
 struct error_block {
@@ -50,9 +41,7 @@ struct error_block {
 	const struct error_info *infos;
 };
 
-enum {
-	MAX_ERROR_BLOCKS = 6,
-};
+#define MAX_ERROR_BLOCKS 6
 
 static struct {
 	int allocated;
@@ -70,12 +59,8 @@ static struct {
 		  } },
 };
 
-/*
- * Get the error info for an error number. Also returns the name of the error
- * block, if known.
- */
-static const char *get_error_info(int errnum,
-				  const struct error_info **info_ptr)
+/* Get the error info for an error number. Also returns the name of the error block, if known. */
+static const char *get_error_info(int errnum, const struct error_info **info_ptr)
 {
 	struct error_block *block;
 
@@ -86,7 +71,7 @@ static const char *get_error_info(int errnum,
 
 	for (block = registered_errors.blocks;
 	     block < registered_errors.blocks + registered_errors.count;
-	     ++block) {
+	     block++) {
 		if ((errnum >= block->base) && (errnum < block->last)) {
 			*info_ptr = block->infos + (errnum - block->base);
 			return block->name;
@@ -100,8 +85,7 @@ static const char *get_error_info(int errnum,
 }
 
 /* Return a string describing a system error message. */
-static INLINE const char *
-system_string_error(int errnum, char *buf, size_t buflen)
+static inline const char *system_string_error(int errnum, char *buf, size_t buflen)
 {
 	return strerror_r(errnum, buf, buflen);
 }
@@ -114,46 +98,32 @@ const char *uds_string_error(int errnum, char *buf, size_t buflen)
 	const struct error_info *info = NULL;
 	const char *block_name;
 
-	if (buf == NULL) {
+	if (buf == NULL)
 		return NULL;
-	}
 
-	if (errnum < 0) {
+	if (errnum < 0)
 		errnum = -errnum;
-	}
 
 	block_name = get_error_info(errnum, &info);
 	if (block_name != NULL) {
 		if (info != NULL) {
-			buffer = uds_append_to_buffer(buffer,
-						      buf_end,
-						      "%s: %s",
-						      block_name,
-						      info->message);
+			buffer = vdo_append_to_buffer(buffer, buf_end, "%s: %s",
+						      block_name, info->message);
 		} else {
-			buffer = uds_append_to_buffer(buffer,
-						      buf_end,
-						      "Unknown %s %d",
-						      block_name,
-						      errnum);
+			buffer = vdo_append_to_buffer(buffer, buf_end, "Unknown %s %d",
+						      block_name, errnum);
 		}
 	} else if (info != NULL) {
-		buffer = uds_append_to_buffer(buffer,
-					      buf_end,
-					      "%s",
-					      info->message);
+		buffer = vdo_append_to_buffer(buffer, buf_end, "%s", info->message);
 	} else {
-		const char *tmp =
-			system_string_error(errnum, buffer, buf_end - buffer);
-		if (tmp != buffer) {
-			buffer = uds_append_to_buffer(buffer,
-						      buf_end,
-						      "%s",
-						      tmp);
-		} else {
+		const char *tmp = system_string_error(errnum, buffer, buf_end - buffer);
+
+		if (tmp != buffer)
+			buffer = vdo_append_to_buffer(buffer, buf_end, "%s", tmp);
+		else
 			buffer += strlen(tmp);
-		}
 	}
+
 	return buf;
 }
 
@@ -165,59 +135,45 @@ const char *uds_string_error_name(int errnum, char *buf, size_t buflen)
 	const struct error_info *info = NULL;
 	const char *block_name;
 
-	if (errnum < 0) {
+	if (errnum < 0)
 		errnum = -errnum;
-	}
 
 	block_name = get_error_info(errnum, &info);
 	if (block_name != NULL) {
 		if (info != NULL) {
-			buffer = uds_append_to_buffer(buffer,
-						      buf_end,
-						      "%s",
-						      info->name);
+			buffer = vdo_append_to_buffer(buffer, buf_end, "%s", info->name);
 		} else {
-			buffer = uds_append_to_buffer(buffer,
-						      buf_end,
-						      "%s %d",
-						      block_name,
-						      errnum);
+			buffer = vdo_append_to_buffer(buffer, buf_end, "%s %d",
+						      block_name, errnum);
 		}
 	} else if (info != NULL) {
-		buffer = uds_append_to_buffer(buffer,
-					      buf_end,
-					      "%s",
-					      info->name);
+		buffer = vdo_append_to_buffer(buffer, buf_end, "%s", info->name);
 	} else {
 		const char *tmp;
 
 		tmp = system_string_error(errnum, buffer, buf_end - buffer);
-		if (tmp != buffer) {
-			buffer = uds_append_to_buffer(buffer,
-						      buf_end,
-						      "%s",
-						      tmp);
-		} else {
+		if (tmp != buffer)
+			buffer = vdo_append_to_buffer(buffer, buf_end, "%s", tmp);
+		else
 			buffer += strlen(tmp);
-		}
 	}
+
 	return buf;
 }
 
 /*
- * Translate an error code into a value acceptable to the kernel. The input
- * error code may be a system-generated value (such as -EIO), or an internal
- * UDS status code. The result will be a negative errno value.
+ * Translate an error code into a value acceptable to the kernel. The input error code may be a
+ * system-generated value (such as -EIO), or an internal UDS status code. The result will be a
+ * negative errno value.
  */
-int uds_map_to_system_error(int error)
+int uds_status_to_errno(int error)
 {
-	char error_name[UDS_MAX_ERROR_NAME_SIZE];
-	char error_message[UDS_MAX_ERROR_MESSAGE_SIZE];
+	char error_name[VDO_MAX_ERROR_NAME_SIZE];
+	char error_message[VDO_MAX_ERROR_MESSAGE_SIZE];
 
 	/* 0 is success, and negative values are already system error codes. */
-	if (likely(error <= 0)) {
+	if (likely(error <= 0))
 		return error;
-	}
 
 	if (error < 1024) {
 		/* This is probably an errno from userspace. */
@@ -234,8 +190,8 @@ int uds_map_to_system_error(int error)
 	case UDS_INDEX_NOT_SAVED_CLEANLY:
 	case UDS_UNSUPPORTED_VERSION:
 		/*
-		 * The index exists, but can't be loaded. Tell the client it
-		 * exists so they don't destroy it inadvertently.
+		 * The index exists, but can't be loaded. Tell the client it exists so they don't
+		 * destroy it inadvertently.
 		 */
 		return -EEXIST;
 
@@ -245,14 +201,11 @@ int uds_map_to_system_error(int error)
 
 	default:
 		/* Translate an unexpected error into something generic. */
-		uds_log_info("%s: mapping status code %d (%s: %s) to -EIO",
-			     __func__,
-			     error,
-			     uds_string_error_name(error,
-						   error_name,
+		vdo_log_info("%s: mapping status code %d (%s: %s) to -EIO",
+			     __func__, error,
+			     uds_string_error_name(error, error_name,
 						   sizeof(error_name)),
-			     uds_string_error(error,
-					      error_message,
+			     uds_string_error(error, error_message,
 					      sizeof(error_message)));
 		return -EIO;
 	}
@@ -261,17 +214,15 @@ int uds_map_to_system_error(int error)
 /*
  * Register a block of error codes.
  *
- * @param block_name       the name of the block of error codes
- * @param first_error      the first error code in the block
- * @param next_free_error  one past the highest possible error in the block
- * @param infos            a pointer to the error info array for the block
- * @param info_size        the size of the error info array
+ * @block_name: the name of the block of error codes
+ * @first_error: the first error code in the block
+ * @next_free_error: one past the highest possible error in the block
+ * @infos: a pointer to the error info array for the block
+ * @info_size: the size of the error info array
  */
-int register_error_block(const char *block_name,
-			 int first_error,
-			 int next_free_error,
-			 const struct error_info *infos,
-			 size_t info_size)
+int uds_register_error_block(const char *block_name, int first_error,
+			     int next_free_error, const struct error_info *infos,
+			     size_t info_size)
 {
 	int result;
 	struct error_block *block;
@@ -283,11 +234,10 @@ int register_error_block(const char *block_name,
 		.infos = infos,
 	};
 
-	result = ASSERT(first_error < next_free_error,
-			"well-defined error block range");
-	if (result != UDS_SUCCESS) {
+	result = VDO_ASSERT(first_error < next_free_error,
+			    "well-defined error block range");
+	if (result != VDO_SUCCESS)
 		return result;
-	}
 
 	if (registered_errors.count == registered_errors.allocated) {
 		/* This should never happen. */
@@ -296,16 +246,13 @@ int register_error_block(const char *block_name,
 
 	for (block = registered_errors.blocks;
 	     block < registered_errors.blocks + registered_errors.count;
-	     ++block) {
-		if (strcmp(block_name, block->name) == 0) {
+	     block++) {
+		if (strcmp(block_name, block->name) == 0)
 			return UDS_DUPLICATE_NAME;
-		}
 
 		/* Ensure error ranges do not overlap. */
-		if ((first_error < block->max) &&
-		    (next_free_error > block->base)) {
+		if ((first_error < block->max) && (next_free_error > block->base))
 			return UDS_ALREADY_REGISTERED;
-		}
 	}
 
 	registered_errors.blocks[registered_errors.count++] = new_block;

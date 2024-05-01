@@ -40,6 +40,10 @@ Other Contributors:
     Adding vdo --version command, and documentation fixes
   Francisco Vilmar Cardoso Ruviaro <francisco.ruviaro@riseup.net>
     Typo corrections in vdo and uds
+  Yukari Chiba <i@0x7f.cc>
+    User tools support for riscv64
+  Yang Huang <huangyang@loongson.cn>
+    User tools support for loongarch64
 
 VDO was originally created at Permabit Technology Corporation, and was
 subsequently acquired and open-sourced by Red Hat.

@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #ifndef VDO_CONFIG_H
@@ -22,17 +22,17 @@
 
 #include "errors.h"
 
-#include "recovery-journal-format.h"
+#include "indexer.h"
+
+#include "encodings.h"
 #include "types.h"
-#include "vdo-layout.h"
-#include "volume-geometry.h"
 
 // The vdo_config structure is fully declared in types.h
 
 /**
  * Initialize the recovery journal state for a new VDO.
  *
- * @return An intialized recovery journal state
+ * @return An initialized recovery journal state
  **/
 struct recovery_journal_state_7_0 __must_check configureRecoveryJournal(void);
 
@@ -67,18 +67,46 @@ int calculateMinimumVDOFromConfig(const struct vdo_config *config,
   __attribute__((warn_unused_result));
 
 /**
- * Make a fixed_layout according to a vdo_config. Exposed for testing only.
+ * Initialize a layout according to a vdo_config. Exposed for testing only.
  *
  * @param [in]  config          The vdo_config to generate a vdo_layout from
  * @param [in]  startingOffset  The start of the layouts
- * @param [out] layoutPtr       A pointer to hold the new vdo_layout
+ * @param [out] layout          The layout to initialize
  *
  * @return VDO_SUCCESS or an error
  **/
 int __must_check
-makeFixedLayoutFromConfig(const struct vdo_config  *config,
-                          physical_block_number_t   startingOffset,
-                          struct fixed_layout     **layoutPtr);
+initializeLayoutFromConfig(const struct vdo_config *config,
+                           physical_block_number_t  startingOffset,
+                           struct layout           *layout);
+
+/**
+ * Compute the index size in blocks from the index_config.
+ *
+ * @param index_config      The index config
+ * @param index_blocks_ptr  A pointer to return the index size in blocks
+ *
+ * @return VDO_SUCCESS or an error.
+ **/
+int __must_check
+computeIndexBlocks(const struct index_config *index_config,
+                   block_count_t             *index_blocks_ptr);
+
+/**
+ * Initialize a volume_geometry for a VDO.
+ *
+ * @param nonce         The nonce for the VDO
+ * @param uuid          The uuid for the VDO
+ * @param index_config  The index config of the VDO
+ * @param geometry      The geometry being initialized
+ *
+ * @return VDO_SUCCESS or an error.
+ **/
+int __must_check
+initializeVolumeGeometry(nonce_t                    nonce,
+                         uuid_t                    *uuid,
+                         const struct index_config *index_config,
+                         struct volume_geometry    *geometry);
 
 /**
  * This is a version of formatVDO() which allows the caller to supply the

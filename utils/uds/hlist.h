@@ -5,23 +5,22 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #ifndef HLIST_H
 #define HLIST_H
 
-#include "atomicDefs.h"
-#include "compiler.h"
+#include <linux/atomic.h>
 
 /*
  * An "hlist" is a doubly linked list with the listhead being a single pointer
@@ -66,7 +65,7 @@ struct hlist_node {
  * @param n new entry to be added
  * @param h hlist head to add it after
  */
-static INLINE void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
+static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 {
 	struct hlist_node *first = h->first;
 	WRITE_ONCE(n->next, first);
@@ -80,7 +79,7 @@ static INLINE void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
  * Delete the specified hlist_node from its list
  * @param n Node to delete.
  */
-static INLINE void hlist_del(struct hlist_node *n)
+static inline void hlist_del(struct hlist_node *n)
 {
 	struct hlist_node *next = n->next;
 	struct hlist_node **pprev = n->pprev;
@@ -94,7 +93,7 @@ static INLINE void hlist_del(struct hlist_node *n)
  * Is the specified hlist_head structure an empty hlist?
  * @param h Structure to check.
  */
-static INLINE int hlist_empty(const struct hlist_head *h)
+static inline int hlist_empty(const struct hlist_head *h)
 {
 	return !READ_ONCE(h->first);
 }

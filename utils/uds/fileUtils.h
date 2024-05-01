@@ -5,26 +5,23 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #ifndef FILE_UTILS_H
-#define FILE_UTILS_H 1
+#define FILE_UTILS_H
 
+#include <linux/compiler_attributes.h>
 #include <sys/stat.h>
-
-#include "common.h"
-#include "compiler.h"
-#include "type-defs.h"
 
 enum file_access {
 	FU_READ_ONLY = 0,                // open file with read-only access
@@ -35,7 +32,7 @@ enum file_access {
 	FU_CREATE_WRITE_ONLY = 3,        // like above, but open for writing
 					 // only
 				         // Direct I/O:
-	FU_READ_ONLY_DIRECT = 4,         // open file with read-only acces
+	FU_READ_ONLY_DIRECT = 4,         // open file with read-only access
 	FU_READ_WRITE_DIRECT = 5,        // open file with read-write access
 	FU_CREATE_READ_WRITE_DIRECT = 6, // same, but create and truncate with
 					 // 0666 mode bits if the file doesn't

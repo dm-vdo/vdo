@@ -1,68 +1,68 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright Red Hat
+ * Copyright 2023 Red Hat
  */
 
-#ifndef GEOMETRY_H
-#define GEOMETRY_H 1
+#ifndef UDS_INDEX_GEOMETRY_H
+#define UDS_INDEX_GEOMETRY_H
 
-#include "compiler.h"
-#include "type-defs.h"
-#include "uds.h"
+#include "indexer.h"
 
-struct geometry {
+/*
+ * The index_geometry records parameters that define the layout of a UDS index volume, and the size and
+ * shape of various index structures. It is created when the index is created, and is referenced by
+ * many index sub-components.
+ */
+
+struct index_geometry {
 	/* Size of a chapter page, in bytes */
 	size_t bytes_per_page;
 	/* Number of record pages in a chapter */
-	unsigned int record_pages_per_chapter;
+	u32 record_pages_per_chapter;
 	/* Total number of chapters in a volume */
-	unsigned int chapters_per_volume;
+	u32 chapters_per_volume;
 	/* Number of sparsely-indexed chapters in a volume */
-	unsigned int sparse_chapters_per_volume;
+	u32 sparse_chapters_per_volume;
 	/* Number of bits used to determine delta list numbers */
-	unsigned int chapter_delta_list_bits;
+	u8 chapter_delta_list_bits;
 	/* Virtual chapter remapped from physical chapter 0 */
-	uint64_t remapped_virtual;
+	u64 remapped_virtual;
 	/* New physical chapter where the remapped chapter can be found */
-	uint64_t remapped_physical;
+	u64 remapped_physical;
 
 	/*
-	 * The following properties are derived from the ones above, but they
-         * are computed and recorded as fields for convenience.
+	 * The following properties are derived from the ones above, but they are computed and
+	 * recorded as fields for convenience.
 	 */
 	/* Total number of pages in a volume, excluding the header */
-	unsigned int pages_per_volume;
-	/* Total number of header pages per volume */
-	unsigned int header_pages_per_volume;
+	u32 pages_per_volume;
 	/* Total number of bytes in a volume, including the header */
 	size_t bytes_per_volume;
 	/* Number of pages in a chapter */
-	unsigned int pages_per_chapter;
+	u32 pages_per_chapter;
 	/* Number of index pages in a chapter index */
-	unsigned int index_pages_per_chapter;
-	/* The minimum ratio of hash slots to records in an open chapter */
-	unsigned int open_chapter_load_ratio;
+	u32 index_pages_per_chapter;
 	/* Number of records that fit on a page */
-	unsigned int records_per_page;
+	u32 records_per_page;
 	/* Number of records that fit in a chapter */
-	unsigned int records_per_chapter;
+	u32 records_per_chapter;
 	/* Number of records that fit in a volume */
-	uint64_t records_per_volume;
+	u64 records_per_volume;
 	/* Number of delta lists per chapter index */
-	unsigned int delta_lists_per_chapter;
+	u32 delta_lists_per_chapter;
 	/* Mean delta for chapter indexes */
-	unsigned int chapter_mean_delta;
+	u32 chapter_mean_delta;
 	/* Number of bits needed for record page numbers */
-	unsigned int chapter_payload_bits;
+	u8 chapter_payload_bits;
 	/* Number of bits used to compute addresses for chapter delta lists */
-	unsigned int chapter_address_bits;
+	u8 chapter_address_bits;
 	/* Number of densely-indexed chapters in a volume */
-	unsigned int dense_chapters_per_volume;
+	u32 dense_chapters_per_volume;
 };
 
 enum {
 	/* The number of bytes in a record (name + metadata) */
-	BYTES_PER_RECORD = (UDS_CHUNK_NAME_SIZE + UDS_METADATA_SIZE),
+	BYTES_PER_RECORD = (UDS_RECORD_NAME_SIZE + UDS_RECORD_DATA_SIZE),
 
 	/* The default length of a page in a chapter, in bytes */
 	DEFAULT_BYTES_PER_PAGE = 1024 * BYTES_PER_RECORD,
@@ -91,53 +91,50 @@ enum {
 	/* The log2 of the number of delta lists in a small chapter */
 	SMALL_CHAPTER_DELTA_LIST_BITS = 10,
 
-	/* The default minimum ratio of slots to records in an open chapter */
-	DEFAULT_OPEN_CHAPTER_LOAD_RATIO = 2,
+	/* The number of header pages per volume */
+	HEADER_PAGES_PER_VOLUME = 1,
 };
 
-int __must_check make_geometry(size_t bytes_per_page,
-			       unsigned int record_pages_per_chapter,
-			       unsigned int chapters_per_volume,
-			       unsigned int sparse_chapters_per_volume,
-			       uint64_t remapped_virtual,
-			       uint64_t remapped_physical,
-			       struct geometry **geometry_ptr);
+int __must_check uds_make_index_geometry(size_t bytes_per_page, u32 record_pages_per_chapter,
+					 u32 chapters_per_volume,
+					 u32 sparse_chapters_per_volume, u64 remapped_virtual,
+					 u64 remapped_physical,
+					 struct index_geometry **geometry_ptr);
 
-int __must_check copy_geometry(struct geometry *source,
-			       struct geometry **geometry_ptr);
+int __must_check uds_copy_index_geometry(struct index_geometry *source,
+					 struct index_geometry **geometry_ptr);
 
-void free_geometry(struct geometry *geometry);
+void uds_free_index_geometry(struct index_geometry *geometry);
 
-unsigned int __must_check
-map_to_physical_chapter(const struct geometry *geometry,
-			uint64_t virtual_chapter);
+u32 __must_check uds_map_to_physical_chapter(const struct index_geometry *geometry,
+					     u64 virtual_chapter);
 
 /*
- * Check whether this geometry is reduced by a chapter. This will only be true
- * if the volume was converted from a non-lvm volume to an lvm volume.
+ * Check whether this geometry is reduced by a chapter. This will only be true if the volume was
+ * converted from a non-lvm volume to an lvm volume.
  */
-static INLINE bool __must_check
-is_reduced_geometry(const struct geometry *geometry)
+static inline bool __must_check
+uds_is_reduced_index_geometry(const struct index_geometry *geometry)
 {
 	return !!(geometry->chapters_per_volume & 1);
 }
 
-static INLINE bool __must_check
-is_sparse_geometry(const struct geometry *geometry)
+static inline bool __must_check
+uds_is_sparse_index_geometry(const struct index_geometry *geometry)
 {
-	return (geometry->sparse_chapters_per_volume > 0);
+	return geometry->sparse_chapters_per_volume > 0;
 }
 
-bool __must_check has_sparse_chapters(const struct geometry *geometry,
-				      uint64_t oldest_virtual_chapter,
-				      uint64_t newest_virtual_chapter);
+bool __must_check uds_has_sparse_chapters(const struct index_geometry *geometry,
+					  u64 oldest_virtual_chapter,
+					  u64 newest_virtual_chapter);
 
-bool __must_check is_chapter_sparse(const struct geometry *geometry,
-				    uint64_t oldest_virtual_chapter,
-				    uint64_t newest_virtual_chapter,
-				    uint64_t virtual_chapter_number);
+bool __must_check uds_is_chapter_sparse(const struct index_geometry *geometry,
+					u64 oldest_virtual_chapter,
+					u64 newest_virtual_chapter,
+					u64 virtual_chapter_number);
 
-unsigned int __must_check chapters_to_expire(const struct geometry *geometry,
-					     uint64_t newest_chapter);
+u32 __must_check uds_chapters_to_expire(const struct index_geometry *geometry,
+					u64 newest_chapter);
 
-#endif /* GEOMETRY_H */
+#endif /* UDS_INDEX_GEOMETRY_H */

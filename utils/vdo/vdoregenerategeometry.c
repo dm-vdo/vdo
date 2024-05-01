@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include <err.h>
@@ -23,17 +23,17 @@
 
 #include "errors.h"
 #include "memory-alloc.h"
+#include "string-utils.h"
 #include "time-utils.h"
 
 #include "constants.h"
-#include "block-map-format.h"
-#include "block-map-page.h"
+#include "encodings.h"
 #include "status-codes.h"
-#include "volume-geometry.h"
 
 #include "fileLayer.h"
 #include "parseUtils.h"
 #include "userVDO.h"
+#include "vdoConfig.h"
 #include "vdoVolumeUtils.h"
 
 static const char usageString[]
@@ -82,7 +82,7 @@ static char          *blockBuffer;
 static PhysicalLayer *fileLayer;
 static block_count_t  physicalSize;
 static uuid_t         uuid;
-static char           errorBuffer[UDS_MAX_ERROR_MESSAGE_SIZE];
+static char           errorBuffer[VDO_MAX_ERROR_MESSAGE_SIZE];
 static Candidate      candidates[UDS_CONFIGURATIONS];
 static int            candidateCount = 0;
 
@@ -111,7 +111,7 @@ static void processArgs(int argc, char *argv[])
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errorBuffer, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errorBuffer, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   int c;
@@ -161,7 +161,7 @@ static void processArgs(int argc, char *argv[])
  * @return The error message associated with the error code
  **/
 static const char *resultString(int result) {
-  return uds_string_error(result, errorBuffer, UDS_MAX_ERROR_MESSAGE_SIZE);
+  return uds_string_error(result, errorBuffer, VDO_MAX_ERROR_MESSAGE_SIZE);
 }
 
 /**
@@ -195,16 +195,14 @@ static int generateGeometry(const uds_memory_config_size_t memory, bool sparse)
 
   struct index_config indexConfig;
   int result = parseIndexConfig(&configStrings, &indexConfig);
-  if (result != UDS_SUCCESS) {
+  if (result != VDO_SUCCESS) {
     warnx("parseIndexConfig for memory %s%s failed: %s",
           candidate->memoryString, (sparse ? ", sparse" : ""),
           resultString(result));
     return result;
   }
 
-  result = vdo_initialize_volume_geometry(current_time_us(), &uuid,
-                                          &indexConfig,
-                                          &candidate->geometry);
+  result = initializeVolumeGeometry(current_time_us(), &uuid, &indexConfig, &candidate->geometry);
   if (result != VDO_SUCCESS) {
     warnx("failed to generate geometry for memory %s%s: %s",
           candidate->memoryString, (sparse ? ", sparse" : ""),
@@ -316,7 +314,7 @@ static void rewriteGeometry(Candidate *candidate)
   candidate->geometry.nonce = candidate->vdo->states.vdo.nonce;
   freeUserVDO(&candidate->vdo);
 
-  int result = vdo_write_volume_geometry(fileLayer, &candidate->geometry);
+  int result = writeVolumeGeometry(fileLayer, &candidate->geometry);
   if (result != VDO_SUCCESS) {
     errx(result, "Failed to write new geometry: %s", resultString(result));
   }
@@ -328,7 +326,7 @@ int main(int argc, char *argv[])
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errorBuffer, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errorBuffer, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   processArgs(argc, argv);
@@ -373,7 +371,7 @@ int main(int argc, char *argv[])
            "\na candidate\n");
   }
 
-  UDS_FREE(blockBuffer);
+  vdo_free(blockBuffer);
   fileLayer->destroy(&fileLayer);
 
   if (candidateCount == 0) {

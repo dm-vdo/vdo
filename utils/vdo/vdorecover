@@ -64,12 +64,16 @@ _fstrimAndPrompt(){
 	local KEEPGOING=true
 
 	while $KEEPGOING; do
-		fstrim $MOUNT_POINT || true
-		FSOUT=$(echo $?)
+		# If we weren't provided a $MOUNT_POINT, then don't try to run fstrim
+		if [[ -n $MOUNT_POINT ]]; then
+			fstrim $MOUNT_POINT || echo "Unable to run fstrim against $MOUNT_POINT"
+		fi
 		USED=$(vdostats $VDO_VOLUME_NAME | awk 'NR==2 {print $5}' |  sed 's/%//')
 		echo "Now down to just ${USED}% used"
-		if [[ $FSOUT -ne 0 || $USED == 100 ]];then
-			_waitForUserToDeleteStuff "${MOUNT_POINT}"
+
+		# If volume usage is (still) at 100%, then the device needs additional manual cleanup.
+		if [[ $USED == 100 ]];then
+			_waitForUserToDeleteStuff "$MOUNT_POINT"
 		else
 			KEEPGOING=false
 		fi
@@ -227,8 +231,8 @@ _repointUpperDevicesOrMountVDO(){
 	# device to point at the VDO snap and prompt the user to clean up;
 	# else mount the VDO snap, fstrim, &c.
 	SNAP_OVER_BASENAME=$(basename $SNAP_OVER_VDO)
-	VDO_MAJMIN=$(dmsetup ls | grep \\\b$VDO_VOLUME_NAME\\\s | cut -f 2)
-        VDO_MAJMIN_DEPS_VERSION=$(echo $VDO_MAJMIN | sed "s/:/, /g")
+	VDO_MAJMIN=$(dmsetup ls | grep \\\b$VDO_VOLUME_NAME\\\s | cut -f 2 | sed -r 's/[()]//g')
+	VDO_MAJMIN_DEPS_VERSION=$(echo $VDO_MAJMIN | sed "s/:/, /g")
 	ORIGIN_OVER_BASENAME=$(echo $SNAP_OVER_BASENAME | sed 's/snap$/origin/')
 	VDO_DEPENDENT_DEV=$(dmsetup deps | grep "${VDO_MAJMIN_DEPS_VERSION}"\
 	       		    | grep -v \\\b$ORIGIN_OVER_BASENAME\\\b\
@@ -237,12 +241,15 @@ _repointUpperDevicesOrMountVDO(){
 	if [[ -n $VDO_DEPENDENT_DEV ]]; then
 		echo "Detecting dependent device $VDO_DEPENDENT_DEV on $VDO_VOLUME_NAME -- manual intervention will be required"
 		VDO_DEPENDENT_DEV_ORIGINAL_TABLE=$(dmsetup table $VDO_DEPENDENT_DEV)
-		DEPENDENT_NEW_TABLE=$(echo $VDO_DEPENDENT_DEV_ORIGINAL_TABLE | sed "s#^${VDO_MAJMIN}\$#${SNAP_OVER_VDO}#g; s#^${VDO_DEVICE}\$#${SNAP_OVER_VDO}#g")
+		DEPENDENT_NEW_TABLE=$(echo $VDO_DEPENDENT_DEV_ORIGINAL_TABLE | sed "s#${VDO_MAJMIN}#${SNAP_OVER_VDO}#g; s#^${VDO_DEVICE}\$#${SNAP_OVER_VDO}#g")
 		dmsetup reload $VDO_DEPENDENT_DEV --table "${DEPENDENT_NEW_TABLE}"
 		dmsetup resume $VDO_DEPENDENT_DEV
 		echo "You may want to remount, and run fstrim, on any filesystem"
 	        echo "mounted on ${VDO_DEPENDENT_DEV}."
-		_fstrimAndPrompt "the device or filesystem atop ${VDO_DEPENDENT_DEV}"
+                DEPENDENT_MOUNT=$(awk "/${VDO_DEPENDENT_DEV}/ {print \$2}" /proc/self/mounts)
+		_fstrimAndPrompt "${DEPENDENT_MOUNT}"
+		dmsetup reload $VDO_DEPENDENT_DEV --table "${VDO_DEPENDENT_DEV_ORIGINAL_TABLE}"
+		dmsetup resume $VDO_DEPENDENT_DEV
 	else
 		_mountVDOSnap
 	fi
@@ -270,12 +277,12 @@ _recoveryProcess(){
 
 #######################################################################
 VDO_DEVICE=$1
-VDO_VOLUME_NAME=$(basename $VDO_DEVICE)
 
 if [[ -z $1 ]] || [[ $1 == "--help" ]] || [[ $1 == "-h" ]]; then
 	echo "Usage: ./vdo_recover {path to vdo device}"
 	exit 1
 else
+	VDO_VOLUME_NAME=$(basename $VDO_DEVICE)
 
 	if [[ $EUID -ne 0 ]]; then
 		echo "$0: cannot open $VDO_DEVICE: Permission denied" 1>&2

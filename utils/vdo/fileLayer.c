@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include "fileLayer.h"
@@ -72,11 +72,11 @@ static int allocateIOBuffer(PhysicalLayer   *header,
                             char           **bufferPtr)
 {
   if ((bytes % VDO_BLOCK_SIZE) != 0) {
-    return uds_log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
+    return vdo_log_error_strerror(UDS_INVALID_ARGUMENT, "IO buffers must be"
                                   " a multiple of the VDO block size");
   }
 
-  return uds_allocate_memory(bytes,
+  return vdo_allocate_memory(bytes,
                              asFileLayer(header)->alignment,
                              why,
                              bufferPtr);
@@ -116,7 +116,7 @@ static int makeAlignedBuffer(FileLayer *layer,
  * @param [in]     startBlock  The physical block number of the start of the
  *                             extent
  * @param [in]     blockCount  The number of blocks in the extent
- * @param [in]     read        Wether the I/O to perform is a read
+ * @param [in]     read        Whether the I/O to perform is a read
  * @param [in/out] buffer      The buffer to read into or write from
  *
  * @return VDO_SUCCESS or an error code
@@ -138,7 +138,7 @@ static int performIO(FileLayer               *layer,
       if (n == 0) {
         errno = VDO_UNEXPECTED_EOF;
       }
-      return uds_log_error_strerror(errno, "p%s %s @%zd",
+      return vdo_log_error_strerror(errno, "p%s %s @%zd",
                                     (read ? "read" : "write"),
                                     layer->name,
                                     offset);
@@ -164,7 +164,7 @@ static int fileReader(PhysicalLayer           *header,
     return VDO_OUT_OF_RANGE;
   }
 
-  uds_log_debug("FL: Reading %zu blocks from block %llu",
+  vdo_log_debug("FL: Reading %zu blocks from block %llu",
                 blockCount, (unsigned long long) startBlock);
 
   // Make sure we cast so we get a proper 64 bit value on the calculation
@@ -179,7 +179,7 @@ static int fileReader(PhysicalLayer           *header,
   result = performIO(layer, startBlock, bytes, true, alignedBuffer);
   if (alignedBuffer != buffer) {
     memcpy(buffer, alignedBuffer, bytes);
-    UDS_FREE(alignedBuffer);
+    vdo_free(alignedBuffer);
   }
 
   return result;
@@ -198,7 +198,7 @@ static int fileWriter(PhysicalLayer           *header,
     return VDO_OUT_OF_RANGE;
   }
 
-  uds_log_debug("FL: Writing %zu blocks from block %llu",
+  vdo_log_debug("FL: Writing %zu blocks from block %llu",
                 blockCount, (unsigned long long) startBlock);
 
   // Make sure we cast so we get a proper 64 bit value on the calculation
@@ -217,7 +217,7 @@ static int fileWriter(PhysicalLayer           *header,
 
   result = performIO(layer, startBlock, bytes, false, alignedBuffer);
   if (alignedBuffer != buffer) {
-    UDS_FREE(alignedBuffer);
+    vdo_free(alignedBuffer);
   }
 
   return result;
@@ -260,7 +260,7 @@ static void freeLayer(PhysicalLayer **layerPtr)
 
   FileLayer *fileLayer = asFileLayer(layer);
   try_sync_and_close_file(fileLayer->fd);
-  UDS_FREE(fileLayer);
+  vdo_free(fileLayer);
   *layerPtr = NULL;
 }
 
@@ -282,16 +282,16 @@ static int setupFileLayer(const char     *name,
                           block_count_t   fileOffset,
                           PhysicalLayer **layerPtr)
 {
-  int result = ASSERT(layerPtr != NULL, "layerPtr must not be NULL");
-  if (result != UDS_SUCCESS) {
+  int result = VDO_ASSERT(layerPtr != NULL, "layerPtr must not be NULL");
+  if (result != VDO_SUCCESS) {
     return result;
   }
 
   size_t     nameLen = strlen(name) + 1;
   FileLayer *layer   = NULL;
   result
-    = UDS_ALLOCATE_EXTENDED(FileLayer, nameLen, char, "file layer", &layer);
-  if (result != UDS_SUCCESS) {
+    = vdo_allocate_extended(FileLayer, nameLen, char, "file layer", &layer);
+  if (result != VDO_SUCCESS) {
     return result;
   }
 
@@ -303,11 +303,11 @@ static int setupFileLayer(const char     *name,
 
   result = file_exists(layer->name, &exists);
   if (result != UDS_SUCCESS) {
-    UDS_FREE(layer);
+    vdo_free(layer);
     return result;
   }
   if (!exists) {
-    UDS_FREE(layer);
+    vdo_free(layer);
     return ENOENT;
   }
 
@@ -315,7 +315,7 @@ static int setupFileLayer(const char     *name,
     = readOnly ? FU_READ_ONLY_DIRECT : FU_READ_WRITE_DIRECT;
   result = open_file(layer->name, access, &layer->fd);
   if (result != UDS_SUCCESS) {
-    UDS_FREE(layer);
+    vdo_free(layer);
     return result;
   }
 
@@ -323,7 +323,7 @@ static int setupFileLayer(const char     *name,
   result = isBlockDevice(layer->name, &blockDevice);
   if (result != UDS_SUCCESS) {
     try_close_file(layer->fd);
-    UDS_FREE(layer);
+    vdo_free(layer);
     return result;
   }
 
@@ -332,7 +332,7 @@ static int setupFileLayer(const char     *name,
   result = logging_fstat(layer->fd, &statbuf, __func__);
   if (result != UDS_SUCCESS) {
     try_close_file(layer->fd);
-    UDS_FREE(layer);
+    vdo_free(layer);
     return result;
   }
 
@@ -341,9 +341,9 @@ static int setupFileLayer(const char     *name,
   if (blockDevice) {
     uint64_t bytes;
     if (ioctl(layer->fd, BLKGETSIZE64, &bytes) < 0) {
-      result = uds_log_error_strerror(errno, "get size of %s", layer->name);
+      result = vdo_log_error_strerror(errno, "get size of %s", layer->name);
       try_close_file(layer->fd);
-      UDS_FREE(layer);
+      vdo_free(layer);
       return result;
     }
     deviceBlocks = bytes / VDO_BLOCK_SIZE;
@@ -354,13 +354,13 @@ static int setupFileLayer(const char     *name,
   if (layer->blockCount == 0) {
     layer->blockCount = deviceBlocks;
   } else if (layer->blockCount != deviceBlocks) {
-    result = uds_log_error_strerror(VDO_PARAMETER_MISMATCH,
+    result = vdo_log_error_strerror(VDO_PARAMETER_MISMATCH,
                                     "physical size %ld 4k blocks must match"
                                     " physical size %ld 4k blocks of %s",
                                     layer->blockCount, deviceBlocks,
                                     layer->name);
     try_close_file(layer->fd);
-    UDS_FREE(layer);
+    vdo_free(layer);
     return result;
   }
 

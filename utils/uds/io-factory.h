@@ -1,133 +1,64 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright Red Hat
+ * Copyright 2023 Red Hat
  */
 
-#ifndef IO_FACTORY_H
-#define IO_FACTORY_H
+#ifndef UDS_IO_FACTORY_H
+#define UDS_IO_FACTORY_H
 
-#include "buffered-reader.h"
-#include "buffered-writer.h"
-#include "fileUtils.h"
-#include "ioRegion.h"
+#include <linux/dm-bufio.h>
 
 /*
- * An IO factory object is responsible for controlling access to index
- * storage.  The index is a contiguous range of blocks on a block
- * device or within a file.
- *
- * The IO factory holds the open device or file and is responsible for
- * closing it.  The IO factory has methods to make IO regions that are
- * used to access sections of the index.
+ * The I/O factory manages all low-level I/O operations to the underlying storage device. Its main
+ * clients are the index layout and the volume. The buffered reader and buffered writer interfaces
+ * are helpers for accessing data in a contiguous range of storage blocks.
  */
+
+struct buffered_reader;
+struct buffered_writer;
+
 struct io_factory;
 
-/*
- * Define the UDS block size as 4K.  Historically, we wrote the volume file in
- * large blocks, but wrote all the other index data into byte streams stored in
- * files.  When we converted to writing an index into a block device, we
- * changed to writing the byte streams into page sized blocks.  Now that we
- * support multiple architectures, we write into 4K blocks on all platforms.
- *
- * XXX We must convert all the rogue 4K constants to use UDS_BLOCK_SIZE.
- */
-enum { UDS_BLOCK_SIZE = 4096 };
+enum {
+	UDS_BLOCK_SIZE = 4096,
+	SECTORS_PER_BLOCK = UDS_BLOCK_SIZE >> SECTOR_SHIFT,
+};
 
-/**
- * Create an IO factory.  The IO factory is returned with a reference
- * count of 1.
- *
- * @param path        The path to the block device or file that contains the
- *                    block stream
- * @param access      The requested access kind.
- * @param factory_ptr The IO factory is returned here
- *
- * @return UDS_SUCCESS or an error code
- **/
-int __must_check make_uds_io_factory(const char *path,
-				     enum file_access access,
+int __must_check uds_make_io_factory(struct block_device *bdev,
 				     struct io_factory **factory_ptr);
 
-/**
- * Replace the backing store for an IO factory.
- *
- * @param factory  The IO factory
- * @param path     The path to the new block device or storage file
- *
- * @return UDS_SUCCESS or an error code
- **/
-int __must_check replace_uds_storage(struct io_factory *factory,
-				     const char *path);
+int __must_check uds_replace_storage(struct io_factory *factory,
+				     struct block_device *bdev);
 
-/**
- * Get another reference to an IO factory, incrementing its reference count.
- *
- * @param factory  The IO factory
- **/
-void get_uds_io_factory(struct io_factory *factory);
+void uds_put_io_factory(struct io_factory *factory);
 
-/**
- * Free a reference to an IO factory.  If the reference count drops to zero,
- * free the IO factory and release all its resources.
- *
- * @param factory  The IO factory
- **/
-void put_uds_io_factory(struct io_factory *factory);
+size_t __must_check uds_get_writable_size(struct io_factory *factory);
 
-/**
- * Get the maximum potential size of the device or file.  For a device, this is
- * the actual size of the device.  For a file, this is the largest file that we
- * can possibly write.
- *
- * @param factory  The IO factory
- *
- * @return the writable size (in bytes)
- **/
-size_t __must_check get_uds_writable_size(struct io_factory *factory);
+int __must_check uds_make_bufio(struct io_factory *factory, off_t block_offset,
+				size_t block_size, unsigned int reserved_buffers,
+				struct dm_bufio_client **client_ptr);
 
-/**
- * Create an IO region for a region of the index.
- *
- * @param factory    The IO factory
- * @param offset     The byte offset to the region within the index
- * @param size       The size in bytes of the region
- * @param region_ptr The IO region is returned here
- *
- * @return UDS_SUCCESS or an error code
- **/
-int __must_check make_uds_io_region(struct io_factory *factory,
-				    off_t offset,
-				    size_t size,
-				    struct io_region **region_ptr);
-
-/**
- * Create a buffered reader for a region of the index.
- *
- * @param factory    The IO factory
- * @param offset     The byte offset to the region within the index
- * @param size       The size in bytes of the region
- * @param reader_ptr The buffered reader is returned here
- *
- * @return UDS_SUCCESS or an error code
- **/
-int __must_check open_uds_buffered_reader(struct io_factory *factory,
-					  off_t offset,
-					  size_t size,
+int __must_check uds_make_buffered_reader(struct io_factory *factory, off_t offset,
+					  u64 block_count,
 					  struct buffered_reader **reader_ptr);
 
-/**
- * Create a buffered writer for a region of the index.
- *
- * @param factory    The IO factory
- * @param offset     The byte offset to the region within the index
- * @param size       The size in bytes of the region
- * @param writer_ptr The buffered writer is returned here
- *
- * @return UDS_SUCCESS or an error code
- **/
-int __must_check open_uds_buffered_writer(struct io_factory *factory,
-					  off_t offset,
-					  size_t size,
+void uds_free_buffered_reader(struct buffered_reader *reader);
+
+int __must_check uds_read_from_buffered_reader(struct buffered_reader *reader, u8 *data,
+					       size_t length);
+
+int __must_check uds_verify_buffered_data(struct buffered_reader *reader, const u8 *value,
+					  size_t length);
+
+int __must_check uds_make_buffered_writer(struct io_factory *factory, off_t offset,
+					  u64 block_count,
 					  struct buffered_writer **writer_ptr);
 
-#endif /* IO_FACTORY_H */
+void uds_free_buffered_writer(struct buffered_writer *buffer);
+
+int __must_check uds_write_to_buffered_writer(struct buffered_writer *writer,
+					      const u8 *data, size_t length);
+
+int __must_check uds_flush_buffered_writer(struct buffered_writer *writer);
+
+#endif /* UDS_IO_FACTORY_H */

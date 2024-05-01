@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include <dlfcn.h>
@@ -91,20 +91,20 @@ static struct dm_event_handler *createEventHandler(const char *devName,
 
   struct dm_event_handler *dmevh = dm_event_handler_create();
   if (dmevh == NULL) {
-    uds_log_error("Failure to create event handler");
+    vdo_log_error("Failure to create event handler");
     return NULL;
   }
 
   result = (dso != NULL) && dm_event_handler_set_dso(dmevh, dso);
   if (result != 0) {
-    uds_log_error("Failure to set plugin name for %s", devName);
+    vdo_log_error("Failure to set plugin name for %s", devName);
     dm_event_handler_destroy(dmevh);
     return NULL;
   }
 
   result = dm_event_handler_set_dev_name(dmevh, devName);
   if (result != 0) {
-    uds_log_error("Failure to set VDO device name for %s", devName);
+    vdo_log_error("Failure to set VDO device name for %s", devName);
     dm_event_handler_destroy(dmevh);
     return NULL;
   }
@@ -169,7 +169,7 @@ static int processEvents(enum registerType type, char *devName, char *dso)
 
   struct dm_event_handler *dmevh = createEventHandler(devName, dso);
   if (dmevh == NULL) {
-    uds_log_error("Failed to create event handler for %s", devName);
+    vdo_log_error("Failed to create event handler for %s", devName);
     return 1;
   }
 
@@ -177,7 +177,7 @@ static int processEvents(enum registerType type, char *devName, char *dso)
   result = (type == EVENTS_REGISTER) ? dm_event_register_handler(dmevh)
                                      : dm_event_unregister_handler(dmevh);
   if (result == 0) {
-    uds_log_error("Failure to process events for %s", devName);
+    vdo_log_error("Failure to process events for %s", devName);
   }
 
   dm_event_handler_destroy(dmevh);
@@ -198,13 +198,13 @@ static int registerVDO(char * devName) {
 
   result = getRegistrationState(devName, PLUGIN_NAME, &pending);
   if (result < 0) {
-    uds_log_error("Failed to get registration info for VDO device %s",
+    vdo_log_error("Failed to get registration info for VDO device %s",
                   devName);
     return 1;
   }
 
   if (result > 0) {
-    uds_log_error("VDO device %s %s", devName,
+    vdo_log_error("VDO device %s %s", devName,
                   pending ? "has a registration event pending"
                   : "is already being monitored");
     return 1;
@@ -212,11 +212,11 @@ static int registerVDO(char * devName) {
 
   result = processEvents(EVENTS_REGISTER, devName, PLUGIN_NAME);
   if (result != 0) {
-    uds_log_error("Unable to register events for VDO device %s", devName);
+    vdo_log_error("Unable to register events for VDO device %s", devName);
     return result;
   }
 
-  uds_log_info("VDO device %s is now registered with dmeventd for monitoring",
+  vdo_log_info("VDO device %s is now registered with dmeventd for monitoring",
                devName);
 
   return 0;
@@ -235,13 +235,13 @@ static int unregisterVDO(char * devName) {
 
   result = getRegistrationState(devName, NULL, &pending);
   if (result < 0) {
-    uds_log_error("Failed to get registration info for VDO device %s",
+    vdo_log_error("Failed to get registration info for VDO device %s",
                   devName);
     return 1;
   }
 
   if ((result == 0) || (pending == 1)) {
-    uds_log_error("VDO device %s %s", devName,
+    vdo_log_error("VDO device %s %s", devName,
                   pending ? "cannot be unregistered until completed"
                   : "is not currently being monitored");
     return 1;
@@ -249,18 +249,18 @@ static int unregisterVDO(char * devName) {
 
   result = processEvents(EVENTS_UNREGISTER, devName, NULL);
   if (result != 0) {
-    uds_log_error("Unable to unregister dmeventd events for VDO "
+    vdo_log_error("Unable to unregister dmeventd events for VDO "
                   "device %s", devName);
     return result;
   }
 
-  uds_log_info("VDO device %s is now unregistered from dmeventd", devName);
+  vdo_log_info("VDO device %s is now unregistered from dmeventd", devName);
 
   return 0;
 }
 
 /**
- * Validate that dynamic shared libray exists
+ * Validate that dynamic shared library exists
  *
  * @returns 0 if success, otherwise error
  */
@@ -268,7 +268,7 @@ static int validatePlugin(void)
 {
   void *dl = dlopen(PLUGIN_NAME, RTLD_NOW);
   if (!dl) {
-    uds_log_error("The dynamic shared library %s could not "
+    vdo_log_error("The dynamic shared library %s could not "
                   "be loaded: %s", PLUGIN_NAME, dlerror());
     return 1; /* Failure. */
   }
@@ -280,12 +280,12 @@ static int validatePlugin(void)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+  static char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   int c;
@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
   }
 
   if (validatePlugin()) {
-    uds_log_error("Failed to load the dmeventd plugin");
+    vdo_log_error("Failed to load the dmeventd plugin");
     return 1;
   }
 

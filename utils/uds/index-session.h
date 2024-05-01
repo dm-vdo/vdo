@@ -1,43 +1,54 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright Red Hat
+ * Copyright 2023 Red Hat
  */
 
-#ifndef INDEX_SESSION_H
-#define INDEX_SESSION_H
+#ifndef UDS_INDEX_SESSION_H
+#define UDS_INDEX_SESSION_H
 
 #include <linux/atomic.h>
+#include <linux/cache.h>
+
+#include "thread-utils.h"
 
 #include "config.h"
-#include "cpu.h"
-#include "uds-threads.h"
-#include "uds.h"
+#include "indexer.h"
 
-struct __attribute__((aligned(CACHE_LINE_BYTES))) session_stats {
+/*
+ * The index session mediates all interactions with a UDS index. Once the index session is created,
+ * it can be used to open, close, suspend, or recreate an index. It implements the majority of the
+ * functions in the top-level UDS API.
+ *
+ * If any deduplication request fails due to an internal error, the index is marked disabled. It
+ * will not accept any further requests and can only be closed. Closing the index will clear the
+ * disabled flag, and the index can then be reopened and recovered using the same index session.
+ */
+
+struct __aligned(L1_CACHE_BYTES) session_stats {
 	/* Post requests that found an entry */
-	uint64_t posts_found;
+	u64 posts_found;
 	/* Post requests found in the open chapter */
-	uint64_t posts_found_open_chapter;
+	u64 posts_found_open_chapter;
 	/* Post requests found in the dense index */
-	uint64_t posts_found_dense;
+	u64 posts_found_dense;
 	/* Post requests found in the sparse index */
-	uint64_t posts_found_sparse;
+	u64 posts_found_sparse;
 	/* Post requests that did not find an entry */
-	uint64_t posts_not_found;
+	u64 posts_not_found;
 	/* Update requests that found an entry */
-	uint64_t updates_found;
+	u64 updates_found;
 	/* Update requests that did not find an entry */
-	uint64_t updates_not_found;
+	u64 updates_not_found;
 	/* Delete requests that found an entry */
-	uint64_t deletions_found;
+	u64 deletions_found;
 	/* Delete requests that did not find an entry */
-	uint64_t deletions_not_found;
+	u64 deletions_not_found;
 	/* Query requests that found an entry */
-	uint64_t queries_found;
+	u64 queries_found;
 	/* Query requests that did not find an entry */
-	uint64_t queries_not_found;
+	u64 queries_not_found;
 	/* Total number of requests */
-	uint64_t requests;
+	u64 requests;
 };
 
 enum index_suspend_status {
@@ -71,4 +82,4 @@ struct uds_index_session {
 	struct session_stats stats;
 };
 
-#endif /* INDEX_SESSION_H */
+#endif /* UDS_INDEX_SESSION_H */

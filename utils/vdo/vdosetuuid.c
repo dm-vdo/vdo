@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include <err.h>
@@ -27,9 +27,9 @@
 #include "memory-alloc.h"
 
 #include "constants.h"
+#include "encodings.h"
 #include "types.h"
 #include "status-codes.h"
-#include "volume-geometry.h"
 
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
@@ -121,12 +121,12 @@ static const char *processArgs(int argc, char *argv[])
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+  static char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-	 uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+	 uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   // Generate a uuid as a default value in case the options is not specified.
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
   }
 
   struct volume_geometry geometry;
-  result = vdo_load_volume_geometry(vdo->layer, &geometry);
+  result = loadVolumeGeometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     freeVDOFromFile(&vdo);
     errx(1, "Could not load the geometry from '%s'", vdoBacking);
@@ -149,11 +149,11 @@ int main(int argc, char *argv[])
 
   uuid_copy(geometry.uuid, uuid);
 
-  result = vdo_write_volume_geometry(vdo->layer, &geometry);
+  result = writeVolumeGeometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     freeVDOFromFile(&vdo);
     errx(1, "Could not write the geometry to '%s' %s", vdoBacking,
-	 uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+	 uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   freeVDOFromFile(&vdo);

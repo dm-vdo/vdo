@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include <err.h>
@@ -26,17 +26,13 @@
 #include "string-utils.h"
 #include "syscalls.h"
 
-#include "block-map-format.h"
-#include "num-utils.h"
-#include "slab-depot-format.h"
-#include "slab-summary-format.h"
+#include "encodings.h"
 #include "status-codes.h"
 #include "types.h"
-#include "volume-geometry.h"
-#include "vdo-layout.h"
 
 #include "blockMapUtils.h"
 #include "fileLayer.h"
+#include "parseUtils.h"
 #include "physicalLayer.h"
 #include "userVDO.h"
 #include "vdoVolumeUtils.h"
@@ -111,8 +107,8 @@ static void freeAllocations(void)
 {
   freeVDOFromFile(&vdo);
   try_sync_and_close_file(outputFD);
-  UDS_FREE(buffer);
-  UDS_FREE(lbns);
+  vdo_free(buffer);
+  vdo_free(lbns);
   buffer = NULL;
 }
 
@@ -144,7 +140,7 @@ static void processArgs(int argc, char *argv[])
       }
 
       noBlockMap = true;
-      int result = uds_parse_uint64(optarg, &lbns[lbnCount++]);
+      int result = parseUInt64(optarg, &lbns[lbnCount++]);
       if (result != VDO_SUCCESS) {
         warnx("Cannot parse LBN as a number");
         usage(argv[0]);
@@ -245,7 +241,7 @@ static void dumpGeometryBlock(void)
 static void dumpSuperBlock(void)
 {
   struct volume_geometry geometry;
-  int result = vdo_load_volume_geometry(vdo->layer, &geometry);
+  int result = loadVolumeGeometry(vdo->layer, &geometry);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not load geometry");
   }
@@ -321,8 +317,7 @@ static void dumpRecoveryJournal(void)
   const struct partition *partition
     = getPartition(vdo, VDO_RECOVERY_JOURNAL_PARTITION,
                    "Could not copy recovery journal, no partition");
-  int result = copyBlocks(vdo_get_fixed_layout_partition_offset(partition),
-                          vdo->states.vdo.config.recovery_journal_size);
+  int result = copyBlocks(partition->offset, vdo->states.vdo.config.recovery_journal_size);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy recovery journal");
   }
@@ -333,10 +328,8 @@ static void dumpSlabSummary(void)
 {
   // Copy the slab summary.
   const struct partition *partition
-    = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION,
-                   "Could not copy slab summary, no partition");
-  int result = copyBlocks(vdo_get_fixed_layout_partition_offset(partition),
-                          vdo_get_slab_summary_size(VDO_BLOCK_SIZE));
+    = getPartition(vdo, VDO_SLAB_SUMMARY_PARTITION, "Could not copy slab summary, no partition");
+  int result = copyBlocks(partition->offset, VDO_SLAB_SUMMARY_BLOCKS);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not copy slab summary");
   }
@@ -345,15 +338,15 @@ static void dumpSlabSummary(void)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+  static char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
-  result = UDS_ALLOCATE(MAX_LBNS, physical_block_number_t, __func__, &lbns);
+  result = vdo_allocate(MAX_LBNS, physical_block_number_t, __func__, &lbns);
   if (result != VDO_SUCCESS) {
     errx(1, "Could not allocate %zu bytes",
          sizeof(physical_block_number_t) * MAX_LBNS);

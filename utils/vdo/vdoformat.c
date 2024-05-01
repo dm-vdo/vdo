@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include <blkid/blkid.h>
@@ -100,8 +100,8 @@ static const char helpString[] =
   "\n"
   "    --uds-memory-size=<gigabytes>\n"
   "       Specify the amount of memory, in gigabytes, to devote to the\n"
-  "       index. Accepted options are .25, .5, .75, and all positive\n"
-  "       integers.\n"
+  "       index. Accepted options are 0.25, 0.5, 0.50, 0.75, and all\n"
+  "       positive integers.\n"
   "\n"
   "    --uds-sparse\n"
   "       Specify whether or not to use a sparse index.\n"
@@ -137,11 +137,17 @@ static void printReadableSize(size_t size)
 {
   const char *UNITS[] = { "B", "KB", "MB", "GB", "TB", "PB" };
   unsigned int unit = 0;
+  float floatSize = 0;
   while ((size >= 1024) && (unit < ARRAY_SIZE(UNITS) - 1)) {
-    size /= 1024;
+    floatSize = (float)size / 1024;
+    size = size / 1024;
     unit++;
   };
-  printf("%zu %s", size, UNITS[unit]);
+  if (unit > 0) {
+    printf("%4.2f %s", floatSize, UNITS[unit]);
+  } else {
+    printf("%zu %s", size, UNITS[unit]);
+  }
 }
 
 /**********************************************************************/
@@ -226,7 +232,7 @@ static int printSignatureInfo(blkid_probe probe,
   } else {
     result = blkid_probe_lookup_value(probe, "PTTYPE", &type, NULL);
     if (result != VDO_SUCCESS) {
-      // Unknown type. Ingore.
+      // Unknown type. Ignore.
       return VDO_SUCCESS;
     }
 
@@ -290,13 +296,6 @@ static int checkForSignaturesUsingBlkid(const char *filename, bool force)
                                     BLKID_SUBLKS_MAGIC |
                                     BLKID_SUBLKS_BADCSUM);
 
-  struct buffer *buffer = NULL;
-  result = make_buffer(0, &buffer);
-  if (result != VDO_SUCCESS) {
-    blkid_free_probe(probe);
-    return ENOMEM;
-  }
-
   int found = 0;
   while (blkid_do_probe(probe) == VDO_SUCCESS) {
     found++;
@@ -314,7 +313,6 @@ static int checkForSignaturesUsingBlkid(const char *filename, bool force)
     }
   }
 
-  free(buffer);
   blkid_free_probe(probe);
 
   return result;
@@ -374,10 +372,10 @@ static int checkDeviceInUse(char *filename, uint32_t major, uint32_t minor)
   int holders = 0;
 
   char *path;
-  int result = uds_alloc_sprintf(__func__, &path,
+  int result = vdo_alloc_sprintf(__func__, &path,
                                  "/sys/dev/block/%u:%u/holders",
                                  major, minor);
-  if (result != UDS_SUCCESS) {
+  if (result != VDO_SUCCESS) {
     return result;
   }
 
@@ -408,12 +406,12 @@ static int checkDeviceInUse(char *filename, uint32_t major, uint32_t minor)
 /**********************************************************************/
 int main(int argc, char *argv[])
 {
-  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+  static char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   uint64_t     logicalSize  = 0; // defaults to physicalSize
@@ -536,7 +534,7 @@ int main(int argc, char *argv[])
          VDO_BLOCK_SIZE);
   }
 
-  char errorBuffer[UDS_MAX_ERROR_MESSAGE_SIZE];
+  char errorBuffer[VDO_MAX_ERROR_MESSAGE_SIZE];
   if (config.logical_blocks > MAXIMUM_VDO_LOGICAL_BLOCKS) {
     errx(VDO_OUT_OF_RANGE,
          "%llu requested logical space exceeds the maximum "
@@ -560,7 +558,7 @@ int main(int argc, char *argv[])
 
   struct index_config indexConfig;
   result = parseIndexConfig(&configStrings, &indexConfig);
-  if (result != UDS_SUCCESS) {
+  if (result != VDO_SUCCESS) {
     errx(result, "parseIndexConfig failed: %s",
          uds_string_error(result, errorBuffer, sizeof(errorBuffer)));
   }

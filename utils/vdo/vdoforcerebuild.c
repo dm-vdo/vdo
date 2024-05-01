@@ -5,21 +5,22 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include <err.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "errors.h"
@@ -68,12 +69,12 @@ static void usage(const char *progname, const char *usageOptionsString)
 
 int main(int argc, char *argv[])
 {
-  static char errBuf[UDS_MAX_ERROR_MESSAGE_SIZE];
+  static char errBuf[VDO_MAX_ERROR_MESSAGE_SIZE];
 
   int result = vdo_register_status_codes();
   if (result != VDO_SUCCESS) {
     errx(1, "Could not register status codes: %s",
-         uds_string_error(result, errBuf, UDS_MAX_ERROR_MESSAGE_SIZE));
+         uds_string_error(result, errBuf, VDO_MAX_ERROR_MESSAGE_SIZE));
   }
 
   int c;
@@ -109,7 +110,7 @@ int main(int argc, char *argv[])
 
   result = forceVDORebuild(layer);
   if (result != VDO_SUCCESS) {
-    char buf[UDS_MAX_ERROR_MESSAGE_SIZE];
+    char buf[VDO_MAX_ERROR_MESSAGE_SIZE];
     errx(result, "forceRebuild failed on '%s': %s",
          filename, uds_string_error(result, buf, sizeof(buf)));
   }

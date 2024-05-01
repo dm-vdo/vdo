@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include "parseUtils.h"
@@ -23,8 +23,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "string-utils.h"
 
 #include "status-codes.h"
 
@@ -45,6 +43,41 @@ int parseUInt(const char   *arg,
   if (numPtr != NULL) {
     *numPtr = n;
   }
+  return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+int parseInt(const char *arg, int *numPtr)
+{
+  char *endPtr;
+  errno = 0;
+  long n = strtol(arg, &endPtr, 0);
+  if ((errno == ERANGE) || (errno == EINVAL)
+      || (endPtr == arg) || (*endPtr != '\0')) {
+    return VDO_OUT_OF_RANGE;
+  }
+  if (numPtr != NULL) {
+    *numPtr = n;
+  }
+  return VDO_SUCCESS;
+}
+
+/**********************************************************************/
+int __must_check parseUInt64(const char *arg, uint64_t *numPtr)
+{
+  char *endPtr;
+  errno = 0;
+  unsigned long long temp = strtoull(arg, &endPtr, 10);
+  if ((errno == ERANGE) || (errno == EINVAL) || (*endPtr != '\0')) {
+    return VDO_OUT_OF_RANGE;
+  }
+  uint64_t n = temp;
+
+  if (temp != (unsigned long long) n) {
+    return VDO_OUT_OF_RANGE;
+  }
+
+  *numPtr = n;
   return VDO_SUCCESS;
 }
 
@@ -115,13 +148,13 @@ static int parseMem(char *string, uint32_t *sizePtr)
     mem = UDS_MEMORY_CONFIG_768MB;
   } else {
     int number;
-    if (uds_string_to_signed_int(string, &number) != UDS_SUCCESS) {
+    if (parseInt(string, &number) != VDO_SUCCESS) {
       return -EINVAL;
     }
     mem = number;
   }
   *sizePtr = (uint32_t) mem;
-  return UDS_SUCCESS;
+  return VDO_SUCCESS;
 }
 
 /**********************************************************************/
@@ -135,7 +168,7 @@ int parseIndexConfig(UdsConfigStrings    *configStrings,
   if (configStrings->memorySize != NULL) {
     uint32_t mem;
     int result = parseMem(configStrings->memorySize, &mem);
-    if (result != UDS_SUCCESS) {
+    if (result != VDO_SUCCESS) {
       return result;
     }
     config.mem = mem;

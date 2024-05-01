@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include "slabSummaryReader.h"
@@ -23,11 +23,9 @@
 
 #include "memory-alloc.h"
 
-#include "slab-depot-format.h"
-#include "slab-summary-format.h"
+#include "encodings.h"
 #include "status-codes.h"
 #include "types.h"
-#include "vdo-component-states.h"
 
 #include "physicalLayer.h"
 #include "userVDO.h"
@@ -41,8 +39,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   }
 
   struct slab_summary_entry *entries;
-  block_count_t summary_blocks
-    = vdo_get_slab_summary_zone_size(VDO_BLOCK_SIZE);
+  block_count_t summary_blocks = VDO_SLAB_SUMMARY_BLOCKS_PER_ZONE;
   int result = vdo->layer->allocateIOBuffer(vdo->layer,
                                             summary_blocks * VDO_BLOCK_SIZE,
                                             "slab summary entries",
@@ -53,21 +50,19 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
   }
 
   struct partition *slab_summary_partition;
-  result = vdo_get_fixed_layout_partition(vdo->states.layout,
-					  VDO_SLAB_SUMMARY_PARTITION,
-					  &slab_summary_partition);
+  result = vdo_get_partition(&vdo->states.layout,
+                             VDO_SLAB_SUMMARY_PARTITION,
+                             &slab_summary_partition);
   if (result != VDO_SUCCESS) {
     warnx("Could not find slab summary partition");
     return result;
   }
 
-  physical_block_number_t origin
-    = vdo_get_fixed_layout_partition_offset(slab_summary_partition);
-  result = vdo->layer->reader(vdo->layer, origin, summary_blocks,
-                              (char *) entries);
+  physical_block_number_t origin = slab_summary_partition->offset;
+  result = vdo->layer->reader(vdo->layer, origin, summary_blocks, (char *) entries);
   if (result != VDO_SUCCESS) {
     warnx("Could not read summary data");
-    UDS_FREE(entries);
+    vdo_free(entries);
     return result;
   }
 
@@ -81,7 +76,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
                                           (char **) &buffer);
     if (result != VDO_SUCCESS) {
       warnx("Could not create slab summary buffer");
-      UDS_FREE(entries);
+      vdo_free(entries);
       return result;
     }
 
@@ -91,8 +86,8 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
                                   (char *) buffer);
       if (result != VDO_SUCCESS) {
         warnx("Could not read summary data");
-        UDS_FREE(buffer);
-        UDS_FREE(entries);
+        vdo_free(buffer);
+        vdo_free(entries);
         return result;
       }
 
@@ -103,7 +98,7 @@ int readSlabSummary(UserVDO *vdo, struct slab_summary_entry **entriesPtr)
       }
     }
 
-    UDS_FREE(buffer);
+    vdo_free(buffer);
   }
 
   *entriesPtr = entries;

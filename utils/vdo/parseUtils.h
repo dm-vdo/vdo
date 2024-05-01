@@ -5,16 +5,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #ifndef PARSE_UTILS_H
@@ -23,7 +23,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "volume-geometry.h"
+#include "indexer.h"
+
+#include "encodings.h"
 
 typedef struct {
   char *sparse;
@@ -36,7 +38,7 @@ typedef struct {
  * @param [in]  arg      The argument to parse
  * @param [in]  lowest   The lowest allowed value
  * @param [in]  highest  The highest allowed value
- * @param [out] sizePtr  A pointer to return the parsed integer.
+ * @param [out] numPtr   A pointer to return the parsed integer.
  *
  * @return VDO_SUCCESS or VDO_OUT_OF_RANGE.
  **/
@@ -44,6 +46,26 @@ int __must_check parseUInt(const char *arg,
 			   unsigned int lowest,
 			   unsigned int highest,
 			   unsigned int *numPtr);
+
+/**
+ * Parse a string argument as a signed int.
+ *
+ * @param [in]  arg      The argument to parse
+ * @param [out] numPtr   A pointer to return the parsed integer.
+ *
+ * @return VDO_SUCCESS or VDO_OUT_OF_RANGE.
+ **/
+int parseInt(const char *arg, int *numPtr);
+
+/**
+ * Parse a string argument as a decimal uint64_t.
+ *
+ * @param [in]  arg      The argument to parse
+ * @param [out] numPtr   A pointer to return the parsed value.
+ *
+ * @return VDO_SUCCESS or VDO_OUT_OF_RANGE.
+ **/
+int __must_check parseUInt64(const char *arg, uint64_t *numPtr);
 
 /**
  * Parse a string argument as a size, optionally using LVM's concept

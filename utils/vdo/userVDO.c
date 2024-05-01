@@ -5,30 +5,29 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
- * 02110-1301, USA. 
+ * 02110-1301, USA.
  */
 
 #include "userVDO.h"
 
 #include <err.h>
 
+#include <linux/log2.h>
+
 #include "memory-alloc.h"
 
-#include "num-utils.h"
+#include "encodings.h"
 #include "status-codes.h"
 #include "types.h"
-#include "super-block-codec.h"
-#include "vdo-component-states.h"
-#include "vdo-layout.h"
 
 #include "physicalLayer.h"
 
@@ -36,14 +35,8 @@
 int makeUserVDO(PhysicalLayer *layer, UserVDO **vdoPtr)
 {
   UserVDO *vdo;
-  int result = UDS_ALLOCATE(1, UserVDO, __func__, &vdo);
+  int result = vdo_allocate(1, UserVDO, __func__, &vdo);
   if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = vdo_initialize_super_block_codec(&vdo->superBlockCodec);
-  if (result != VDO_SUCCESS) {
-    freeUserVDO(&vdo);
     return result;
   }
 
@@ -61,23 +54,21 @@ void freeUserVDO(UserVDO **vdoPtr)
   }
 
   vdo_destroy_component_states(&vdo->states);
-  vdo_destroy_super_block_codec(&vdo->superBlockCodec);
-  UDS_FREE(vdo);
+  vdo_free(vdo);
   *vdoPtr = NULL;
 }
 
 /**********************************************************************/
 int __must_check loadSuperBlock(UserVDO *vdo)
 {
-  int result
-    = vdo->layer->reader(vdo->layer,
-                         vdo_get_data_region_start(vdo->geometry), 1,
-                         (char *) vdo->superBlockCodec.encoded_super_block);
+  int result = vdo->layer->reader(vdo->layer,
+                                  vdo_get_data_region_start(vdo->geometry), 1,
+                                  vdo->superBlockBuffer);
   if (result != VDO_SUCCESS) {
     return result;
   }
 
-  return vdo_decode_super_block(&vdo->superBlockCodec);
+  return vdo_decode_super_block((u8 *) vdo->superBlockBuffer);
 }
 
 /**********************************************************************/
@@ -99,9 +90,7 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
     return result;
   }
 
-  result = vdo_decode_component_states(vdo->superBlockCodec.component_buffer,
-                                       geometry->release_version,
-                                       &vdo->states);
+  result = vdo_decode_component_states((u8 *) vdo->superBlockBuffer, &vdo->geometry, &vdo->states);
   if (result != VDO_SUCCESS) {
     freeUserVDO(&vdo);
     return result;
@@ -125,10 +114,31 @@ int loadVDOWithGeometry(PhysicalLayer           *layer,
 }
 
 /**********************************************************************/
+int loadVolumeGeometry(PhysicalLayer *layer, struct volume_geometry *geometry)
+{
+  char *block;
+  int result;
+
+  result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE, "geometry block", &block);
+  if (result != VDO_SUCCESS)
+    return result;
+
+  result = layer->reader(layer, VDO_GEOMETRY_BLOCK_LOCATION, 1, block);
+  if (result != VDO_SUCCESS) {
+    vdo_free(block);
+    return result;
+  }
+
+  result = vdo_parse_geometry_block((u8 *) block, geometry);
+  vdo_free(block);
+  return result;
+}
+
+/**********************************************************************/
 int loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr)
 {
   struct volume_geometry geometry;
-  int result = vdo_load_volume_geometry(layer, &geometry);
+  int result = loadVolumeGeometry(layer, &geometry);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -137,30 +147,50 @@ int loadVDO(PhysicalLayer *layer, bool validateConfig, UserVDO **vdoPtr)
 }
 
 /**********************************************************************/
-int saveSuperBlock(UserVDO *vdo)
+int writeVolumeGeometryWithVersion(PhysicalLayer          *layer,
+                                   struct volume_geometry *geometry,
+                                   u32                     version)
 {
-  int result = vdo_encode_super_block(&vdo->superBlockCodec);
+  u8 *block;
+  size_t offset = 0;
+  u32 checksum;
+  int result;
+
+  result = layer->allocateIOBuffer(layer, VDO_BLOCK_SIZE, "geometry", (char **) &block);
+  if (result != VDO_SUCCESS)
+    return result;
+
+  memcpy(block, VDO_GEOMETRY_MAGIC_NUMBER, VDO_GEOMETRY_MAGIC_NUMBER_SIZE);
+  offset += VDO_GEOMETRY_MAGIC_NUMBER_SIZE;
+
+  result = encode_volume_geometry(block, &offset, geometry, version);
   if (result != VDO_SUCCESS) {
+    vdo_free(block);
     return result;
   }
 
+  checksum = vdo_crc32(block, offset);
+  encode_u32_le(block, &offset, checksum);
+
+  result = layer->writer(layer, VDO_GEOMETRY_BLOCK_LOCATION, 1, (char *) block);
+  vdo_free(block);
+  return result;
+}
+
+/**********************************************************************/
+int saveSuperBlock(UserVDO *vdo)
+{
+  vdo_encode_super_block((u8 *) vdo->superBlockBuffer, &vdo->states);
   return vdo->layer->writer(vdo->layer,
                             vdo_get_data_region_start(vdo->geometry),
                             1,
-                            (char *) vdo->superBlockCodec.encoded_super_block);
+                            vdo->superBlockBuffer);
 }
 
 /**********************************************************************/
 int saveVDO(UserVDO *vdo, bool saveGeometry)
 {
-  int result
-    = vdo_encode_component_states(vdo->superBlockCodec.component_buffer,
-                                  &vdo->states);
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
-  result = saveSuperBlock(vdo);
+  int result = saveSuperBlock(vdo);
   if (result != VDO_SUCCESS) {
     return result;
   }
@@ -169,7 +199,7 @@ int saveVDO(UserVDO *vdo, bool saveGeometry)
     return VDO_SUCCESS;
   }
 
-  return vdo_write_volume_geometry(vdo->layer, &vdo->geometry);
+  return writeVolumeGeometry(vdo->layer, &vdo->geometry);
 }
 
 /**********************************************************************/
@@ -229,7 +259,8 @@ getPartition(const UserVDO     *vdo,
              const char        *errorMessage)
 {
   struct partition *partition;
-  int result = vdo_get_fixed_layout_partition(vdo->states.layout, id, &partition);
+  struct layout layout = vdo->states.layout;
+  int result = vdo_get_partition(&layout, id, &partition);
   if (result != VDO_SUCCESS) {
     errx(1, "%s", errorMessage);
   }
