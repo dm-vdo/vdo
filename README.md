@@ -5,47 +5,50 @@ block storage.
 
 ## Background
 
-VDO (which includes [kvdo](https://github.com/dm-vdo/kvdo) and
-[vdo](https://github.com/dm-vdo/vdo)) is software that provides inline
-block-level deduplication, compression, and thin provisioning capabilities for
-primary storage. VDO installs within the Linux device mapper framework, where
-it takes ownership of existing physical block devices and remaps these to new,
-higher-level block devices with data-efficiency capabilities.
+VDO is a device-mapper target that provides inline block-level deduplication,
+compression, and thin provisioning capabilities for primary storage. VDO
+is managed through LVM and can be integrated into any existing storage stack.
 
 Deduplication is a technique for reducing the consumption of storage resources
 by eliminating multiple copies of duplicate blocks. Compression takes the
 individual unique blocks and shrinks them with coding algorithms; these reduced
 blocks are then efficiently packed together into physical blocks. Thin
-provisioning manages the mapping from LBAs presented by VDO to where the data
-has actually been stored, and also eliminates any blocks of all zeroes.
+provisioning manages the mapping from logical block addresses presented by VDO
+to where the data has actually been stored, and also eliminates any blocks of
+all zeroes.
 
 With deduplication, instead of writing the same data more than once each
 duplicate block is detected and recorded as a reference to the original
-block. VDO maintains a mapping from logical block addresses (used by the
-storage layer above VDO) to physical block addresses (used by the storage layer
-under VDO). After deduplication, multiple logical block addresses may be mapped
+block. VDO maintains a mapping from logical block addresses (presented to the
+storage layer above VDO) to physical block addresses on the storage layer
+under VDO. After deduplication, multiple logical block addresses may be mapped
 to the same physical block address; these are called shared blocks and are
 reference-counted by the software.
 
-With VDO's compression, multiple blocks (or shared blocks) are compressed with
-the fast LZ4 algorithm, and binned together where possible so that multiple
-compressed blocks fit within a 4 KB block on the underlying storage. Mapping
-from LBA is to a physical block address and index within it for the desired
-compressed data. All compressed blocks are individually reference counted for
+With VDO's compression, blocks are compressed with the fast LZ4 algorithm, and
+collected together where possible so that multiple compressed blocks fit within
+a single 4 KB block on the underlying storage. Each logical block address is
+mapped to a physical block address and an index within it for the desired
+compressed data. All compressed blocks are individually reference-counted for
 correctness.
 
 Block sharing and block compression are invisible to applications using the
-storage, which read and write blocks as they would if VDO were not
-present. When a shared block is overwritten, a new physical block is allocated
-for storing the new block data to ensure that other logical block addresses
-that are mapped to the shared physical block are not modified.
+storage, which read and write blocks as they would if VDO were not present.
+When a shared block is overwritten, a new physical block is allocated for
+storing the new block data to ensure that other logical block addresses that
+are mapped to the shared physical block are not modified.
 
-This public source release of VDO includes two kernel modules, and a set of
-userspace tools for managing them. The "kvdo" module implements fine-grained
-storage virtualization, thin provisioning, block sharing, and compression; the
-"uds" module provides memory-efficient duplicate identification. The userspace
-tools include a pair of python scripts, "vdo" for creating and managing VDO
-volumes, and "vdostats" for extracting statistics from those volumes.
+This repository contains a set of userspace tools for managing VDO volumes.
+These include "vdoformat" for creating new volumes, "vdostats" for extracting
+statistics from those volumes, and a variety of support and debugging tools
+which should not be necessary during ordinary operation.
+
+## History
+
+VDO was originally developed by Permabit Technology Corp. as a proprietary set
+of kernel modules and userspace tools. This software and technology has been
+acquired by Red Hat and relicensed under the GPL (v2 or later). The kernel
+module has been merged into the upstream Linux kernel as dm-vdo.
 
 ## Documentation
 
@@ -56,40 +59,26 @@ volumes, and "vdostats" for extracting statistics from those volumes.
 
 ## Releases
 
-Each branch on this project is intended to work with a specific release of
-Enterprise Linux (Red Hat Enterprise Linux, CentOS, etc.). We try to maintain
-compatibility with active Fedora releases, but some modifications may be
-required and if they become too extensive we may stop providing these updates at
-any point for a particular branch.
+The master branch of this repository is intended to be compatible with the most
+recent version of the Linux kernel. These packages are available in active
+Fedora releases with matching kernel versions.
 
-Version | Intended Enterprise Linux Release | Supported With Modifications
-------- | --------------------------------- | -------------------------------
-6.1.x.x | EL7 (3.10.0-*.el7) |
-6.2.x.x | EL8 (4.18.0-*.el8) | Supported Fedora Releases and Rawhide
-8.x.x.x | EL9 (5.14.0-*.el9) | Supported Fedora Releases and Rawhide
+Version | Oldest Supported Linux Kernel Version 
+------- | --------------------------------------
+8.3.x.x | 6.9.0
 
-* Pre-built versions with the required modifications for the referenced Fedora
-  releases can be found
-  [here](https://copr.fedorainfracloud.org/coprs/rhawalsh/dm-vdo) and can be
-  used by running `dnf copr enable rhawalsh/dm-vdo`.
+Each older branch of this repository is intended to work with a specific
+release of Enterprise Linux (Red Hat Enterprise Linux, CentOS, etc.).
 
-**The [unstable](https://github.com/dm-vdo/vdo/tree/unstable) branch provides a
-  snapshot of our most up to date internal code that is targeting the mainline
-  kernel and is currently under test. There are no guarantees of stability from
-  this branch.**
+Version | Intended Enterprise Linux Release
+------- | ---------------------------------
+6.1.x.x | EL7 (3.10.0-*.el7)
+6.2.x.x | EL8 (4.18.0-*.el8)
+8.2.x.x | EL9 (5.14.0-*.el9)
 
-## Status
-
-VDO was originally developed by Permabit Technology Corp. as a proprietary set
-of kernel modules and userspace tools. This software and technology has been
-acquired by Red Hat, has been relicensed under the GPL (v2 or later), and this
-repository begins the process of preparing for integration with the upstream
-kernel.
-
-While this software has been relicensed there are a number of issues that must
-still be addressed to be ready for inclusion into the upstream kernel. To see
-the progress of this effort, visit the [Unstable
-branch](https://github.com/dm-vdo/vdo/tree/unstable) of this project.
+* Pre-built versions with the required modifications for older Fedora releases
+  can be found [here](https://copr.fedorainfracloud.org/coprs/rhawalsh/dm-vdo)
+  and can be used by running `dnf copr enable rhawalsh/dm-vdo`.
 
 ## Building
 
@@ -104,19 +93,11 @@ of this tree, as the root user:
 
         make install
 
-## Communication channels
+## Communication Channels and Contributions
 
 Community feedback, participation and patches are welcome to the
-vdo-devel@redhat.com mailing list -- subscribe
-[here](https://www.redhat.com/mailman/listinfo/vdo-devel).
-
-## Contributing
-
-This project is currently a stepping stone towards integration with the Linux
-kernel. As such, contributions are welcome via a process similar to that for
-Linux kernel development. Patches should be submitted to the
-vdo-devel@redhat.com mailing list, where they will be considered for
-inclusion. This project does not accept pull requests.
+[vdo-devel](https://github.com/dm-vdo/vdo-devel) repository, which is the
+parent of this one. This repository does not accept pull requests.
 
 ## Licensing
 

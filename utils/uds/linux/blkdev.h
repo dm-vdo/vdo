@@ -23,11 +23,6 @@
 #define format_dev_t(buffer, dev)				\
 	sprintf(buffer, "%u:%u", MAJOR(dev), MINOR(dev))
 
-/* Defined in linux/fs.h but hacked for vdo unit testing */
-struct inode {
-  loff_t size;
-};
-
 /* Defined in linux/blk_types.h */
 typedef unsigned int blk_opf_t;
 typedef uint32_t blk_status_t;
@@ -39,8 +34,8 @@ struct block_device {
 	int fd;
 	dev_t bd_dev;
 
-	/* This is only here for i_size_read(). */
-	struct inode *bd_inode;
+	/* This is only here for bdev_nr_bytes(). */
+	loff_t size;
 };
 
 /**********************************************************************/
@@ -58,10 +53,10 @@ static inline blk_status_t errno_to_blk_status(int error)
 /**********************************************************************/
 blk_qc_t submit_bio_noacct(struct bio *bio);
 
-/* Defined in linux/fs.h, but it's convenient to implement here. */
-static inline loff_t i_size_read(const struct inode *inode)
+/**********************************************************************/
+static inline loff_t bdev_nr_bytes(struct block_device *bdev)
 {
-        return (inode == NULL) ? (loff_t) SIZE_MAX : inode->size;
+	return bdev->size;
 }
 
 #endif // LINUX_BLKDEV_H

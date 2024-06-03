@@ -53,6 +53,10 @@
 #define min(x, y) COMPARE(x, y, <)
 #define max(x, y) COMPARE(x, y, >)
 
+/* Defined in linux/minmax.h */
+#define swap(a, b) \
+	do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
+
 /* Defined in linux/math.h */
 #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
