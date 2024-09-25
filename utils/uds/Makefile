@@ -25,29 +25,6 @@ ifeq ($(origin CC), default)
   CC=gcc
 endif
 
-WARNS =	-Wall			\
-	-Wcast-align		\
-	-Werror			\
-	-Wextra			\
-	-Winit-self		\
-	-Wlogical-op		\
-	-Wmissing-include-dirs	\
-	-Wpointer-arith		\
-	-Wredundant-decls	\
-	-Wunused		\
-	-Wwrite-strings
-
-C_WARNS =	-Wbad-function-cast		\
-		-Wcast-qual			\
-		-Wfloat-equal			\
-		-Wformat=2			\
-		-Wmissing-declarations		\
-		-Wmissing-format-attribute	\
-		-Wmissing-prototypes		\
-		-Wnested-externs		\
-		-Wold-style-definition		\
-		-Wswitch-default
-
 OPT_FLAGS      = -O3 -fno-omit-frame-pointer
 DEBUG_FLAGS    =
 RPM_OPT_FLAGS ?= -fpic

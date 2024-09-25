@@ -21,32 +21,6 @@ VDO_VERSION = 8.3.0.71
 
 UDS_DIR      = ../uds
 
-
-WARNS            =				\
-		   -Wall			\
-		   -Wcast-align			\
-		   -Werror			\
-		   -Wextra			\
-		   -Winit-self			\
-		   -Wlogical-op			\
-		   -Wmissing-include-dirs	\
-		   -Wpointer-arith		\
-		   -Wredundant-decls		\
-		   -Wunused			\
-		   -Wwrite-strings		\
-
-C_WARNS          =				\
-		   -Wbad-function-cast		\
-		   -Wcast-qual			\
-		   -Wfloat-equal		\
-		   -Wformat=2			\
-		   -Wmissing-declarations	\
-		   -Wmissing-format-attribute	\
-		   -Wmissing-prototypes		\
-		   -Wnested-externs		\
-		   -Wold-style-definition	\
-		   -Wswitch-default		\
-
 ifeq ($(AR), ar)
 	ifeq ($(origin AR), default)
 		AR := gcc-ar
