@@ -21,6 +21,8 @@ VDO_VERSION = 8.3.0.71
 
 UDS_DIR      = ../uds
 
+ifeq ($(shell $(CC) --version | grep -i clang),)
+else
 
 WARNS            =				\
 		   -Wall			\
@@ -46,6 +48,8 @@ C_WARNS          =				\
 		   -Wnested-externs		\
 		   -Wold-style-definition	\
 		   -Wswitch-default		\
+
+endif
 
 ifeq ($(AR), ar)
 	ifeq ($(origin AR), default)

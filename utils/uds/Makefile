@@ -25,6 +25,8 @@ ifeq ($(origin CC), default)
   CC=gcc
 endif
 
+ifeq ($(shell $(CC) --version | grep -i clang),)
+else
 WARNS =	-Wall			\
 	-Wcast-align		\
 	-Werror			\
@@ -47,6 +49,8 @@ C_WARNS =	-Wbad-function-cast		\
 		-Wnested-externs		\
 		-Wold-style-definition		\
 		-Wswitch-default
+
+endif
 
 OPT_FLAGS      = -O3 -fno-omit-frame-pointer
 DEBUG_FLAGS    =
