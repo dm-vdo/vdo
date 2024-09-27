@@ -21,39 +21,42 @@ BUILD_VERSION = 8.3.0.71
 
 DEPDIR = .deps
 
-ifeq ($(origin CC), default)
-  CC=gcc
+# Define WARNS and C_WARNS only if using gcc
+CLANG_VERSION := $(shell $(CC) --version | grep -i clang)
+ifeq ($(findstring clang, $(CLANG_VERSION)),clang)
+WARNS =
+C_WARNS =
+else
+WARNS = -Wall \
+        $(Wcast-align) \
+        -Werror \
+        -Wextra \
+        -Winit-self \
+        -Wlogical-op \
+        -Wmissing-include-dirs \
+        -Wpointer-arith \
+        -Wredundant-decls \
+        -Wunused \
+        -Wwrite-strings
+
+C_WARNS = -Wbad-function-cast \
+          -Wcast-qual \
+          -Wfloat-equal \
+          -Wformat=2 \
+          -Wmissing-declarations \
+          -Wmissing-format-attribute \
+          -Wmissing-prototypes \
+          -Wnested-externs \
+          -Wold-style-definition \
+          -Wswitch-default
 endif
-
-WARNS =	-Wall			\
-	-Wcast-align		\
-	-Werror			\
-	-Wextra			\
-	-Winit-self		\
-	-Wlogical-op		\
-	-Wmissing-include-dirs	\
-	-Wpointer-arith		\
-	-Wredundant-decls	\
-	-Wunused		\
-	-Wwrite-strings
-
-C_WARNS =	-Wbad-function-cast		\
-		-Wcast-qual			\
-		-Wfloat-equal			\
-		-Wformat=2			\
-		-Wmissing-declarations		\
-		-Wmissing-format-attribute	\
-		-Wmissing-prototypes		\
-		-Wnested-externs		\
-		-Wold-style-definition		\
-		-Wswitch-default
 
 OPT_FLAGS      = -O3 -fno-omit-frame-pointer
 DEBUG_FLAGS    =
 RPM_OPT_FLAGS ?= -fpic
-GLOBAL_FLAGS   = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS)		\
-		 $(WARNS) $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS)	\
-		 -DCURRENT_VERSION='"$(BUILD_VERSION)"'			\
+GLOBAL_FLAGS   = $(RPM_OPT_FLAGS) -D_GNU_SOURCE -g $(OPT_FLAGS) \
+                 $(WARNS) $(shell getconf LFS_CFLAGS) $(DEBUG_FLAGS) \
+                 -DCURRENT_VERSION='"$(BUILD_VERSION)"'
 
 CFLAGS  = $(GLOBAL_FLAGS) -I. -std=gnu11 -pedantic $(C_WARNS) $(MY_CFLAGS)
 LDFLAGS = $(RPM_LD_FLAGS) $(MY_LDFLAGS)
@@ -64,39 +67,48 @@ MY_LDFLAGS  =
 
 vpath %.c .
 
-UDS_OBJECTS =	chapter-index.o		\
-		config.o		\
-		delta-index.o		\
-		dm-bufio.o              \
-		errors.o		\
-		event-count.o		\
-		fileUtils.o		\
-		funnel-queue.o		\
-		geometry.o		\
-		index.o			\
-		index-layout.o		\
-		index-page-map.o	\
-		index-session.o		\
-		io-factory.o		\
-		logger.o		\
-		memoryAlloc.o		\
-		minisyslog.o		\
-		murmurhash3.o		\
-		open-chapter.o		\
-		permassert.o		\
-		radix-sort.o		\
-		random.o		\
-		requestQueue.o		\
-		sparse-cache.o		\
-		string-utils.o		\
-		syscalls.o		\
-		threadCondVar.o		\
-		threadMutex.o		\
-		threadSemaphore.o	\
-		thread-utils.o		\
-		time-utils.o		\
-		volume.o		\
-		volume-index.o
+UDS_OBJECTS = murmurhash3.o \
+              buffer.o \
+              buffered-reader.o \
+              buffered-writer.o \
+              chapter-index.o \
+              config.o \
+              delta-index.o \
+              errors.o \
+              event-count.o \
+              fileIORegion.o \
+              fileUtils.o \
+              funnel-queue.o \
+              geometry.o \
+              hash-utils.o \
+              index.o \
+              index-layout.o \
+              index-page-map.o \
+              index-session.o \
+              ioFactory.o \
+              logger.o \
+              memoryAlloc.o \
+              minisyslog.o \
+              open-chapter.o \
+              page-cache.o \
+              permassert.o \
+              radix-sort.o \
+              random.o \
+              record-page.o \
+              requestQueue.o \
+              sparse-cache.o \
+              string-utils.o \
+              syscalls.o \
+              threadCondVar.o \
+              threadMutex.o \
+              threadSemaphore.o \
+              time-utils.o \
+              uds-threads.o \
+              volume.o \
+              volume-index005.o \
+              volume-index006.o \
+              volume-index-ops.o \
+              volume-store.o
 
 .PHONY: all
 all: libuds.a
