@@ -21,31 +21,35 @@ VDO_VERSION = 8.3.0.71
 
 UDS_DIR      = ../uds
 
+CLANG_VERSION := $(shell $(CC) --version | grep -i clang)
+ifeq ($(findstring clang, $(CLANG_VERSION)),clang)
+WARNS =
+C_WARNS =
+else
+WARNS = -Wall \
+        $(Wcast-align) \
+        -Werror \
+        -Wextra \
+        -Winit-self \
+        -Wlogical-op \
+        -Wmissing-include-dirs \
+        -Wpointer-arith \
+        -Wredundant-decls \
+        -Wunused \
+        -Wwrite-strings
 
-WARNS            =				\
-		   -Wall			\
-		   -Wcast-align			\
-		   -Werror			\
-		   -Wextra			\
-		   -Winit-self			\
-		   -Wlogical-op			\
-		   -Wmissing-include-dirs	\
-		   -Wpointer-arith		\
-		   -Wredundant-decls		\
-		   -Wunused			\
-		   -Wwrite-strings		\
 
-C_WARNS          =				\
-		   -Wbad-function-cast		\
-		   -Wcast-qual			\
-		   -Wfloat-equal		\
-		   -Wformat=2			\
-		   -Wmissing-declarations	\
-		   -Wmissing-format-attribute	\
-		   -Wmissing-prototypes		\
-		   -Wnested-externs		\
-		   -Wold-style-definition	\
-		   -Wswitch-default		\
+C_WARNS = -Wbad-function-cast \
+          -Wcast-qual \
+          -Wfloat-equal \
+          -Wformat=2 \
+          -Wmissing-declarations \
+          -Wmissing-format-attribute \
+          -Wmissing-prototypes \
+          -Wnested-externs \
+          -Wold-style-definition \
+          -Wswitch-default
+endif
 
 ifeq ($(AR), ar)
 	ifeq ($(origin AR), default)
