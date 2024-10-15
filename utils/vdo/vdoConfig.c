@@ -124,10 +124,6 @@ static int __must_check configureVDO(UserVDO *vdo)
 
   const struct partition *partition =
     getPartition(vdo, VDO_SLAB_DEPOT_PARTITION, "no allocator partition");
-  if (result != VDO_SUCCESS) {
-    return result;
-  }
-
   result = vdo_configure_slab_depot(partition, slabConfig, 0, &vdo->states.slab_depot);
   if (result != VDO_SUCCESS) {
     return result;

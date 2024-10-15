@@ -23,7 +23,6 @@ LVM_EXTRA_ARGS=${EXTRA_LVM_ARGS:-}
 
 BACKINGTABLE=
 DEV_VG_LV=
-DM_VPOOL=
 LV=
 LVMVDO=
 OPERATION=
@@ -101,7 +100,6 @@ setRW() {
   fi
 
   VPOOL_NAME=$(lvdisplay ${LVMVDO} | awk '/LV VDO Pool name/ {print $NF}')
-  DM_VPOOL="${VG}-${VPOOL_NAME}"
   DM_VDATA="${VG}-${VPOOL_NAME}_vdata"
 
   # Look in the list of dm devices and find the appropriate backing device

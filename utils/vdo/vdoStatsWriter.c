@@ -917,12 +917,12 @@ static int write_vdo_statistics(char *prefix,
 	u64 one_k_blocks = stats->physical_blocks * stats->block_size / 1024;
 	u64 one_k_blocks_used = (stats->data_blocks_used + stats->overhead_blocks_used) * stats->block_size / 1024;
 	u64 one_k_blocks_available = (stats->physical_blocks - stats->data_blocks_used - stats->overhead_blocks_used) * stats->block_size / 1024;
-	u8 used_percent = (int) (100 * (stats->data_blocks_used + stats->overhead_blocks_used) / stats->physical_blocks) + 0.5;
-	s32 savings = (stats->logical_blocks_used > 0) ? (int) (100 * (s64) (stats->logical_blocks_used - stats->data_blocks_used) / (u64) stats->logical_blocks_used) : -1;
+	u8 used_percent = (int) (100 * ((double) (stats->data_blocks_used + stats->overhead_blocks_used) / stats->physical_blocks) + 0.5);
+	s32 savings = (stats->logical_blocks_used > 0) ? (int) (100 * (s64) (stats->logical_blocks_used - stats->data_blocks_used) / (u64) stats->logical_blocks_used) : 0;
 	u8 saving_percent = savings;
 	char five_twelve_byte_emulation[4] = "";
 	sprintf(five_twelve_byte_emulation, "%s", (stats->logical_block_size == 512) ? "on" : "off");
-	double write_amplification_ratio = (stats->bios_in.write > 0) ? roundf((stats->bios_meta.write + stats->bios_out.write) / (stats->bios_in.write)) : 0.00;
+	double write_amplification_ratio = (stats->bios_in.write > 0) ? roundf((double) (stats->bios_meta.write + stats->bios_out.write) / stats->bios_in.write) : 0.00;
 
 	if (asprintf(&joined, "%s version", prefix) == -1) {
 		return VDO_UNEXPECTED_EOF;

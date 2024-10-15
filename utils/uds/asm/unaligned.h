@@ -23,35 +23,48 @@
 #include <asm/byteorder.h>
 #include <linux/types.h>
 
-/* Type safe comparison macros, similar to the ones in linux/kernel.h. */
+/* Type safe comparison macros, similar to the ones in linux/minmax.h. */
 
 /*
  * If pointers to types are comparable (without dereferencing them and
  * potentially causing side effects) then types are the same.
  */
-#define TYPECHECK(x, y) (!!(sizeof((typeof(x) *) 1 == (typeof(y) *) 1)))
-#define CONSTCHECK(x, y) (__builtin_constant_p(x) && __builtin_constant_p(y))
+ #define __typecheck(x, y) \
+	(!!(sizeof((typeof(x) *)1 == (typeof(y) *)1)))
+
+/* 
+ * Hack for VDO to replace use of the kernel's __is_constexpr() in __cmp_ macros.
+ * VDO cannot use __is_constexpr() due to it relying on a GCC extension to allow sizeof(void).
+ */
+#define __constcheck(x, y) \
+	(__builtin_constant_p(x) && __builtin_constant_p(y))
 
 /* It takes two levels of macro expansion to compose the unique temp names. */
-#define CONCAT_(a, b) a##b
-#define CONCAT(a, b) CONCAT_(a, b)
-#define UNIQUE_ID(a) CONCAT(_UNIQUE_, CONCAT(a, __COUNTER__))
+#define ___PASTE(a,b) a##b
+#define __PASTE(a,b) ___PASTE(a,b)
+#define __UNIQUE_ID(prefix) __PASTE(__PASTE(__UNIQUE_ID_, prefix), __COUNTER__)
 
-#define SAFE_COMPARE(x, y, unique_x, unique_y, op)          \
-	__extension__({                                     \
-		typeof(x) unique_x = (x);                   \
-		typeof(y) unique_y = (y);                   \
-		unique_x op unique_y ? unique_x : unique_y; \
+/* Defined in linux/minmax.h */
+#define __cmp_op_min <
+#define __cmp_op_max >
+
+#define __cmp(op, x, y)	((x) __cmp_op_##op (y) ? (x) : (y))
+
+#define __cmp_once(op, x, y, unique_x, unique_y) \
+	__extension__({                          \
+		typeof(x) unique_x = (x);        \
+		typeof(y) unique_y = (y);        \
+		__cmp(op, unique_x, unique_y);   \
 	})
 
-#define COMPARE(x, y, op)                              \
-	__builtin_choose_expr(                         \
-		(TYPECHECK(x, y) && CONSTCHECK(x, y)), \
-		(((x) op(y)) ? (x) : (y)),             \
-		SAFE_COMPARE(x, y, UNIQUE_ID(x_), UNIQUE_ID(y_), op))
+#define __careful_cmp(op, x, y)                            \
+	__builtin_choose_expr(                             \
+		(__typecheck(x, y) && __constcheck(x, y)), \
+		__cmp(op, x, y),                           \
+		__cmp_once(op, x, y, __UNIQUE_ID(x_), __UNIQUE_ID(y_)))
 
-#define min(x, y) COMPARE(x, y, <)
-#define max(x, y) COMPARE(x, y, >)
+#define min(x, y) __careful_cmp(min, x, y)
+#define max(x, y) __careful_cmp(max, x, y)
 
 /* Defined in linux/minmax.h */
 #define swap(a, b) \

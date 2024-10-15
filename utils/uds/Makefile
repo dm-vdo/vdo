@@ -17,30 +17,45 @@
 # 02110-1301, USA.
 #
 
-BUILD_VERSION = 8.3.0.71
+BUILD_VERSION = 8.3.0.72
 
 DEPDIR = .deps
 
-ifeq ($(origin CC), default)
-  CC=gcc
+ifdef LLVM
+	export CC := clang
+	export LD := ld.ldd
 endif
 
-WARNS =	-Wall			\
-	-Wcast-align		\
-	-Werror			\
-	-Wextra			\
-	-Winit-self		\
-	-Wlogical-op		\
-	-Wmissing-include-dirs	\
-	-Wpointer-arith		\
-	-Wredundant-decls	\
-	-Wunused		\
-	-Wwrite-strings
+ifeq ($(origin CC), default)
+	CC := gcc
+endif
 
-C_WARNS =	-Wbad-function-cast		\
-		-Wcast-qual			\
+ifeq ($(findstring clang, $(CC)),clang)
+# Ignore additional warnings for clang
+	WARNS =	-Wno-compare-distinct-pointer-types	 \
+		-Wno-gnu-statement-expression		 \
+		-Wno-gnu-zero-variadic-macro-arguments	 \
+		-Wno-implicit-const-int-float-conversion \
+		-Wno-language-extension-token
+else
+	WARNS =	-Wcast-align	\
+		-Wcast-qual	\
+		-Wformat=2	\
+		-Wlogical-op
+endif
+
+WARNS        +=	-Wall			\
+		-Werror			\
+		-Wextra			\
+		-Winit-self		\
+		-Wmissing-include-dirs	\
+		-Wpointer-arith		\
+		-Wredundant-decls	\
+		-Wunused		\
+		-Wwrite-strings
+
+C_WARNS       =	-Wbad-function-cast		\
 		-Wfloat-equal			\
-		-Wformat=2			\
 		-Wmissing-declarations		\
 		-Wmissing-format-attribute	\
 		-Wmissing-prototypes		\

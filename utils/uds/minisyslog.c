@@ -86,7 +86,7 @@ void mini_syslog(int priority, const char *format, ...)
 }
 
 /**********************************************************************/
-static bool __must_check write_msg(int fd, const char *msg)
+static bool write_msg(int fd, const char *msg)
 {
 	size_t bytes_to_write = strlen(msg);
 	ssize_t bytes_written = write(fd, msg, bytes_to_write);
@@ -180,9 +180,10 @@ static void log_it(int priority,
 	}
 	if (failure && (log_option & LOG_CONS)) {
 		int console = open(_PATH_CONSOLE, O_WRONLY);
-		failure |= (console == -1) || write_msg(console, stderr_msg);
-		if (console != -1)
-			failure |= (close(console) != 0);
+		if (console != -1) {
+			write_msg(console, stderr_msg);
+			close(console);
+		}
 	}
 }
 

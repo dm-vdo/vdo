@@ -5,8 +5,9 @@
 #ifndef LINUX_BLKDEV_H
 #define LINUX_BLKDEV_H
 
-#include <linux/compiler_attributes.h>
+#include <linux/compiler.h>
 #include <linux/types.h>
+#include <errno.h>
 #include <stdio.h>
 
 #define SECTOR_SHIFT    9
@@ -24,9 +25,17 @@
 	sprintf(buffer, "%u:%u", MAJOR(dev), MINOR(dev))
 
 /* Defined in linux/blk_types.h */
-typedef unsigned int blk_opf_t;
-typedef uint32_t blk_status_t;
-typedef unsigned int blk_qc_t;
+typedef u32 __bitwise blk_opf_t;
+typedef unsigned int  blk_qc_t;
+
+typedef u8 __bitwise  blk_status_t;
+#define BLK_STS_OK 0
+#define BLK_STS_NOSPC    ((blk_status_t)3)
+#define BLK_STS_RESOURCE ((blk_status_t)9)
+#define BLK_STS_IOERR    ((blk_status_t)10)
+
+/* hack for vdo, don't use elsewhere */
+#define BLK_STS_VDO_INJECTED ((blk_status_t)31)
 
 struct bio;
 
@@ -38,20 +47,44 @@ struct block_device {
 	loff_t size;
 };
 
+/* Defined in linux/blk-core.c */
+static const struct {
+	int         error;
+	const char *name;
+} blk_errors[] = {
+	[BLK_STS_OK]           = { 0,		"" },
+	[BLK_STS_NOSPC]        = { -ENOSPC,	"critical space allocation" },
+	[BLK_STS_RESOURCE]     = { -ENOMEM,	"kernel resource" },
+	
+	/* error specifically for VDO unit tests */
+	[BLK_STS_VDO_INJECTED] = { 31,		"vdo injected error" },
+	/* everything else not covered above: */
+	[BLK_STS_IOERR]        = { -EIO,	"I/O" },
+};
+
 /**********************************************************************/
 static inline int blk_status_to_errno(blk_status_t status)
 {
-  return (int) status;
+	int idx = (int) status;
+
+	return blk_errors[idx].error;
 }
 
 /**********************************************************************/
 static inline blk_status_t errno_to_blk_status(int error)
 {
-  return (blk_status_t) error;
+	unsigned int i;
+	
+	for (i = 0; i < ARRAY_SIZE(blk_errors); i++) {
+		if (blk_errors[i].error == error)
+			return (blk_status_t)i;
+	}
+
+	return BLK_STS_IOERR;
 }
 
 /**********************************************************************/
-blk_qc_t submit_bio_noacct(struct bio *bio);
+void submit_bio_noacct(struct bio *bio);
 
 /**********************************************************************/
 static inline loff_t bdev_nr_bytes(struct block_device *bdev)

@@ -210,8 +210,7 @@ static int fileWriter(PhysicalLayer           *header,
     return result;
   }
 
-  bool wasAligned = (alignedBuffer == buffer);
-  if (!wasAligned) {
+  if (alignedBuffer != buffer) {
     memcpy(alignedBuffer, buffer, bytes);
   }
 

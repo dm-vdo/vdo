@@ -156,7 +156,8 @@ _mergeDataSnap(){
 	fi
 
 	losetup -d $LOOPBACK1
-	rm $LOOPBACK_DIR/$(basename $PARENT)-tmp_loopback_file
+	PARENT_NAME=$(basename $PARENT)
+	rm $LOOPBACK_DIR/$PARENT_NAME-tmp_loopback_file
 }
 
 _mergeBackingSnap(){
@@ -165,7 +166,8 @@ _mergeBackingSnap(){
 	_enableOriginalVDO
 
 	losetup -d $LOOPBACK0
-	rm $LOOPBACK_DIR/$(basename $VDO_BACKING)-tmp_loopback_file
+	VDO_BACKING_NAME=$(basename $VDO_BACKING)
+	rm $LOOPBACK_DIR/$VDO_BACKING_NAME-tmp_loopback_file
 }
 
 _mkloop(){
@@ -194,7 +196,6 @@ _snap(){
 _insertSnapUnderVDO(){
 	VDO_BACKING=$(echo $VDO_TABLE | cut -d' ' -f 5)
 	_disableVDO
-	VDO_BACKING_NAME=$(basename $VDO_BACKING)
 	_snap $VDO_BACKING
 	LOOPBACK0=$LOOPBACK
 	SNAP_UNDER_VDO=$SNAP

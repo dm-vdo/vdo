@@ -281,7 +281,7 @@ static int checkForSignaturesUsingBlkid(const char *filename, bool force)
   blkid_probe probe = NULL;
   probe = blkid_new_probe_from_filename(filename);
   if (probe == NULL) {
-    errx(EIO, "Failed to create a new blkid probe for device %s", filename);
+    errx(1, "Failed to create a new blkid probe for device %s", filename);
   }
 
   blkid_probe_enable_partitions(probe, 1);
@@ -400,6 +400,8 @@ static int checkDeviceInUse(char *filename, uint32_t major, uint32_t minor)
       return result;
     }
   }
+
+  free(path);
   return VDO_SUCCESS;
 }
 
@@ -485,7 +487,7 @@ int main(int argc, char *argv[])
   struct stat statbuf;
   result = logging_stat_missing_ok(filename, &statbuf, "Getting status");
   if (result != UDS_SUCCESS && result != ENOENT) {
-    errx(result, "unable to get status of %s", filename);
+    errx(1, "unable to get status of %s", filename);
   }
 
   if (!S_ISBLK(statbuf.st_mode)) {
@@ -497,18 +499,18 @@ int main(int argc, char *argv[])
 
   result = checkDeviceInUse(filename, major, minor);
   if (result != VDO_SUCCESS) {
-    errx(result, "checkDeviceInUse failed on %s", filename);
+    errx(1, "checkDeviceInUse failed on %s", filename);
   }
 
   int fd;
   result = open_file(filename, FU_READ_WRITE, &fd);
   if (result != UDS_SUCCESS) {
-    errx(result, "unable to open %s", filename);
+    errx(1, "unable to open %s", filename);
   }
 
   uint64_t physicalSize;
   if (ioctl(fd, BLKGETSIZE64, &physicalSize) < 0) {
-    errx(errno, "unable to get size of %s", filename);
+    errx(1, "unable to get size of %s", filename);
   }
 
   if (physicalSize > MAXIMUM_VDO_PHYSICAL_BLOCKS * VDO_BLOCK_SIZE) {
@@ -536,7 +538,7 @@ int main(int argc, char *argv[])
 
   char errorBuffer[VDO_MAX_ERROR_MESSAGE_SIZE];
   if (config.logical_blocks > MAXIMUM_VDO_LOGICAL_BLOCKS) {
-    errx(VDO_OUT_OF_RANGE,
+    errx(1,
          "%llu requested logical space exceeds the maximum "
          "(%llu): %s",
          (unsigned long long) logicalSize,
@@ -547,19 +549,19 @@ int main(int argc, char *argv[])
   PhysicalLayer *layer;
   result = makeFileLayer(filename, config.physical_blocks, &layer);
   if (result != VDO_SUCCESS) {
-    errx(result, "makeFileLayer failed on '%s'", filename);
+    errx(1, "makeFileLayer failed on '%s'", filename);
   }
 
   // Check whether there's already something on this device already...
   result = checkForSignaturesUsingBlkid(filename, force);
   if (result != VDO_SUCCESS) {
-    errx(result, "checkForSignaturesUsingBlkid failed on '%s'", filename);
+    errx(1, "checkForSignaturesUsingBlkid failed on '%s'", filename);
   }
 
   struct index_config indexConfig;
   result = parseIndexConfig(&configStrings, &indexConfig);
   if (result != VDO_SUCCESS) {
-    errx(result, "parseIndexConfig failed: %s",
+    errx(1, "parseIndexConfig failed: %s",
          uds_string_error(result, errorBuffer, sizeof(errorBuffer)));
   }
 
@@ -597,14 +599,17 @@ int main(int argc, char *argv[])
     if (result == VDO_TOO_MANY_SLABS) {
       extraHelp = "\nReduce the device size or increase the slab size";
     }
+    if (result == UDS_ASSERTION_FAILED) {
+      result = VDO_BAD_CONFIGURATION;
+      extraHelp = "\nInformation on the failure can be found in the logs";
+    }
     if (result == VDO_NO_SPACE) {
       block_count_t minVDOBlocks = 0;
       int calcResult = calculateMinimumVDOFromConfig(&config,
                                                      &indexConfig,
                                                      &minVDOBlocks);
       if (calcResult != VDO_SUCCESS) {
-        errx(calcResult,
-             "Unable to calculate minimum required VDO size");
+        errx(1, "Unable to calculate minimum required VDO size");
       } else {
         uint64_t minimumSize = minVDOBlocks * VDO_BLOCK_SIZE;
         fprintf(stderr,
@@ -612,7 +617,7 @@ int main(int argc, char *argv[])
                 (unsigned long long) minimumSize);
       }
     }
-    errx(result, "formatVDO failed on '%s': %s%s",
+    errx(1, "formatVDO failed on '%s': %s%s",
          filename,
          uds_string_error(result, errorBuffer, sizeof(errorBuffer)),
          extraHelp);
@@ -621,7 +626,7 @@ int main(int argc, char *argv[])
   UserVDO *vdo;
   result = loadVDO(layer, true, &vdo);
   if (result != VDO_SUCCESS) {
-    errx(result, "unable to verify configuration after formatting '%s'",
+    errx(1, "unable to verify configuration after formatting '%s'",
          filename);
   }
 

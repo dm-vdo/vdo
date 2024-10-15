@@ -17,18 +17,38 @@
 # 02110-1301, USA.
 #
 
-VDO_VERSION = 8.3.0.71
+VDO_VERSION = 8.3.0.72
 
 UDS_DIR      = ../uds
 
+ifdef LLVM
+	export CC := clang
+	export LD := ld.ldd
+endif
 
-WARNS            =				\
+ifeq ($(origin CC), default)
+	CC := gcc
+endif
+
+ifeq ($(findstring clang, $(CC)),clang)
+# Ignore additional warnings for clang
+	WARNS = -Wno-compare-distinct-pointer-types	 \
+		-Wno-gnu-statement-expression		 \
+		-Wno-gnu-zero-variadic-macro-arguments	 \
+		-Wno-implicit-const-int-float-conversion \
+		-Wno-language-extension-token
+else
+	WARNS = -Wcast-align			\
+		-Wcast-qual			\
+		-Wformat=2			\
+		-Wlogical-op
+endif
+
+WARNS           +=				\
 		   -Wall			\
-		   -Wcast-align			\
 		   -Werror			\
 		   -Wextra			\
 		   -Winit-self			\
-		   -Wlogical-op			\
 		   -Wmissing-include-dirs	\
 		   -Wpointer-arith		\
 		   -Wredundant-decls		\
@@ -37,9 +57,7 @@ WARNS            =				\
 
 C_WARNS          =				\
 		   -Wbad-function-cast		\
-		   -Wcast-qual			\
 		   -Wfloat-equal		\
-		   -Wformat=2			\
 		   -Wmissing-declarations	\
 		   -Wmissing-format-attribute	\
 		   -Wmissing-prototypes		\
