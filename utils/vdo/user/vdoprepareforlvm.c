@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#9 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#10 $
  */
 
 #include <err.h>
@@ -272,7 +272,7 @@ static int convertUDS(IndexConfig    *indexConfig,
  * In order to properly convert VDO volumes to LVM, they need to
  * be able to fit our max length (256 TB) into two 32 bit numbers;
  * one for extent count and one for extent size. If we take a max
- ^ extent count, it means the min extent size can be 65536. This
+ * extent count, it means the min extent size can be 65536. This
  * function attempts to find the max extent size between 1.5 to
  * 2M from the original VDO start location, which we know is free
  * space we can move the start of the VDO volume to after
@@ -361,7 +361,7 @@ static int convertVDO(VDO            *vdo,
   geometry->indexConfig = indexConfig;
 
   PhysicalLayer *offsetLayer;
-  result = makeOffsetFileLayer(fileName, 0, newBlockOffset, &offsetLayer);
+  result = makeOffsetFileLayer(fileName, false, 0, newBlockOffset, &offsetLayer);
   if (result != VDO_SUCCESS) {
     warnx("Failed to make offset FileLayer for writing converted volume"
           " geometry");
@@ -492,9 +492,9 @@ static int performDeviceCheck(off_t *vdoBlockOffset)
    * check it.
    **/
   PhysicalLayer *layer;
-  result = makeFileLayer(fileName, 0, &layer);
+  result = makeReadOnlyFileLayer(fileName, &layer);
   if (result != VDO_SUCCESS) {
-    return result;
+    return deviceCheckResultToExitStatus(result, true);
   }
 
   /**
@@ -512,6 +512,7 @@ static int performDeviceCheck(off_t *vdoBlockOffset)
     cleanup(NULL, layer);
     return deviceCheckResultToExitStatus(result, true);
   }
+
   if (result == VDO_SUCCESS) {
     // Load the superblock as an additional check the device is really a vdo.
     VDO *vdo;
@@ -529,10 +530,11 @@ static int performDeviceCheck(off_t *vdoBlockOffset)
      * We try to load the superblock again accounting for the conversion.
      **/
     PhysicalLayer *offsetLayer;
-    result = makeOffsetFileLayer(fileName, 0, -vdoMaxBlockOffset, &offsetLayer);
+    result = makeOffsetFileLayer(fileName, true, 0, -vdoMaxBlockOffset,
+                                 &offsetLayer);
     if (result != VDO_SUCCESS) {
       cleanup(NULL, layer);
-      return result;
+      return deviceCheckResultToExitStatus(result, true);
     }
 
     result = loadVDOSuperblock(offsetLayer, &geometry, false, NULL, &vdo);
@@ -710,7 +712,7 @@ static int performDeviceConversion(off_t oldBlockOffset)
          " starting at offset %lu\n",
          fileName, lvmExtentSize, newBlockOffset * VDO_BLOCK_SIZE);
 
-  return result;
+  return deviceCheckResultToExitStatus(result, true);
 }
 
 /**
@@ -757,7 +759,7 @@ static int repairVDO(VDO            *vdo,
   geometry->bioOffset -= offset;
 
   PhysicalLayer *offsetLayer;
-  result = makeOffsetFileLayer(fileName, 0, newBlockOffset, &offsetLayer);
+  result = makeOffsetFileLayer(fileName, false, 0, newBlockOffset, &offsetLayer);
   if (result != VDO_SUCCESS) {
     warnx("Failed to make offset FileLayer for writing converted volume"
           " geometry");
@@ -892,7 +894,7 @@ static int repairDeviceConversion(off_t oldBlockOffset)
          " starting at offset %lu\n",
          fileName, lvmExtentSize, newBlockOffset * VDO_BLOCK_SIZE);
 
-  return result;
+  return deviceCheckResultToExitStatus(result, true);
 }
 
 /**********************************************************************/

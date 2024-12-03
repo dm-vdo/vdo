@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/fileLayer.c#5 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/fileLayer.c#6 $
  */
 
 #include "fileLayer.h"
@@ -343,9 +343,10 @@ int makeReadOnlyFileLayer(const char *name, PhysicalLayer **layerPtr)
 
 /**********************************************************************/
 int makeOffsetFileLayer(const char           *name,
+                        bool                  readOnly,
                         BlockCount            blockCount,
                         off_t                 blockOffset,
                         PhysicalLayer       **layerPtr)
 {
-  return setupFileLayer(name, false, blockCount, blockOffset, layerPtr);
+  return setupFileLayer(name, readOnly, blockCount, blockOffset, layerPtr);
 }
