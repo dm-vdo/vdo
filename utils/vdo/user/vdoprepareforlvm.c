@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA. 
  *
- * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#10 $
+ * $Id: //eng/vdo-releases/aluminum/src/c++/vdo/user/vdoPrepareForLVM.c#11 $
  */
 
 #include <err.h>
@@ -712,7 +712,7 @@ static int performDeviceConversion(off_t oldBlockOffset)
          " starting at offset %lu\n",
          fileName, lvmExtentSize, newBlockOffset * VDO_BLOCK_SIZE);
 
-  return deviceCheckResultToExitStatus(result, true);
+  return 0;
 }
 
 /**
@@ -894,7 +894,7 @@ static int repairDeviceConversion(off_t oldBlockOffset)
          " starting at offset %lu\n",
          fileName, lvmExtentSize, newBlockOffset * VDO_BLOCK_SIZE);
 
-  return deviceCheckResultToExitStatus(result, true);
+  return 0;
 }
 
 /**********************************************************************/

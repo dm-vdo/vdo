@@ -4,7 +4,7 @@
 #
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 6.2.11.4
+Version: 6.2.11.5
 Release: %{spec_release}%{?dist}
 License: GPLv2
 Source0: %{name}-%{version}.tgz
@@ -184,5 +184,5 @@ This package provides the user-space support tools for VDO.
 %{_mandir}/man8/vdoregenerategeometry.8.gz
 
 %changelog
-* Mon Dec 02 2024 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.11.4-1
-- Enabled vdoPrepareForLVM to check read-only devices.
+* Thu Dec 05 2024 - Red Hat VDO Team <vdo-devel@redhat.com> - 6.2.11.5-1
+- Fixed return codes for vdoPrepareForLVM conversions.
