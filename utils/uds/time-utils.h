@@ -50,4 +50,9 @@ static inline s64 ktime_to_us(ktime_t reltime)
 	return reltime / NSEC_PER_USEC;
 }
 
+static inline ktime_t us_to_ktime(u64 microseconds)
+{
+	return (ktime_t) microseconds * NSEC_PER_USEC;
+}
+
 #endif /* UDS_TIME_UTILS_H */
