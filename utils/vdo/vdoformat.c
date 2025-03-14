@@ -47,10 +47,9 @@
 #include "vdoVolumeUtils.h"
 
 enum {
-  MIN_SLAB_BITS        =  4,
-  DEFAULT_SLAB_BITS    = 19,
+  MIN_SLAB_BITS     = 13,
+  DEFAULT_SLAB_BITS = 19,
 };
-
 
 static const char usageString[] =
   " [--help] [options...] filename";
@@ -85,8 +84,8 @@ static const char helpString[] =
   "\n"
   "    --slab-bits=<bits>\n"
   "      Set the free space allocator's slab size to 2^<bits> 4 KB blocks.\n"
-  "      <bits> must be a value between 4 and 23 (inclusive), corresponding\n"
-  "      to a slab size between 128 KB and 32 GB. The default value is 19\n"
+  "      <bits> must be a value between 13 and 23 (inclusive), corresponding\n"
+  "      to a slab size between 32 MB and 32 GB. The default value is 19\n"
   "      which results in a slab size of 2 GB. This allocator manages the\n"
   "      space VDO uses to store user data.\n"
   "\n"

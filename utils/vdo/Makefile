@@ -17,7 +17,7 @@
 # 02110-1301, USA.
 #
 
-VDO_VERSION = 8.3.0.73
+VDO_VERSION = 8.3.1.1
 
 UDS_DIR      = ../uds
 

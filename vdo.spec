@@ -3,7 +3,7 @@
 
 Summary: Management tools for Virtual Data Optimizer
 Name: vdo
-Version: 8.3.0.73
+Version: 8.3.1.1
 Release: %{spec_release}%{?dist}
 
 License: GPL-2.0-only
@@ -98,5 +98,5 @@ make install DESTDIR=$RPM_BUILD_ROOT INSTALLOWNER= name=%{name} bindir=%{_bindir
 %{_mandir}/man8/vdorecover.8*
 
 %changelog
-* Tue Jan 28 2025 - Red Hat VDO Team <dm-devel@lists.linux.dev> - 8.3.0.73-1
+* Thu Mar 13 2025 - Red Hat VDO Team <dm-devel@lists.linux.dev> - 8.3.1.1-1
 - See https://github.com/dm-vdo/vdo.git

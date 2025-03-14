@@ -31,8 +31,8 @@ default unit is megabytes.
 .TP
 .B \-\-slab\-bits=\fIbits\fP
 Set the free space allocator's slab size to 2^\fIbits\fP 4 KB blocks.
-\fIbits\fP must be a value between 4 and 23 (inclusive), corresponding
-to a slab size between 128 KB and 32 GB. The default value is 19
+\fIbits\fP must be a value between 13 and 23 (inclusive), corresponding
+to a slab size between 32 MB and 32 GB. The default value is 19
 which results in a slab size of 2 GB. This allocator manages the
 space VDO uses to store user data.
 
