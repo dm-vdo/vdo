@@ -90,6 +90,60 @@ struct vdoInfo {
   int humanReadable;
 };
 
+static const char usageString[] =
+  "Usage: vdoCalculateSize --physical-size=MB\n"
+  "                        --logical-size=MB\n"
+  "                        [--block-map-cache-size=blocks]\n"
+  "                        [--human-readable]\n"
+  "                        [--index-memory-size=GB]\n"
+  "                        [--slab-bits=bits]\n"
+  "                        [--slab-size=MB]\n"
+  "                        [--sparse-index]\n"
+  "                        [--version]\n\n";
+
+static const char helpString[] =
+  "DESCRIPTION\n"
+  "  Calculate VDO space and memory usage.\n"
+  "\n"
+  "\n"
+  "  --block-map-cache-size=blocks  Size of the block map cache, in 4K blocks\n"
+  "\n"
+  "  --help                         Display this help and exit\n"
+  "\n"
+  "  --human-readable               Print sizes in human readable format\n"
+  "\n"
+  "  --index-memory-size=GB\n"
+  "    Specify the amount of memory, in gigabytes, to devote to the\n"
+  "    index. Accepted options are .25, .5, .75, and all positive\n"
+  "    integers. Default size is 0.25\n"
+  "\n"
+  "  --logical-size=MB              VDO logical size\n"
+  "\n"
+  "  --physical-size=MB             VDO physical size\n"
+  "\n"
+  "  --slab-bits=bits\n"
+  "    Set the free space allocator's slab size to 2^<bits> 4 KB blocks.\n"
+  "    <bits> must be a value between 4 and 23 (inclusive), corresponding\n"
+  "    to a slab size between 128 KB and 32 GB. The default value is 19\n"
+  "    which results in a slab size of 2 GB. This allocator manages the\n"
+  "    space VDO uses to store user data.\n"
+  "    The maximum number of slabs in the system is 8192, so this value\n"
+  "    determines the maximum physical size of a VDO volume. One slab is\n"
+  "    the minimum amount by which a VDO volume can be grown. Smaller\n"
+  "    slabs also increase the potential for parallelism if the device\n"
+  "    has multiple physical threads. Therefore, this value should be set\n"
+  "    as small as possible, given the eventual maximal size of the\n"
+  "    volume.\n"
+  "\n"
+  "  --slab-size=MB\n"
+  "    Set slab size directly instead of using --slab-bits. This\n"
+  "    option is mutually exclusive with --slab-bits.\n"
+  "\n"
+  "  --sparse-index                 Default to false\n"
+  "\n"
+  "  --version\n                    Output version and exit\n"
+  "\n";
+
 /*
   A VDO volume contains three types of data, system metadata, user metadata
   and user data. All VDO data is stored in a 4K block.
@@ -409,59 +463,9 @@ static int checkSlabSize(u64 slabSize)
 /**********************************************************************/
 static void usage(bool printDetail)
 {
-  fprintf(stderr,
-          "Usage: vdoCalculateSize --physical-size=MB\n"
-          "                        --logical-size=MB\n"
-          "                        [--block-map-cache-size=blocks]\n"
-          "                        [--human-readable]\n"
-          "                        [--index-memory-size=GB]\n"
-          "                        [--slab-bits=bits]\n"
-          "                        [--slab-size=MB]\n"
-          "                        [--sparse-index]\n"
-          "                        [--version]\n\n");
+  fprintf(stderr, usageString);
   if (printDetail) {
-    fprintf(stderr,
-          "DESCRIPTION\n"
-          "  Calculate VDO space and memory usage.\n"
-          "\n"
-          "\n"
-          "  --block-map-cache-size=blocks  Size of the block map cache, in 4K blocks\n"
-          "\n"
-          "  --help                         Display this help and exit\n"
-          "\n"
-          "  --human-readable               Print sizes in human readable format\n"
-          "\n"
-          "  --index-memory-size=GB\n"
-          "    Specify the amount of memory, in gigabytes, to devote to the\n"
-          "    index. Accepted options are .25, .5, .75, and all positive\n"
-          "    integers. Default size is 0.25\n"
-          "\n"
-          "  --logical-size=MB              VDO logical size\n"
-          "\n"
-          "  --physical-size=MB             VDO physical size\n"
-          "\n"
-          "  --slab-bits=bits\n"
-          "    Set the free space allocator's slab size to 2^<bits> 4 KB blocks.\n"
-          "    <bits> must be a value between 4 and 23 (inclusive), corresponding\n"
-          "    to a slab size between 128 KB and 32 GB. The default value is 19\n"
-          "    which results in a slab size of 2 GB. This allocator manages the\n"
-          "    space VDO uses to store user data.\n"
-          "    The maximum number of slabs in the system is 8192, so this value\n"
-          "    determines the maximum physical size of a VDO volume. One slab is\n"
-          "    the minimum amount by which a VDO volume can be grown. Smaller\n"
-          "    slabs also increase the potential for parallelism if the device\n"
-          "    has multiple physical threads. Therefore, this value should be set\n"
-          "    as small as possible, given the eventual maximal size of the\n"
-          "    volume.\n"
-          "\n"
-          "  --slab-size=MB\n"
-          "    Set slab size directly instead of using --slab-bits. This\n"
-          "    option is mutually exclusive with --slab-bits.\n"
-          "\n"
-          "  --sparse-index                 Default to false\n"
-          "\n"
-          "  --version\n                    Output version and exit\n"
-          "\n");
+    fprintf(stderr, helpString);
   }
   exit(1);
 }
@@ -522,7 +526,9 @@ static void parseArgs(int argc, char **argv, struct vdoInfo *vdoInfo)
       }
       break;
     case OPT_HELP:
-      usage(printDetail);
+      printf("%s", usageString);
+      printf("%s", helpString);
+      exit(0);
       break;
     case OPT_HUMAN_READABLE:
       vdoInfo->humanReadable = 1;
