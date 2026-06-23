@@ -395,12 +395,12 @@ static int checkSlabSize(u64 slabSize)
 
   if (slabSize < MIN_VDO_SLAB_SIZE) {
     getSizeString(MIN_VDO_SLAB_SIZE, 1, size);
-    warnx("Slab size too small, minumum size %s", size);
+    warnx("Slab size too small, minimum size %s", size);
     return(VDO_OUT_OF_RANGE);
   }
   if (slabSize > MAX_VDO_SLAB_SIZE) {
     getSizeString(MAX_VDO_SLAB_SIZE, 1, size);
-    warnx("Slab size too large, maxmium size %s", size);
+    warnx("Slab size too large, maximum size %s", size);
     return(VDO_OUT_OF_RANGE);
   }
   return VDO_SUCCESS;
